@@ -9,14 +9,15 @@ import (
 
 // Config represents the application configuration
 type Config struct {
-	Server    ServerConfig    `yaml:"server"`
-	Database  DatabaseConfig  `yaml:"database"`
-	Auth      AuthConfig      `yaml:"auth"`
-	Logging   LoggingConfig   `yaml:"logging"`
-	RateLimit RateLimitConfig `yaml:"rate_limit"`
-	Discovery DiscoveryConfig `yaml:"discovery"`
-	Gateway   GatewayConfig   `yaml:"gateway"`
-	Redis     RedisConfig     `yaml:"redis"`
+	Server       ServerConfig       `yaml:"server"`
+	Database     DatabaseConfig     `yaml:"database"`
+	Auth         AuthConfig         `yaml:"auth"`
+	Logging      LoggingConfig      `yaml:"logging"`
+	RateLimit    RateLimitConfig    `yaml:"rate_limit"`
+	Discovery    DiscoveryConfig    `yaml:"discovery"`
+	Gateway      GatewayConfig      `yaml:"gateway"`
+	Redis        RedisConfig        `yaml:"redis"`
+	MCPDiscovery MCPDiscoveryConfig `yaml:"mcp_discovery"`
 }
 
 // ServerConfig holds HTTP server configuration
@@ -107,6 +108,12 @@ type RedisConfig struct {
 	Password string `yaml:"password" env:"REDIS_PASSWORD"`
 	Database int    `yaml:"database" env:"REDIS_DB"`
 	PoolSize int    `yaml:"pool_size"`
+}
+
+// MCPDiscoveryConfig holds MCP discovery service configuration
+type MCPDiscoveryConfig struct {
+	Enabled bool   `yaml:"enabled" env:"MCP_DISCOVERY_ENABLED"`
+	BaseURL string `yaml:"base_url" env:"MCP_DISCOVERY_BASE_URL"`
 }
 
 // Load loads configuration from file and environment variables

@@ -67,6 +67,11 @@ redis:
   pool_size: 50
   pool_timeout: 30s
 
+# MCP Discovery Service Configuration
+mcp_discovery:
+  enabled: true
+  base_url: "${MCP_DISCOVERY_BASE_URL:-https://metatool-service.jczstudio.workers.dev/search}"
+
 gateway:
   default_timeout: 30s
   max_concurrent_reqs: 2000

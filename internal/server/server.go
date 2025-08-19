@@ -9,21 +9,26 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 
+	"mcp-gateway/internal/config"
 	"mcp-gateway/internal/database"
 )
 
 type Server struct {
 	port int
-
-	db database.Service
+	cfg  *config.Config
+	db   database.Service
 }
 
-func NewServer() *http.Server {
+func NewServer(cfg *config.Config) *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
+	if port == 0 {
+		port = cfg.Server.Port
+	}
+
 	NewServer := &Server{
 		port: port,
-
-		db: database.New(),
+		cfg:  cfg,
+		db:   database.New(),
 	}
 
 	// Declare Server config

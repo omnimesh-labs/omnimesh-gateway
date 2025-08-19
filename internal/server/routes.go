@@ -1,6 +1,8 @@
 package server
 
 import (
+	"mcp-gateway/internal/discovery"
+	"mcp-gateway/internal/server/handlers"
 	"net/http"
 
 	"github.com/gin-contrib/cors"
@@ -20,6 +22,26 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.GET("/", s.HelloWorldHandler)
 
 	r.GET("/health", s.healthHandler)
+
+	// Initialize MCP Discovery Service and Handler
+	mcpDiscoveryService := discovery.NewMCPDiscoveryService(s.cfg.MCPDiscovery.BaseURL)
+	mcpDiscoveryHandler := handlers.NewMCPDiscoveryHandler(mcpDiscoveryService)
+
+	// MCP Discovery API routes
+	api := r.Group("/api")
+	{
+		mcp := api.Group("/mcp")
+		{
+			// Search for MCP packages
+			mcp.GET("/search", mcpDiscoveryHandler.SearchPackages)
+
+			// List all MCP packages
+			mcp.GET("/packages", mcpDiscoveryHandler.ListPackages)
+
+			// Get specific package details
+			mcp.GET("/packages/:packageName", mcpDiscoveryHandler.GetPackageDetails)
+		}
+	}
 
 	return r
 }

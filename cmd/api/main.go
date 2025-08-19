@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"mcp-gateway/internal/config"
 	"mcp-gateway/internal/server"
 )
 
@@ -38,8 +40,31 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 }
 
 func main() {
+	var (
+		configPath = flag.String("config", "configs/development.yaml", "Path to configuration file")
+	)
+	flag.Parse()
 
-	server := server.NewServer()
+	// Load configuration
+	cfg, err := config.Load(*configPath)
+	if err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
+
+	// Set defaults if config loading is not fully implemented
+	if cfg == nil {
+		cfg = &config.Config{
+			MCPDiscovery: config.MCPDiscoveryConfig{
+				Enabled: true,
+				BaseURL: "https://metatool-service.jczstudio.workers.dev/search",
+			},
+			Server: config.ServerConfig{
+				Port: 8080,
+			},
+		}
+	}
+
+	server := server.NewServer(cfg)
 
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)
@@ -47,7 +72,7 @@ func main() {
 	// Run graceful shutdown in a separate goroutine
 	go gracefulShutdown(server, done)
 
-	err := server.ListenAndServe()
+	err = server.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		panic(fmt.Sprintf("http server error: %s", err))
 	}
