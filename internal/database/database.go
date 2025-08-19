@@ -54,6 +54,16 @@ func New() Service {
 	return dbInstance
 }
 
+// NewWithConfig creates a database connection with the provided config
+func NewWithConfig(config interface{}) (*sql.DB, error) {
+	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable&search_path=%s", username, password, host, port, database, schema)
+	db, err := sql.Open("pgx", connStr)
+	if err != nil {
+		return nil, err
+	}
+	return db, nil
+}
+
 // Health checks the health of the database connection by pinging the database.
 // It returns a map with keys indicating various health statistics.
 func (s *service) Health() map[string]string {

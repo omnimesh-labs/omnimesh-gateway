@@ -1,0 +1,6 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+1. Do NOT add too many comments for each function - have 1-2 comments per function at most unless the function is very complicated.
