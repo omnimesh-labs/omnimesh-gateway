@@ -32,3 +32,5 @@ main
 # OS X generated file
 .DS_Store
 
+apps/web/node_modules/
+apps/web/.next/
