@@ -5,3 +5,4 @@ alwaysApply: true
 ---
 1. Refer to ARCHITECTURE.md for project structure. Put business logic in proper files according to this file.
 1. Do NOT add too many comments for each function - have 1-2 comments per function at most unless the function is very complicated.
+1. Use `bun` for frontend app

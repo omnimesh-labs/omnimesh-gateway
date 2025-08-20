@@ -213,7 +213,7 @@ authService := auth.NewService(db, &auth.Config{
 ## Directory Structure Reference
 
 ```
-mcp-gateway/
+mcp-gateway/apps/backend/
 ├── cmd/
 │   ├── api/main.go           # ✅ Server entrypoint
 │   ├── migrate/              # 🔄 Database migrations tool

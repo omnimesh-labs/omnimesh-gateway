@@ -15,111 +15,134 @@ This MCP (Model Context Protocol) Gateway provides organization-level policies, 
 
 ```
 mcp-gateway/
-├── cmd/
-│   ├── api/                    # API server entrypoint
-│   ├── migrate/               # Database migration tool
-│   └── worker/                # Background worker for health checks, cleanup
-├── internal/
-│   ├── auth/                  # Authentication & Authorization
-│   │   ├── jwt.go            # JWT token management
-│   │   ├── middleware.go     # Auth middleware
-│   │   ├── policies.go       # Policy engine
-│   │   └── service.go        # Auth service
-│   ├── config/               # Configuration management
-│   │   ├── config.go         # Config structs and loading
-│   │   ├── policy.go         # Policy configuration
-│   │   └── validation.go     # Config validation
-│   ├── database/             # Database layer (existing)
-│   │   ├── migrations/       # SQL migrations
-│   │   └── models/           # Database models
-│   ├── discovery/            # MCP Server Discovery
-│   │   ├── health.go         # Health checking
-│   │   ├── registry.go       # Server registry
-│   │   └── service.go        # Discovery service
-│   ├── gateway/              # Core gateway functionality
-│   │   ├── proxy.go          # HTTP proxy logic
-│   │   ├── router.go         # Request routing
-│   │   └── loadbalancer.go   # Load balancing
-│   ├── logging/              # Logging & Audit
-│   │   ├── audit.go          # Audit logging
-│   │   ├── middleware.go     # Request logging middleware
-│   │   └── service.go        # Logging service
-│   ├── middleware/           # HTTP Middleware
-│   │   ├── chain.go          # Middleware chain builder
-│   │   ├── cors.go           # CORS middleware
-│   │   ├── recovery.go       # Panic recovery
-│   │   └── timeout.go        # Request timeout
-│   ├── ratelimit/            # Rate Limiting
-│   │   ├── limiter.go        # Rate limiter implementation
-│   │   ├── middleware.go     # Rate limiting middleware
-│   │   ├── storage.go        # Rate limit storage (Redis/Memory)
-│   │   └── policies.go       # Rate limiting policies
-│   ├── server/               # HTTP Server (existing, enhanced)
-│   │   ├── handlers/         # HTTP handlers
-│   │   │   ├── auth.go       # Auth endpoints
-│   │   │   ├── gateway.go    # Gateway endpoints
-│   │   │   ├── health.go     # Health check endpoints
-│   │   │   └── admin.go      # Admin endpoints
-│   │   ├── routes.go         # Route definitions
-│   │   └── server.go         # Server setup
-│   └── types/                # Shared types and interfaces
-│       ├── auth.go           # Auth-related types
-│       ├── config.go         # Configuration types
-│       ├── errors.go         # Custom error types
-│       ├── gateway.go        # Gateway types
-│       └── mcp.go            # MCP protocol types
-├── pkg/                      # Public packages
+├── apps/
+│   ├── backend/              # Go API backend
+│   │   ├── cmd/
+│   │   │   ├── api/          # API server entrypoint
+│   │   │   ├── migrate/      # Database migration tool
+│   │   │   └── worker/       # Background worker for health checks, cleanup
+│   │   ├── internal/
+│   │   │   ├── auth/         # Authentication & Authorization
+│   │   │   │   ├── jwt.go    # JWT token management
+│   │   │   │   ├── middleware.go # Auth middleware
+│   │   │   │   ├── policies.go # Policy engine
+│   │   │   │   └── service.go # Auth service
+│   │   │   ├── config/       # Configuration management
+│   │   │   │   ├── config.go # Config structs and loading
+│   │   │   │   ├── policy.go # Policy configuration
+│   │   │   │   └── validation.go # Config validation
+│   │   │   ├── database/     # Database layer
+│   │   │   │   ├── database.go # Database connection
+│   │   │   │   └── models/   # Database models
+│   │   │   ├── discovery/    # MCP Server Discovery
+│   │   │   │   ├── health.go # Health checking
+│   │   │   │   ├── registry.go # Server registry
+│   │   │   │   ├── mcp_discovery.go # MCP discovery service
+│   │   │   │   └── service.go # Discovery service
+│   │   │   ├── gateway/      # Core gateway functionality
+│   │   │   │   ├── proxy.go  # HTTP proxy logic
+│   │   │   │   ├── router.go # Request routing
+│   │   │   │   └── loadbalancer.go # Load balancing
+│   │   │   ├── logging/      # Logging & Audit
+│   │   │   │   ├── audit.go  # Audit logging
+│   │   │   │   ├── middleware.go # Request logging middleware
+│   │   │   │   └── service.go # Logging service
+│   │   │   ├── middleware/   # HTTP Middleware
+│   │   │   │   ├── chain.go  # Middleware chain builder
+│   │   │   │   ├── cors.go   # CORS middleware
+│   │   │   │   ├── recovery.go # Panic recovery
+│   │   │   │   └── timeout.go # Request timeout
+│   │   │   ├── ratelimit/    # Rate Limiting
+│   │   │   │   ├── limiter.go # Rate limiter implementation
+│   │   │   │   ├── middleware.go # Rate limiting middleware
+│   │   │   │   ├── storage.go # Rate limit storage (Redis/Memory)
+│   │   │   │   ├── service.go # Rate limiting service
+│   │   │   │   └── policies.go # Rate limiting policies
+│   │   │   ├── server/       # HTTP Server
+│   │   │   │   ├── handlers/ # HTTP handlers
+│   │   │   │   │   ├── auth.go # Auth endpoints
+│   │   │   │   │   ├── gateway.go # Gateway endpoints
+│   │   │   │   │   ├── health.go # Health check endpoints
+│   │   │   │   │   ├── admin.go # Admin endpoints
+│   │   │   │   │   └── mcp_discovery.go # MCP discovery endpoints
+│   │   │   │   ├── routes.go # Route definitions
+│   │   │   │   └── server.go # Server setup
+│   │   │   └── types/        # Shared types and interfaces
+│   │   │       ├── auth.go   # Auth-related types
+│   │   │       ├── config.go # Configuration types
+│   │   │       ├── discovery.go # Discovery types
+│   │   │       ├── errors.go # Custom error types
+│   │   │       ├── gateway.go # Gateway types
+│   │   │       └── mcp.go    # MCP protocol types
+│   │   ├── migrations/       # Database migrations
+│   │   └── configs/          # Configuration files
+│   │       ├── development.yaml
+│   │       ├── production.yaml
+│   │       └── test.yaml
+│   └── frontend/             # Next.js frontend dashboard
+│       ├── src/
+│       │   └── app/          # Next.js App Router
+│       ├── package.json
+│       ├── next.config.js
+│       └── tsconfig.json
+├── pkg/                      # Shared Go packages
 │   ├── client/               # MCP client library
 │   ├── protocol/             # MCP protocol definitions
 │   └── utils/                # Utility functions
-├── migrations/               # Database migrations
-├── configs/                  # Configuration files
-│   ├── development.yaml
-│   ├── production.yaml
-│   └── test.yaml
+├── docs/                     # Documentation
+│   ├── api/                  # API documentation
+│   └── deployment/           # Deployment guides
 ├── scripts/                  # Build and deployment scripts
-└── docs/                     # Documentation
-    ├── api/                  # API documentation
-    └── deployment/           # Deployment guides
+├── go.mod                    # Go module definition
+├── go.sum                    # Go dependencies
+├── Makefile                  # Build commands
+├── docker-compose.yml        # Docker services
+└── .air.toml                 # Hot reload configuration
 ```
 
 ## Key Components
 
-### 1. Authentication & Authorization (`internal/auth/`)
+### 1. Authentication & Authorization (`apps/backend/internal/auth/`)
 - JWT-based authentication
 - Organization-level policies
 - Role-based access control (RBAC)
 - API key management
 
-### 2. Logging & Audit (`internal/logging/`)
+### 2. Logging & Audit (`apps/backend/internal/logging/`)
 - Request/response logging
 - Audit trail for policy changes
 - Performance metrics
 - Error tracking
 
-### 3. Rate Limiting (`internal/ratelimit/`)
+### 3. Rate Limiting (`apps/backend/internal/ratelimit/`)
 - Per-user rate limits
 - Per-organization rate limits
 - Per-endpoint rate limits
 - Sliding window implementation
 
-### 4. MCP Server Discovery (`internal/discovery/`)
+### 4. MCP Server Discovery (`apps/backend/internal/discovery/`)
 - Service registry
 - Health checking
 - Auto-discovery mechanisms
 - Load balancing strategies
 
-### 5. Gateway Configuration (`internal/config/`)
+### 5. Gateway Configuration (`apps/backend/internal/config/`)
 - Policy management
 - Dynamic configuration updates
 - Environment-specific configs
 - Validation and defaults
 
-### 6. Gateway Core (`internal/gateway/`)
+### 6. Gateway Core (`apps/backend/internal/gateway/`)
 - HTTP proxy functionality
 - Request routing
 - Load balancing
 - Circuit breaker patterns
+
+### 7. Frontend Dashboard (`apps/frontend/`)
+- Next.js TypeScript application
+- MCP Gateway management interface
+- Real-time monitoring dashboard
+- Configuration management UI
 
 ## Database Schema Design
 
