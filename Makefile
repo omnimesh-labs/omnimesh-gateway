@@ -1,3 +1,11 @@
+# Check if .env exists and include it
+ifeq (,$(wildcard ./.env))
+    $(error .env file not found. Please create one.)
+endif
+
+include .env
+export
+
 # Simple Makefile for a Go project
 
 # Build the application
@@ -12,6 +20,7 @@ build:
 # Run the application
 run:
 	@go run apps/backend/cmd/api/main.go
+
 # Create DB container
 docker-run:
 	@if docker compose up --build 2>/dev/null; then \
@@ -34,6 +43,7 @@ docker-down:
 test:
 	@echo "Testing..."
 	@go test ./... -v
+
 # Integrations Tests for the application
 itest:
 	@echo "Running integration tests..."
@@ -61,4 +71,25 @@ watch:
             fi; \
         fi
 
-.PHONY: all build run test clean watch docker-run docker-down itest
+# Run database migrations
+migrate:
+	@echo "Running database migrations..."
+	@bash -c 'cd apps/backend && migrate -path migrations -database "postgres://$$DB_USERNAME:$$DB_PASSWORD@$$DB_HOST:$$DB_PORT/$$DB_DATABASE?sslmode=disable&search_path=$$DB_SCHEMA" up'
+
+# Rollback database migrations
+migrate-down:
+	@echo "Rolling back database migrations..."
+	@bash -c 'cd apps/backend && migrate -path migrations -database "postgres://$$DB_USERNAME:$$DB_PASSWORD@$$DB_HOST:$$DB_PORT/$$DB_DATABASE?sslmode=disable&search_path=$$DB_SCHEMA" down'
+
+# Check migration status
+migrate-status:
+	@echo "Checking migration status..."
+	@bash -c 'cd apps/backend && migrate -path migrations -database "postgres://$$DB_USERNAME:$$DB_PASSWORD@$$DB_HOST:$$DB_PORT/$$DB_DATABASE?sslmode=disable&search_path=$$DB_SCHEMA" status'
+
+# Create new migration file
+migrate-create:
+	@echo "Creating new migration file..."
+	@read -p "Enter migration name: " name; \
+	cd apps/backend && migrate create -ext sql -dir migrations -seq $$name
+
+.PHONY: all build run test clean watch docker-run docker-down itest migrate migrate-down migrate-status migrate-create

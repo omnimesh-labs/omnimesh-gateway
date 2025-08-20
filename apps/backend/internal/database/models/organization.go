@@ -3,47 +3,63 @@ package models
 import (
 	"time"
 
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/google/uuid"
 )
+
+// Organization represents the organizations table from the ERD
+type Organization struct {
+	ID               uuid.UUID `db:"id" json:"id"`
+	Name             string    `db:"name" json:"name"`
+	Slug             string    `db:"slug" json:"slug"`
+	CreatedAt        time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt        time.Time `db:"updated_at" json:"updated_at"`
+	IsActive         bool      `db:"is_active" json:"is_active"`
+	PlanType         string    `db:"plan_type" json:"plan_type"`
+	MaxServers       int       `db:"max_servers" json:"max_servers"`
+	MaxSessions      int       `db:"max_sessions" json:"max_sessions"`
+	LogRetentionDays int       `db:"log_retention_days" json:"log_retention_days"`
+}
 
 // OrganizationModel handles organization database operations
 type OrganizationModel struct {
-	BaseModel
+	db Database
 }
 
 // NewOrganizationModel creates a new organization model
 func NewOrganizationModel(db Database) *OrganizationModel {
-	return &OrganizationModel{
-		BaseModel: BaseModel{db: db},
-	}
+	return &OrganizationModel{db: db}
 }
 
-// Create inserts a new organization into the database
-func (m *OrganizationModel) Create(org *types.Organization) error {
+// Create inserts a new organization
+func (m *OrganizationModel) Create(org *Organization) error {
 	query := `
-		INSERT INTO organizations (id, name, description, is_active, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO organizations (id, name, slug, is_active, plan_type, max_servers, max_sessions, log_retention_days)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`
 
-	now := time.Now()
-	org.CreatedAt = now
-	org.UpdatedAt = now
+	if org.ID == uuid.Nil {
+		org.ID = uuid.New()
+	}
 
-	_, err := m.db.Exec(query, org.ID, org.Name, org.Description, org.IsActive, org.CreatedAt, org.UpdatedAt)
+	_, err := m.db.Exec(query,
+		org.ID, org.Name, org.Slug, org.IsActive,
+		org.PlanType, org.MaxServers, org.MaxSessions, org.LogRetentionDays)
 	return err
 }
 
 // GetByID retrieves an organization by ID
-func (m *OrganizationModel) GetByID(id string) (*types.Organization, error) {
+func (m *OrganizationModel) GetByID(id uuid.UUID) (*Organization, error) {
 	query := `
-		SELECT id, name, description, is_active, created_at, updated_at
+		SELECT id, name, slug, created_at, updated_at, is_active, 
+			   plan_type, max_servers, max_sessions, log_retention_days
 		FROM organizations
-		WHERE id = $1 AND is_active = true
+		WHERE id = $1
 	`
 
-	org := &types.Organization{}
+	org := &Organization{}
 	err := m.db.QueryRow(query, id).Scan(
-		&org.ID, &org.Name, &org.Description, &org.IsActive, &org.CreatedAt, &org.UpdatedAt,
+		&org.ID, &org.Name, &org.Slug, &org.CreatedAt, &org.UpdatedAt,
+		&org.IsActive, &org.PlanType, &org.MaxServers, &org.MaxSessions, &org.LogRetentionDays,
 	)
 
 	if err != nil {
@@ -53,38 +69,55 @@ func (m *OrganizationModel) GetByID(id string) (*types.Organization, error) {
 	return org, nil
 }
 
-// Update updates an organization in the database
-func (m *OrganizationModel) Update(org *types.Organization) error {
+// GetBySlug retrieves an organization by slug
+func (m *OrganizationModel) GetBySlug(slug string) (*Organization, error) {
 	query := `
-		UPDATE organizations
-		SET name = $1, description = $2, updated_at = $3
-		WHERE id = $4
-	`
-
-	org.UpdatedAt = time.Now()
-
-	_, err := m.db.Exec(query, org.Name, org.Description, org.UpdatedAt, org.ID)
-	return err
-}
-
-// Delete soft deletes an organization
-func (m *OrganizationModel) Delete(id string) error {
-	query := `
-		UPDATE organizations
-		SET is_active = false, updated_at = $1
-		WHERE id = $2
-	`
-
-	_, err := m.db.Exec(query, time.Now(), id)
-	return err
-}
-
-// List lists all active organizations
-func (m *OrganizationModel) List(limit, offset int) ([]*types.Organization, error) {
-	query := `
-		SELECT id, name, description, is_active, created_at, updated_at
+		SELECT id, name, slug, created_at, updated_at, is_active, 
+			   plan_type, max_servers, max_sessions, log_retention_days
 		FROM organizations
-		WHERE is_active = true
+		WHERE slug = $1
+	`
+
+	org := &Organization{}
+	err := m.db.QueryRow(query, slug).Scan(
+		&org.ID, &org.Name, &org.Slug, &org.CreatedAt, &org.UpdatedAt,
+		&org.IsActive, &org.PlanType, &org.MaxServers, &org.MaxSessions, &org.LogRetentionDays,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return org, nil
+}
+
+// GetDefault retrieves the default organization
+func (m *OrganizationModel) GetDefault() (*Organization, error) {
+	defaultID := uuid.MustParse("00000000-0000-0000-0000-000000000000")
+	return m.GetByID(defaultID)
+}
+
+// Update updates an organization
+func (m *OrganizationModel) Update(org *Organization) error {
+	query := `
+		UPDATE organizations
+		SET name = $2, slug = $3, is_active = $4, plan_type = $5,
+			max_servers = $6, max_sessions = $7, log_retention_days = $8
+		WHERE id = $1
+	`
+
+	_, err := m.db.Exec(query,
+		org.ID, org.Name, org.Slug, org.IsActive,
+		org.PlanType, org.MaxServers, org.MaxSessions, org.LogRetentionDays)
+	return err
+}
+
+// List lists all organizations
+func (m *OrganizationModel) List(limit, offset int) ([]*Organization, error) {
+	query := `
+		SELECT id, name, slug, created_at, updated_at, is_active, 
+			   plan_type, max_servers, max_sessions, log_retention_days
+		FROM organizations
 		ORDER BY created_at DESC
 		LIMIT $1 OFFSET $2
 	`
@@ -95,11 +128,12 @@ func (m *OrganizationModel) List(limit, offset int) ([]*types.Organization, erro
 	}
 	defer rows.Close()
 
-	var orgs []*types.Organization
+	var orgs []*Organization
 	for rows.Next() {
-		org := &types.Organization{}
+		org := &Organization{}
 		err := rows.Scan(
-			&org.ID, &org.Name, &org.Description, &org.IsActive, &org.CreatedAt, &org.UpdatedAt,
+			&org.ID, &org.Name, &org.Slug, &org.CreatedAt, &org.UpdatedAt,
+			&org.IsActive, &org.PlanType, &org.MaxServers, &org.MaxSessions, &org.LogRetentionDays,
 		)
 		if err != nil {
 			return nil, err
@@ -108,135 +142,4 @@ func (m *OrganizationModel) List(limit, offset int) ([]*types.Organization, erro
 	}
 
 	return orgs, nil
-}
-
-// APIKeyModel handles API key database operations
-type APIKeyModel struct {
-	BaseModel
-}
-
-// NewAPIKeyModel creates a new API key model
-func NewAPIKeyModel(db Database) *APIKeyModel {
-	return &APIKeyModel{
-		BaseModel: BaseModel{db: db},
-	}
-}
-
-// Create inserts a new API key into the database
-func (m *APIKeyModel) Create(apiKey *types.APIKey) error {
-	query := `
-		INSERT INTO api_keys (id, user_id, organization_id, name, key_hash, prefix, permissions,
-			expires_at, is_active, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-	`
-
-	now := time.Now()
-	apiKey.CreatedAt = now
-	apiKey.UpdatedAt = now
-
-	// Convert permissions slice to PostgreSQL array format
-	// This is a simplified version - in production, you might want to use a proper JSON column
-	permissionsJSON := ""
-	if len(apiKey.Permissions) > 0 {
-		// Convert to JSON string for storage
-		// TODO: Use proper JSON marshaling
-	}
-
-	_, err := m.db.Exec(query, apiKey.ID, apiKey.UserID, apiKey.OrganizationID,
-		apiKey.Name, apiKey.KeyHash, apiKey.Prefix, permissionsJSON,
-		apiKey.ExpiresAt, apiKey.IsActive, apiKey.CreatedAt, apiKey.UpdatedAt)
-
-	return err
-}
-
-// GetByHash retrieves an API key by its hash
-func (m *APIKeyModel) GetByHash(keyHash string) (*types.APIKey, error) {
-	query := `
-		SELECT id, user_id, organization_id, name, key_hash, prefix, permissions,
-			expires_at, last_used_at, is_active, created_at, updated_at
-		FROM api_keys
-		WHERE key_hash = $1 AND is_active = true
-	`
-
-	apiKey := &types.APIKey{}
-	var permissionsJSON string
-
-	err := m.db.QueryRow(query, keyHash).Scan(
-		&apiKey.ID, &apiKey.UserID, &apiKey.OrganizationID, &apiKey.Name,
-		&apiKey.KeyHash, &apiKey.Prefix, &permissionsJSON, &apiKey.ExpiresAt,
-		&apiKey.LastUsedAt, &apiKey.IsActive, &apiKey.CreatedAt, &apiKey.UpdatedAt,
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	// Parse permissions JSON
-	// TODO: Implement proper JSON unmarshaling
-
-	return apiKey, nil
-}
-
-// ListByUser lists API keys for a user
-func (m *APIKeyModel) ListByUser(userID string) ([]*types.APIKey, error) {
-	query := `
-		SELECT id, user_id, organization_id, name, key_hash, prefix, permissions,
-			expires_at, last_used_at, is_active, created_at, updated_at
-		FROM api_keys
-		WHERE user_id = $1 AND is_active = true
-		ORDER BY created_at DESC
-	`
-
-	rows, err := m.db.Query(query, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var apiKeys []*types.APIKey
-	for rows.Next() {
-		apiKey := &types.APIKey{}
-		var permissionsJSON string
-
-		err := rows.Scan(
-			&apiKey.ID, &apiKey.UserID, &apiKey.OrganizationID, &apiKey.Name,
-			&apiKey.KeyHash, &apiKey.Prefix, &permissionsJSON, &apiKey.ExpiresAt,
-			&apiKey.LastUsedAt, &apiKey.IsActive, &apiKey.CreatedAt, &apiKey.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		// Parse permissions JSON
-		// TODO: Implement proper JSON unmarshaling
-
-		apiKeys = append(apiKeys, apiKey)
-	}
-
-	return apiKeys, nil
-}
-
-// UpdateLastUsed updates the last used timestamp for an API key
-func (m *APIKeyModel) UpdateLastUsed(id string) error {
-	query := `
-		UPDATE api_keys
-		SET last_used_at = $1, updated_at = $2
-		WHERE id = $3
-	`
-
-	now := time.Now()
-	_, err := m.db.Exec(query, now, now, id)
-	return err
-}
-
-// Revoke revokes an API key
-func (m *APIKeyModel) Revoke(id string) error {
-	query := `
-		UPDATE api_keys
-		SET is_active = false, updated_at = $1
-		WHERE id = $2
-	`
-
-	_, err := m.db.Exec(query, time.Now(), id)
-	return err
 }

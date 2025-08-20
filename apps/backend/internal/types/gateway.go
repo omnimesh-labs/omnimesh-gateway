@@ -9,7 +9,7 @@ type MCPServer struct {
 	Name           string            `json:"name" db:"name"`
 	Description    string            `json:"description" db:"description"`
 	URL            string            `json:"url" db:"url"`
-	Protocol       string            `json:"protocol" db:"protocol"` // "http", "websocket", "sse"
+	Protocol       string            `json:"protocol" db:"protocol"` // "http", "websocket", "sse", "stdio"
 	Version        string            `json:"version" db:"version"`
 	Status         string            `json:"status" db:"status"` // "active", "inactive", "unhealthy"
 	Weight         int               `json:"weight" db:"weight"`
@@ -20,6 +20,12 @@ type MCPServer struct {
 	IsActive       bool              `json:"is_active" db:"is_active"`
 	CreatedAt      time.Time         `json:"created_at" db:"created_at"`
 	UpdatedAt      time.Time         `json:"updated_at" db:"updated_at"`
+
+	// For stdio/command-based servers
+	Command     string   `json:"command,omitempty" db:"command"`
+	Args        []string `json:"args,omitempty" db:"args"`
+	Environment []string `json:"environment,omitempty" db:"environment"`
+	WorkingDir  string   `json:"working_dir,omitempty" db:"working_dir"`
 }
 
 // HealthCheck represents a health check result
@@ -84,7 +90,7 @@ type CircuitBreakerState struct {
 type CreateMCPServerRequest struct {
 	Name           string            `json:"name" binding:"required,min=2"`
 	Description    string            `json:"description"`
-	URL            string            `json:"url" binding:"required,url"`
+	URL            string            `json:"url" binding:"omitempty,url"` // Optional for stdio servers
 	Protocol       string            `json:"protocol" binding:"required"`
 	Version        string            `json:"version"`
 	Weight         int               `json:"weight"`
@@ -92,6 +98,12 @@ type CreateMCPServerRequest struct {
 	HealthCheckURL string            `json:"health_check_url" binding:"omitempty,url"`
 	Timeout        time.Duration     `json:"timeout"`
 	MaxRetries     int               `json:"max_retries"`
+
+	// For stdio/command-based servers
+	Command     string   `json:"command,omitempty"`     // e.g., "npx"
+	Args        []string `json:"args,omitempty"`        // e.g., ["-y", "@executeautomation/playwright-mcp-server"]
+	Environment []string `json:"environment,omitempty"` // e.g., ["VAR=value"]
+	WorkingDir  string   `json:"working_dir,omitempty"` // Working directory for the command
 }
 
 // UpdateMCPServerRequest represents an MCP server update request
@@ -107,6 +119,12 @@ type UpdateMCPServerRequest struct {
 	Timeout        time.Duration     `json:"timeout,omitempty"`
 	MaxRetries     int               `json:"max_retries,omitempty"`
 	IsActive       *bool             `json:"is_active,omitempty"`
+
+	// For stdio/command-based servers
+	Command     string   `json:"command,omitempty"`
+	Args        []string `json:"args,omitempty"`
+	Environment []string `json:"environment,omitempty"`
+	WorkingDir  string   `json:"working_dir,omitempty"`
 }
 
 // ServerStatus constants
@@ -123,6 +141,7 @@ const (
 	ProtocolHTTPS     = "https"
 	ProtocolWebSocket = "websocket"
 	ProtocolSSE       = "sse"
+	ProtocolStdio     = "stdio"
 )
 
 // Health check status constants
@@ -146,4 +165,66 @@ const (
 	LoadBalancerLeastConn  = "least_conn"
 	LoadBalancerWeighted   = "weighted"
 	LoadBalancerRandom     = "random"
+)
+
+// MCPProxySession represents an active MCP proxy session
+type MCPProxySession struct {
+	ID             string                 `json:"id"`
+	UserID         string                 `json:"user_id"`
+	OrganizationID string                 `json:"organization_id"`
+	ServerID       string                 `json:"server_id"`
+	Server         *MCPServer             `json:"server"`
+	Protocol       string                 `json:"protocol"`
+	Status         string                 `json:"status"` // "initializing", "active", "closed", "error"
+	StartedAt      time.Time              `json:"started_at"`
+	LastActivity   time.Time              `json:"last_activity"`
+	EndedAt        *time.Time             `json:"ended_at,omitempty"`
+	Metadata       map[string]interface{} `json:"metadata"`
+
+	// For stdio sessions
+	Process    *MCPProcess `json:"process,omitempty"`
+	StdinPipe  interface{} `json:"-"` // io.WriteCloser
+	StdoutPipe interface{} `json:"-"` // io.ReadCloser
+	StderrPipe interface{} `json:"-"` // io.ReadCloser
+
+	// For HTTP sessions
+	HTTPClient *interface{} `json:"-"` // *http.Client
+}
+
+// MCPProcess represents a running MCP server process
+type MCPProcess struct {
+	PID       int        `json:"pid"`
+	Command   string     `json:"command"`
+	Args      []string   `json:"args"`
+	Status    string     `json:"status"` // "starting", "running", "stopped", "error"
+	StartedAt time.Time  `json:"started_at"`
+	EndedAt   *time.Time `json:"ended_at,omitempty"`
+	ExitCode  *int       `json:"exit_code,omitempty"`
+	Error     string     `json:"error,omitempty"`
+}
+
+// MCPProxyConfig represents proxy configuration
+type MCPProxyConfig struct {
+	MaxConcurrentSessions int           `json:"max_concurrent_sessions"`
+	SessionTimeout        time.Duration `json:"session_timeout"`
+	ProcessTimeout        time.Duration `json:"process_timeout"`
+	BufferSize            int           `json:"buffer_size"`
+	EnableLogging         bool          `json:"enable_logging"`
+	LogLevel              string        `json:"log_level"`
+}
+
+// MCP proxy session status constants
+const (
+	SessionStatusInitializing = "initializing"
+	SessionStatusActive       = "active"
+	SessionStatusClosed       = "closed"
+	SessionStatusError        = "error"
+)
+
+// MCP process status constants
+const (
+	ProcessStatusStarting = "starting"
+	ProcessStatusRunning  = "running"
+	ProcessStatusStopped  = "stopped"
+	ProcessStatusError    = "error"
 )

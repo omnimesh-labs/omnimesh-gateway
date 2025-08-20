@@ -2,8 +2,11 @@ package server
 
 import (
 	"mcp-gateway/apps/backend/internal/discovery"
+	"mcp-gateway/apps/backend/internal/gateway"
 	"mcp-gateway/apps/backend/internal/server/handlers"
+	"mcp-gateway/apps/backend/internal/types"
 	"net/http"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -23,13 +26,40 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	r.GET("/health", s.healthHandler)
 
-	// Initialize MCP Discovery Service and Handler
+	// Initialize services
 	mcpDiscoveryService := discovery.NewMCPDiscoveryService(s.cfg.MCPDiscovery.BaseURL)
-	mcpDiscoveryHandler := handlers.NewMCPDiscoveryHandler(mcpDiscoveryService)
 
-	// MCP Discovery API routes
+	// Initialize discovery service
+	discoveryConfig := &discovery.Config{
+		Enabled:          true,
+		HealthInterval:   30 * time.Second,
+		FailureThreshold: 3,
+		RecoveryTimeout:  5 * time.Minute,
+	}
+	discoveryService := discovery.NewService(nil, discoveryConfig) // Using nil for DB for now
+
+	// Initialize proxy services
+	proxyConfig := &types.MCPProxyConfig{
+		MaxConcurrentSessions: 100,
+		SessionTimeout:        30 * time.Minute,
+		ProcessTimeout:        5 * time.Minute,
+		BufferSize:            4096,
+		EnableLogging:         true,
+		LogLevel:              "info",
+	}
+	mcpProxy := gateway.NewMCPProxy(proxyConfig)
+
+	// You'll need to implement the legacy Proxy as well
+	legacyProxy := gateway.NewProxy(nil, nil) // Placeholder - implement as needed
+
+	// Initialize handlers
+	mcpDiscoveryHandler := handlers.NewMCPDiscoveryHandler(mcpDiscoveryService)
+	gatewayHandler := handlers.NewGatewayHandler(discoveryService, legacyProxy, mcpProxy)
+
+	// API routes
 	api := r.Group("/api")
 	{
+		// MCP Discovery routes
 		mcp := api.Group("/mcp")
 		{
 			// Search for MCP packages
@@ -40,6 +70,29 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 			// Get specific package details
 			mcp.GET("/packages/:packageName", mcpDiscoveryHandler.GetPackageDetails)
+		}
+
+		// Gateway management routes
+		gateway := api.Group("/gateway")
+		{
+			// Server management
+			gateway.GET("/servers", gatewayHandler.ListServers)
+			gateway.POST("/servers", gatewayHandler.RegisterServer)
+			gateway.GET("/servers/:id", gatewayHandler.GetServer)
+			gateway.PUT("/servers/:id", gatewayHandler.UpdateServer)
+			gateway.DELETE("/servers/:id", gatewayHandler.UnregisterServer)
+			gateway.GET("/servers/:id/stats", gatewayHandler.GetServerStats)
+
+			// MCP session management
+			gateway.POST("/sessions", gatewayHandler.CreateMCPSession)
+			gateway.GET("/sessions", gatewayHandler.ListMCPSessions)
+			gateway.DELETE("/sessions/:session_id", gatewayHandler.CloseMCPSession)
+
+			// WebSocket endpoint for MCP communication
+			gateway.GET("/ws", gatewayHandler.HandleMCPWebSocket)
+
+			// Legacy proxy endpoint
+			gateway.Any("/proxy/*path", gatewayHandler.ProxyRequest)
 		}
 	}
 

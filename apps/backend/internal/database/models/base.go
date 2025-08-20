@@ -41,28 +41,38 @@ func (m *BaseModel) Transaction(fn func(*sql.Tx) error) error {
 
 // Models holds all model instances
 type Models struct {
-	User         *UserModel
-	Organization *OrganizationModel
-	APIKey       *APIKeyModel
-	Policy       *PolicyModel
-	MCPServer    *MCPServerModel
-	HealthCheck  *HealthCheckModel
-	// LogEntry      *LogEntryModel
-	// AuditLog      *AuditLogModel
-	RateLimitRule *RateLimitRuleModel
+	// ERD-based models
+	Organization   *OrganizationModel
+	MCPServer      *MCPServerModel
+	MCPSession     *MCPSessionModel
+	HealthCheck    *HealthCheckModel
+	ServerStats    *ServerStatsModel
+	LogIndex       *LogIndexModel
+	AuditLog       *AuditLogModel
+	LogAggregate   *LogAggregateModel
+	RateLimit      *RateLimitModel
+	RateLimitUsage *RateLimitUsageModel
+
+	// Legacy models (deprecated - will be removed in future versions)
+	User *UserModel
 }
 
 // NewModels creates a new Models instance
 func NewModels(db Database) *Models {
 	return &Models{
-		User:         NewUserModel(db),
-		Organization: NewOrganizationModel(db),
-		APIKey:       NewAPIKeyModel(db),
-		Policy:       NewPolicyModel(db),
-		MCPServer:    NewMCPServerModel(db),
-		HealthCheck:  NewHealthCheckModel(db),
-		// LogEntry:     NewLogEntryModel(db),
-		// AuditLog:     NewAuditLogModel(db),
-		RateLimitRule: NewRateLimitRuleModel(db),
+		// ERD-based models
+		Organization:   NewOrganizationModel(db),
+		MCPServer:      NewMCPServerModel(db),
+		MCPSession:     NewMCPSessionModel(db),
+		HealthCheck:    NewHealthCheckModel(db),
+		ServerStats:    NewServerStatsModel(db),
+		LogIndex:       NewLogIndexModel(db),
+		AuditLog:       NewAuditLogModel(db),
+		LogAggregate:   NewLogAggregateModel(db),
+		RateLimit:      NewRateLimitModel(db),
+		RateLimitUsage: NewRateLimitUsageModel(db),
+
+		// Legacy models (deprecated)
+		User: NewUserModel(db),
 	}
 }
