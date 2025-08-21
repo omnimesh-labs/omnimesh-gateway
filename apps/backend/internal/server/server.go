@@ -28,9 +28,11 @@ func NewServer(cfg *config.Config) *http.Server {
 		port = cfg.Server.Port
 	}
 
-	// Register the file logging plugin
-	if err := logging.RegisterPlugin(file.NewFilePlugin()); err != nil {
-		panic(fmt.Sprintf("failed to register file plugin: %v", err))
+	// Register the file logging plugin (skip if environment variable is set for tests)
+	if os.Getenv("SKIP_PLUGIN_REGISTRATION") == "" {
+		if err := logging.RegisterPlugin(file.NewFilePlugin()); err != nil {
+			panic(fmt.Sprintf("failed to register file plugin: %v", err))
+		}
 	}
 
 	// Initialize logging service

@@ -44,10 +44,60 @@ test:
 	@echo "Testing..."
 	@go test ./... -v
 
-# Integrations Tests for the application
-itest:
+# Transport Tests - All transport layer tests
+test-transport:
+	@echo "Running transport tests..."
+	@./apps/backend/tests/run_tests.sh transport
+
+# Integration Tests - All integration tests
+test-integration:
 	@echo "Running integration tests..."
+	@./apps/backend/tests/run_tests.sh integration
+
+# Unit Tests - All unit tests
+test-unit:
+	@echo "Running unit tests..."
+	@./apps/backend/tests/run_tests.sh unit
+
+# Specific transport tests
+test-rpc:
+	@echo "Running JSON-RPC transport tests..."
+	@./apps/backend/tests/run_tests.sh rpc
+
+test-sse:
+	@echo "Running SSE transport tests..."
+	@./apps/backend/tests/run_tests.sh sse
+
+test-websocket:
+	@echo "Running WebSocket transport tests..."
+	@./apps/backend/tests/run_tests.sh websocket
+
+test-mcp:
+	@echo "Running MCP transport tests..."
+	@./apps/backend/tests/run_tests.sh mcp
+
+test-stdio:
+	@echo "Running STDIO transport tests..."
+	@./apps/backend/tests/run_tests.sh stdio
+
+# Test with coverage
+test-coverage:
+	@echo "Running tests with coverage..."
+	@cd apps/backend && TEST_COVERAGE=true ./tests/run_tests.sh all
+
+# Test with verbose output
+test-verbose:
+	@echo "Running tests with verbose output..."
+	@cd apps/backend && TEST_VERBOSE=true ./tests/run_tests.sh all
+
+# Legacy integration test (for database)
+itest:
+	@echo "Running database integration tests..."
 	@go test ./apps/backend/internal/database -v
+
+# Run all transport tests
+test-all-transports: test-rpc test-sse test-websocket test-mcp test-stdio
+	@echo "All transport tests completed!"
 
 # Clean the binary
 clean:
@@ -92,4 +142,4 @@ migrate-create:
 	@read -p "Enter migration name: " name; \
 	cd apps/backend && migrate create -ext sql -dir migrations -seq $$name
 
-.PHONY: all build run test clean watch docker-run docker-down itest migrate migrate-down migrate-status migrate-create
+.PHONY: all build run test clean watch docker-run docker-down itest migrate migrate-down migrate-status migrate-create test-transport test-integration test-unit test-rpc test-sse test-websocket test-mcp test-stdio test-coverage test-verbose test-all-transports

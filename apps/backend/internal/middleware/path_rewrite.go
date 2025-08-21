@@ -11,6 +11,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// contextKey is a custom type for context keys to avoid collisions
+type contextKey string
+
 // PathRewriteMiddleware handles path rewriting for server-specific endpoints
 type PathRewriteMiddleware struct {
 	rules []types.PathRewriteRule
@@ -181,34 +184,39 @@ func ServerContextMiddleware() gin.HandlerFunc {
 			serverID = c.Param("server_id")
 		}
 
-		// Store server context
-		if serverID != "" {
-			transportCtx := &types.TransportContext{
-				Request:  c.Request,
-				ServerID: serverID,
-				Metadata: make(map[string]interface{}),
-			}
-
-			// Extract user info from JWT or session
-			if userID, exists := c.Get("user_id"); exists {
-				if strUserID, ok := userID.(string); ok {
-					transportCtx.UserID = strUserID
-				}
-			}
-
-			if orgID, exists := c.Get("organization_id"); exists {
-				if strOrgID, ok := orgID.(string); ok {
-					transportCtx.OrganizationID = strOrgID
-				}
-			}
-
-			// Store transport context
-			c.Set("transport_context", transportCtx)
-
-			// Store in request context for downstream handlers
-			ctx := context.WithValue(c.Request.Context(), "transport_context", transportCtx)
-			c.Request = c.Request.WithContext(ctx)
+		// Create transport context (either with server ID or default for direct transport endpoints)
+		transportCtx := &types.TransportContext{
+			Request:  c.Request,
+			ServerID: serverID, // Will be empty for direct transport endpoints
+			Metadata: make(map[string]interface{}),
 		}
+
+		// Extract user info from JWT or session
+		if userID, exists := c.Get("user_id"); exists {
+			if strUserID, ok := userID.(string); ok {
+				transportCtx.UserID = strUserID
+			}
+		}
+
+		if orgID, exists := c.Get("organization_id"); exists {
+			if strOrgID, ok := orgID.(string); ok {
+				transportCtx.OrganizationID = strOrgID
+			}
+		}
+
+		// For direct transport endpoints without server context, use default values
+		if serverID == "" {
+			transportCtx.UserID = "default-user"
+			transportCtx.OrganizationID = "default-org"
+			transportCtx.ServerID = "default-server"
+		}
+
+		// Store transport context
+		c.Set("transport_context", transportCtx)
+
+		// Store in request context for downstream handlers
+		ctx := context.WithValue(c.Request.Context(), contextKey("transport_context"), transportCtx)
+		c.Request = c.Request.WithContext(ctx)
 
 		c.Next()
 	}
@@ -229,6 +237,8 @@ func TransportTypeMiddleware() gin.HandlerFunc {
 			transportType = types.TransportTypeSSE
 		case strings.HasPrefix(path, "/ws"):
 			transportType = types.TransportTypeWebSocket
+		case strings.HasPrefix(path, "/stdio"):
+			transportType = types.TransportTypeSTDIO
 		case strings.HasPrefix(path, "/mcp"):
 			// Check Accept header to determine streamable mode
 			accept := c.GetHeader("Accept")

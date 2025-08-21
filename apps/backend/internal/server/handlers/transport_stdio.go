@@ -54,7 +54,7 @@ func (h *STDIOHandler) HandleSTDIOExecute(c *gin.Context) {
 	}
 
 	// Create STDIO transport with command configuration
-	_ = map[string]interface{}{
+	config := map[string]interface{}{
 		"command":     stdioCmd.Command,
 		"args":        stdioCmd.Args,
 		"env":         stdioCmd.Env,
@@ -63,12 +63,13 @@ func (h *STDIOHandler) HandleSTDIOExecute(c *gin.Context) {
 	}
 
 	// Create STDIO transport connection
-	stdioTransport, session, err := h.transportManager.CreateConnection(
+	stdioTransport, session, err := h.transportManager.CreateConnectionWithConfig(
 		c.Request.Context(),
 		types.TransportTypeSTDIO,
 		transportCtx.UserID,
 		transportCtx.OrganizationID,
 		transportCtx.ServerID,
+		config,
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -127,13 +128,18 @@ func (h *STDIOHandler) HandleSTDIOExecute(c *gin.Context) {
 	}
 
 	// Return response
+	var sessionID string
+	if session != nil {
+		sessionID = session.ID
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"status":     "success",
 		"command":    stdioCmd.Command,
 		"args":       stdioCmd.Args,
 		"pid":        pid,
 		"response":   response,
-		"session_id": session.ID,
+		"session_id": sessionID,
 		"timestamp":  time.Now(),
 	})
 }
@@ -205,12 +211,13 @@ func (h *STDIOHandler) handleSTDIOStart(c *gin.Context) {
 		config["timeout"] = 30 * time.Second
 	}
 
-	stdioTransport, session, err := h.transportManager.CreateConnection(
+	stdioTransport, session, err := h.transportManager.CreateConnectionWithConfig(
 		c.Request.Context(),
 		types.TransportTypeSTDIO,
 		transportCtx.UserID,
 		transportCtx.OrganizationID,
 		transportCtx.ServerID,
+		config,
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -233,9 +240,14 @@ func (h *STDIOHandler) handleSTDIOStart(c *gin.Context) {
 		pid = pidGetter.GetPID()
 	}
 
+	var sessionID string
+	if session != nil {
+		sessionID = session.ID
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"status":     "started",
-		"session_id": session.ID,
+		"session_id": sessionID,
 		"pid":        pid,
 		"command":    processConfig.Command,
 		"args":       processConfig.Args,

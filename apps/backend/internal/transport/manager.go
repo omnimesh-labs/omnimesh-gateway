@@ -65,6 +65,11 @@ func (m *Manager) Initialize(ctx context.Context) error {
 
 // CreateConnection creates a new connection for the specified transport type
 func (m *Manager) CreateConnection(ctx context.Context, transportType types.TransportType, userID, orgID, serverID string) (types.Transport, *types.TransportSession, error) {
+	return m.CreateConnectionWithConfig(ctx, transportType, userID, orgID, serverID, nil)
+}
+
+// CreateConnectionWithConfig creates a new connection with custom configuration
+func (m *Manager) CreateConnectionWithConfig(ctx context.Context, transportType types.TransportType, userID, orgID, serverID string, customConfig map[string]interface{}) (types.Transport, *types.TransportSession, error) {
 	// Check if transport type is enabled
 	if !m.isTransportEnabled(transportType) {
 		return nil, nil, fmt.Errorf("transport type %s is not enabled", transportType)
@@ -91,6 +96,11 @@ func (m *Manager) CreateConnection(ctx context.Context, transportType types.Tran
 		"websocket_timeout":   m.config.WebSocketTimeout,
 		"streamable_stateful": m.config.StreamableStateful,
 		"stdio_timeout":       m.config.STDIOTimeout,
+	}
+
+	// Merge custom configuration
+	for key, value := range customConfig {
+		config[key] = value
 	}
 
 	transport, err := CreateTransport(transportType, config)
@@ -401,9 +411,9 @@ func (m *Manager) isTransportEnabled(transportType types.TransportType) bool {
 // isStatefulTransport checks if a transport type requires session management
 func (m *Manager) isStatefulTransport(transportType types.TransportType) bool {
 	switch transportType {
-	case types.TransportTypeSSE, types.TransportTypeWebSocket, types.TransportTypeStreamable:
+	case types.TransportTypeSSE, types.TransportTypeWebSocket, types.TransportTypeStreamable, types.TransportTypeSTDIO:
 		return true
-	case types.TransportTypeHTTP, types.TransportTypeSTDIO:
+	case types.TransportTypeHTTP:
 		return false
 	default:
 		return false
