@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+	"mcp-gateway/apps/backend/internal/types"
 	"os"
 	"time"
 
@@ -18,6 +20,7 @@ type Config struct {
 	Gateway      GatewayConfig      `yaml:"gateway"`
 	Redis        RedisConfig        `yaml:"redis"`
 	MCPDiscovery MCPDiscoveryConfig `yaml:"mcp_discovery"`
+	Transport    TransportConfig    `yaml:"transport"`
 }
 
 // ServerConfig holds HTTP server configuration
@@ -133,6 +136,26 @@ type MCPDiscoveryConfig struct {
 	BaseURL string `yaml:"base_url" env:"MCP_DISCOVERY_BASE_URL"`
 }
 
+// TransportConfig holds transport layer configuration
+type TransportConfig struct {
+	EnabledTransports  []types.TransportType `yaml:"enabled_transports" env:"TRANSPORT_ENABLED"`
+	SSEKeepAlive       time.Duration         `yaml:"sse_keep_alive"`
+	WebSocketTimeout   time.Duration         `yaml:"websocket_timeout"`
+	SessionTimeout     time.Duration         `yaml:"session_timeout"`
+	MaxConnections     int                   `yaml:"max_connections"`
+	BufferSize         int                   `yaml:"buffer_size"`
+	StreamableStateful bool                  `yaml:"streamable_stateful"`
+	STDIOTimeout       time.Duration         `yaml:"stdio_timeout"`
+	PathRewrite        PathRewriteConfig     `yaml:"path_rewrite"`
+}
+
+// PathRewriteConfig holds path rewriting configuration
+type PathRewriteConfig struct {
+	Enabled  bool                    `yaml:"enabled"`
+	Rules    []types.PathRewriteRule `yaml:"rules"`
+	LogLevel string                  `yaml:"log_level"`
+}
+
 // Load loads configuration from file and environment variables
 func Load(configPath string) (*Config, error) {
 	// Load from file
@@ -174,4 +197,105 @@ func overrideWithEnv(config *Config) error {
 func (d *DatabaseConfig) GetDSN() string {
 	// TODO: Implement DSN construction
 	return ""
+}
+
+// SetDefaults sets default values for transport configuration
+func (t *TransportConfig) SetDefaults() {
+	if len(t.EnabledTransports) == 0 {
+		t.EnabledTransports = []types.TransportType{
+			types.TransportTypeHTTP,
+			types.TransportTypeSSE,
+			types.TransportTypeWebSocket,
+			types.TransportTypeStreamable,
+		}
+	}
+
+	if t.SSEKeepAlive == 0 {
+		t.SSEKeepAlive = types.DefaultSSEKeepAlive
+	}
+
+	if t.WebSocketTimeout == 0 {
+		t.WebSocketTimeout = types.DefaultWebSocketTimeout
+	}
+
+	if t.SessionTimeout == 0 {
+		t.SessionTimeout = types.DefaultSessionTimeout
+	}
+
+	if t.MaxConnections == 0 {
+		t.MaxConnections = types.DefaultMaxConnections
+	}
+
+	if t.BufferSize == 0 {
+		t.BufferSize = types.DefaultBufferSize
+	}
+
+	if t.STDIOTimeout == 0 {
+		t.STDIOTimeout = types.DefaultSTDIOTimeout
+	}
+
+	// Set path rewrite defaults
+	if !t.PathRewrite.Enabled {
+		t.PathRewrite.Enabled = true
+		t.PathRewrite.LogLevel = "info"
+	}
+}
+
+// Validate validates the transport configuration
+func (t *TransportConfig) Validate() error {
+	// Validate enabled transports
+	for _, transportType := range t.EnabledTransports {
+		switch transportType {
+		case types.TransportTypeHTTP,
+			types.TransportTypeSSE,
+			types.TransportTypeWebSocket,
+			types.TransportTypeStreamable,
+			types.TransportTypeSTDIO:
+			// Valid transport types
+		default:
+			return fmt.Errorf("invalid transport type: %s", transportType)
+		}
+	}
+
+	// Validate timeouts
+	if t.SSEKeepAlive <= 0 {
+		return fmt.Errorf("sse_keep_alive must be positive")
+	}
+
+	if t.WebSocketTimeout <= 0 {
+		return fmt.Errorf("websocket_timeout must be positive")
+	}
+
+	if t.SessionTimeout <= 0 {
+		return fmt.Errorf("session_timeout must be positive")
+	}
+
+	if t.STDIOTimeout <= 0 {
+		return fmt.Errorf("stdio_timeout must be positive")
+	}
+
+	// Validate connection limits
+	if t.MaxConnections <= 0 {
+		return fmt.Errorf("max_connections must be positive")
+	}
+
+	if t.BufferSize <= 0 {
+		return fmt.Errorf("buffer_size must be positive")
+	}
+
+	return nil
+}
+
+// ToTransportConfig converts to types.TransportConfig
+func (t *TransportConfig) ToTransportConfig() *types.TransportConfig {
+	return &types.TransportConfig{
+		EnabledTransports:  t.EnabledTransports,
+		SSEKeepAlive:       t.SSEKeepAlive,
+		WebSocketTimeout:   t.WebSocketTimeout,
+		SessionTimeout:     t.SessionTimeout,
+		MaxConnections:     t.MaxConnections,
+		BufferSize:         t.BufferSize,
+		StreamableStateful: t.StreamableStateful,
+		STDIOTimeout:       t.STDIOTimeout,
+	}
 }

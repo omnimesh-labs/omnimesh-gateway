@@ -1,0 +1,574 @@
+package transport
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
+	"mcp-gateway/apps/backend/internal/types"
+
+	"github.com/google/uuid"
+)
+
+// StreamableHTTPTransport implements the MCP Streamable HTTP transport protocol
+type StreamableHTTPTransport struct {
+	*BaseTransport
+	client     *http.Client
+	baseURL    string
+	stateful   bool
+	streamMode string // "json" or "sse"
+	eventStore []*types.TransportEvent
+	config     map[string]interface{}
+	mu         sync.RWMutex
+	timeout    time.Duration
+}
+
+// StreamableRequest represents a streamable HTTP request
+type StreamableRequest struct {
+	Method    string                 `json:"method"`
+	Headers   map[string]string      `json:"headers,omitempty"`
+	Body      interface{}            `json:"body,omitempty"`
+	Stateful  bool                   `json:"stateful"`
+	SessionID string                 `json:"session_id,omitempty"`
+	Mode      string                 `json:"mode"` // "json", "sse"
+	Metadata  map[string]interface{} `json:"metadata,omitempty"`
+}
+
+// StreamableResponse represents a streamable HTTP response
+type StreamableResponse struct {
+	Status    int                     `json:"status"`
+	Headers   map[string]string       `json:"headers,omitempty"`
+	Body      interface{}             `json:"body,omitempty"`
+	Events    []*types.TransportEvent `json:"events,omitempty"`
+	SessionID string                  `json:"session_id,omitempty"`
+	Mode      string                  `json:"mode"`
+	Metadata  map[string]interface{}  `json:"metadata,omitempty"`
+}
+
+// NewStreamableHTTPTransport creates a new Streamable HTTP transport instance
+func NewStreamableHTTPTransport(config map[string]interface{}) (types.Transport, error) {
+	transport := &StreamableHTTPTransport{
+		BaseTransport: NewBaseTransport(types.TransportTypeStreamable),
+		client: &http.Client{
+			Timeout: 30 * time.Second,
+		},
+		stateful:   true,
+		streamMode: types.StreamableModeJSON,
+		eventStore: make([]*types.TransportEvent, 0),
+		config:     config,
+		timeout:    30 * time.Second,
+	}
+
+	// Configure from config map
+	if baseURL, ok := config["base_url"].(string); ok {
+		transport.baseURL = baseURL
+	} else {
+		transport.baseURL = "/mcp" // Default endpoint
+	}
+
+	if stateful, ok := config["streamable_stateful"].(bool); ok {
+		transport.stateful = stateful
+	}
+
+	if mode, ok := config["stream_mode"].(string); ok {
+		transport.streamMode = mode
+	}
+
+	if timeout, ok := config["timeout"].(time.Duration); ok {
+		transport.timeout = timeout
+		transport.client.Timeout = timeout
+	}
+
+	return transport, nil
+}
+
+// Connect establishes connection for Streamable HTTP
+func (s *StreamableHTTPTransport) Connect(ctx context.Context) error {
+	s.setConnected(true)
+
+	// For stateful mode, initialize session if not already set
+	if s.stateful && s.GetSessionID() == "" {
+		sessionID := uuid.New().String()
+		s.SetSessionID(sessionID)
+	}
+
+	// Add connection event to event store
+	if s.stateful {
+		event := &types.TransportEvent{
+			ID:        uuid.New().String(),
+			SessionID: s.GetSessionID(),
+			Type:      types.TransportEventTypeConnect,
+			Data: map[string]interface{}{
+				"transport_type": s.GetTransportType(),
+				"stateful":       s.stateful,
+				"stream_mode":    s.streamMode,
+			},
+			Timestamp: time.Now(),
+		}
+		s.addEvent(event)
+	}
+
+	return nil
+}
+
+// Disconnect closes Streamable HTTP connection
+func (s *StreamableHTTPTransport) Disconnect(ctx context.Context) error {
+	s.setConnected(false)
+
+	// Add disconnect event to event store
+	if s.stateful {
+		event := &types.TransportEvent{
+			ID:        uuid.New().String(),
+			SessionID: s.GetSessionID(),
+			Type:      types.TransportEventTypeDisconnect,
+			Data: map[string]interface{}{
+				"reason": "manual_disconnect",
+			},
+			Timestamp: time.Now(),
+		}
+		s.addEvent(event)
+	}
+
+	return nil
+}
+
+// SendMessage sends a message via Streamable HTTP
+func (s *StreamableHTTPTransport) SendMessage(ctx context.Context, message interface{}) error {
+	if !s.IsConnected() {
+		return fmt.Errorf("transport not connected")
+	}
+
+	// Convert message to streamable request
+	request, err := s.convertToStreamableRequest(message)
+	if err != nil {
+		return fmt.Errorf("failed to convert message: %w", err)
+	}
+
+	// Send HTTP request based on mode
+	switch s.streamMode {
+	case types.StreamableModeJSON:
+		return s.sendJSONRequest(ctx, request)
+	case types.StreamableModeSSE:
+		return s.sendSSERequest(ctx, request)
+	default:
+		return fmt.Errorf("unsupported stream mode: %s", s.streamMode)
+	}
+}
+
+// ReceiveMessage receives a message via Streamable HTTP
+func (s *StreamableHTTPTransport) ReceiveMessage(ctx context.Context) (interface{}, error) {
+	if !s.IsConnected() {
+		return nil, fmt.Errorf("transport not connected")
+	}
+
+	// For streamable HTTP, this typically returns events from the event store
+	if s.stateful {
+		return s.GetLatestEvents(10), nil
+	}
+
+	return nil, fmt.Errorf("ReceiveMessage not applicable for stateless streamable HTTP")
+}
+
+// sendJSONRequest sends a request in JSON mode
+func (s *StreamableHTTPTransport) sendJSONRequest(ctx context.Context, request *StreamableRequest) error {
+	// Marshal request
+	requestBody, err := json.Marshal(request)
+	if err != nil {
+		return fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	// Create HTTP request
+	httpReq, err := http.NewRequestWithContext(ctx, "POST", s.baseURL, bytes.NewBuffer(requestBody))
+	if err != nil {
+		return fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	// Set headers
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Accept", "application/json")
+
+	if s.stateful && s.GetSessionID() != "" {
+		httpReq.Header.Set("X-Session-ID", s.GetSessionID())
+	}
+
+	// Add custom headers from request
+	for key, value := range request.Headers {
+		httpReq.Header.Set(key, value)
+	}
+
+	// Send request
+	resp, err := s.client.Do(httpReq)
+	if err != nil {
+		return fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Read response
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response: %w", err)
+	}
+
+	// Parse response
+	var streamableResp StreamableResponse
+	if err := json.Unmarshal(responseBody, &streamableResp); err != nil {
+		return fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	// Add response events to event store for stateful mode
+	if s.stateful {
+		for _, event := range streamableResp.Events {
+			s.addEvent(event)
+		}
+
+		// Add message event
+		messageEvent := &types.TransportEvent{
+			ID:        uuid.New().String(),
+			SessionID: s.GetSessionID(),
+			Type:      types.TransportEventTypeMessage,
+			Data: map[string]interface{}{
+				"direction": "inbound",
+				"status":    streamableResp.Status,
+				"body":      streamableResp.Body,
+			},
+			Timestamp: time.Now(),
+		}
+		s.addEvent(messageEvent)
+	}
+
+	return nil
+}
+
+// sendSSERequest sends a request in SSE mode
+func (s *StreamableHTTPTransport) sendSSERequest(ctx context.Context, request *StreamableRequest) error {
+	// Marshal request for SSE
+	requestBody, err := json.Marshal(request)
+	if err != nil {
+		return fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	// Create HTTP request
+	httpReq, err := http.NewRequestWithContext(ctx, "POST", s.baseURL, bytes.NewBuffer(requestBody))
+	if err != nil {
+		return fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	// Set headers for SSE
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Accept", "text/event-stream")
+	httpReq.Header.Set("Cache-Control", "no-cache")
+
+	if s.stateful && s.GetSessionID() != "" {
+		httpReq.Header.Set("X-Session-ID", s.GetSessionID())
+	}
+
+	// Send request
+	resp, err := s.client.Do(httpReq)
+	if err != nil {
+		return fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Handle SSE stream
+	return s.handleSSEStream(ctx, resp.Body)
+}
+
+// handleSSEStream processes incoming SSE events
+func (s *StreamableHTTPTransport) handleSSEStream(ctx context.Context, reader io.Reader) error {
+	buffer := make([]byte, 4096)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+			n, err := reader.Read(buffer)
+			if err != nil {
+				if err == io.EOF {
+					return nil
+				}
+				return fmt.Errorf("failed to read SSE stream: %w", err)
+			}
+
+			// Parse SSE data
+			data := string(buffer[:n])
+			events := s.parseSSEData(data)
+
+			// Add events to store for stateful mode
+			if s.stateful {
+				for _, event := range events {
+					s.addEvent(event)
+				}
+			}
+		}
+	}
+}
+
+// parseSSEData parses SSE formatted data into events
+func (s *StreamableHTTPTransport) parseSSEData(data string) []*types.TransportEvent {
+	var events []*types.TransportEvent
+	lines := strings.Split(data, "\n")
+
+	var currentEvent *types.TransportEvent
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+
+		if line == "" {
+			// End of event
+			if currentEvent != nil {
+				events = append(events, currentEvent)
+				currentEvent = nil
+			}
+			continue
+		}
+
+		if strings.HasPrefix(line, ":") {
+			// Comment, ignore
+			continue
+		}
+
+		parts := strings.SplitN(line, ":", 2)
+		if len(parts) != 2 {
+			continue
+		}
+
+		field := strings.TrimSpace(parts[0])
+		value := strings.TrimSpace(parts[1])
+
+		if currentEvent == nil {
+			currentEvent = &types.TransportEvent{
+				SessionID: s.GetSessionID(),
+				Type:      types.TransportEventTypeMessage,
+				Data:      make(map[string]interface{}),
+				Timestamp: time.Now(),
+			}
+		}
+
+		switch field {
+		case "id":
+			currentEvent.ID = value
+		case "event":
+			currentEvent.Type = value
+		case "data":
+			// Try to parse as JSON
+			var jsonData interface{}
+			if err := json.Unmarshal([]byte(value), &jsonData); err == nil {
+				currentEvent.Data["parsed_data"] = jsonData
+			} else {
+				currentEvent.Data["raw_data"] = value
+			}
+		case "retry":
+			if retryTime, err := strconv.Atoi(value); err == nil {
+				currentEvent.Data["retry"] = retryTime
+			}
+		}
+	}
+
+	// Add final event if exists
+	if currentEvent != nil {
+		events = append(events, currentEvent)
+	}
+
+	return events
+}
+
+// SendMCPRequest sends an MCP request via Streamable HTTP
+func (s *StreamableHTTPTransport) SendMCPRequest(ctx context.Context, mcpMessage *types.MCPMessage) (*StreamableResponse, error) {
+	request := &StreamableRequest{
+		Method:    "POST",
+		Body:      mcpMessage,
+		Stateful:  s.stateful,
+		SessionID: s.GetSessionID(),
+		Mode:      s.streamMode,
+		Headers: map[string]string{
+			"Content-Type": "application/json",
+		},
+	}
+
+	// Send request
+	if err := s.SendMessage(ctx, request); err != nil {
+		return nil, err
+	}
+
+	// For JSON mode, return mock response (in real implementation, this would be from actual response)
+	response := &StreamableResponse{
+		Status:    200,
+		SessionID: s.GetSessionID(),
+		Mode:      s.streamMode,
+		Events:    s.GetLatestEvents(1),
+	}
+
+	return response, nil
+}
+
+// convertToStreamableRequest converts various message types to streamable request
+func (s *StreamableHTTPTransport) convertToStreamableRequest(message interface{}) (*StreamableRequest, error) {
+	switch msg := message.(type) {
+	case *StreamableRequest:
+		return msg, nil
+	case *types.StreamableHTTPRequest:
+		return &StreamableRequest{
+			Method:    msg.Method,
+			Headers:   msg.Headers,
+			Body:      msg.Body,
+			Stateful:  msg.Stateful,
+			SessionID: msg.SessionID,
+			Mode:      msg.StreamMode,
+			Metadata:  msg.Metadata,
+		}, nil
+	case *types.MCPMessage:
+		return &StreamableRequest{
+			Method:    "POST",
+			Body:      msg,
+			Stateful:  s.stateful,
+			SessionID: s.GetSessionID(),
+			Mode:      s.streamMode,
+			Headers: map[string]string{
+				"Content-Type": "application/json",
+			},
+		}, nil
+	case *types.TransportRequest:
+		return &StreamableRequest{
+			Method:    msg.Method,
+			Body:      msg.Body,
+			Stateful:  s.stateful,
+			SessionID: s.GetSessionID(),
+			Mode:      s.streamMode,
+			Headers:   msg.Headers,
+		}, nil
+	default:
+		return &StreamableRequest{
+			Method:    "POST",
+			Body:      message,
+			Stateful:  s.stateful,
+			SessionID: s.GetSessionID(),
+			Mode:      s.streamMode,
+			Headers: map[string]string{
+				"Content-Type": "application/json",
+			},
+		}, nil
+	}
+}
+
+// Event store management
+
+// addEvent adds an event to the event store
+func (s *StreamableHTTPTransport) addEvent(event *types.TransportEvent) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.eventStore = append(s.eventStore, event)
+
+	// Keep only recent events (configurable limit)
+	maxEvents := 1000
+	if len(s.eventStore) > maxEvents {
+		s.eventStore = s.eventStore[len(s.eventStore)-maxEvents:]
+	}
+}
+
+// GetLatestEvents returns the latest N events
+func (s *StreamableHTTPTransport) GetLatestEvents(limit int) []*types.TransportEvent {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if limit <= 0 || limit > len(s.eventStore) {
+		limit = len(s.eventStore)
+	}
+
+	start := len(s.eventStore) - limit
+	if start < 0 {
+		start = 0
+	}
+
+	// Return a copy to avoid concurrent modification
+	events := make([]*types.TransportEvent, limit)
+	copy(events, s.eventStore[start:])
+
+	return events
+}
+
+// GetEventsSince returns events since a specific timestamp
+func (s *StreamableHTTPTransport) GetEventsSince(since time.Time) []*types.TransportEvent {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	var events []*types.TransportEvent
+	for _, event := range s.eventStore {
+		if event.Timestamp.After(since) {
+			events = append(events, event)
+		}
+	}
+
+	return events
+}
+
+// Configuration and utility methods
+
+// SetStateful sets the stateful mode
+func (s *StreamableHTTPTransport) SetStateful(stateful bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.stateful = stateful
+}
+
+// IsStateful returns whether the transport is in stateful mode
+func (s *StreamableHTTPTransport) IsStateful() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.stateful
+}
+
+// SetStreamMode sets the streaming mode
+func (s *StreamableHTTPTransport) SetStreamMode(mode string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.streamMode = mode
+}
+
+// GetStreamMode returns the current streaming mode
+func (s *StreamableHTTPTransport) GetStreamMode() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.streamMode
+}
+
+// GetConfig returns the transport configuration
+func (s *StreamableHTTPTransport) GetConfig() map[string]interface{} {
+	return s.config
+}
+
+// GetMetrics returns transport metrics
+func (s *StreamableHTTPTransport) GetMetrics() map[string]interface{} {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return map[string]interface{}{
+		"connected":        s.IsConnected(),
+		"stateful":         s.stateful,
+		"stream_mode":      s.streamMode,
+		"event_store_size": len(s.eventStore),
+		"session_id":       s.GetSessionID(),
+		"base_url":         s.baseURL,
+		"timeout":          s.timeout,
+	}
+}
+
+// ClearEventStore clears the event store
+func (s *StreamableHTTPTransport) ClearEventStore() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.eventStore = make([]*types.TransportEvent, 0)
+}
+
+// init registers the Streamable HTTP transport factory
+func init() {
+	RegisterTransport(types.TransportTypeStreamable, NewStreamableHTTPTransport)
+}

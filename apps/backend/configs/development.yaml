@@ -88,3 +88,51 @@ gateway:
     failure_threshold: 3
     recovery_timeout: 30s
     half_open_requests: 5
+
+# Transport Layer Configuration
+transport:
+  enabled_transports:
+    - "HTTP"
+    - "SSE"
+    - "WEBSOCKET"
+    - "STREAMABLE"
+    - "STDIO"
+  sse_keep_alive: 30s
+  websocket_timeout: 60s
+  session_timeout: 24h
+  max_connections: 1000
+  buffer_size: 1024
+  streamable_stateful: true
+  stdio_timeout: 30s
+  path_rewrite:
+    enabled: true
+    log_level: "info"
+    rules:
+      - pattern: "^/servers/([^/]+)/mcp(.*)$"
+        replacement: "/mcp$2"
+        headers:
+          X-MCP-Server-ID: "$1"
+        context:
+          server_id: "$1"
+          original_path: "$0"
+      - pattern: "^/servers/([^/]+)/sse(.*)$"
+        replacement: "/sse$2"
+        headers:
+          X-MCP-Server-ID: "$1"
+        context:
+          server_id: "$1"
+          original_path: "$0"
+      - pattern: "^/servers/([^/]+)/ws(.*)$"
+        replacement: "/ws$2"
+        headers:
+          X-MCP-Server-ID: "$1"
+        context:
+          server_id: "$1"
+          original_path: "$0"
+      - pattern: "^/servers/([^/]+)/rpc(.*)$"
+        replacement: "/rpc$2"
+        headers:
+          X-MCP-Server-ID: "$1"
+        context:
+          server_id: "$1"
+          original_path: "$0"

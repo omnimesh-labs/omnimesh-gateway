@@ -51,7 +51,8 @@ mcp-gateway/
 │   │   │   │   ├── chain.go  # Middleware chain builder
 │   │   │   │   ├── cors.go   # CORS middleware
 │   │   │   │   ├── recovery.go # Panic recovery
-│   │   │   │   └── timeout.go # Request timeout
+│   │   │   │   ├── timeout.go # Request timeout
+│   │   │   │   └── path_rewrite.go # Path rewriting for server-specific endpoints
 │   │   │   ├── ratelimit/    # Rate Limiting
 │   │   │   │   ├── limiter.go # Rate limiter implementation
 │   │   │   │   ├── middleware.go # Rate limiting middleware
@@ -64,16 +65,31 @@ mcp-gateway/
 │   │   │   │   │   ├── gateway.go # Gateway endpoints
 │   │   │   │   │   ├── health.go # Health check endpoints
 │   │   │   │   │   ├── admin.go # Admin endpoints
-│   │   │   │   │   └── mcp_discovery.go # MCP discovery endpoints
+│   │   │   │   │   ├── mcp_discovery.go # MCP discovery endpoints
+│   │   │   │   │   ├── transport_rpc.go # JSON-RPC transport handler
+│   │   │   │   │   ├── transport_sse.go # SSE transport handler
+│   │   │   │   │   ├── transport_ws.go # WebSocket transport handler
+│   │   │   │   │   ├── transport_mcp.go # Streamable HTTP transport handler
+│   │   │   │   │   └── transport_stdio.go # STDIO transport handler
 │   │   │   │   ├── routes.go # Route definitions
 │   │   │   │   └── server.go # Server setup
+│   │   │   ├── transport/    # Transport Layer (NEW)
+│   │   │   │   ├── base.go   # Transport interface and base implementation
+│   │   │   │   ├── manager.go # Transport manager/multiplexer
+│   │   │   │   ├── session.go # Session management for stateful transports
+│   │   │   │   ├── jsonrpc.go # JSON-RPC over HTTP transport
+│   │   │   │   ├── sse.go     # Server-Sent Events transport
+│   │   │   │   ├── websocket.go # WebSocket transport
+│   │   │   │   ├── streamable.go # Streamable HTTP transport
+│   │   │   │   └── stdio.go  # STDIO transport bridge
 │   │   │   └── types/        # Shared types and interfaces
 │   │   │       ├── auth.go   # Auth-related types
 │   │   │       ├── config.go # Configuration types
 │   │   │       ├── discovery.go # Discovery types
 │   │   │       ├── errors.go # Custom error types
 │   │   │       ├── gateway.go # Gateway types
-│   │   │       └── mcp.go    # MCP protocol types
+│   │   │       ├── mcp.go    # MCP protocol types
+│   │   │       └── transport.go # Transport-related types
 │   │   ├── migrations/       # Database migrations
 │   │   └── configs/          # Configuration files
 │   │       ├── development.yaml
@@ -138,7 +154,18 @@ mcp-gateway/
 - Load balancing
 - Circuit breaker patterns
 
-### 7. Frontend Dashboard (`apps/frontend/`)
+### 7. Transport Layer (`apps/backend/internal/transport/`)
+- Multi-protocol MCP transport support
+- Session management for stateful transports
+- Transport manager/multiplexer
+- Protocol-specific implementations:
+  - **JSON-RPC over HTTP**: Standard synchronous RPC
+  - **Server-Sent Events (SSE)**: Real-time server-to-client streaming
+  - **WebSocket**: Full-duplex bidirectional communication
+  - **Streamable HTTP**: Official MCP protocol with session support
+  - **STDIO**: Command-line interface bridge
+
+### 8. Frontend Dashboard (`apps/frontend/`)
 - Next.js TypeScript application
 - MCP Gateway management interface
 - Real-time monitoring dashboard
@@ -178,6 +205,43 @@ mcp-gateway/
 ### Proxy Endpoints
 - `/*` - Proxy requests to MCP servers (with auth/rate limiting)
 
+### Transport Endpoints
+#### JSON-RPC over HTTP
+- `POST /rpc` - JSON-RPC requests
+- `POST /rpc/batch` - Batch JSON-RPC requests
+- `GET /rpc/introspection` - Available RPC methods
+
+#### Server-Sent Events (SSE)
+- `GET /sse` - SSE connection
+- `POST /sse/events` - Send SSE events
+- `POST /sse/broadcast` - Broadcast to all SSE clients
+- `GET /sse/status` - SSE connection status
+- `GET /sse/replay/{session_id}` - Replay events from specific point
+
+#### WebSocket
+- `GET /ws` - WebSocket connection upgrade
+- `POST /ws/send` - Send message to WebSocket
+- `POST /ws/broadcast` - Broadcast to all WebSocket clients
+- `GET /ws/status` - WebSocket connection status
+- `POST /ws/ping` - Send ping to WebSocket
+- `DELETE /ws/close` - Close WebSocket connection
+
+#### Streamable HTTP (MCP Protocol)
+- `GET|POST /mcp` - Streamable HTTP endpoints
+- `GET /mcp/capabilities` - MCP capabilities
+- `GET /mcp/status` - MCP connection status
+
+#### STDIO Bridge
+- `POST /stdio/execute` - Execute command via STDIO
+- `GET|POST /stdio/process` - Manage STDIO processes
+- `POST /stdio/send` - Send message to STDIO process
+
+#### Server-Specific Endpoints
+- `POST /servers/{server_id}/rpc` - Server-specific JSON-RPC
+- `GET /servers/{server_id}/sse` - Server-specific SSE
+- `GET /servers/{server_id}/ws` - Server-specific WebSocket
+- `GET|POST /servers/{server_id}/mcp` - Server-specific MCP
+
 ### Admin & Monitoring
 - `GET /health` - Health check
 - `GET /metrics` - Prometheus metrics
@@ -197,6 +261,14 @@ mcp-gateway/
 - Server configurations
 - Feature flags
 - Environment-specific overrides
+- Transport layer settings
+
+### Transport Configuration
+- Enabled transport protocols
+- Session management settings
+- Connection limits and timeouts
+- Path rewriting rules
+- Protocol-specific configurations
 
 ## Security Considerations
 - JWT token validation
