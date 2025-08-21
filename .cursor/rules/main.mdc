@@ -7,3 +7,4 @@ alwaysApply: true
 1. This is a SINGLE TENANT application since it is for open source purposes.
 1. Do NOT add too many comments for each function - have 1-2 comments per function at most unless the function is very complicated.
 1. Use `bun` for frontend app
+1. Types should go into `apps/backend/internal/types` directory

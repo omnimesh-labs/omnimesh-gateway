@@ -41,7 +41,7 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 
 func main() {
 	var (
-		configPath = flag.String("config", "configs/development.yaml", "Path to configuration file")
+		configPath = flag.String("config", "apps/backend/configs/development.yaml", "Path to configuration file")
 	)
 	flag.Parse()
 

@@ -60,12 +60,29 @@ type AuthConfig struct {
 
 // LoggingConfig holds logging configuration
 type LoggingConfig struct {
-	Level          string `yaml:"level" env:"LOG_LEVEL"`
+	Level         string                 `yaml:"level" env:"LOG_LEVEL"`
+	Environment   string                 `yaml:"environment" env:"ENVIRONMENT"`
+	Backend       string                 `yaml:"backend" env:"LOG_BACKEND"`
+	Config        map[string]interface{} `yaml:"config"`
+	BufferSize    int                    `yaml:"buffer_size"`
+	BatchSize     int                    `yaml:"batch_size"`
+	FlushInterval time.Duration          `yaml:"flush_interval"`
+	Async         bool                   `yaml:"async"`
+	Retention     *RetentionConfig       `yaml:"retention,omitempty"`
+
+	// Legacy fields for backward compatibility
 	Format         string `yaml:"format"`
 	RequestLogging bool   `yaml:"request_logging"`
 	AuditLogging   bool   `yaml:"audit_logging"`
 	MetricsEnabled bool   `yaml:"metrics_enabled"`
 	RetentionDays  int    `yaml:"retention_days"`
+}
+
+// RetentionConfig defines log retention policies
+type RetentionConfig struct {
+	Days      int    `yaml:"days"`
+	KeepCount int    `yaml:"keep_count"`
+	Policy    string `yaml:"policy"` // "time", "count", "size"
 }
 
 // RateLimitConfig holds rate limiting configuration
@@ -118,11 +135,18 @@ type MCPDiscoveryConfig struct {
 
 // Load loads configuration from file and environment variables
 func Load(configPath string) (*Config, error) {
-	// TODO: Implement configuration loading
-	// Read YAML file
+	// Load from file
+	config, err := loadFromFile(configPath)
+	if err != nil {
+		return nil, err
+	}
+
 	// Override with environment variables
-	// Validate configuration
-	return nil, nil
+	if err := overrideWithEnv(config); err != nil {
+		return nil, err
+	}
+
+	return config, nil
 }
 
 // loadFromFile loads configuration from YAML file
@@ -142,7 +166,7 @@ func loadFromFile(configPath string) (*Config, error) {
 
 // overrideWithEnv overrides configuration with environment variables
 func overrideWithEnv(config *Config) error {
-	// TODO: Implement environment variable override
+	// For now, just return nil - environment variable override can be implemented later
 	return nil
 }
 

@@ -247,7 +247,6 @@ func (s *Service) UpdateServer(serverID string, req *types.UpdateMCPServerReques
 		return nil, fmt.Errorf("failed to get server: %w", err)
 	}
 
-	// Update fields if provided
 	if req.Name != "" {
 		// Check if name conflicts with another server in the same organization
 		existing, err := s.models.MCPServer.GetByName(server.OrganizationID, req.Name)
@@ -534,6 +533,6 @@ func (s *Service) performHealthCheck(serverID uuid.UUID) {
 // checkServerHealth performs the actual health check logic
 func (s *Service) checkServerHealth(server *models.MCPServer) string {
 	// TODO: Implement actual health checking logic based on protocol
-	// For now, just return healthy status (matching health_status_enum)
-	return "healthy"
+	// For now, just return active status (matching server_status_enum)
+	return types.ServerStatusActive
 }

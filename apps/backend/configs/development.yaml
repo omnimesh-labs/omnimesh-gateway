@@ -11,9 +11,8 @@ database:
   host: "localhost"
   port: 5432
   database: "mcp_gateway_dev"
-  username: "postgres"
+  user: "postgres"
   password: "postgres"
-  schema: "public"
   ssl_mode: "disable"
   max_open_conns: 25
   max_idle_conns: 5
@@ -21,8 +20,8 @@ database:
 
 auth:
   access_token_expiry: 15m
-  refresh_token_expiry: 7d
-  api_key_expiry: 365d
+  refresh_token_expiry: 168h  # 7 days
+  api_key_expiry: 8760h       # 365 days
   password_min_length: 8
   enable_registration: true
   require_email_verify: false
@@ -30,30 +29,41 @@ auth:
 rate_limit:
   enabled: true
   storage: "memory"
-  default_per_minute: 100
-  default_per_hour: 2000
-  default_per_day: 20000
-  burst_multiplier: 2.0
+  default_limit: 100
+  default_window: 1m
   cleanup_interval: 1h
-  key_prefix: "ratelimit:dev"
 
 discovery:
   enabled: true
-  health_check_interval: 30s
-  health_check_timeout: 5s
-  max_failures: 3
-  recovery_time: 1m
-  auto_discovery: false
+  health_interval: 30s
+  failure_threshold: 3
+  recovery_timeout: 1m
 
 logging:
   level: "debug"
+  environment: "development"
+  backend: "file"
+  buffer_size: 1000
+  batch_size: 50
+  flush_interval: 5s
+  async: true
+  config:
+    path: "logs/mcp-gateway-dev.log"
+    max_size: 52428800  # 50MB
+    max_files: 10
+    rotate: true
+    permissions: "0644"
+    buffer_size: 8192
+    sync_interval: "5s"
+  retention:
+    days: 30
+    policy: "time"
+  
   format: "text"
-  output: "stdout"
-  enable_audit: true
-  enable_request: true
-  request_body_log: true
-  response_body_log: true
-  max_body_size: 2048
+  request_logging: true
+  audit_logging: true
+  metrics_enabled: true
+  retention_days: 30
 
 redis:
   enabled: false
@@ -70,18 +80,11 @@ mcp_discovery:
   base_url: "https://metatool-service.jczstudio.workers.dev/search"
 
 gateway:
-  default_timeout: 30s
-  max_concurrent_reqs: 500
-  load_balance_strategy: "round_robin"
+  proxy_timeout: 30s
+  max_retries: 3
+  load_balancer: "round_robin"
   circuit_breaker:
     enabled: true
-    max_requests: 5
-    interval: 30s
-    timeout: 10s
     failure_threshold: 3
-  proxy:
-    buffer_size: 32768
-    max_idle_conns: 50
-    max_idle_conns_per_host: 5
-    idle_conn_timeout: 90s
-    disable_compression: false
+    recovery_timeout: 30s
+    half_open_requests: 5

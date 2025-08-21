@@ -1,6 +1,9 @@
 package types
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 // RateLimitRule represents a rate limiting rule
 type RateLimitRule struct {
@@ -106,6 +109,57 @@ type LogQueryRequest struct {
 	Search         string    `json:"search,omitempty" form:"search"`
 	Limit          int       `json:"limit" form:"limit"`
 	Offset         int       `json:"offset" form:"offset"`
+}
+
+// QueryRequest represents a log query with filters (for logging service)
+type QueryRequest struct {
+	StartTime  *time.Time             `json:"start_time,omitempty"`
+	EndTime    *time.Time             `json:"end_time,omitempty"`
+	Level      string                 `json:"level,omitempty"`
+	Logger     string                 `json:"logger,omitempty"`
+	EntityType string                 `json:"entity_type,omitempty"`
+	EntityID   string                 `json:"entity_id,omitempty"`
+	RequestID  string                 `json:"request_id,omitempty"`
+	UserID     string                 `json:"user_id,omitempty"`
+	OrgID      string                 `json:"org_id,omitempty"`
+	Message    string                 `json:"message,omitempty"` // Text search
+	Limit      int                    `json:"limit,omitempty"`
+	Offset     int                    `json:"offset,omitempty"`
+	OrderBy    string                 `json:"order_by,omitempty"`
+	Filters    map[string]interface{} `json:"filters,omitempty"`
+}
+
+// StorageBackend defines the interface for log storage backends
+type StorageBackend interface {
+	// Initialize sets up the storage backend with configuration
+	Initialize(ctx context.Context, config map[string]interface{}) error
+
+	// Store saves a log entry to the backend
+	Store(ctx context.Context, entry *LogEntry) error
+
+	// StoreBatch saves multiple log entries efficiently
+	StoreBatch(ctx context.Context, entries []*LogEntry) error
+
+	// Query retrieves log entries based on filters
+	Query(ctx context.Context, query *QueryRequest) ([]*LogEntry, error)
+
+	// Close cleanly shuts down the storage backend
+	Close() error
+
+	// HealthCheck verifies the backend is operational
+	HealthCheck(ctx context.Context) error
+
+	// GetCapabilities returns what features this backend supports
+	GetCapabilities() BackendCapabilities
+}
+
+// BackendCapabilities describes what features a storage backend supports
+type BackendCapabilities struct {
+	SupportsQuery      bool `json:"supports_query"`
+	SupportsStreaming  bool `json:"supports_streaming"`
+	SupportsRetention  bool `json:"supports_retention"`
+	SupportsBatchWrite bool `json:"supports_batch_write"`
+	SupportsMetrics    bool `json:"supports_metrics"`
 }
 
 // Log level constants

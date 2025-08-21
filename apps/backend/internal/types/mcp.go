@@ -168,3 +168,12 @@ const (
 	MCPCapabilityLogging   = "logging"
 	MCPCapabilitySampling  = "sampling"
 )
+
+// LoggingMetrics represents logging service metrics
+type LoggingMetrics struct {
+	BufferSize      int    `json:"buffer_size"`
+	SubscriberCount int    `json:"subscriber_count"`
+	CurrentLevel    string `json:"current_level"`
+	BackendType     string `json:"backend_type"`
+	AsyncMode       bool   `json:"async_mode"`
+}

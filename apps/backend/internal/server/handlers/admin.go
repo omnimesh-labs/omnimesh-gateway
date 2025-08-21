@@ -210,8 +210,31 @@ func (h *AdminHandler) GetLogs(c *gin.Context) {
 		query.OrganizationID = orgID.(string)
 	}
 
+	// Convert types.LogQueryRequest to logging.QueryRequest
+	logQuery := &logging.QueryRequest{
+		StartTime: &query.StartTime,
+		EndTime:   &query.EndTime,
+		Level:     logging.LogLevel(query.Level),
+		UserID:    query.UserID,
+		OrgID:     query.OrganizationID,
+		Message:   query.Search,
+		Limit:     query.Limit,
+		Offset:    query.Offset,
+	}
+
+	// Add method and path to filters if provided
+	if query.Method != "" || query.Path != "" {
+		logQuery.Filters = make(map[string]interface{})
+		if query.Method != "" {
+			logQuery.Filters["method"] = query.Method
+		}
+		if query.Path != "" {
+			logQuery.Filters["path"] = query.Path
+		}
+	}
+
 	// TODO: Implement log retrieval logic
-	logs, err := h.loggingService.GetLogs(query)
+	logs, err := h.loggingService.Query(c.Request.Context(), logQuery)
 	if err != nil {
 		c.JSON(types.GetStatusCode(err), types.ErrorResponse{
 			Error:   err.(*types.Error),

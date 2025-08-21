@@ -3,6 +3,7 @@ package server
 import (
 	"mcp-gateway/apps/backend/internal/discovery"
 	"mcp-gateway/apps/backend/internal/gateway"
+	"mcp-gateway/apps/backend/internal/logging"
 	"mcp-gateway/apps/backend/internal/server/handlers"
 	"mcp-gateway/apps/backend/internal/types"
 	"net/http"
@@ -13,13 +14,18 @@ import (
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
-	r := gin.Default()
+	r := gin.New()
+	r.Use(gin.Recovery())
+
+	// Initialize logging middleware
+	loggingMiddleware := logging.NewMiddleware(s.logging.(*logging.Service))
+	r.Use(loggingMiddleware.RequestLogger())
 
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173"}, // Add frontend URLs
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowHeaders:     []string{"Accept", "Authorization", "Content-Type", "X-Requested-With"},
-		AllowCredentials: true, // Enable cookies/auth
+		AllowCredentials: true,
 	}))
 
 	r.GET("/", s.HelloWorldHandler)
@@ -35,7 +41,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 		HealthInterval:   30 * time.Second,
 		FailureThreshold: 3,
 		RecoveryTimeout:  5 * time.Minute,
-		SingleTenant:     true, // Enable single-tenant mode
+		SingleTenant:     true,
 	}
 	discoveryService := discovery.NewService(s.db.GetDB(), discoveryConfig)
 
@@ -50,8 +56,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	}
 	mcpProxy := gateway.NewMCPProxy(proxyConfig)
 
-	// You'll need to implement the legacy Proxy as well
-	legacyProxy := gateway.NewProxy(nil, nil) // Placeholder - implement as needed
+	legacyProxy := gateway.NewProxy(nil, nil)
 
 	// Initialize handlers
 	mcpDiscoveryHandler := handlers.NewMCPDiscoveryHandler(mcpDiscoveryService)
@@ -78,10 +83,10 @@ func (s *Server) RegisterRoutes() http.Handler {
 		{
 			// Server management
 			gateway.GET("/servers", gatewayHandler.ListServers)
-			gateway.POST("/servers", gatewayHandler.RegisterServer)
+			gateway.POST("/servers", loggingMiddleware.AuditLogger("register", "server"), gatewayHandler.RegisterServer)
 			gateway.GET("/servers/:id", gatewayHandler.GetServer)
-			gateway.PUT("/servers/:id", gatewayHandler.UpdateServer)
-			gateway.DELETE("/servers/:id", gatewayHandler.UnregisterServer)
+			gateway.PUT("/servers/:id", loggingMiddleware.AuditLogger("update", "server"), gatewayHandler.UpdateServer)
+			gateway.DELETE("/servers/:id", loggingMiddleware.AuditLogger("unregister", "server"), gatewayHandler.UnregisterServer)
 			gateway.GET("/servers/:id/stats", gatewayHandler.GetServerStats)
 
 			// MCP session management

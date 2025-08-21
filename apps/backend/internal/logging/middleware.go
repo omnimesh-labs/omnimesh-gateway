@@ -94,21 +94,31 @@ func (m *Middleware) RequestLogger() gin.HandlerFunc {
 			"response_size": writer.size,
 		}
 
-		if len(requestBody) > 0 && len(requestBody) < 1024 { // Only log small bodies
+		if len(requestBody) > 0 && len(requestBody) < 1024 {
 			entry.Data["request_body"] = string(requestBody)
 		}
 
-		if writer.body.Len() > 0 && writer.body.Len() < 1024 { // Only log small responses
+		if writer.body.Len() > 0 && writer.body.Len() < 1024 {
 			entry.Data["response_body"] = writer.body.String()
 		}
 
-		// Add error if any
 		if len(c.Errors) > 0 {
 			entry.Error = c.Errors.String()
 		}
 
-		// Log the request
-		if err := m.service.LogRequest(entry); err != nil {
+		logEntry := &LogEntry{
+			ID:        entry.ID,
+			Timestamp: entry.Timestamp,
+			Level:     LogLevel(entry.Level),
+			Message:   entry.Message,
+			Logger:    "request",
+			RequestID: entry.RequestID,
+			UserID:    entry.UserID,
+			OrgID:     entry.OrganizationID,
+			Data:      entry.Data,
+		}
+
+		if err := m.service.Log(c.Request.Context(), logEntry); err != nil {
 			// TODO: Handle logging error (maybe fallback to file logging)
 		}
 	}
@@ -129,11 +139,26 @@ func (m *Middleware) AuditLogger(action, resource string) gin.HandlerFunc {
 			resourceID = c.Param("server_id")
 		}
 
+		// Handle nil values for single-tenant setup
+		userIDStr := "system"
+		if userID != nil {
+			if uid, ok := userID.(string); ok {
+				userIDStr = uid
+			}
+		}
+
+		orgIDStr := "00000000-0000-0000-0000-000000000000"
+		if orgID != nil {
+			if oid, ok := orgID.(string); ok {
+				orgIDStr = oid
+			}
+		}
+
 		// Create audit entry
 		audit := &types.AuditLog{
 			Timestamp:      time.Now(),
-			UserID:         userID.(string),
-			OrganizationID: orgID.(string),
+			UserID:         userIDStr,
+			OrganizationID: orgIDStr,
 			Action:         action,
 			Resource:       resource,
 			ResourceID:     resourceID,
@@ -154,7 +179,7 @@ func (m *Middleware) AuditLogger(action, resource string) gin.HandlerFunc {
 		}
 
 		// Log the audit event
-		if err := m.service.LogAudit(audit); err != nil {
+		if err := m.service.LogAudit(c.Request.Context(), audit); err != nil {
 			// TODO: Handle audit logging error
 		}
 	}
@@ -207,8 +232,8 @@ func (m *Middleware) MetricsCollector() gin.HandlerFunc {
 		}
 
 		// Log metrics
-		m.service.LogMetric(durationMetric)
-		m.service.LogMetric(countMetric)
+		m.service.LogMetric(c.Request.Context(), durationMetric)
+		m.service.LogMetric(c.Request.Context(), countMetric)
 	}
 }
 

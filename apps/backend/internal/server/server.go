@@ -11,12 +11,15 @@ import (
 
 	"mcp-gateway/apps/backend/internal/config"
 	"mcp-gateway/apps/backend/internal/database"
+	"mcp-gateway/apps/backend/internal/logging"
+	"mcp-gateway/apps/backend/internal/logging/plugins/file"
 )
 
 type Server struct {
-	port int
-	cfg  *config.Config
-	db   database.Service
+	port    int
+	cfg     *config.Config
+	db      database.Service
+	logging logging.LogService
 }
 
 func NewServer(cfg *config.Config) *http.Server {
@@ -25,10 +28,33 @@ func NewServer(cfg *config.Config) *http.Server {
 		port = cfg.Server.Port
 	}
 
+	// Register the file logging plugin
+	if err := logging.RegisterPlugin(file.NewFilePlugin()); err != nil {
+		panic(fmt.Sprintf("failed to register file plugin: %v", err))
+	}
+
+	// Initialize logging service
+	loggingConfig := &logging.LoggingConfig{
+		Backend:       cfg.Logging.Backend,
+		Level:         logging.LogLevel(cfg.Logging.Level),
+		Environment:   cfg.Logging.Environment,
+		BufferSize:    cfg.Logging.BufferSize,
+		BatchSize:     cfg.Logging.BatchSize,
+		FlushInterval: cfg.Logging.FlushInterval,
+		Async:         cfg.Logging.Async,
+		Config:        cfg.Logging.Config,
+	}
+
+	loggingService, err := logging.NewService(loggingConfig)
+	if err != nil {
+		panic(fmt.Sprintf("failed to initialize logging service: %v", err))
+	}
+
 	NewServer := &Server{
-		port: port,
-		cfg:  cfg,
-		db:   database.New(),
+		port:    port,
+		cfg:     cfg,
+		db:      database.New(),
+		logging: loggingService,
 	}
 
 	// Declare Server config
