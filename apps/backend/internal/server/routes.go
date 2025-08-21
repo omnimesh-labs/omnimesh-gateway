@@ -16,9 +16,9 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"}, // Add your frontend URL
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173"}, // Add frontend URLs
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
-		AllowHeaders:     []string{"Accept", "Authorization", "Content-Type"},
+		AllowHeaders:     []string{"Accept", "Authorization", "Content-Type", "X-Requested-With"},
 		AllowCredentials: true, // Enable cookies/auth
 	}))
 
@@ -35,8 +35,9 @@ func (s *Server) RegisterRoutes() http.Handler {
 		HealthInterval:   30 * time.Second,
 		FailureThreshold: 3,
 		RecoveryTimeout:  5 * time.Minute,
+		SingleTenant:     true, // Enable single-tenant mode
 	}
-	discoveryService := discovery.NewService(nil, discoveryConfig) // Using nil for DB for now
+	discoveryService := discovery.NewService(s.db.GetDB(), discoveryConfig)
 
 	// Initialize proxy services
 	proxyConfig := &types.MCPProxyConfig{
@@ -101,7 +102,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 func (s *Server) HelloWorldHandler(c *gin.Context) {
 	resp := make(map[string]string)
-	resp["message"] = "Hello World"
+	resp["message"] = "all quiet on the western front"
 
 	c.JSON(http.StatusOK, resp)
 }

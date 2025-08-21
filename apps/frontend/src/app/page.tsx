@@ -1,12 +1,14 @@
+'use client';
+
 export default function HomePage() {
   return (
     <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
       <header style={{ textAlign: 'center', marginBottom: '3rem' }}>
         <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#333', marginBottom: '1rem' }}>
-          MCP Gateway
+          Dashboard
         </h1>
         <p style={{ fontSize: '1.25rem', color: '#666' }}>
-          Model Context Protocol Gateway Dashboard
+          Model Context Protocol Gateway
         </p>
       </header>
 
@@ -28,16 +30,25 @@ export default function HomePage() {
           <p style={{ color: '#666', marginBottom: '1rem' }}>
             Manage and monitor your MCP servers
           </p>
-          <button style={{ 
-            background: '#3b82f6', 
-            color: 'white', 
-            padding: '0.5rem 1rem', 
-            borderRadius: '6px', 
-            border: 'none',
-            fontSize: '0.875rem'
-          }}>
+          <a
+            href="/servers"
+            style={{ 
+              background: '#3b82f6', 
+              color: 'white', 
+              padding: '0.5rem 1rem', 
+              borderRadius: '6px', 
+              border: 'none',
+              fontSize: '0.875rem',
+              textDecoration: 'none',
+              display: 'inline-block',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = '#2563eb'}
+            onMouseOut={(e) => e.currentTarget.style.background = '#3b82f6'}
+          >
             View Servers
-          </button>
+          </a>
         </div>
 
         <div style={{ 

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
 	"mcp-gateway/apps/backend/internal/discovery"
 	"mcp-gateway/apps/backend/internal/gateway"
@@ -26,13 +27,44 @@ func NewGatewayHandler(discoveryService *discovery.Service, proxy *gateway.Proxy
 	}
 }
 
+// convertToTypesError converts a standard Go error to a types.Error
+func convertToTypesError(err error) *types.Error {
+	if err == nil {
+		return nil
+	}
+
+	// If it's already a types.Error, return it
+	if typesErr, ok := err.(*types.Error); ok {
+		return typesErr
+	}
+
+	// Convert based on error message patterns
+	errMsg := err.Error()
+	errMsgLower := strings.ToLower(errMsg)
+
+	switch {
+	case strings.Contains(errMsgLower, "not found"):
+		return types.NewNotFoundError(errMsg)
+	case strings.Contains(errMsgLower, "already exists"):
+		return types.NewAlreadyExistsError(errMsg)
+	case strings.Contains(errMsgLower, "invalid"):
+		return types.NewValidationError(errMsg)
+	case strings.Contains(errMsgLower, "organization"):
+		return types.NewValidationError(errMsg)
+	case strings.Contains(errMsgLower, "server"):
+		return types.NewServerNotFoundError(errMsg)
+	default:
+		return types.NewInternalError(errMsg)
+	}
+}
+
 // ListServers lists all MCP servers
 func (h *GatewayHandler) ListServers(c *gin.Context) {
-	// TODO: Implement server listing logic
 	servers, err := h.discoveryService.ListServers("default-org")
 	if err != nil {
-		c.JSON(types.GetStatusCode(err), types.ErrorResponse{
-			Error:   err.(*types.Error),
+		typesErr := convertToTypesError(err)
+		c.JSON(types.GetStatusCode(typesErr), types.ErrorResponse{
+			Error:   typesErr,
 			Success: false,
 		})
 		return
@@ -55,11 +87,11 @@ func (h *GatewayHandler) RegisterServer(c *gin.Context) {
 		return
 	}
 
-	// TODO: Implement server registration logic
 	server, err := h.discoveryService.RegisterServer("default-org", &req)
 	if err != nil {
-		c.JSON(types.GetStatusCode(err), types.ErrorResponse{
-			Error:   err.(*types.Error),
+		typesErr := convertToTypesError(err)
+		c.JSON(types.GetStatusCode(typesErr), types.ErrorResponse{
+			Error:   typesErr,
 			Success: false,
 		})
 		return
@@ -82,11 +114,11 @@ func (h *GatewayHandler) GetServer(c *gin.Context) {
 		return
 	}
 
-	// TODO: Implement server retrieval logic
 	server, err := h.discoveryService.GetServer(serverID)
 	if err != nil {
-		c.JSON(types.GetStatusCode(err), types.ErrorResponse{
-			Error:   err.(*types.Error),
+		typesErr := convertToTypesError(err)
+		c.JSON(types.GetStatusCode(typesErr), types.ErrorResponse{
+			Error:   typesErr,
 			Success: false,
 		})
 		return
@@ -118,11 +150,11 @@ func (h *GatewayHandler) UpdateServer(c *gin.Context) {
 		return
 	}
 
-	// TODO: Implement server update logic
 	server, err := h.discoveryService.UpdateServer(serverID, &req)
 	if err != nil {
-		c.JSON(types.GetStatusCode(err), types.ErrorResponse{
-			Error:   err.(*types.Error),
+		typesErr := convertToTypesError(err)
+		c.JSON(types.GetStatusCode(typesErr), types.ErrorResponse{
+			Error:   typesErr,
 			Success: false,
 		})
 		return
@@ -145,11 +177,11 @@ func (h *GatewayHandler) UnregisterServer(c *gin.Context) {
 		return
 	}
 
-	// TODO: Implement server unregistration logic
 	err := h.discoveryService.UnregisterServer(serverID)
 	if err != nil {
-		c.JSON(types.GetStatusCode(err), types.ErrorResponse{
-			Error:   err.(*types.Error),
+		typesErr := convertToTypesError(err)
+		c.JSON(types.GetStatusCode(typesErr), types.ErrorResponse{
+			Error:   typesErr,
 			Success: false,
 		})
 		return
@@ -172,11 +204,11 @@ func (h *GatewayHandler) GetServerStats(c *gin.Context) {
 		return
 	}
 
-	// TODO: Implement server statistics retrieval
 	stats, err := h.discoveryService.GetServerStats(serverID)
 	if err != nil {
-		c.JSON(types.GetStatusCode(err), types.ErrorResponse{
-			Error:   err.(*types.Error),
+		typesErr := convertToTypesError(err)
+		c.JSON(types.GetStatusCode(typesErr), types.ErrorResponse{
+			Error:   typesErr,
 			Success: false,
 		})
 		return
@@ -210,8 +242,9 @@ func (h *GatewayHandler) CreateMCPSession(c *gin.Context) {
 	// Get server details
 	server, err := h.discoveryService.GetServer(req.ServerID)
 	if err != nil {
-		c.JSON(types.GetStatusCode(err), types.ErrorResponse{
-			Error:   err.(*types.Error),
+		typesErr := convertToTypesError(err)
+		c.JSON(types.GetStatusCode(typesErr), types.ErrorResponse{
+			Error:   typesErr,
 			Success: false,
 		})
 		return
@@ -261,8 +294,9 @@ func (h *GatewayHandler) CloseMCPSession(c *gin.Context) {
 
 	err := h.mcpProxy.CloseSession(sessionID)
 	if err != nil {
-		c.JSON(types.GetStatusCode(err), types.ErrorResponse{
-			Error:   err.(*types.Error),
+		typesErr := convertToTypesError(err)
+		c.JSON(types.GetStatusCode(typesErr), types.ErrorResponse{
+			Error:   typesErr,
 			Success: false,
 		})
 		return

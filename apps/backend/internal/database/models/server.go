@@ -11,27 +11,27 @@ import (
 
 // MCPServer represents the mcp_servers table from the ERD
 type MCPServer struct {
-	ID             uuid.UUID         `db:"id" json:"id"`
-	OrganizationID uuid.UUID         `db:"organization_id" json:"organization_id"`
-	Name           string            `db:"name" json:"name"`
-	Description    sql.NullString    `db:"description" json:"description,omitempty"`
-	Protocol       string            `db:"protocol" json:"protocol"` // protocol_enum
-	URL            sql.NullString    `db:"url" json:"url,omitempty"`
-	Command        sql.NullString    `db:"command" json:"command,omitempty"`
-	Args           pq.StringArray    `db:"args" json:"args,omitempty"`
-	Environment    pq.StringArray    `db:"environment" json:"environment,omitempty"`
-	WorkingDir     sql.NullString    `db:"working_dir" json:"working_dir,omitempty"`
-	Version        sql.NullString    `db:"version" json:"version,omitempty"`
-	Weight         int               `db:"weight" json:"weight"`
-	TimeoutSeconds int               `db:"timeout_seconds" json:"timeout_seconds"`
-	MaxRetries     int               `db:"max_retries" json:"max_retries"`
-	Status         string            `db:"status" json:"status"` // server_status_enum
-	HealthCheckURL sql.NullString    `db:"health_check_url" json:"health_check_url,omitempty"`
-	IsActive       bool              `db:"is_active" json:"is_active"`
+	ID             uuid.UUID              `db:"id" json:"id"`
+	OrganizationID uuid.UUID              `db:"organization_id" json:"organization_id"`
+	Name           string                 `db:"name" json:"name"`
+	Description    sql.NullString         `db:"description" json:"description,omitempty"`
+	Protocol       string                 `db:"protocol" json:"protocol"` // protocol_enum
+	URL            sql.NullString         `db:"url" json:"url,omitempty"`
+	Command        sql.NullString         `db:"command" json:"command,omitempty"`
+	Args           pq.StringArray         `db:"args" json:"args,omitempty"`
+	Environment    pq.StringArray         `db:"environment" json:"environment,omitempty"`
+	WorkingDir     sql.NullString         `db:"working_dir" json:"working_dir,omitempty"`
+	Version        sql.NullString         `db:"version" json:"version,omitempty"`
+	Weight         int                    `db:"weight" json:"weight"`
+	TimeoutSeconds int                    `db:"timeout_seconds" json:"timeout_seconds"`
+	MaxRetries     int                    `db:"max_retries" json:"max_retries"`
+	Status         string                 `db:"status" json:"status"` // server_status_enum
+	HealthCheckURL sql.NullString         `db:"health_check_url" json:"health_check_url,omitempty"`
+	IsActive       bool                   `db:"is_active" json:"is_active"`
 	Metadata       map[string]interface{} `db:"metadata" json:"metadata,omitempty"`
-	Tags           pq.StringArray    `db:"tags" json:"tags,omitempty"`
-	CreatedAt      time.Time         `db:"created_at" json:"created_at"`
-	UpdatedAt      time.Time         `db:"updated_at" json:"updated_at"`
+	Tags           pq.StringArray         `db:"tags" json:"tags,omitempty"`
+	CreatedAt      time.Time              `db:"created_at" json:"created_at"`
+	UpdatedAt      time.Time              `db:"updated_at" json:"updated_at"`
 }
 
 // MCPServerModel handles MCP server database operations
@@ -55,11 +55,11 @@ func (m *MCPServerModel) Create(server *MCPServer) error {
 			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
 		)
 	`
-	
+
 	if server.ID == uuid.Nil {
 		server.ID = uuid.New()
 	}
-	
+
 	// Convert metadata to JSON
 	var metadataJSON []byte
 	if server.Metadata != nil {
@@ -69,7 +69,7 @@ func (m *MCPServerModel) Create(server *MCPServer) error {
 			return err
 		}
 	}
-	
+
 	_, err := m.db.Exec(query,
 		server.ID, server.OrganizationID, server.Name, server.Description,
 		server.Protocol, server.URL, server.Command, server.Args,
@@ -88,10 +88,10 @@ func (m *MCPServerModel) GetByID(id uuid.UUID) (*MCPServer, error) {
 		FROM mcp_servers
 		WHERE id = $1
 	`
-	
+
 	server := &MCPServer{}
 	var metadataJSON []byte
-	
+
 	err := m.db.QueryRow(query, id).Scan(
 		&server.ID, &server.OrganizationID, &server.Name, &server.Description,
 		&server.Protocol, &server.URL, &server.Command, &server.Args,
@@ -100,11 +100,11 @@ func (m *MCPServerModel) GetByID(id uuid.UUID) (*MCPServer, error) {
 		&server.HealthCheckURL, &server.IsActive, &metadataJSON, &server.Tags,
 		&server.CreatedAt, &server.UpdatedAt,
 	)
-	
+
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Parse metadata JSON
 	if len(metadataJSON) > 0 {
 		err = json.Unmarshal(metadataJSON, &server.Metadata)
@@ -112,7 +112,7 @@ func (m *MCPServerModel) GetByID(id uuid.UUID) (*MCPServer, error) {
 			return nil, err
 		}
 	}
-	
+
 	return server, nil
 }
 
@@ -123,12 +123,12 @@ func (m *MCPServerModel) GetByName(orgID uuid.UUID, name string) (*MCPServer, er
 			   environment, working_dir, version, weight, timeout_seconds, max_retries,
 			   status, health_check_url, is_active, metadata, tags, created_at, updated_at
 		FROM mcp_servers
-		WHERE organization_id = $1 AND name = $2
+		WHERE organization_id = $1 AND name = $2 AND is_active = true
 	`
-	
+
 	server := &MCPServer{}
 	var metadataJSON []byte
-	
+
 	err := m.db.QueryRow(query, orgID, name).Scan(
 		&server.ID, &server.OrganizationID, &server.Name, &server.Description,
 		&server.Protocol, &server.URL, &server.Command, &server.Args,
@@ -137,11 +137,11 @@ func (m *MCPServerModel) GetByName(orgID uuid.UUID, name string) (*MCPServer, er
 		&server.HealthCheckURL, &server.IsActive, &metadataJSON, &server.Tags,
 		&server.CreatedAt, &server.UpdatedAt,
 	)
-	
+
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Parse metadata JSON
 	if len(metadataJSON) > 0 {
 		err = json.Unmarshal(metadataJSON, &server.Metadata)
@@ -149,7 +149,7 @@ func (m *MCPServerModel) GetByName(orgID uuid.UUID, name string) (*MCPServer, er
 			return nil, err
 		}
 	}
-	
+
 	return server, nil
 }
 
@@ -162,24 +162,24 @@ func (m *MCPServerModel) ListByOrganization(orgID uuid.UUID, activeOnly bool) ([
 		FROM mcp_servers
 		WHERE organization_id = $1
 	`
-	
+
 	args := []interface{}{orgID}
 	if activeOnly {
 		query += " AND is_active = true"
 	}
 	query += " ORDER BY weight DESC, created_at DESC"
-	
+
 	rows, err := m.db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	
+
 	var servers []*MCPServer
 	for rows.Next() {
 		server := &MCPServer{}
 		var metadataJSON []byte
-		
+
 		err := rows.Scan(
 			&server.ID, &server.OrganizationID, &server.Name, &server.Description,
 			&server.Protocol, &server.URL, &server.Command, &server.Args,
@@ -191,7 +191,7 @@ func (m *MCPServerModel) ListByOrganization(orgID uuid.UUID, activeOnly bool) ([
 		if err != nil {
 			return nil, err
 		}
-		
+
 		// Parse metadata JSON
 		if len(metadataJSON) > 0 {
 			err = json.Unmarshal(metadataJSON, &server.Metadata)
@@ -199,10 +199,10 @@ func (m *MCPServerModel) ListByOrganization(orgID uuid.UUID, activeOnly bool) ([
 				return nil, err
 			}
 		}
-		
+
 		servers = append(servers, server)
 	}
-	
+
 	return servers, nil
 }
 
@@ -216,18 +216,18 @@ func (m *MCPServerModel) GetActiveServers(orgID uuid.UUID) ([]*MCPServer, error)
 		WHERE organization_id = $1 AND is_active = true AND status = 'active'
 		ORDER BY weight DESC, created_at DESC
 	`
-	
+
 	rows, err := m.db.Query(query, orgID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	
+
 	var servers []*MCPServer
 	for rows.Next() {
 		server := &MCPServer{}
 		var metadataJSON []byte
-		
+
 		err := rows.Scan(
 			&server.ID, &server.OrganizationID, &server.Name, &server.Description,
 			&server.Protocol, &server.URL, &server.Command, &server.Args,
@@ -239,7 +239,7 @@ func (m *MCPServerModel) GetActiveServers(orgID uuid.UUID) ([]*MCPServer, error)
 		if err != nil {
 			return nil, err
 		}
-		
+
 		// Parse metadata JSON
 		if len(metadataJSON) > 0 {
 			err = json.Unmarshal(metadataJSON, &server.Metadata)
@@ -247,10 +247,10 @@ func (m *MCPServerModel) GetActiveServers(orgID uuid.UUID) ([]*MCPServer, error)
 				return nil, err
 			}
 		}
-		
+
 		servers = append(servers, server)
 	}
-	
+
 	return servers, nil
 }
 
@@ -264,7 +264,7 @@ func (m *MCPServerModel) Update(server *MCPServer) error {
 			health_check_url = $14, metadata = $15, tags = $16
 		WHERE id = $1
 	`
-	
+
 	// Convert metadata to JSON
 	var metadataJSON []byte
 	if server.Metadata != nil {
@@ -274,7 +274,7 @@ func (m *MCPServerModel) Update(server *MCPServer) error {
 			return err
 		}
 	}
-	
+
 	_, err := m.db.Exec(query,
 		server.ID, server.Name, server.Description, server.Protocol,
 		server.URL, server.Command, server.Args, server.Environment,
@@ -325,12 +325,12 @@ func (m *HealthCheckModel) Create(check *HealthCheck) error {
 		INSERT INTO health_checks (id, server_id, status, response_time_ms, response_body, error_message, checked_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
-	
+
 	if check.ID == uuid.Nil {
 		check.ID = uuid.New()
 	}
-	
-	_, err := m.db.Exec(query, 
+
+	_, err := m.db.Exec(query,
 		check.ID, check.ServerID, check.Status, check.ResponseTimeMS,
 		check.ResponseBody, check.ErrorMessage, check.CheckedAt)
 	return err
@@ -345,17 +345,17 @@ func (m *HealthCheckModel) GetLatestByServerID(serverID uuid.UUID) (*HealthCheck
 		ORDER BY checked_at DESC
 		LIMIT 1
 	`
-	
+
 	check := &HealthCheck{}
 	err := m.db.QueryRow(query, serverID).Scan(
 		&check.ID, &check.ServerID, &check.Status, &check.ResponseTimeMS,
 		&check.ResponseBody, &check.ErrorMessage, &check.CheckedAt,
 	)
-	
+
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return check, nil
 }
 
@@ -368,13 +368,13 @@ func (m *HealthCheckModel) GetHistoryByServerID(serverID uuid.UUID, limit int) (
 		ORDER BY checked_at DESC
 		LIMIT $2
 	`
-	
+
 	rows, err := m.db.Query(query, serverID, limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	
+
 	var checks []*HealthCheck
 	for rows.Next() {
 		check := &HealthCheck{}
@@ -387,7 +387,7 @@ func (m *HealthCheckModel) GetHistoryByServerID(serverID uuid.UUID, limit int) (
 		}
 		checks = append(checks, check)
 	}
-	
+
 	return checks, nil
 }
 
