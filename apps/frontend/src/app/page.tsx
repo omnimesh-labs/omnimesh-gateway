@@ -110,6 +110,39 @@ export default function HomePage() {
             View Analytics
           </button>
         </div>
+
+        <div style={{ 
+          background: 'white', 
+          borderRadius: '8px', 
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)', 
+          padding: '1.5rem' 
+        }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#333', marginBottom: '0.75rem' }}>
+            Policy Management
+          </h2>
+          <p style={{ color: '#666', marginBottom: '1rem' }}>
+            Configure authentication, rate limiting, and access policies
+          </p>
+          <a
+            href="/policies"
+            style={{ 
+              background: '#10b981', 
+              color: 'white', 
+              padding: '0.5rem 1rem', 
+              borderRadius: '6px', 
+              border: 'none',
+              fontSize: '0.875rem',
+              textDecoration: 'none',
+              display: 'inline-block',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = '#059669'}
+            onMouseOut={(e) => e.currentTarget.style.background = '#10b981'}
+          >
+            Manage Policies
+          </a>
+        </div>
       </div>
 
       <section style={{ 
@@ -129,7 +162,7 @@ export default function HomePage() {
           <li style={{ marginBottom: '0.5rem' }}>Monitor system logs and audit administrative actions</li>
           <li style={{ marginBottom: '0.5rem' }}>Configure gateway settings and policies</li>
           <li style={{ marginBottom: '0.5rem' }}>View real-time analytics and performance metrics</li>
-          <li style={{ marginBottom: '0.5rem' }}>Set up authentication and access policies</li>
+          <li style={{ marginBottom: '0.5rem' }}>Manage authentication, rate limiting, and access policies</li>
         </ul>
       </section>
       </div>
