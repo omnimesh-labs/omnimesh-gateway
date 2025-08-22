@@ -148,12 +148,51 @@ const (
 
 // Permission constants
 const (
+	// Basic permissions
 	PermissionRead       = "read"
 	PermissionWrite      = "write"
 	PermissionDelete     = "delete"
 	PermissionAdmin      = "admin"
+	
+	// API access permissions
 	PermissionAPIAccess  = "api_access"
-	PermissionUserManage = "user_manage"
+	PermissionAPIKeyManage = "api_key_manage"
+	
+	// User management permissions
+	PermissionUserRead    = "user_read"
+	PermissionUserWrite   = "user_write"
+	PermissionUserDelete  = "user_delete"
+	PermissionUserManage  = "user_manage"
+	
+	// Server management permissions
+	PermissionServerRead   = "server_read"
+	PermissionServerWrite  = "server_write" 
+	PermissionServerDelete = "server_delete"
+	PermissionServerManage = "server_manage"
+	
+	// Session management permissions
+	PermissionSessionRead   = "session_read"
+	PermissionSessionWrite  = "session_write"
+	PermissionSessionDelete = "session_delete"
+	PermissionSessionManage = "session_manage"
+	
+	// Virtual server permissions
+	PermissionVirtualServerRead   = "virtual_server_read"
+	PermissionVirtualServerWrite  = "virtual_server_write"
+	PermissionVirtualServerDelete = "virtual_server_delete"
+	PermissionVirtualServerManage = "virtual_server_manage"
+	
+	// Audit and logging permissions
+	PermissionAuditRead      = "audit_read"
+	PermissionLogsRead       = "logs_read"
+	PermissionMetricsRead    = "metrics_read"
+	PermissionSystemManage   = "system_manage"
+	
+	// Organization permissions
+	PermissionOrgRead    = "org_read"
+	PermissionOrgWrite   = "org_write"
+	PermissionOrgDelete  = "org_delete"
+	PermissionOrgManage  = "org_manage"
 )
 
 // PolicyType constants

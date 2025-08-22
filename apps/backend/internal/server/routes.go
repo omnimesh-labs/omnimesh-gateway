@@ -151,8 +151,10 @@ func (s *Server) RegisterRoutes() http.Handler {
 			}
 		}
 
-		// MCP Discovery routes
+		// MCP Discovery routes (require authentication and read permission)
 		mcp := api.Group("/mcp")
+		mcp.Use(authMiddleware.RequireAuth())
+		mcp.Use(authMiddleware.RequirePermission(types.PermissionRead))
 		{
 			// Search for MCP packages
 			mcp.GET("/search", mcpDiscoveryHandler.SearchPackages)
@@ -164,48 +166,106 @@ func (s *Server) RegisterRoutes() http.Handler {
 			mcp.GET("/packages/:packageName", mcpDiscoveryHandler.GetPackageDetails)
 		}
 
-		// Gateway management routes
+		// Gateway management routes (protected)
 		gateway := api.Group("/gateway")
+		gateway.Use(authMiddleware.RequireAuth())
+		gateway.Use(authMiddleware.RequireOrganizationAccess())
 		{
-			// Server management
-			gateway.GET("/servers", gatewayHandler.ListServers)
-			gateway.POST("/servers", loggingMiddleware.AuditLogger("register", "server"), gatewayHandler.RegisterServer)
-			gateway.GET("/servers/:id", gatewayHandler.GetServer)
-			gateway.PUT("/servers/:id", loggingMiddleware.AuditLogger("update", "server"), gatewayHandler.UpdateServer)
-			gateway.DELETE("/servers/:id", loggingMiddleware.AuditLogger("unregister", "server"), gatewayHandler.UnregisterServer)
-			gateway.GET("/servers/:id/stats", gatewayHandler.GetServerStats)
+			// Server management - requires appropriate permissions
+			gateway.GET("/servers", 
+				authMiddleware.RequireResourceAccess("server", "read"), 
+				gatewayHandler.ListServers)
+			gateway.POST("/servers", 
+				authMiddleware.RequireResourceAccess("server", "write"),
+				loggingMiddleware.AuditLogger("register", "server"), 
+				gatewayHandler.RegisterServer)
+			gateway.GET("/servers/:id", 
+				authMiddleware.RequireResourceAccess("server", "read"), 
+				gatewayHandler.GetServer)
+			gateway.PUT("/servers/:id", 
+				authMiddleware.RequireResourceAccess("server", "write"),
+				loggingMiddleware.AuditLogger("update", "server"), 
+				gatewayHandler.UpdateServer)
+			gateway.DELETE("/servers/:id", 
+				authMiddleware.RequireResourceAccess("server", "delete"),
+				loggingMiddleware.AuditLogger("unregister", "server"), 
+				gatewayHandler.UnregisterServer)
+			gateway.GET("/servers/:id/stats", 
+				authMiddleware.RequireResourceAccess("server", "read"), 
+				gatewayHandler.GetServerStats)
 
-			// MCP session management
-			gateway.POST("/sessions", gatewayHandler.CreateMCPSession)
-			gateway.GET("/sessions", gatewayHandler.ListMCPSessions)
-			gateway.DELETE("/sessions/:session_id", gatewayHandler.CloseMCPSession)
+			// MCP session management - requires session permissions
+			gateway.POST("/sessions", 
+				authMiddleware.RequireResourceAccess("session", "write"),
+				gatewayHandler.CreateMCPSession)
+			gateway.GET("/sessions", 
+				authMiddleware.RequireResourceAccess("session", "read"),
+				gatewayHandler.ListMCPSessions)
+			gateway.DELETE("/sessions/:session_id", 
+				authMiddleware.RequireResourceAccess("session", "delete"),
+				gatewayHandler.CloseMCPSession)
 
 			// WebSocket endpoint for MCP communication
-			gateway.GET("/ws", gatewayHandler.HandleMCPWebSocket)
+			gateway.GET("/ws", 
+				authMiddleware.RequireResourceAccess("session", "write"),
+				gatewayHandler.HandleMCPWebSocket)
 
-			// Legacy proxy endpoint
-			gateway.Any("/proxy/*path", gatewayHandler.ProxyRequest)
+			// Legacy proxy endpoint - requires user level access
+			gateway.Any("/proxy/*path", 
+				authMiddleware.RequireUser(),
+				gatewayHandler.ProxyRequest)
 		}
 
-		// Admin routes for virtual servers and system management
+		// Admin routes for virtual servers and system management (protected)
 		admin := api.Group("/admin")
+		admin.Use(authMiddleware.RequireAuth())
+		admin.Use(authMiddleware.RequireOrganizationAccess())
 		{
-			// Logging and audit routes
-			admin.GET("/logs", adminHandler.GetLogs)
-			admin.GET("/audit", adminHandler.GetAuditLogs)
-			admin.GET("/stats", adminHandler.GetStats)
-			admin.GET("/metrics", adminHandler.GetMetrics)
+			// Logging and audit routes - require admin access
+			admin.GET("/logs", 
+				authMiddleware.RequireAdmin(),
+				authMiddleware.RequirePermission(types.PermissionLogsRead),
+				adminHandler.GetLogs)
+			admin.GET("/audit", 
+				authMiddleware.RequireAdmin(),
+				authMiddleware.RequirePermission(types.PermissionAuditRead),
+				adminHandler.GetAuditLogs)
+			admin.GET("/stats", 
+				authMiddleware.RequireAdmin(),
+				authMiddleware.RequirePermission(types.PermissionMetricsRead),
+				adminHandler.GetStats)
+			admin.GET("/metrics", 
+				authMiddleware.RequireAdmin(),
+				authMiddleware.RequirePermission(types.PermissionMetricsRead),
+				adminHandler.GetMetrics)
 			
-			// Virtual server management
+			// Virtual server management - role-based access
 			virtual := admin.Group("/virtual-servers")
 			{
-				virtual.POST("", loggingMiddleware.AuditLogger("create", "virtual-server"), virtualAdminHandler.CreateVirtualServer)
-				virtual.GET("", virtualAdminHandler.ListVirtualServers)
-				virtual.GET("/:id", virtualAdminHandler.GetVirtualServer)
-				virtual.PUT("/:id", loggingMiddleware.AuditLogger("update", "virtual-server"), virtualAdminHandler.UpdateVirtualServer)
-				virtual.DELETE("/:id", loggingMiddleware.AuditLogger("delete", "virtual-server"), virtualAdminHandler.DeleteVirtualServer)
-				virtual.GET("/:id/tools", virtualAdminHandler.GetVirtualServerTools)
-				virtual.POST("/:id/tools/:tool/test", virtualAdminHandler.TestVirtualServerTool)
+				virtual.POST("", 
+					authMiddleware.RequireResourceAccess("virtual_server", "write"),
+					loggingMiddleware.AuditLogger("create", "virtual-server"), 
+					virtualAdminHandler.CreateVirtualServer)
+				virtual.GET("", 
+					authMiddleware.RequireResourceAccess("virtual_server", "read"),
+					virtualAdminHandler.ListVirtualServers)
+				virtual.GET("/:id", 
+					authMiddleware.RequireResourceAccess("virtual_server", "read"),
+					virtualAdminHandler.GetVirtualServer)
+				virtual.PUT("/:id", 
+					authMiddleware.RequireResourceAccess("virtual_server", "write"),
+					loggingMiddleware.AuditLogger("update", "virtual-server"), 
+					virtualAdminHandler.UpdateVirtualServer)
+				virtual.DELETE("/:id", 
+					authMiddleware.RequireResourceAccess("virtual_server", "delete"),
+					loggingMiddleware.AuditLogger("delete", "virtual-server"), 
+					virtualAdminHandler.DeleteVirtualServer)
+				virtual.GET("/:id/tools", 
+					authMiddleware.RequireResourceAccess("virtual_server", "read"),
+					virtualAdminHandler.GetVirtualServerTools)
+				virtual.POST("/:id/tools/:tool/test", 
+					authMiddleware.RequireResourceAccess("virtual_server", "write"),
+					virtualAdminHandler.TestVirtualServerTool)
 			}
 		}
 	}

@@ -370,3 +370,262 @@ func TestMiddleware_HasRequiredRole_Hierarchy(t *testing.T) {
 	assert.False(t, middleware.hasRequiredRole(types.RoleUser, types.RoleAdmin))
 	assert.False(t, middleware.hasRequiredRole(types.RoleAdmin, types.RoleSystemAdmin))
 }
+
+func TestMiddleware_RequirePermission_Success(t *testing.T) {
+	middleware, _, _ := setupTestMiddleware()
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest("GET", "/test", nil)
+
+	// Set user context with admin role
+	c.Set("role", types.RoleAdmin)
+
+	handlerCalled := false
+	testHandler := func(c *gin.Context) {
+		handlerCalled = true
+		c.Status(http.StatusOK)
+	}
+
+	// Test permission that admin should have
+	middleware.RequirePermission(types.PermissionUserManage)(c)
+	if !c.IsAborted() {
+		testHandler(c)
+	}
+
+	assert.False(t, c.IsAborted())
+	assert.True(t, handlerCalled)
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestMiddleware_RequirePermission_Forbidden(t *testing.T) {
+	middleware, _, _ := setupTestMiddleware()
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest("GET", "/test", nil)
+
+	// Set user context with viewer role
+	c.Set("role", types.RoleViewer)
+
+	// Test permission that viewer should NOT have
+	middleware.RequirePermission(types.PermissionUserManage)(c)
+
+	assert.True(t, c.IsAborted())
+	assert.Equal(t, http.StatusForbidden, w.Code)
+}
+
+func TestMiddleware_RequireResourceAccess_Success(t *testing.T) {
+	middleware, _, _ := setupTestMiddleware()
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest("GET", "/test", nil)
+
+	// Set user context with user role
+	c.Set("role", types.RoleUser)
+
+	handlerCalled := false
+	testHandler := func(c *gin.Context) {
+		handlerCalled = true
+		c.Status(http.StatusOK)
+	}
+
+	// Test resource access that user should have (server read)
+	middleware.RequireResourceAccess("server", "read")(c)
+	if !c.IsAborted() {
+		testHandler(c)
+	}
+
+	assert.False(t, c.IsAborted())
+	assert.True(t, handlerCalled)
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestMiddleware_RequireResourceAccess_Forbidden(t *testing.T) {
+	middleware, _, _ := setupTestMiddleware()
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest("DELETE", "/test", nil)
+
+	// Set user context with user role
+	c.Set("role", types.RoleUser)
+
+	// Test resource access that user should NOT have (server delete)
+	middleware.RequireResourceAccess("server", "delete")(c)
+
+	assert.True(t, c.IsAborted())
+	assert.Equal(t, http.StatusForbidden, w.Code)
+}
+
+func TestMiddleware_RequireSystemAdmin_Success(t *testing.T) {
+	middleware, _, _ := setupTestMiddleware()
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest("GET", "/test", nil)
+
+	// Set user context with system admin role
+	c.Set("role", types.RoleSystemAdmin)
+
+	handlerCalled := false
+	testHandler := func(c *gin.Context) {
+		handlerCalled = true
+		c.Status(http.StatusOK)
+	}
+
+	middleware.RequireSystemAdmin()(c)
+	if !c.IsAborted() {
+		testHandler(c)
+	}
+
+	assert.False(t, c.IsAborted())
+	assert.True(t, handlerCalled)
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestMiddleware_RequireSystemAdmin_Forbidden(t *testing.T) {
+	middleware, _, _ := setupTestMiddleware()
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest("GET", "/test", nil)
+
+	// Set user context with regular admin role (not system admin)
+	c.Set("role", types.RoleAdmin)
+
+	middleware.RequireSystemAdmin()(c)
+
+	assert.True(t, c.IsAborted())
+	assert.Equal(t, http.StatusForbidden, w.Code)
+}
+
+func TestMiddleware_RequireOrganizationAccess_Success(t *testing.T) {
+	middleware, _, _ := setupTestMiddleware()
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest("GET", "/test?organization_id=org123", nil)
+
+	// Set user context with matching organization
+	c.Set("organization_id", "org123")
+	c.Set("role", types.RoleUser)
+
+	handlerCalled := false
+	testHandler := func(c *gin.Context) {
+		handlerCalled = true
+		c.Status(http.StatusOK)
+	}
+
+	middleware.RequireOrganizationAccess()(c)
+	if !c.IsAborted() {
+		testHandler(c)
+	}
+
+	assert.False(t, c.IsAborted())
+	assert.True(t, handlerCalled)
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestMiddleware_RequireOrganizationAccess_SystemAdminBypass(t *testing.T) {
+	middleware, _, _ := setupTestMiddleware()
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest("GET", "/test?organization_id=org456", nil)
+
+	// Set user context with different organization but system admin role
+	c.Set("organization_id", "org123")
+	c.Set("role", types.RoleSystemAdmin)
+
+	handlerCalled := false
+	testHandler := func(c *gin.Context) {
+		handlerCalled = true
+		c.Status(http.StatusOK)
+	}
+
+	middleware.RequireOrganizationAccess()(c)
+	if !c.IsAborted() {
+		testHandler(c)
+	}
+
+	// System admin should bypass organization check
+	assert.False(t, c.IsAborted())
+	assert.True(t, handlerCalled)
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestMiddleware_RequireOrganizationAccess_Forbidden(t *testing.T) {
+	middleware, _, _ := setupTestMiddleware()
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest("GET", "/test?organization_id=org456", nil)
+
+	// Set user context with different organization
+	c.Set("organization_id", "org123")
+	c.Set("role", types.RoleUser)
+
+	middleware.RequireOrganizationAccess()(c)
+
+	assert.True(t, c.IsAborted())
+	assert.Equal(t, http.StatusForbidden, w.Code)
+}
+
+func TestMiddleware_RequireAnyPermission_Success(t *testing.T) {
+	middleware, _, _ := setupTestMiddleware()
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest("GET", "/test", nil)
+
+	// Set user context with user role
+	c.Set("role", types.RoleUser)
+
+	handlerCalled := false
+	testHandler := func(c *gin.Context) {
+		handlerCalled = true
+		c.Status(http.StatusOK)
+	}
+
+	// Test permissions where user should have at least one (read)
+	permissions := []string{types.PermissionRead, types.PermissionUserManage}
+	middleware.RequireAnyPermission(permissions)(c)
+	if !c.IsAborted() {
+		testHandler(c)
+	}
+
+	assert.False(t, c.IsAborted())
+	assert.True(t, handlerCalled)
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestMiddleware_RequireAnyPermission_Forbidden(t *testing.T) {
+	middleware, _, _ := setupTestMiddleware()
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest("GET", "/test", nil)
+
+	// Set user context with viewer role
+	c.Set("role", types.RoleViewer)
+
+	// Test permissions that viewer should NOT have
+	permissions := []string{types.PermissionUserManage, types.PermissionSystemManage}
+	middleware.RequireAnyPermission(permissions)(c)
+
+	assert.True(t, c.IsAborted())
+	assert.Equal(t, http.StatusForbidden, w.Code)
+}
