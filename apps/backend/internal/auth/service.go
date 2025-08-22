@@ -206,12 +206,12 @@ type RefreshTokenResponse struct {
 }
 
 // RefreshToken generates new access token from refresh token
-func (s *Service) RefreshToken(refreshToken string) (*types.TokenResponse, error) {
+func (s *Service) RefreshToken(refreshToken string) (*types.LoginResponse, error) {
 	return s.RefreshTokenWithContext(refreshToken, nil)
 }
 
 // RefreshTokenWithContext generates new access token with security context and optional rotation
-func (s *Service) RefreshTokenWithContext(refreshToken string, ctx *LoginContext) (*types.TokenResponse, error) {
+func (s *Service) RefreshTokenWithContext(refreshToken string, ctx *LoginContext) (*types.LoginResponse, error) {
 	// Default context if none provided
 	if ctx == nil {
 		ctx = &LoginContext{
@@ -300,10 +300,27 @@ func (s *Service) RefreshTokenWithContext(refreshToken string, ctx *LoginContext
 		"",
 	)
 
-	response := &types.TokenResponse{
-		AccessToken: accessToken,
-		ExpiresIn:   int64(s.config.AccessTokenExpiry.Seconds()),
-		TokenType:   "Bearer",
+	// Generate new refresh token to maintain security
+	newRefreshToken, err := s.jwtManager.GenerateRefreshToken(user)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
+	}
+
+	response := &types.LoginResponse{
+		User: &types.User{
+			ID:             user.ID,
+			Email:          user.Email,
+			Name:           user.Name,
+			OrganizationID: user.OrganizationID,
+			Role:           user.Role,
+			IsActive:       user.IsActive,
+			CreatedAt:      user.CreatedAt,
+			UpdatedAt:      user.UpdatedAt,
+		},
+		AccessToken:  accessToken,
+		RefreshToken: newRefreshToken,
+		ExpiresIn:    int64(s.config.AccessTokenExpiry.Seconds()),
+		TokenType:    "Bearer",
 	}
 
 	return response, nil

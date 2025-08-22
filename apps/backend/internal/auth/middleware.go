@@ -9,14 +9,31 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// ServiceInterface defines the methods needed by the middleware
+type ServiceInterface interface {
+	GetUserByID(userID string) (*types.User, error)
+	ValidateAPIKey(apiKey string) (*types.APIKey, error)
+}
+
+// Ensure Service implements ServiceInterface
+var _ ServiceInterface = (*Service)(nil)
+
 // Middleware handles authentication and authorization
 type Middleware struct {
 	jwtManager *JWTManager
-	service    *Service
+	service    ServiceInterface
 }
 
 // NewMiddleware creates a new auth middleware
 func NewMiddleware(jwtManager *JWTManager, service *Service) *Middleware {
+	return &Middleware{
+		jwtManager: jwtManager,
+		service:    service,
+	}
+}
+
+// NewMiddlewareWithInterface creates a new auth middleware with interface
+func NewMiddlewareWithInterface(jwtManager *JWTManager, service ServiceInterface) *Middleware {
 	return &Middleware{
 		jwtManager: jwtManager,
 		service:    service,

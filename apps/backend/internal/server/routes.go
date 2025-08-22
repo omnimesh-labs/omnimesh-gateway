@@ -116,6 +116,9 @@ func (s *Server) RegisterRoutes() http.Handler {
 	
 	authService := auth.NewService(s.db.GetDB(), authConfig)
 	authHandler := handlers.NewAuthHandler(authService)
+	
+	// Initialize auth middleware
+	authMiddleware := auth.NewMiddleware(authService.GetJWTManager(), authService)
 
 	// Initialize transport handlers
 	rpcHandler := handlers.NewRPCHandler(transportManager)
@@ -130,15 +133,22 @@ func (s *Server) RegisterRoutes() http.Handler {
 	// API routes
 	api := r.Group("/api")
 	{
-		// Authentication routes (public - no auth required)
+		// Authentication routes
 		auth := api.Group("/auth")
 		{
+			// Public routes (no auth required)
 			auth.POST("/login", authHandler.Login)
 			auth.POST("/refresh", authHandler.RefreshToken)
-			auth.POST("/logout", authHandler.Logout)
-			auth.POST("/api-keys", authHandler.CreateAPIKey)
-			auth.GET("/profile", authHandler.GetProfile)
-			auth.PUT("/profile", authHandler.UpdateProfile)
+			
+			// Protected routes (auth required)
+			protected := auth.Group("/")
+			protected.Use(authMiddleware.RequireAuth())
+			{
+				protected.POST("/logout", authHandler.Logout)
+				protected.GET("/profile", authHandler.GetProfile)
+				protected.PUT("/profile", authHandler.UpdateProfile)
+				protected.POST("/api-keys", authHandler.CreateAPIKey)
+			}
 		}
 
 		// MCP Discovery routes

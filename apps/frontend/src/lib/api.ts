@@ -234,10 +234,14 @@ function clearTokens(): void {
     }
 }
 
-// Generic fetch wrapper with error handling
+// Track if we're currently refreshing to avoid infinite loops
+let isRefreshing = false;
+
+// Generic fetch wrapper with error handling and automatic token refresh
 async function apiRequest<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    retryOnAuth = true
 ): Promise<T> {
     try {
         const headers: Record<string, string> = {
@@ -266,6 +270,53 @@ async function apiRequest<T>(
                     message: `HTTP ${response.status}: ${response.statusText}`,
                 },
             }));
+
+            // If 401 and we haven't tried refreshing yet, attempt token refresh
+            if (response.status === 401 && retryOnAuth && !isRefreshing && endpoint !== '/auth/refresh' && endpoint !== '/auth/login') {
+                const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
+                if (refreshToken) {
+                    try {
+                        isRefreshing = true;
+                        console.log('401 detected, attempting token refresh...');
+                        
+                        // Try to refresh the token
+                        const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            mode: 'cors',
+                            credentials: 'include',
+                            body: JSON.stringify({ refresh_token: refreshToken }),
+                        });
+
+                        if (refreshResponse.ok) {
+                            const refreshData = await refreshResponse.json();
+                            
+                            // Update tokens in localStorage
+                            if (typeof window !== 'undefined') {
+                                localStorage.setItem('access_token', refreshData.data.access_token);
+                                localStorage.setItem('refresh_token', refreshData.data.refresh_token);
+                            }
+
+                            console.log('Token refreshed successfully, retrying original request...');
+                            
+                            // Retry the original request with the new token
+                            return apiRequest(endpoint, options, false);
+                        } else {
+                            // Refresh failed, clear tokens
+                            clearTokens();
+                            throw new Error('Session expired. Please log in again.');
+                        }
+                    } catch (refreshError) {
+                        clearTokens();
+                        throw new Error('Session expired. Please log in again.');
+                    } finally {
+                        isRefreshing = false;
+                    }
+                }
+            }
+
             throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`);
         }
 
@@ -530,9 +581,10 @@ export const authApi = {
         });
     },
 
-    // Check if user is authenticated
+    // Check if user is authenticated (has either access token or refresh token)
     isAuthenticated(): boolean {
-        return getAccessToken() !== null;
+        if (typeof window === 'undefined') return false;
+        return getAccessToken() !== null || localStorage.getItem('refresh_token') !== null;
     },
 
     // Clear authentication tokens

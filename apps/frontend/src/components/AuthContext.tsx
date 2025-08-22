@@ -35,13 +35,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const initializeAuth = async () => {
             try {
                 if (authApi.isAuthenticated()) {
-                    const userProfile = await authApi.getProfile();
-                    setUser(userProfile);
+                    try {
+                        const userProfile = await authApi.getProfile();
+                        setUser(userProfile);
+                    } catch (profileError) {
+                        // If profile fails, try to refresh token
+                        console.log('Profile fetch failed, attempting token refresh...');
+                        try {
+                            const refreshResponse = await authApi.refresh();
+                            setUser(refreshResponse.user);
+                            console.log('Token refreshed successfully');
+                        } catch (refreshError) {
+                            // If refresh also fails, clear tokens and log out
+                            authApi.clearTokens();
+                            console.error('Token refresh failed:', refreshError);
+                        }
+                    }
                 }
             } catch (error) {
-                // If token is invalid, clear it
+                // If something goes wrong, clear tokens
                 authApi.clearTokens();
-                console.error('Failed to load user profile:', error);
+                console.error('Auth initialization failed:', error);
             } finally {
                 setIsLoading(false);
             }
