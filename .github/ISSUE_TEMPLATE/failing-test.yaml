@@ -1,0 +1,117 @@
+name: Failing Test
+description: Report consistently failing tests in MCP Gateway's test suite
+labels: kind/failing-test
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please use this template to report tests that are consistently failing in the test suite.
+        This helps us maintain the quality and reliability of MCP Gateway.
+
+  - type: dropdown
+    id: test_type
+    attributes:
+      label: Test Type
+      multiple: true
+      options:
+        - Unit Tests
+        - Integration Tests
+        - Transport Layer Tests
+        - Virtual Server Tests
+        - Database Tests
+        - Frontend Tests
+        - End-to-End Tests
+    validations:
+      required: true
+
+  - type: textarea
+    id: failing_tests
+    attributes:
+      label: Which tests are failing?
+      description: |
+        Please provide the specific test names and file locations.
+      placeholder: |
+        Example:
+        - TestVirtualServerRPC in internal/server/handlers/virtual_mcp_test.go
+        - TestRESTAdapter in internal/virtual/adapter_test.go
+    validations:
+      required: true
+
+  - type: textarea
+    id: error_output
+    attributes:
+      label: Test Error Output
+      description: |
+        Please provide the complete error output from the failing tests.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: since_when
+    attributes:
+      label: Since when has it been failing?
+      description: |
+        Please provide context about when the test started failing:
+        - First noticed date
+        - Related PR or commit if known
+        - Whether it fails locally, in CI, or both
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: How to reproduce?
+      description: |
+        Please provide steps to reproduce the test failure:
+        - Command to run the specific test
+        - Any required setup or configuration
+        - Environment details if relevant
+      placeholder: |
+        make test-transport
+        # or
+        cd apps/backend && go test ./internal/virtual/... -v
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Test Environment
+      value: |
+        - Go Version: [e.g., 1.21.0]
+        - OS: [e.g., Ubuntu 22.04, macOS 13.0]
+        - PostgreSQL Version: [e.g., 14.0]
+        - Node Version (if frontend): [e.g., 18.12.0]
+    validations:
+      required: true
+
+  - type: dropdown
+    id: components
+    attributes:
+      label: Affected Components
+      multiple: true
+      options:
+        - Core Gateway
+        - Virtual Servers
+        - Transport Layer
+        - Database Layer
+        - Frontend
+        - Authentication
+        - Rate Limiting
+        - Logging
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Information
+      description: |
+        Any additional context that might help us understand and fix the failing test:
+        - Related issues or PRs
+        - Recent changes that might have caused this
+        - Patterns or conditions when the test fails
+    validations:
+      required: false

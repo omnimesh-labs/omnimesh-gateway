@@ -1,0 +1,197 @@
+name: Bug Report
+description: Report a bug encountered while using MCP Gateway
+labels: kind/bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! Please provide as much information as possible to help us diagnose and fix the issue.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: |
+        Please provide a clear and concise description of what the bug is.
+        If this is a security issue, please report it privately via our security policy.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+      description: |
+        Describe what you expected to happen when using the feature.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: |
+        Please provide minimal steps to reproduce the behavior:
+        1. Configure gateway with '...'
+        2. Make request to '...'
+        3. See error
+      placeholder: |
+        1. Step one...
+        2. Step two...
+        3. Step three...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Which component is affected?
+      multiple: true
+      options:
+        - Core Gateway
+        - Virtual Servers
+        - Authentication/Authorization
+        - Rate Limiting
+        - Logging/Audit
+        - Transport Layer (JSON-RPC)
+        - Transport Layer (WebSocket)
+        - Transport Layer (SSE)
+        - Transport Layer (STDIO)
+        - Database/Persistence
+        - Admin API
+        - Frontend Dashboard
+    validations:
+      required: true
+
+  - type: dropdown
+    id: transport
+    attributes:
+      label: Which transport protocol are you using?
+      multiple: true
+      options:
+        - JSON-RPC over HTTP
+        - WebSocket
+        - Server-Sent Events (SSE)
+        - STDIO
+        - Streamable HTTP (MCP Protocol)
+        - Virtual Server (REST)
+        - Virtual Server (GraphQL)
+        - Virtual Server (gRPC)
+    validations:
+      required: false
+
+  - type: textarea
+    id: configuration
+    attributes:
+      label: Gateway Configuration
+      description: |
+        Please provide relevant configuration settings (redact sensitive information).
+      value: |
+        <details>
+        <summary>Configuration</summary>
+
+        ```yaml
+        # Paste your configuration here
+        ```
+
+        </details>
+    validations:
+      required: false
+
+  - type: textarea
+    id: request
+    attributes:
+      label: Request Details
+      description: |
+        Please provide the request that triggered the issue (if applicable).
+      value: |
+        <details>
+        <summary>Request</summary>
+
+        ```
+        # Example curl command or request payload
+        curl -X POST http://localhost:8080/mcp/rpc \
+          -H "Content-Type: application/json" \
+          -d '{
+            "jsonrpc": "2.0",
+            "method": "tools/list",
+            "id": "1"
+          }'
+        ```
+
+        </details>
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: |
+        Please provide relevant log output. This will be automatically formatted into code.
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: version
+    attributes:
+      label: MCP Gateway Version
+      value: |
+        <details>
+
+        ```console
+        $ mcp-gateway version
+        # paste output here
+        ```
+
+        </details>
+    validations:
+      required: true
+
+  - type: textarea
+    id: database
+    attributes:
+      label: Database Information
+      description: |
+        PostgreSQL version and any relevant database configuration.
+      value: |
+        <details>
+
+        ```console
+        $ psql --version
+        # paste output here
+        ```
+
+        </details>
+    validations:
+      required: false
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment Information
+      value: |
+        <details>
+
+        - OS: [e.g., Ubuntu 22.04, macOS 13.0]
+        - Go Version: [e.g., 1.21.0]
+        - Node Version (if using frontend): [e.g., 18.12.0]
+        - Deployment: [e.g., Docker, Kubernetes, Bare Metal]
+
+        </details>
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: |
+        Add any other context about the problem here. This could include:
+        - Load balancing configuration
+        - Network setup
+        - Virtual server configurations
+        - Related services or dependencies
+    validations:
+      required: false

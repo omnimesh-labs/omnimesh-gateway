@@ -1,0 +1,140 @@
+name: Feature Enhancement
+description: Propose a new feature or enhancement for MCP Gateway
+labels: kind/feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to propose an enhancement! Please provide as much detail as possible to help us understand and evaluate your proposal.
+
+  - type: dropdown
+    id: feature_type
+    attributes:
+      label: Enhancement Type
+      multiple: true
+      options:
+        - New Feature
+        - Performance Improvement
+        - API Enhancement
+        - Protocol Support
+        - Security Enhancement
+        - Developer Experience
+        - User Experience
+        - Documentation
+    validations:
+      required: true
+
+  - type: dropdown
+    id: components
+    attributes:
+      label: Affected Components
+      multiple: true
+      options:
+        - Core Gateway
+        - Virtual Servers
+        - Transport Layer (JSON-RPC)
+        - Transport Layer (WebSocket)
+        - Transport Layer (SSE)
+        - Transport Layer (STDIO)
+        - Database Layer
+        - Frontend Dashboard
+        - Authentication/Authorization
+        - Rate Limiting
+        - Logging/Audit
+        - Configuration Management
+    validations:
+      required: true
+
+  - type: textarea
+    id: feature
+    attributes:
+      label: Feature Description
+      description: |
+        Please describe the feature or enhancement you'd like to see added.
+        Be as specific as possible about what you want and how it should work.
+      placeholder: |
+        Example:
+        Add support for GraphQL adapters in virtual servers to allow wrapping GraphQL APIs as MCP servers.
+    validations:
+      required: true
+
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Why is this needed?
+      description: |
+        Please explain the motivation behind this enhancement:
+        - What problem does it solve?
+        - Who would benefit from this?
+        - How does it align with MCP Gateway's goals?
+      placeholder: |
+        Example:
+        This would allow teams using GraphQL services to integrate them with MCP workflows without writing custom adapters.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_implementation
+    attributes:
+      label: Proposed Implementation
+      description: |
+        If you have ideas about how this could be implemented, please share them:
+        - Technical approach
+        - Required changes
+        - Potential challenges
+      placeholder: |
+        Example:
+        1. Add GraphQL adapter interface
+        2. Implement query/mutation mapping to MCP tools
+        3. Add GraphQL schema validation
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: |
+        Have you considered alternative approaches?
+        What are the trade-offs between different approaches?
+    validations:
+      required: false
+
+  - type: textarea
+    id: example_usage
+    attributes:
+      label: Example Usage
+      description: |
+        Please provide examples of how this feature would be used:
+        - Configuration examples
+        - API call examples
+        - Use case examples
+      render: shell
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: considerations
+    attributes:
+      label: Implementation Considerations
+      description: Please confirm you've thought about these aspects
+      options:
+        - label: Backward compatibility impact
+        - label: Performance implications
+        - label: Security considerations
+        - label: Documentation requirements
+        - label: Testing requirements
+        - label: Database schema changes
+        - label: API changes
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: |
+        Any additional information that would help us understand your proposal:
+        - Links to related issues or discussions
+        - Screenshots or diagrams
+        - External references or similar implementations
+    validations:
+      required: false

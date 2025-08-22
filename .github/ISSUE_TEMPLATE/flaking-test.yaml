@@ -1,0 +1,131 @@
+name: Flaking Test
+description: Report intermittently failing tests in MCP Gateway's test suite
+labels: kind/flake
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please use this template to report tests that are flaking (passing and failing inconsistently).
+        This helps us identify and fix reliability issues in our test suite.
+
+  - type: dropdown
+    id: test_type
+    attributes:
+      label: Test Type
+      multiple: true
+      options:
+        - Unit Tests
+        - Integration Tests
+        - Transport Layer Tests
+        - Virtual Server Tests
+        - Database Tests
+        - Frontend Tests
+        - End-to-End Tests
+    validations:
+      required: true
+
+  - type: textarea
+    id: flaking_tests
+    attributes:
+      label: Which tests are flaking?
+      description: |
+        Please provide the specific test names and file locations.
+        Include the success/failure ratio if known.
+      placeholder: |
+        Example:
+        - TestWebSocketConnection in internal/transport/websocket_test.go (fails ~20% of runs)
+        - TestRateLimiting in internal/ratelimit/service_test.go (fails occasionally under high load)
+    validations:
+      required: true
+
+  - type: textarea
+    id: failure_pattern
+    attributes:
+      label: Failure Pattern
+      description: |
+        Please describe any patterns you've noticed about when/how the test fails:
+        - Time of day
+        - System load
+        - Test order
+        - Concurrent tests
+        - Resource constraints
+    validations:
+      required: true
+
+  - type: textarea
+    id: error_output
+    attributes:
+      label: Example Error Output
+      description: |
+        Please provide example error output from a failed run.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: since_when
+    attributes:
+      label: Since when has it been flaking?
+      description: |
+        When did you first notice the flakiness?
+        Has it gotten worse over time?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Increase Likelihood of Flake
+      description: |
+        Please provide any steps that seem to increase the likelihood of seeing the flake:
+        - Specific test commands
+        - Environment conditions
+        - Concurrent operations
+      placeholder: |
+        Example:
+        1. Run with race detector: go test -race ./...
+        2. Run multiple times in parallel: go test -count=100 -parallel=4 ./...
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Test Environment
+      value: |
+        - Go Version: [e.g., 1.21.0]
+        - OS: [e.g., Ubuntu 22.04, macOS 13.0]
+        - PostgreSQL Version: [e.g., 14.0]
+        - Node Version (if frontend): [e.g., 18.12.0]
+        - Memory/CPU: [e.g., 16GB RAM, 8 cores]
+    validations:
+      required: true
+
+  - type: dropdown
+    id: components
+    attributes:
+      label: Affected Components
+      multiple: true
+      options:
+        - Core Gateway
+        - Virtual Servers
+        - Transport Layer
+        - Database Layer
+        - Frontend
+        - Authentication
+        - Rate Limiting
+        - Logging
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Information
+      description: |
+        Any additional context that might help us understand and fix the flaky test:
+        - Related issues or PRs
+        - Recent changes that might have introduced the flakiness
+        - Theories about what might be causing the issue
+    validations:
+      required: false
