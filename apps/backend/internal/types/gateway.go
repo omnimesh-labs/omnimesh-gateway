@@ -153,3 +153,27 @@ const (
 	ProcessStatusError    = "error"
 )
 
+// FilteringMetrics represents filtering system metrics
+type FilteringMetrics struct {
+	TotalRequests      int64                  `json:"total_requests"`
+	TotalBlocked       int64                  `json:"total_blocked"`
+	TotalModified      int64                  `json:"total_modified"`
+	FilterStats        map[string]*FilterStat `json:"filter_stats"`
+	ViolationsByType   map[string]int64       `json:"violations_by_type"`
+	ProcessingTime     time.Duration          `json:"processing_time"`
+	LastReset          time.Time              `json:"last_reset"`
+}
+
+// FilterStat represents statistics for a specific filter
+type FilterStat struct {
+	Name              string        `json:"name"`
+	Type              string        `json:"type"`
+	RequestsProcessed int64         `json:"requests_processed"`
+	Violations        int64         `json:"violations"`
+	Blocks            int64         `json:"blocks"`
+	Modifications     int64         `json:"modifications"`
+	AverageLatency    time.Duration `json:"average_latency"`
+	LastActive        time.Time     `json:"last_active"`
+	Errors            int64         `json:"errors"`
+}
+

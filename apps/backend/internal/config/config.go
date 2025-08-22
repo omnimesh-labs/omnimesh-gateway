@@ -21,6 +21,7 @@ type Config struct {
 	Redis        RedisConfig        `yaml:"redis"`
 	MCPDiscovery MCPDiscoveryConfig `yaml:"mcp_discovery"`
 	Transport    TransportConfig    `yaml:"transport"`
+	Filters      FiltersConfig      `yaml:"filters"`
 }
 
 // ServerConfig holds HTTP server configuration
@@ -154,6 +155,22 @@ type PathRewriteConfig struct {
 	Enabled  bool                    `yaml:"enabled"`
 	Rules    []types.PathRewriteRule `yaml:"rules"`
 	LogLevel string                  `yaml:"log_level"`
+}
+
+// FiltersConfig holds content filtering configuration
+type FiltersConfig struct {
+	Enabled         bool                     `yaml:"enabled" env:"FILTERS_ENABLED"`
+	DatabaseDriven  bool                     `yaml:"database_driven"`
+	DefaultFilters  map[string]interface{}   `yaml:"default_filters"`
+	GlobalSettings  FilterGlobalSettings     `yaml:"global_settings"`
+}
+
+// FilterGlobalSettings holds global filter settings
+type FilterGlobalSettings struct {
+	MaxViolationsPerRequest int    `yaml:"max_violations_per_request"`
+	LogAllViolations        bool   `yaml:"log_all_violations"`
+	BlockOnHighSeverity     bool   `yaml:"block_on_high_severity"`
+	DefaultAction           string `yaml:"default_action"`
 }
 
 // Load loads configuration from file and environment variables
