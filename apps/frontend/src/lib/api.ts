@@ -77,6 +77,83 @@ export interface CreateServerRequest {
     metadata?: Record<string, string>;
 }
 
+// Logging and Audit Types
+export interface LogEntry {
+    id: string;
+    organization_id: string;
+    server_id?: string;
+    session_id?: string;
+    rpc_method?: string;
+    level: 'debug' | 'info' | 'warn' | 'error';
+    started_at: string;
+    duration_ms?: number;
+    status_code?: number;
+    error_flag: boolean;
+    storage_provider: string;
+    object_uri: string;
+    byte_offset?: number;
+    user_id: string;
+    remote_ip?: string;
+    client_id?: string;
+    connection_id?: string;
+    created_at: string;
+}
+
+export interface AuditLogEntry {
+    id: string;
+    organization_id: string;
+    action: string;
+    resource_type: string;
+    resource_id?: string;
+    actor_id: string;
+    actor_ip?: string;
+    old_values?: Record<string, any>;
+    new_values?: Record<string, any>;
+    metadata?: Record<string, any>;
+    created_at: string;
+}
+
+export interface LogQueryParams {
+    start_time?: string;
+    end_time?: string;
+    level?: string;
+    type?: string;
+    user_id?: string;
+    method?: string;
+    path?: string;
+    search?: string;
+    limit?: number;
+    offset?: number;
+}
+
+export interface AuditQueryParams {
+    resource_type?: string;
+    action?: string;
+    actor_id?: string;
+    limit?: number;
+    offset?: number;
+}
+
+export interface SystemStats {
+    users: {
+        total: number;
+        active: number;
+    };
+    servers: {
+        total: number;
+        healthy: number;
+    };
+    requests: {
+        total: number;
+        successful: number;
+        failed: number;
+    };
+    rate_limits: {
+        total_limits: number;
+        blocked: number;
+    };
+}
+
 const API_BASE_URL = 'http://localhost:8080/api';
 
 // Generic fetch wrapper with error handling
@@ -218,5 +295,65 @@ export const sessionApi = {
         await apiRequest<ApiResponse<any>>(`/gateway/sessions/${sessionId}`, {
             method: 'DELETE',
         });
+    },
+};
+
+// Admin & Logging APIs
+export const adminApi = {
+    // Get system logs with filtering
+    async getLogs(params?: LogQueryParams): Promise<LogEntry[]> {
+        const queryParams = new URLSearchParams();
+        if (params) {
+            Object.entries(params).forEach(([key, value]) => {
+                if (value !== undefined) {
+                    queryParams.append(key, value.toString());
+                }
+            });
+        }
+        
+        const response = await apiRequest<ApiResponse<LogEntry[]>>(
+            `/admin/logs${queryParams.toString() ? '?' + queryParams.toString() : ''}`
+        );
+        return response.data;
+    },
+
+    // Get audit trail logs
+    async getAuditLogs(params?: AuditQueryParams): Promise<{ data: AuditLogEntry[], pagination: { limit: number, offset: number, total: number } }> {
+        const queryParams = new URLSearchParams();
+        if (params) {
+            Object.entries(params).forEach(([key, value]) => {
+                if (value !== undefined) {
+                    queryParams.append(key, value.toString());
+                }
+            });
+        }
+        
+        const response = await apiRequest<ApiResponse<{ data: AuditLogEntry[], pagination: { limit: number, offset: number, total: number } }>>(
+            `/admin/audit${queryParams.toString() ? '?' + queryParams.toString() : ''}`
+        );
+        return response.data;
+    },
+
+    // Get system statistics
+    async getStats(): Promise<SystemStats> {
+        const response = await apiRequest<ApiResponse<SystemStats>>('/admin/stats');
+        return response.data;
+    },
+
+    // Get Prometheus metrics (raw text)
+    async getMetrics(): Promise<string> {
+        const response = await fetch(`${API_BASE_URL}/admin/metrics`, {
+            headers: {
+                'Accept': 'text/plain',
+            },
+            mode: 'cors',
+            credentials: 'include',
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        return response.text();
     },
 };

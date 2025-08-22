@@ -249,6 +249,51 @@ func (h *AdminHandler) GetLogs(c *gin.Context) {
 	})
 }
 
+// GetAuditLogs retrieves audit logs
+func (h *AdminHandler) GetAuditLogs(c *gin.Context) {
+	// Parse query parameters
+	limit := 100
+	offset := 0
+	
+	if l := c.Query("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil {
+			limit = parsed
+		}
+	}
+	
+	if o := c.Query("offset"); o != "" {
+		if parsed, err := strconv.Atoi(o); err == nil {
+			offset = parsed
+		}
+	}
+	
+	resourceType := c.Query("resource_type")
+	action := c.Query("action")
+	actorID := c.Query("actor_id")
+	
+	// TODO: Set organization ID from context
+	// orgID, _ := c.Get("organization_id")
+	
+	// TODO: Implement audit log retrieval logic
+	// For now, return empty result with proper structure
+	auditLogs := []gin.H{}
+	
+	// Filter logic would be implemented here
+	_ = resourceType
+	_ = action
+	_ = actorID
+	
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    auditLogs,
+		"pagination": gin.H{
+			"limit":  limit,
+			"offset": offset,
+			"total":  0,
+		},
+	})
+}
+
 // GetStats returns system statistics
 func (h *AdminHandler) GetStats(c *gin.Context) {
 	orgID, _ := c.Get("organization_id")

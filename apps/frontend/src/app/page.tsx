@@ -82,13 +82,46 @@ export default function HomePage() {
           padding: '1.5rem' 
         }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#333', marginBottom: '0.75rem' }}>
+            Logging & Audit
+          </h2>
+          <p style={{ color: '#666', marginBottom: '1rem' }}>
+            Monitor system logs and audit trail
+          </p>
+          <a
+            href="/logs"
+            style={{ 
+              background: '#8b5cf6', 
+              color: 'white', 
+              padding: '0.5rem 1rem', 
+              borderRadius: '6px', 
+              border: 'none',
+              fontSize: '0.875rem',
+              textDecoration: 'none',
+              display: 'inline-block',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = '#7c3aed'}
+            onMouseOut={(e) => e.currentTarget.style.background = '#8b5cf6'}
+          >
+            View Logs
+          </a>
+        </div>
+
+        <div style={{ 
+          background: 'white', 
+          borderRadius: '8px', 
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)', 
+          padding: '1.5rem' 
+        }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#333', marginBottom: '0.75rem' }}>
             Analytics
           </h2>
           <p style={{ color: '#666', marginBottom: '1rem' }}>
             View usage statistics and performance metrics
           </p>
           <button style={{ 
-            background: '#8b5cf6', 
+            background: '#f59e0b', 
             color: 'white', 
             padding: '0.5rem 1rem', 
             borderRadius: '6px', 
@@ -114,6 +147,7 @@ export default function HomePage() {
         </p>
         <ul style={{ color: '#666', paddingLeft: '1.5rem' }}>
           <li style={{ marginBottom: '0.5rem' }}>Manage and monitor MCP server instances</li>
+          <li style={{ marginBottom: '0.5rem' }}>Monitor system logs and audit administrative actions</li>
           <li style={{ marginBottom: '0.5rem' }}>Configure gateway proxy settings</li>
           <li style={{ marginBottom: '0.5rem' }}>View real-time analytics and performance metrics</li>
           <li style={{ marginBottom: '0.5rem' }}>Set up authentication and access policies</li>

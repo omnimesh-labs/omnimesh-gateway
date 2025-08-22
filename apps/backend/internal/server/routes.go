@@ -87,6 +87,9 @@ func (s *Server) RegisterRoutes() http.Handler {
 	gatewayHandler := handlers.NewGatewayHandler(discoveryService, legacyProxy, mcpProxy)
 	virtualAdminHandler := handlers.NewVirtualAdminHandler(virtualService)
 	virtualMCPHandler := handlers.NewVirtualMCPHandler(virtualService)
+	
+	// Initialize admin handler (for logging and system management)
+	adminHandler := handlers.NewAdminHandler(nil, s.logging.(*logging.Service), nil)
 
 	// Initialize transport handlers
 	rpcHandler := handlers.NewRPCHandler(transportManager)
@@ -137,9 +140,16 @@ func (s *Server) RegisterRoutes() http.Handler {
 			gateway.Any("/proxy/*path", gatewayHandler.ProxyRequest)
 		}
 
-		// Admin routes for virtual servers
+		// Admin routes for virtual servers and system management
 		admin := api.Group("/admin")
 		{
+			// Logging and audit routes
+			admin.GET("/logs", adminHandler.GetLogs)
+			admin.GET("/audit", adminHandler.GetAuditLogs)
+			admin.GET("/stats", adminHandler.GetStats)
+			admin.GET("/metrics", adminHandler.GetMetrics)
+			
+			// Virtual server management
 			virtual := admin.Group("/virtual-servers")
 			{
 				virtual.POST("", loggingMiddleware.AuditLogger("create", "virtual-server"), virtualAdminHandler.CreateVirtualServer)
