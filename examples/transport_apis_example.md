@@ -479,6 +479,92 @@ done
 
 6. **Server registration**: For server-specific endpoints, you need to register servers first through the gateway API.
 
+## 10. Quick Smoke Tests
+
+These are simplified smoke tests to quickly verify all transports are working:
+
+### Basic Server Health
+```bash
+curl -s http://localhost:8080/health | jq .
+```
+
+### JSON-RPC Smoke Test
+```bash
+# Test ping method
+curl -s -X POST http://localhost:8080/rpc \
+  -H "Content-Type: application/json" \
+  -d '{"id":"test-1","jsonrpc":"2.0","method":"ping","params":{}}' | jq .
+
+# Test tools/list method  
+curl -s -X POST http://localhost:8080/rpc \
+  -H "Content-Type: application/json" \
+  -d '{"id":"test-2","jsonrpc":"2.0","method":"tools/list","params":{}}' | jq .
+
+# Test health and introspection
+curl -s http://localhost:8080/rpc/health | jq .
+curl -s http://localhost:8080/rpc/introspection | jq .
+```
+
+### SSE Smoke Test
+```bash
+# Test health and status
+curl -s http://localhost:8080/sse/health | jq .
+curl -s http://localhost:8080/sse/status | jq .
+```
+
+### WebSocket Smoke Test  
+```bash
+# Test health and status
+curl -s http://localhost:8080/ws/health | jq .
+curl -s http://localhost:8080/ws/status | jq .
+```
+
+### MCP Streamable HTTP Smoke Test
+```bash
+# Test health, capabilities, and status
+curl -s http://localhost:8080/mcp/health | jq .
+curl -s http://localhost:8080/mcp/capabilities | jq .  
+curl -s http://localhost:8080/mcp/status | jq .
+
+# Test GET request (JSON mode)
+curl -s http://localhost:8080/mcp | jq .
+```
+
+### STDIO Smoke Test
+```bash
+# Test health
+curl -s http://localhost:8080/stdio/health | jq .
+```
+
+### Server-Specific Endpoint Smoke Test
+```bash
+# Test server-specific JSON-RPC (uses path rewriting middleware)
+curl -s -X POST http://localhost:8080/servers/test-server/rpc \
+  -H "Content-Type: application/json" \
+  -d '{"id":"test-proxy","jsonrpc":"2.0","method":"ping","params":{}}' | jq .
+```
+
+### Virtual MCP Server Smoke Test
+```bash
+# Test virtual MCP JSON-RPC endpoint
+curl -s -X POST http://localhost:8080/mcp/rpc \
+  -H "Content-Type: application/json" \
+  -d '{"id":"virtual-test","jsonrpc":"2.0","method":"tools/list","params":{}}' | jq .
+
+# List virtual servers
+curl -s http://localhost:8080/api/admin/virtual-servers | jq .
+```
+
+### All Transport Health Check
+```bash
+echo "=== Transport Health Status ==="
+echo "JSON-RPC:" && curl -s http://localhost:8080/rpc/health | jq '.status'
+echo "SSE:" && curl -s http://localhost:8080/sse/health | jq '.status'  
+echo "WebSocket:" && curl -s http://localhost:8080/ws/health | jq '.status'
+echo "MCP:" && curl -s http://localhost:8080/mcp/health | jq '.status'
+echo "STDIO:" && curl -s http://localhost:8080/stdio/health | jq '.status'
+```
+
 ## Monitoring and Debugging
 
 ### Check Gateway Health

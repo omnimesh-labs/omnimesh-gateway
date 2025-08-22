@@ -16,8 +16,8 @@ import (
 type StreamableTransport interface {
 	types.Transport
 	GetStreamMode() string
-	GetEventsSince(time.Time) []types.TransportEvent
-	GetLatestEvents(int) []types.TransportEvent
+	GetEventsSince(time.Time) []*types.TransportEvent
+	GetLatestEvents(int) []*types.TransportEvent
 	IsStateful() bool
 }
 
