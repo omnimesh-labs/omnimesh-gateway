@@ -523,9 +523,12 @@ make setup-admin
 make run
 
 # In another terminal, start frontend
-cd apps/frontend && npm run dev
+cd apps/frontend && bun run dev
 ```
 
 **Admin Credentials**: `team@wraithscan.com` / `qwerty123`
 
 The codebase provides a comprehensive foundation for a production-ready MCP Gateway with enterprise features and multi-protocol support.
+
+## IMPORTANT NOTES
+- ALWAYS use `bun` instead of `npm`

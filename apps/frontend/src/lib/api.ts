@@ -209,6 +209,46 @@ export interface UpdateProfileRequest {
     new_password?: string;
 }
 
+// Policy Management Types
+export interface Policy {
+    id: string;
+    organization_id: string;
+    name: string;
+    description: string;
+    type: 'access' | 'rate_limit' | 'routing' | 'security';
+    priority: number;
+    conditions: Record<string, any>;
+    actions: Record<string, any>;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CreatePolicyRequest {
+    name: string;
+    description: string;
+    type: 'access' | 'rate_limit' | 'routing' | 'security';
+    priority: number;
+    conditions: Record<string, any>;
+    actions: Record<string, any>;
+}
+
+export interface UpdatePolicyRequest {
+    name?: string;
+    description?: string;
+    priority?: number;
+    conditions?: Record<string, any>;
+    actions?: Record<string, any>;
+    is_active?: boolean;
+}
+
+export interface PolicyListResponse {
+    policies: Policy[];
+    total: number;
+    limit: number;
+    offset: number;
+}
+
 const API_BASE_URL = 'http://localhost:8080/api';
 
 // Get access token from localStorage
@@ -589,4 +629,58 @@ export const authApi = {
 
     // Clear authentication tokens
     clearTokens,
+};
+
+// Policy Management APIs
+export const policyApi = {
+    // List all policies with optional filtering
+    async listPolicies(params?: {
+        type?: string;
+        is_active?: boolean;
+        limit?: number;
+        offset?: number;
+    }): Promise<PolicyListResponse> {
+        const queryParams = new URLSearchParams();
+        if (params?.type) queryParams.append('type', params.type);
+        if (params?.is_active !== undefined) queryParams.append('is_active', params.is_active.toString());
+        if (params?.limit) queryParams.append('limit', params.limit.toString());
+        if (params?.offset) queryParams.append('offset', params.offset.toString());
+
+        const response = await apiRequest<PolicyListResponse>(
+            `/admin/policies${queryParams.toString() ? '?' + queryParams.toString() : ''}`
+        );
+        return response;
+    },
+
+    // Get specific policy details
+    async getPolicy(id: string): Promise<{ policy: Policy }> {
+        const response = await apiRequest<{ policy: Policy }>(`/admin/policies/${id}`);
+        return response;
+    },
+
+    // Create a new policy
+    async createPolicy(policyData: CreatePolicyRequest): Promise<{ message: string; policy: Policy; user_id: string }> {
+        const response = await apiRequest<{ message: string; policy: Policy; user_id: string }>('/admin/policies', {
+            method: 'POST',
+            body: JSON.stringify(policyData),
+        });
+        return response;
+    },
+
+    // Update an existing policy
+    async updatePolicy(id: string, policyData: UpdatePolicyRequest): Promise<{ message: string; policy_id: string }> {
+        const response = await apiRequest<{ message: string; policy_id: string }>(`/admin/policies/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(policyData),
+        });
+        return response;
+    },
+
+    // Delete a policy
+    async deletePolicy(id: string): Promise<{ message: string; policy_id: string }> {
+        const response = await apiRequest<{ message: string; policy_id: string }>(`/admin/policies/${id}`, {
+            method: 'DELETE',
+        });
+        return response;
+    },
 };

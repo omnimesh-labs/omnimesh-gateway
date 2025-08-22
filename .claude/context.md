@@ -35,3 +35,4 @@ This is a production-ready API gateway for Model Context Protocol (MCP) servers,
 2. Follow `IMPLEMENTATION_GUIDE.md` for step-by-step development
 3. Refer to `.claude/architecture.md` for system design details
 4. Use `.claude/database-schema.md` for database queries and schema
+5. Use `bun` over `npm` for frontend development

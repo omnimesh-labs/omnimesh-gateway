@@ -92,6 +92,9 @@ func (s *Server) RegisterRoutes() http.Handler {
 	// Initialize admin handler (for logging and system management)
 	adminHandler := handlers.NewAdminHandler(nil, s.logging.(*logging.Service), nil)
 	
+	// Initialize policy handler
+	policyHandler := handlers.NewPolicyHandler(s.db.GetDB())
+	
 	// Initialize authentication service
 	authConfig := &auth.Config{
 		JWTSecret:          s.cfg.Auth.JWTSecret,
@@ -266,6 +269,34 @@ func (s *Server) RegisterRoutes() http.Handler {
 				virtual.POST("/:id/tools/:tool/test", 
 					authMiddleware.RequireResourceAccess("virtual_server", "write"),
 					virtualAdminHandler.TestVirtualServerTool)
+			}
+			
+			// Policy management - requires admin access and policy permissions  
+			policies := admin.Group("/policies")
+			{
+				policies.GET("", 
+					authMiddleware.RequireAdmin(),
+					authMiddleware.RequirePermission(types.PermissionRead),
+					policyHandler.ListPolicies)
+				policies.POST("", 
+					authMiddleware.RequireAdmin(),
+					authMiddleware.RequirePermission(types.PermissionWrite),
+					loggingMiddleware.AuditLogger("create", "policy"), 
+					policyHandler.CreatePolicy)
+				policies.GET("/:id", 
+					authMiddleware.RequireAdmin(),
+					authMiddleware.RequirePermission(types.PermissionRead),
+					policyHandler.GetPolicy)
+				policies.PUT("/:id", 
+					authMiddleware.RequireAdmin(),
+					authMiddleware.RequirePermission(types.PermissionWrite),
+					loggingMiddleware.AuditLogger("update", "policy"), 
+					policyHandler.UpdatePolicy)
+				policies.DELETE("/:id", 
+					authMiddleware.RequireAdmin(),
+					authMiddleware.RequirePermission(types.PermissionDelete),
+					loggingMiddleware.AuditLogger("delete", "policy"), 
+					policyHandler.DeletePolicy)
 			}
 		}
 	}

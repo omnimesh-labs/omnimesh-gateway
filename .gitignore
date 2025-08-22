@@ -11,8 +11,7 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
-# Dependency directories (remove the comment below to include it)
-# vendor/
+*.tsbuildinfo
 
 # Go workspace file
 go.work
@@ -27,6 +26,7 @@ tmp/
 
 # Project build
 main
+api
 *templ.go
 
 # OS X generated file
