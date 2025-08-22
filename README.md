@@ -57,7 +57,7 @@ The MCP Gateway is designed with a modular architecture for scalability and main
                        └─────────────────┘
 ```
 
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed architectural documentation.
+See [.claude/architecture.md](./.claude/architecture.md) for detailed architectural documentation.
 
 ## Virtual Server Feature
 
