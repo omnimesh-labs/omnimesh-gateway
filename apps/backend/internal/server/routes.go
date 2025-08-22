@@ -9,6 +9,7 @@ import (
 	"mcp-gateway/apps/backend/internal/server/handlers"
 	"mcp-gateway/apps/backend/internal/transport"
 	"mcp-gateway/apps/backend/internal/types"
+	"mcp-gateway/apps/backend/internal/virtual"
 	"net/http"
 	"time"
 
@@ -78,9 +79,14 @@ func (s *Server) RegisterRoutes() http.Handler {
 		// Log error but continue - transport layer is optional
 	}
 
+	// Initialize virtual server service
+	virtualService := virtual.NewService(s.db.GetDB())
+
 	// Initialize handlers
 	mcpDiscoveryHandler := handlers.NewMCPDiscoveryHandler(mcpDiscoveryService)
 	gatewayHandler := handlers.NewGatewayHandler(discoveryService, legacyProxy, mcpProxy)
+	virtualAdminHandler := handlers.NewVirtualAdminHandler(virtualService)
+	virtualMCPHandler := handlers.NewVirtualMCPHandler(virtualService)
 
 	// Initialize transport handlers
 	rpcHandler := handlers.NewRPCHandler(transportManager)
@@ -88,6 +94,9 @@ func (s *Server) RegisterRoutes() http.Handler {
 	wsHandler := handlers.NewWebSocketHandler(transportManager)
 	mcpHandler := handlers.NewMCPHandler(transportManager)
 	stdioHandler := handlers.NewSTDIOHandler(transportManager)
+
+	// Virtual MCP JSON-RPC endpoint
+	r.POST("/mcp/rpc", virtualMCPHandler.HandleMCPRPC)
 
 	// API routes
 	api := r.Group("/api")
@@ -126,6 +135,21 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 			// Legacy proxy endpoint
 			gateway.Any("/proxy/*path", gatewayHandler.ProxyRequest)
+		}
+
+		// Admin routes for virtual servers
+		admin := api.Group("/admin")
+		{
+			virtual := admin.Group("/virtual-servers")
+			{
+				virtual.POST("", loggingMiddleware.AuditLogger("create", "virtual-server"), virtualAdminHandler.CreateVirtualServer)
+				virtual.GET("", virtualAdminHandler.ListVirtualServers)
+				virtual.GET("/:id", virtualAdminHandler.GetVirtualServer)
+				virtual.PUT("/:id", loggingMiddleware.AuditLogger("update", "virtual-server"), virtualAdminHandler.UpdateVirtualServer)
+				virtual.DELETE("/:id", loggingMiddleware.AuditLogger("delete", "virtual-server"), virtualAdminHandler.DeleteVirtualServer)
+				virtual.GET("/:id/tools", virtualAdminHandler.GetVirtualServerTools)
+				virtual.POST("/:id/tools/:tool/test", virtualAdminHandler.TestVirtualServerTool)
+			}
 		}
 	}
 

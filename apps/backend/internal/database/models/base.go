@@ -52,6 +52,7 @@ type Models struct {
 	LogAggregate   *LogAggregateModel
 	RateLimit      *RateLimitModel
 	RateLimitUsage *RateLimitUsageModel
+	VirtualServer  *VirtualServerModel
 
 	// Legacy models (deprecated - will be removed in future versions)
 	User *UserModel
@@ -60,7 +61,6 @@ type Models struct {
 // NewModels creates a new Models instance
 func NewModels(db Database) *Models {
 	return &Models{
-		// ERD-based models
 		Organization:   NewOrganizationModel(db),
 		MCPServer:      NewMCPServerModel(db),
 		MCPSession:     NewMCPSessionModel(db),
@@ -71,8 +71,7 @@ func NewModels(db Database) *Models {
 		LogAggregate:   NewLogAggregateModel(db),
 		RateLimit:      NewRateLimitModel(db),
 		RateLimitUsage: NewRateLimitUsageModel(db),
-
-		// Legacy models (deprecated)
-		User: NewUserModel(db),
+		VirtualServer:  NewVirtualServerModel(db),
+		User:           NewUserModel(db),
 	}
 }

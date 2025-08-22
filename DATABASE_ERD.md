@@ -40,6 +40,7 @@ CREATE TYPE log_level_enum AS ENUM ('trace','debug','info','warn','error','fatal
 CREATE TYPE plan_type_enum AS ENUM ('free','pro','enterprise');
 CREATE TYPE rate_limit_scope_enum AS ENUM ('global', 'server', 'user', 'ip');
 CREATE TYPE aggregation_window_enum AS ENUM ('hourly', 'daily');
+CREATE TYPE adapter_type_enum AS ENUM ('REST', 'GraphQL', 'gRPC', 'SOAP');
 
 -- Generic trigger for updated_at
 CREATE OR REPLACE FUNCTION set_updated_at()
@@ -165,6 +166,41 @@ CREATE TABLE mcp_sessions (
 
 CREATE TRIGGER mcp_sessions_updated_at 
     BEFORE UPDATE ON mcp_sessions 
+    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+```
+
+#### `virtual_servers`
+Virtual MCP servers that wrap non-MCP services (REST, GraphQL, gRPC, etc.).
+```sql
+CREATE TABLE virtual_servers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    
+    -- Basic information
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    adapter_type adapter_type_enum NOT NULL DEFAULT 'REST',
+    
+    -- Tool definitions stored as JSONB for flexibility
+    tools JSONB NOT NULL DEFAULT '[]',
+    
+    -- Status and metadata
+    is_active BOOLEAN DEFAULT true,
+    metadata JSONB DEFAULT '{}',
+    
+    -- Timestamps
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    
+    -- Constraints
+    UNIQUE(organization_id, name),
+    CONSTRAINT valid_tools_format CHECK (
+        jsonb_typeof(tools) = 'array'
+    )
+);
+
+CREATE TRIGGER virtual_servers_updated_at 
+    BEFORE UPDATE ON virtual_servers 
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 ```
 
@@ -300,6 +336,10 @@ CREATE TABLE audit_logs (
 
 CREATE INDEX idx_audit_logs_org_time ON audit_logs(organization_id, created_at DESC);
 CREATE INDEX idx_audit_logs_resource ON audit_logs(resource_type, resource_id, created_at DESC);
+
+-- Add virtual server support to audit logs
+ALTER TABLE audit_logs ADD COLUMN virtual_server_id UUID REFERENCES virtual_servers(id) ON DELETE SET NULL;
+CREATE INDEX idx_audit_logs_virtual_server ON audit_logs(virtual_server_id, created_at DESC) WHERE virtual_server_id IS NOT NULL;
 ```
 
 ### Rate Limiting Tables
@@ -424,6 +464,11 @@ CREATE INDEX idx_mcp_servers_org_status ON mcp_servers(organization_id, status);
 CREATE INDEX idx_mcp_sessions_server_status ON mcp_sessions(server_id, status);
 CREATE INDEX idx_mcp_sessions_org_active ON mcp_sessions(organization_id, status) WHERE status = 'active';
 
+-- Virtual servers indexes
+CREATE INDEX idx_virtual_servers_org_active ON virtual_servers(organization_id, is_active);
+CREATE INDEX idx_virtual_servers_adapter_type ON virtual_servers(adapter_type);
+CREATE INDEX idx_virtual_servers_name ON virtual_servers(organization_id, name);
+
 -- Cleanup indexes
 CREATE INDEX idx_health_checks_cleanup ON health_checks(checked_at) WHERE checked_at < NOW() - INTERVAL '30 days';
 CREATE INDEX idx_log_index_cleanup ON log_index(created_at) WHERE created_at < NOW() - INTERVAL '7 days';
@@ -447,6 +492,7 @@ Multi-tenant isolation policies (disabled in OSS, enabled in commercial).
 -- ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE mcp_servers ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE mcp_sessions ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE virtual_servers ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE log_index ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE rate_limits ENABLE ROW LEVEL SECURITY;
@@ -465,6 +511,9 @@ Multi-tenant isolation policies (disabled in OSS, enabled in commercial).
 --     USING (organization_id = current_setting('app.current_org')::uuid);
 
 -- CREATE POLICY org_isolation ON mcp_sessions
+--     USING (organization_id = current_setting('app.current_org')::uuid);
+
+-- CREATE POLICY org_isolation ON virtual_servers
 --     USING (organization_id = current_setting('app.current_org')::uuid);
 
 -- CREATE POLICY org_isolation ON log_index
