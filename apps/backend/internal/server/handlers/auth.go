@@ -32,7 +32,6 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	// TODO: Implement login logic
 	response, err := h.authService.Login(req.Email, req.Password)
 	if err != nil {
 		c.JSON(types.GetStatusCode(err), types.ErrorResponse{
@@ -59,7 +58,6 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	// TODO: Implement token refresh logic
 	response, err := h.authService.RefreshToken(req.RefreshToken)
 	if err != nil {
 		c.JSON(types.GetStatusCode(err), types.ErrorResponse{
@@ -92,7 +90,6 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 		token = token[7:]
 	}
 
-	// TODO: Implement logout logic
 	err := h.authService.Logout(token)
 	if err != nil {
 		c.JSON(types.GetStatusCode(err), types.ErrorResponse{
@@ -129,7 +126,6 @@ func (h *AuthHandler) CreateAPIKey(c *gin.Context) {
 		return
 	}
 
-	// TODO: Implement API key creation logic
 	apiKey, err := h.authService.CreateAPIKey(userID.(string), &req)
 	if err != nil {
 		c.JSON(types.GetStatusCode(err), types.ErrorResponse{
@@ -156,7 +152,6 @@ func (h *AuthHandler) GetProfile(c *gin.Context) {
 		return
 	}
 
-	// TODO: Implement profile retrieval logic
 	user, err := h.authService.GetUserByID(userID.(string))
 	if err != nil {
 		c.JSON(types.GetStatusCode(err), types.ErrorResponse{
@@ -192,7 +187,6 @@ func (h *AuthHandler) UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	// TODO: Implement profile update logic
 	user, err := h.authService.UpdateUser(userID.(string), &req)
 	if err != nil {
 		c.JSON(types.GetStatusCode(err), types.ErrorResponse{

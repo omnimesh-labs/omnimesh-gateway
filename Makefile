@@ -142,4 +142,25 @@ migrate-create:
 	@read -p "Enter migration name: " name; \
 	cd apps/backend && migrate create -ext sql -dir migrations -seq $$name
 
-.PHONY: all build run test clean watch docker-run docker-down itest migrate migrate-down migrate-status migrate-create test-transport test-integration test-unit test-rpc test-sse test-websocket test-mcp test-stdio test-coverage test-verbose test-all-transports
+# Setup commands for local development
+setup:
+	@echo "Running local development setup..."
+	@go run apps/backend/cmd/setup/main.go
+
+setup-admin:
+	@echo "Creating admin user..."
+	@go run apps/backend/cmd/setup/main.go admin
+
+setup-org:
+	@echo "Creating default organization..."
+	@go run apps/backend/cmd/setup/main.go org
+
+setup-dummy:
+	@echo "Adding dummy data..."
+	@go run apps/backend/cmd/setup/main.go dummy
+
+setup-reset:
+	@echo "Resetting database..."
+	@go run apps/backend/cmd/setup/main.go reset
+
+.PHONY: all build run test clean watch docker-run docker-down itest migrate migrate-down migrate-status migrate-create test-transport test-integration test-unit test-rpc test-sse test-websocket test-mcp test-stdio test-coverage test-verbose test-all-transports setup setup-admin setup-org setup-dummy setup-reset

@@ -1,8 +1,11 @@
 'use client';
 
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+
 export default function HomePage() {
   return (
-    <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+    <ProtectedRoute>
+      <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
       <header style={{ textAlign: 'center', marginBottom: '3rem' }}>
         <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#333', marginBottom: '1rem' }}>
           Dashboard
@@ -153,6 +156,7 @@ export default function HomePage() {
           <li style={{ marginBottom: '0.5rem' }}>Set up authentication and access policies</li>
         </ul>
       </section>
-    </div>
+      </div>
+    </ProtectedRoute>
   )
 }

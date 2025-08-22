@@ -154,7 +154,85 @@ export interface SystemStats {
     };
 }
 
+// Authentication Types
+export interface User {
+    id: string;
+    organization_id: string;
+    email: string;
+    role: 'admin' | 'user' | 'viewer';
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface LoginRequest {
+    email: string;
+    password: string;
+}
+
+export interface LoginResponse {
+    access_token: string;
+    refresh_token: string;
+    expires_in: number;
+    user: User;
+}
+
+export interface RefreshRequest {
+    refresh_token: string;
+}
+
+export interface ApiKey {
+    id: string;
+    name: string;
+    key_hash: string;
+    role: 'admin' | 'user' | 'viewer';
+    is_active: boolean;
+    expires_at?: string;
+    created_at: string;
+    last_used_at?: string;
+}
+
+export interface CreateApiKeyRequest {
+    name: string;
+    role: 'admin' | 'user' | 'viewer';
+    expires_at?: string;
+}
+
+export interface CreateApiKeyResponse {
+    api_key: ApiKey;
+    key: string; // The actual key value (only returned once)
+}
+
+export interface UpdateProfileRequest {
+    email?: string;
+    current_password?: string;
+    new_password?: string;
+}
+
 const API_BASE_URL = 'http://localhost:8080/api';
+
+// Get access token from localStorage
+function getAccessToken(): string | null {
+    if (typeof window !== 'undefined') {
+        return localStorage.getItem('access_token');
+    }
+    return null;
+}
+
+// Set access token in localStorage
+function setAccessToken(token: string): void {
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('access_token', token);
+    }
+}
+
+// Remove tokens from localStorage
+function clearTokens(): void {
+    if (typeof window !== 'undefined') {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+    }
+}
 
 // Generic fetch wrapper with error handling
 async function apiRequest<T>(
@@ -162,11 +240,19 @@ async function apiRequest<T>(
     options: RequestInit = {}
 ): Promise<T> {
     try {
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+            ...options.headers as Record<string, string>,
+        };
+
+        // Add Authorization header if token exists
+        const token = getAccessToken();
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers,
-            },
+            headers,
             mode: 'cors', // Explicitly set CORS mode
             credentials: 'include', // Include credentials for CORS
             ...options,
@@ -310,7 +396,7 @@ export const adminApi = {
                 }
             });
         }
-        
+
         const response = await apiRequest<ApiResponse<LogEntry[]>>(
             `/admin/logs${queryParams.toString() ? '?' + queryParams.toString() : ''}`
         );
@@ -327,7 +413,7 @@ export const adminApi = {
                 }
             });
         }
-        
+
         const response = await apiRequest<ApiResponse<{ data: AuditLogEntry[], pagination: { limit: number, offset: number, total: number } }>>(
             `/admin/audit${queryParams.toString() ? '?' + queryParams.toString() : ''}`
         );
@@ -349,11 +435,106 @@ export const adminApi = {
             mode: 'cors',
             credentials: 'include',
         });
-        
+
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
-        
+
         return response.text();
     },
+};
+
+// Authentication APIs
+export const authApi = {
+    // Login user
+    async login(credentials: LoginRequest): Promise<LoginResponse> {
+        const response = await apiRequest<ApiResponse<LoginResponse>>('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify(credentials),
+        });
+
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('access_token', response.data.access_token);
+            localStorage.setItem('refresh_token', response.data.refresh_token);
+        }
+
+        return response.data;
+    },
+
+    // Refresh access token
+    async refresh(): Promise<LoginResponse> {
+        const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
+        if (!refreshToken) {
+            throw new Error('No refresh token available');
+        }
+
+        const response = await apiRequest<ApiResponse<LoginResponse>>('/auth/refresh', {
+            method: 'POST',
+            body: JSON.stringify({ refresh_token: refreshToken }),
+        });
+
+        // Update tokens in localStorage
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('access_token', response.data.access_token);
+            localStorage.setItem('refresh_token', response.data.refresh_token);
+        }
+
+        return response.data;
+    },
+
+    // Logout user
+    async logout(): Promise<void> {
+        try {
+            await apiRequest<ApiResponse<any>>('/auth/logout', {
+                method: 'POST',
+            });
+        } finally {
+            clearTokens();
+        }
+    },
+
+    // Get user profile
+    async getProfile(): Promise<User> {
+        const response = await apiRequest<ApiResponse<User>>('/auth/profile');
+        return response.data;
+    },
+
+    // Update user profile
+    async updateProfile(updates: UpdateProfileRequest): Promise<User> {
+        const response = await apiRequest<ApiResponse<User>>('/auth/profile', {
+            method: 'PUT',
+            body: JSON.stringify(updates),
+        });
+        return response.data;
+    },
+
+    // Create API key
+    async createApiKey(keyData: CreateApiKeyRequest): Promise<CreateApiKeyResponse> {
+        const response = await apiRequest<ApiResponse<CreateApiKeyResponse>>('/auth/api-keys', {
+            method: 'POST',
+            body: JSON.stringify(keyData),
+        });
+        return response.data;
+    },
+
+    // List API keys
+    async listApiKeys(): Promise<ApiKey[]> {
+        const response = await apiRequest<ApiResponse<ApiKey[]>>('/auth/api-keys');
+        return response.data;
+    },
+
+    // Delete API key
+    async deleteApiKey(keyId: string): Promise<void> {
+        await apiRequest<ApiResponse<any>>(`/auth/api-keys/${keyId}`, {
+            method: 'DELETE',
+        });
+    },
+
+    // Check if user is authenticated
+    isAuthenticated(): boolean {
+        return getAccessToken() !== null;
+    },
+
+    // Clear authentication tokens
+    clearTokens,
 };

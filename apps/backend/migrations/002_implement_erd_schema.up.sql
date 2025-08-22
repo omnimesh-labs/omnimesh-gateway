@@ -470,6 +470,83 @@ LEFT JOIN LATERAL (
     LIMIT 1
 ) ss ON true;
 
+-- Authentication Tables (Users, API Keys, Policies)
+
+-- Users table - Authentication and authorization
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email CITEXT UNIQUE NOT NULL, -- Case-insensitive email
+    name VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    role VARCHAR(50) NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'user', 'viewer', 'api_user', 'system_admin')),
+    is_active BOOLEAN DEFAULT true,
+    email_verified BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TRIGGER users_updated_at 
+    BEFORE UPDATE ON users 
+    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- API Keys table
+CREATE TABLE api_keys (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    key_hash VARCHAR(255) UNIQUE NOT NULL,
+    prefix VARCHAR(20) NOT NULL, -- For key identification (e.g., "mcp_sk_")
+    permissions TEXT[] DEFAULT ARRAY[]::TEXT[], -- Array of permission strings
+    expires_at TIMESTAMP WITH TIME ZONE,
+    last_used_at TIMESTAMP WITH TIME ZONE,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TRIGGER api_keys_updated_at 
+    BEFORE UPDATE ON api_keys 
+    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- Policies table - Access control policies
+CREATE TABLE policies (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    type VARCHAR(50) NOT NULL CHECK (type IN ('access', 'rate_limit', 'routing', 'security')),
+    priority INTEGER DEFAULT 100 CHECK (priority >= 1 AND priority <= 1000),
+    conditions JSONB NOT NULL DEFAULT '{}',
+    actions JSONB NOT NULL DEFAULT '{}',
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_by UUID NOT NULL REFERENCES users(id),
+    
+    UNIQUE(organization_id, name)
+);
+
+CREATE TRIGGER policies_updated_at 
+    BEFORE UPDATE ON policies 
+    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- Users indexes
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_org_active ON users(organization_id, is_active);
+CREATE INDEX idx_users_role ON users(role);
+
+-- API Keys indexes
+CREATE INDEX idx_api_keys_user_org ON api_keys(user_id, organization_id);
+CREATE INDEX idx_api_keys_active ON api_keys(is_active);
+CREATE INDEX idx_api_keys_expires ON api_keys(expires_at);
+CREATE INDEX idx_api_keys_prefix ON api_keys(prefix);
+
+-- Policies indexes
+CREATE INDEX idx_policies_org_active ON policies(organization_id, is_active);
+CREATE INDEX idx_policies_type_priority ON policies(type, priority);
+
 -- Insert default organization for single-tenant mode
 INSERT INTO organizations (id, name, slug, plan_type, max_servers, max_sessions, log_retention_days)
 VALUES (

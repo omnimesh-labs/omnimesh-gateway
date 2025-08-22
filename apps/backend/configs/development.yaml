@@ -6,13 +6,12 @@ server:
   idle_timeout: 120s
   tls:
     enabled: false
-
 database:
   host: "localhost"
   port: 5432
-  database: "mcp_gateway_dev"
-  user: "postgres"
-  password: "postgres"
+  database: "blueprint"
+  user: "melkey" 
+  password: "password1234"
   ssl_mode: "disable"
   max_open_conns: 25
   max_idle_conns: 5

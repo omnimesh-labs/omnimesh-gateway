@@ -1,0 +1,49 @@
+# Example authentication configuration for MCP Gateway
+# Copy to development.yaml or production.yaml and customize
+
+server:
+  host: "localhost"
+  port: 8080
+  read_timeout: 30s
+  write_timeout: 30s
+  idle_timeout: 120s
+
+database:
+  host: "localhost"
+  port: 5432
+  user: "mcp_gateway"
+  password: "your_db_password"
+  database: "mcp_gateway"
+  ssl_mode: "prefer"
+
+auth:
+  jwt_secret: "your-very-secure-jwt-secret-key-change-this-in-production"
+  access_token_expiry: 15m      # 15 minutes for access tokens
+  refresh_token_expiry: 168h    # 7 days for refresh tokens (7 * 24h)
+  bcrypt_cost: 12               # Higher in production for more security
+
+logging:
+  level: "info"
+  environment: "development"
+  backend: "file"
+  format: "json"
+  request_logging: true
+  audit_logging: true
+  metrics_enabled: true
+  retention_days: 7
+
+rate_limit:
+  enabled: true
+  requests_per_minute: 60
+  requests_per_hour: 1000
+  burst_limit: 10
+
+# Redis configuration for production token blacklisting
+redis:
+  enabled: false  # Set to true in production
+  host: "localhost"
+  port: 6379
+  password: ""
+  db: 0
+  max_retries: 3
+  pool_size: 10

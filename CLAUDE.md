@@ -232,6 +232,57 @@ CREATE TABLE mcp_sessions (
 );
 ```
 
+#### Users & Authentication
+```sql
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email CITEXT UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    role VARCHAR(50) NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'user', 'viewer', 'api_user', 'system_admin')),
+    is_active BOOLEAN DEFAULT true,
+    email_verified BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+#### API Keys
+```sql
+CREATE TABLE api_keys (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    key_hash VARCHAR(255) UNIQUE NOT NULL,
+    prefix VARCHAR(20) NOT NULL,
+    permissions TEXT[] DEFAULT ARRAY[]::TEXT[],
+    expires_at TIMESTAMP WITH TIME ZONE,
+    last_used_at TIMESTAMP WITH TIME ZONE,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+#### Virtual Servers
+```sql
+CREATE TABLE virtual_servers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    adapter_type adapter_type_enum NOT NULL DEFAULT 'REST',
+    tools JSONB NOT NULL DEFAULT '[]',
+    is_active BOOLEAN DEFAULT true,
+    metadata JSONB DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(organization_id, name)
+);
+```
+
 #### Logging & Audit
 - **log_index**: Fast queries with pointers to detailed logs in object storage
 - **audit_logs**: High-level audit trail for administrative actions
@@ -248,10 +299,12 @@ CREATE TABLE mcp_sessions (
 ## API Endpoints
 
 ### Authentication
-- `POST /auth/login` - User login
+- `POST /auth/login` - Username/password login
 - `POST /auth/refresh` - Token refresh
 - `POST /auth/logout` - User logout
-- `POST /auth/api-keys` - Generate API key
+- `POST /auth/api-keys` - Create API keys
+- `GET /auth/profile` - Get user profile
+- `PUT /auth/profile` - Update user profile
 
 ### Gateway Management
 - `GET /gateway/servers` - List available MCP servers
@@ -362,6 +415,13 @@ make test-stdio             # STDIO tests
 # Development
 make watch                  # Live reload with air
 make clean                  # Clean build artifacts
+
+# Local Setup
+make setup                  # Interactive setup menu
+make setup-admin            # Create admin user (team@wraithscan.com)
+make setup-org              # Create default organization
+make setup-dummy            # Add dummy test data
+make setup-reset            # Reset database (WARNING: deletes all data)
 ```
 
 ### Configuration
@@ -445,8 +505,27 @@ Following the **IMPLEMENTATION_GUIDE.md**, the main areas needing business logic
 1. **Prerequisites**: Go 1.25+, PostgreSQL, Docker (optional)
 2. **Environment Setup**: Create `.env` file with database credentials
 3. **Database Setup**: `make docker-run` and `make migrate`
-4. **Build & Run**: `make build && make run`
-5. **Development**: `make watch` for live reload
-6. **Testing**: `make test` for full test suite
+4. **Create Admin User**: `make setup-admin` (creates team@wraithscan.com / qwerty123)
+5. **Build & Run**: `make build && make run`
+6. **Development**: `make watch` for live reload
+7. **Testing**: `make test` for full test suite
+
+### Quick Start for Authentication
+```bash
+# Start database and apply migrations
+make docker-run
+make migrate
+
+# Create admin user for testing
+make setup-admin
+
+# Start the backend server
+make run
+
+# In another terminal, start frontend
+cd apps/frontend && npm run dev
+```
+
+**Admin Credentials**: `team@wraithscan.com` / `qwerty123`
 
 The codebase provides a comprehensive foundation for a production-ready MCP Gateway with enterprise features and multi-protocol support.

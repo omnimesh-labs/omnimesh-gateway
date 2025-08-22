@@ -6,6 +6,7 @@ import { AvailableServersList } from '@/components/servers/AvailableServersList'
 import { RegisterServerModal } from '@/components/servers/RegisterServerModal';
 import { HealthCheck } from '@/components/HealthCheck';
 import { useToast } from '@/components/Toast';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { serverApi, type MCPServer } from '@/lib/api';
 
 export default function ServersPage() {
@@ -58,16 +59,18 @@ export default function ServersPage() {
 
   if (loading && registeredServers.length === 0) {
     return (
-      <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', padding: '2rem' }}>
-          <div style={{ fontSize: '1.125rem', color: '#666' }}>Loading servers...</div>
+      <ProtectedRoute>
+        <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            <div style={{ fontSize: '1.125rem', color: '#666' }}>Loading servers...</div>
+          </div>
         </div>
-      </div>
+      </ProtectedRoute>
     );
   }
 
   return (
-    <>
+    <ProtectedRoute>
       <ToastContainer />
       <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
       <header style={{ marginBottom: '2rem' }}>
@@ -219,6 +222,6 @@ export default function ServersPage() {
         />
       )}
     </div>
-    </>
+    </ProtectedRoute>
   );
 }

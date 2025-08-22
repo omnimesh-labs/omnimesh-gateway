@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"mcp-gateway/apps/backend/internal/auth"
 	"mcp-gateway/apps/backend/internal/discovery"
 	"mcp-gateway/apps/backend/internal/gateway"
 	"mcp-gateway/apps/backend/internal/logging"
@@ -90,6 +91,31 @@ func (s *Server) RegisterRoutes() http.Handler {
 	
 	// Initialize admin handler (for logging and system management)
 	adminHandler := handlers.NewAdminHandler(nil, s.logging.(*logging.Service), nil)
+	
+	// Initialize authentication service
+	authConfig := &auth.Config{
+		JWTSecret:          s.cfg.Auth.JWTSecret,
+		AccessTokenExpiry:  s.cfg.Auth.AccessTokenExpiry,
+		RefreshTokenExpiry: s.cfg.Auth.RefreshTokenExpiry,
+		BCryptCost:         s.cfg.Auth.BCryptCost,
+	}
+	
+	// Set defaults if not configured
+	if authConfig.JWTSecret == "" {
+		authConfig.JWTSecret = "development-secret-change-in-production" // TODO: Get from env
+	}
+	if authConfig.AccessTokenExpiry == 0 {
+		authConfig.AccessTokenExpiry = 15 * time.Minute
+	}
+	if authConfig.RefreshTokenExpiry == 0 {
+		authConfig.RefreshTokenExpiry = 24 * time.Hour
+	}
+	if authConfig.BCryptCost == 0 {
+		authConfig.BCryptCost = 12
+	}
+	
+	authService := auth.NewService(s.db.GetDB(), authConfig)
+	authHandler := handlers.NewAuthHandler(authService)
 
 	// Initialize transport handlers
 	rpcHandler := handlers.NewRPCHandler(transportManager)
@@ -104,6 +130,17 @@ func (s *Server) RegisterRoutes() http.Handler {
 	// API routes
 	api := r.Group("/api")
 	{
+		// Authentication routes (public - no auth required)
+		auth := api.Group("/auth")
+		{
+			auth.POST("/login", authHandler.Login)
+			auth.POST("/refresh", authHandler.RefreshToken)
+			auth.POST("/logout", authHandler.Logout)
+			auth.POST("/api-keys", authHandler.CreateAPIKey)
+			auth.GET("/profile", authHandler.GetProfile)
+			auth.PUT("/profile", authHandler.UpdateProfile)
+		}
+
 		// MCP Discovery routes
 		mcp := api.Group("/mcp")
 		{
