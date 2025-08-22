@@ -12,7 +12,7 @@ type Registry struct {
 	db      *sql.DB
 	mu      sync.RWMutex
 	servers map[string]*types.MCPServer
-	stats   map[string]*types.LoadBalancerStats
+	stats   map[string]*types.ServerStats
 }
 
 // NewRegistry creates a new server registry
@@ -20,7 +20,7 @@ func NewRegistry(db *sql.DB) *Registry {
 	return &Registry{
 		db:      db,
 		servers: make(map[string]*types.MCPServer),
-		stats:   make(map[string]*types.LoadBalancerStats),
+		stats:   make(map[string]*types.ServerStats),
 	}
 }
 
@@ -106,7 +106,7 @@ func (r *Registry) UpdateServerStatus(serverID, status string) error {
 }
 
 // GetServerStats returns statistics for a server
-func (r *Registry) GetServerStats(serverID string) (*types.LoadBalancerStats, bool) {
+func (r *Registry) GetServerStats(serverID string) (*types.ServerStats, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -115,7 +115,7 @@ func (r *Registry) GetServerStats(serverID string) (*types.LoadBalancerStats, bo
 }
 
 // UpdateServerStats updates statistics for a server
-func (r *Registry) UpdateServerStats(serverID string, stats *types.LoadBalancerStats) {
+func (r *Registry) UpdateServerStats(serverID string, stats *types.ServerStats) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -159,9 +159,8 @@ func (r *Registry) LoadFromDatabase() error {
 
 // initializeStats initializes statistics for a server
 func (r *Registry) initializeStats(serverID string) {
-	r.stats[serverID] = &types.LoadBalancerStats{
+	r.stats[serverID] = &types.ServerStats{
 		ServerID:        serverID,
-		ActiveRequests:  0,
 		TotalRequests:   0,
 		SuccessRequests: 0,
 		ErrorRequests:   0,

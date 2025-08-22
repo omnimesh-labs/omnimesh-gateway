@@ -99,7 +99,6 @@ func (s *Service) RegisterServer(orgID string, req *types.CreateMCPServerRequest
 		Environment:    pq.StringArray(req.Environment),
 		WorkingDir:     sql.NullString{String: req.WorkingDir, Valid: req.WorkingDir != ""},
 		Version:        sql.NullString{String: req.Version, Valid: req.Version != ""},
-		Weight:         req.Weight,
 		TimeoutSeconds: int(req.Timeout.Seconds()),
 		MaxRetries:     req.MaxRetries,
 		Status:         types.ServerStatusInactive, // Start as inactive
@@ -110,9 +109,6 @@ func (s *Service) RegisterServer(orgID string, req *types.CreateMCPServerRequest
 	}
 
 	// Set default values if not provided
-	if server.Weight == 0 {
-		server.Weight = 100
-	}
 	if server.TimeoutSeconds == 0 {
 		server.TimeoutSeconds = 30
 	}
@@ -270,9 +266,6 @@ func (s *Service) UpdateServer(serverID string, req *types.UpdateMCPServerReques
 	if req.Version != "" {
 		server.Version = sql.NullString{String: req.Version, Valid: true}
 	}
-	if req.Weight > 0 {
-		server.Weight = req.Weight
-	}
 	if req.Metadata != nil {
 		server.Metadata = convertStringMapToInterface(req.Metadata)
 	}
@@ -319,7 +312,7 @@ func (s *Service) UpdateServer(serverID string, req *types.UpdateMCPServerReques
 }
 
 // GetServerStats returns server statistics
-func (s *Service) GetServerStats(serverID string) (*types.LoadBalancerStats, error) {
+func (s *Service) GetServerStats(serverID string) (*types.ServerStats, error) {
 	// TODO: Implement server statistics retrieval
 	return nil, nil
 }
@@ -392,7 +385,6 @@ func convertModelToTypesMCPServer(server *models.MCPServer) *types.MCPServer {
 		Protocol:       server.Protocol,
 		Version:        server.Version.String,
 		Status:         server.Status,
-		Weight:         server.Weight,
 		Timeout:        time.Duration(server.TimeoutSeconds) * time.Second,
 		MaxRetries:     server.MaxRetries,
 		IsActive:       server.IsActive,

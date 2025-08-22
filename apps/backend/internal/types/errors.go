@@ -151,6 +151,10 @@ func NewServiceUnavailableError(message string) *Error {
 	return NewError(ErrCodeServiceUnavailable, message, http.StatusServiceUnavailable)
 }
 
+func NewNotImplementedError(message string) *Error {
+	return NewError("NOT_IMPLEMENTED", message, http.StatusNotImplemented)
+}
+
 func NewTimeoutError(message string) *Error {
 	return NewError(ErrCodeTimeout, message, http.StatusGatewayTimeout)
 }

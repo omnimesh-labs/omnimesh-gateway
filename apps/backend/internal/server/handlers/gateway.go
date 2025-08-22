@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"mcp-gateway/apps/backend/internal/discovery"
-	"mcp-gateway/apps/backend/internal/gateway"
 	"mcp-gateway/apps/backend/internal/types"
 
 	"github.com/gin-gonic/gin"
@@ -14,16 +13,12 @@ import (
 // GatewayHandler handles gateway management endpoints
 type GatewayHandler struct {
 	discoveryService *discovery.Service
-	proxy            *gateway.Proxy
-	mcpProxy         *gateway.MCPProxy
 }
 
 // NewGatewayHandler creates a new gateway handler
-func NewGatewayHandler(discoveryService *discovery.Service, proxy *gateway.Proxy, mcpProxy *gateway.MCPProxy) *GatewayHandler {
+func NewGatewayHandler(discoveryService *discovery.Service) *GatewayHandler {
 	return &GatewayHandler{
 		discoveryService: discoveryService,
-		proxy:            proxy,
-		mcpProxy:         mcpProxy,
 	}
 }
 
@@ -220,9 +215,12 @@ func (h *GatewayHandler) GetServerStats(c *gin.Context) {
 	})
 }
 
-// ProxyRequest proxies requests to MCP servers
+// ProxyRequest is deprecated - proxy functionality removed
 func (h *GatewayHandler) ProxyRequest(c *gin.Context) {
-	h.proxy.ProxyRequest(c)
+	c.JSON(http.StatusNotImplemented, types.ErrorResponse{
+		Error:   types.NewNotImplementedError("Proxy functionality has been removed"),
+		Success: false,
+	})
 }
 
 // CreateMCPSession creates a new MCP session
@@ -239,71 +237,33 @@ func (h *GatewayHandler) CreateMCPSession(c *gin.Context) {
 		return
 	}
 
-	// Get server details
-	server, err := h.discoveryService.GetServer(req.ServerID)
-	if err != nil {
-		typesErr := convertToTypesError(err)
-		c.JSON(types.GetStatusCode(typesErr), types.ErrorResponse{
-			Error:   typesErr,
-			Success: false,
-		})
-		return
-	}
-
-	// Create session with default values for single-tenant
-	session, err := h.mcpProxy.CreateSession("default-user", "default-org", server)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
-			Error:   types.NewInternalError(err.Error()),
-			Success: false,
-		})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{
-		"success": true,
-		"data":    session,
+	// MCP session functionality removed - return not implemented
+	c.JSON(http.StatusNotImplemented, types.ErrorResponse{
+		Error:   types.NewInternalError("MCP session functionality has been removed"),
+		Success: false,
 	})
 }
 
 // HandleMCPWebSocket handles MCP WebSocket connections
 func (h *GatewayHandler) HandleMCPWebSocket(c *gin.Context) {
-	h.mcpProxy.HandleWebSocket(c)
+	c.JSON(http.StatusNotImplemented, types.ErrorResponse{
+		Error:   types.NewInternalError("MCP WebSocket functionality has been removed"),
+		Success: false,
+	})
 }
 
 // ListMCPSessions lists all MCP sessions
 func (h *GatewayHandler) ListMCPSessions(c *gin.Context) {
-	sessions := h.mcpProxy.ListSessions("default-org")
-
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"data":    sessions,
+	c.JSON(http.StatusNotImplemented, types.ErrorResponse{
+		Error:   types.NewInternalError("MCP session functionality has been removed"),
+		Success: false,
 	})
 }
 
 // CloseMCPSession closes an MCP session
 func (h *GatewayHandler) CloseMCPSession(c *gin.Context) {
-	sessionID := c.Param("session_id")
-	if sessionID == "" {
-		c.JSON(http.StatusBadRequest, types.ErrorResponse{
-			Error:   types.NewValidationError("Session ID is required"),
-			Success: false,
-		})
-		return
-	}
-
-	err := h.mcpProxy.CloseSession(sessionID)
-	if err != nil {
-		typesErr := convertToTypesError(err)
-		c.JSON(types.GetStatusCode(typesErr), types.ErrorResponse{
-			Error:   typesErr,
-			Success: false,
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "Session closed successfully",
+	c.JSON(http.StatusNotImplemented, types.ErrorResponse{
+		Error:   types.NewInternalError("MCP session functionality has been removed"),
+		Success: false,
 	})
 }

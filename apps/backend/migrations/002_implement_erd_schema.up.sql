@@ -91,7 +91,6 @@ CREATE TABLE mcp_servers (
     
     -- Configuration
     version VARCHAR(50),
-    weight INTEGER DEFAULT 100,
     timeout_seconds INTEGER DEFAULT 300,
     max_retries INTEGER DEFAULT 3,
     
@@ -108,15 +107,14 @@ CREATE TABLE mcp_servers (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     
     UNIQUE(organization_id, name),
-    CONSTRAINT valid_timeout CHECK (timeout_seconds > 0 AND timeout_seconds <= 3600),
-    CONSTRAINT valid_weight CHECK (weight >= 0 AND weight <= 1000)
+    CONSTRAINT valid_timeout CHECK (timeout_seconds > 0 AND timeout_seconds <= 3600)
 );
 
 CREATE TRIGGER mcp_servers_updated_at 
     BEFORE UPDATE ON mcp_servers 
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
--- MCP Sessions - Active MCP proxy sessions
+-- MCP Sessions - Active MCP sessions
 CREATE TABLE mcp_sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -126,7 +124,7 @@ CREATE TABLE mcp_sessions (
     status session_status_enum DEFAULT 'initializing',
     protocol protocol_enum NOT NULL,
     
-    -- Observability IDs for correlation across proxy <-> DB <-> logs
+    -- Observability IDs for correlation across sessions <-> DB <-> logs
     client_id UUID, -- Client/request identifier
     connection_id UUID, -- WebSocket/HTTP connection identifier
     
@@ -181,7 +179,7 @@ CREATE TABLE health_checks (
 CREATE TABLE health_checks_current PARTITION OF health_checks
     FOR VALUES FROM (date_trunc('month', NOW())) TO (date_trunc('month', NOW() + INTERVAL '1 month'));
 
--- Server Stats - Aggregate statistics for load balancing and monitoring
+-- Server Stats - Aggregate statistics for monitoring
 CREATE TABLE server_stats (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     server_id UUID NOT NULL REFERENCES mcp_servers(id) ON DELETE CASCADE,
@@ -516,7 +514,7 @@ CREATE TABLE policies (
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    type VARCHAR(50) NOT NULL CHECK (type IN ('access', 'rate_limit', 'routing', 'security')),
+    type VARCHAR(50) NOT NULL CHECK (type IN ('access', 'rate_limit', 'security')),
     priority INTEGER DEFAULT 100 CHECK (priority >= 1 AND priority <= 1000),
     conditions JSONB NOT NULL DEFAULT '{}',
     actions JSONB NOT NULL DEFAULT '{}',

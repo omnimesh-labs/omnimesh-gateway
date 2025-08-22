@@ -4,7 +4,6 @@ import (
 	"context"
 	"mcp-gateway/apps/backend/internal/auth"
 	"mcp-gateway/apps/backend/internal/discovery"
-	"mcp-gateway/apps/backend/internal/gateway"
 	"mcp-gateway/apps/backend/internal/logging"
 	"mcp-gateway/apps/backend/internal/middleware"
 	"mcp-gateway/apps/backend/internal/server/handlers"
@@ -60,18 +59,6 @@ func (s *Server) RegisterRoutes() http.Handler {
 	}
 	discoveryService := discovery.NewService(s.db.GetDB(), discoveryConfig)
 
-	// Initialize proxy services
-	proxyConfig := &types.MCPProxyConfig{
-		MaxConcurrentSessions: 100,
-		SessionTimeout:        30 * time.Minute,
-		ProcessTimeout:        5 * time.Minute,
-		BufferSize:            4096,
-		EnableLogging:         true,
-		LogLevel:              "info",
-	}
-	mcpProxy := gateway.NewMCPProxy(proxyConfig)
-
-	legacyProxy := gateway.NewProxy(nil, nil)
 
 	// Initialize transport manager
 	transportConfig := s.cfg.Transport.ToTransportConfig()
@@ -85,7 +72,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	// Initialize handlers
 	mcpDiscoveryHandler := handlers.NewMCPDiscoveryHandler(mcpDiscoveryService)
-	gatewayHandler := handlers.NewGatewayHandler(discoveryService, legacyProxy, mcpProxy)
+	gatewayHandler := handlers.NewGatewayHandler(discoveryService)
 	virtualAdminHandler := handlers.NewVirtualAdminHandler(virtualService)
 	virtualMCPHandler := handlers.NewVirtualMCPHandler(virtualService)
 	
@@ -213,10 +200,6 @@ func (s *Server) RegisterRoutes() http.Handler {
 				authMiddleware.RequireResourceAccess("session", "write"),
 				gatewayHandler.HandleMCPWebSocket)
 
-			// Legacy proxy endpoint - requires user level access
-			gateway.Any("/proxy/*path", 
-				authMiddleware.RequireUser(),
-				gatewayHandler.ProxyRequest)
 		}
 
 		// Admin routes for virtual servers and system management (protected)
@@ -298,6 +281,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 					loggingMiddleware.AuditLogger("delete", "policy"), 
 					policyHandler.DeletePolicy)
 			}
+			
 		}
 	}
 

@@ -9,7 +9,6 @@ This MCP (Model Context Protocol) Gateway provides organization-level policies, 
 3. **Rate Limiting** - Per-user, per-org, and per-endpoint rate limiting
 4. **MCP Server Discovery** - Dynamic discovery and health checking of MCP servers
 5. **Gateway Configuration** - Flexible policy management and configuration
-6. **Proxy & Load Balancing** - Intelligent routing to MCP servers
 
 ## Directory Structure
 

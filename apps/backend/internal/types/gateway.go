@@ -12,7 +12,6 @@ type MCPServer struct {
 	Protocol       string            `json:"protocol" db:"protocol"` // "http", "websocket", "sse", "stdio"
 	Version        string            `json:"version" db:"version"`
 	Status         string            `json:"status" db:"status"` // "active", "inactive", "unhealthy"
-	Weight         int               `json:"weight" db:"weight"`
 	Metadata       map[string]string `json:"metadata" db:"metadata"`
 	HealthCheckURL string            `json:"health_check_url" db:"health_check_url"`
 	Timeout        time.Duration     `json:"timeout" db:"timeout"`
@@ -39,36 +38,9 @@ type HealthCheck struct {
 	CheckedAt time.Time `json:"checked_at" db:"checked_at"`
 }
 
-// ProxyRequest represents a proxied request
-type ProxyRequest struct {
-	ID             string            `json:"id"`
-	UserID         string            `json:"user_id"`
-	OrganizationID string            `json:"organization_id"`
-	ServerID       string            `json:"server_id"`
-	Method         string            `json:"method"`
-	Path           string            `json:"path"`
-	Headers        map[string]string `json:"headers"`
-	Body           []byte            `json:"body,omitempty"`
-	RemoteIP       string            `json:"remote_ip"`
-	UserAgent      string            `json:"user_agent"`
-	StartTime      time.Time         `json:"start_time"`
-}
-
-// ProxyResponse represents a proxied response
-type ProxyResponse struct {
-	RequestID  string            `json:"request_id"`
-	StatusCode int               `json:"status_code"`
-	Headers    map[string]string `json:"headers"`
-	Body       []byte            `json:"body,omitempty"`
-	Latency    time.Duration     `json:"latency"`
-	Error      string            `json:"error,omitempty"`
-	EndTime    time.Time         `json:"end_time"`
-}
-
-// LoadBalancerStats represents load balancer statistics
-type LoadBalancerStats struct {
+// ServerStats represents basic server statistics
+type ServerStats struct {
 	ServerID        string    `json:"server_id"`
-	ActiveRequests  int       `json:"active_requests"`
 	TotalRequests   int64     `json:"total_requests"`
 	SuccessRequests int64     `json:"success_requests"`
 	ErrorRequests   int64     `json:"error_requests"`
@@ -76,15 +48,6 @@ type LoadBalancerStats struct {
 	LastRequest     time.Time `json:"last_request"`
 }
 
-// CircuitBreakerState represents circuit breaker state
-type CircuitBreakerState struct {
-	ServerID      string    `json:"server_id"`
-	State         string    `json:"state"` // "closed", "open", "half_open"
-	FailureCount  int       `json:"failure_count"`
-	SuccessCount  int       `json:"success_count"`
-	LastFailure   time.Time `json:"last_failure"`
-	NextRetryTime time.Time `json:"next_retry_time"`
-}
 
 // CreateMCPServerRequest represents an MCP server registration request
 type CreateMCPServerRequest struct {
@@ -93,7 +56,6 @@ type CreateMCPServerRequest struct {
 	URL            string            `json:"url" binding:"omitempty,url"` // Optional for stdio servers
 	Protocol       string            `json:"protocol" binding:"required"`
 	Version        string            `json:"version"`
-	Weight         int               `json:"weight"`
 	Metadata       map[string]string `json:"metadata"`
 	HealthCheckURL string            `json:"health_check_url" binding:"omitempty,url"`
 	Timeout        time.Duration     `json:"timeout"`
@@ -113,7 +75,6 @@ type UpdateMCPServerRequest struct {
 	URL            string            `json:"url,omitempty" binding:"omitempty,url"`
 	Protocol       string            `json:"protocol,omitempty"`
 	Version        string            `json:"version,omitempty"`
-	Weight         int               `json:"weight,omitempty"`
 	Metadata       map[string]string `json:"metadata,omitempty"`
 	HealthCheckURL string            `json:"health_check_url,omitempty" binding:"omitempty,url"`
 	Timeout        time.Duration     `json:"timeout,omitempty"`
@@ -152,44 +113,7 @@ const (
 	HealthStatusError     = "error"
 )
 
-// Circuit breaker state constants
-const (
-	CircuitBreakerClosed   = "closed"
-	CircuitBreakerOpen     = "open"
-	CircuitBreakerHalfOpen = "half_open"
-)
 
-// Load balancer algorithm constants
-const (
-	LoadBalancerRoundRobin = "round_robin"
-	LoadBalancerLeastConn  = "least_conn"
-	LoadBalancerWeighted   = "weighted"
-	LoadBalancerRandom     = "random"
-)
-
-// MCPProxySession represents an active MCP proxy session
-type MCPProxySession struct {
-	ID             string                 `json:"id"`
-	UserID         string                 `json:"user_id"`
-	OrganizationID string                 `json:"organization_id"`
-	ServerID       string                 `json:"server_id"`
-	Server         *MCPServer             `json:"server"`
-	Protocol       string                 `json:"protocol"`
-	Status         string                 `json:"status"` // "initializing", "active", "closed", "error"
-	StartedAt      time.Time              `json:"started_at"`
-	LastActivity   time.Time              `json:"last_activity"`
-	EndedAt        *time.Time             `json:"ended_at,omitempty"`
-	Metadata       map[string]interface{} `json:"metadata"`
-
-	// For stdio sessions
-	Process    *MCPProcess `json:"process,omitempty"`
-	StdinPipe  interface{} `json:"-"` // io.WriteCloser
-	StdoutPipe interface{} `json:"-"` // io.ReadCloser
-	StderrPipe interface{} `json:"-"` // io.ReadCloser
-
-	// For HTTP sessions
-	HTTPClient *interface{} `json:"-"` // *http.Client
-}
 
 // MCPProcess represents a running MCP server process
 type MCPProcess struct {
@@ -203,8 +127,8 @@ type MCPProcess struct {
 	Error     string     `json:"error,omitempty"`
 }
 
-// MCPProxyConfig represents proxy configuration
-type MCPProxyConfig struct {
+// MCPConfig represents MCP configuration
+type MCPConfig struct {
 	MaxConcurrentSessions int           `json:"max_concurrent_sessions"`
 	SessionTimeout        time.Duration `json:"session_timeout"`
 	ProcessTimeout        time.Duration `json:"process_timeout"`
@@ -213,7 +137,7 @@ type MCPProxyConfig struct {
 	LogLevel              string        `json:"log_level"`
 }
 
-// MCP proxy session status constants
+// MCP session status constants
 const (
 	SessionStatusInitializing = "initializing"
 	SessionStatusActive       = "active"
@@ -228,3 +152,4 @@ const (
 	ProcessStatusStopped  = "stopped"
 	ProcessStatusError    = "error"
 )
+

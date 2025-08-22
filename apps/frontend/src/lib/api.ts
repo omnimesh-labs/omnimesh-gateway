@@ -10,7 +10,6 @@ export interface MCPServer {
     protocol: string;
     version: string;
     status: 'active' | 'inactive' | 'unhealthy' | 'maintenance';
-    weight: number;
     metadata: Record<string, string>;
     health_check_url: string;
     timeout: number;
@@ -69,7 +68,6 @@ export interface CreateServerRequest {
     environment?: string[];
     url?: string;
     version?: string;
-    weight?: number;
     timeout?: number;
     max_retries?: number;
     health_check_url?: string;
@@ -215,7 +213,7 @@ export interface Policy {
     organization_id: string;
     name: string;
     description: string;
-    type: 'access' | 'rate_limit' | 'routing' | 'security';
+    type: 'access' | 'rate_limit' | 'security';
     priority: number;
     conditions: Record<string, any>;
     actions: Record<string, any>;
@@ -227,7 +225,7 @@ export interface Policy {
 export interface CreatePolicyRequest {
     name: string;
     description: string;
-    type: 'access' | 'rate_limit' | 'routing' | 'security';
+    type: 'access' | 'rate_limit' | 'security';
     priority: number;
     conditions: Record<string, any>;
     actions: Record<string, any>;

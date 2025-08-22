@@ -141,7 +141,6 @@ sessionApi.closeSession(sessionId)  // Close session
 - **Purpose**: Main landing page with navigation cards
 - **Features**:
   - Server Management card with direct navigation
-  - Gateway Proxy configuration (placeholder)
   - Analytics section (placeholder)
   - Quick start guide for new users
 

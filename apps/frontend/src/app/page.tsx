@@ -61,30 +61,6 @@ export default function HomePage() {
           padding: '1.5rem' 
         }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#333', marginBottom: '0.75rem' }}>
-            Gateway Proxy
-          </h2>
-          <p style={{ color: '#666', marginBottom: '1rem' }}>
-            Configure proxy settings and routing
-          </p>
-          <button style={{ 
-            background: '#10b981', 
-            color: 'white', 
-            padding: '0.5rem 1rem', 
-            borderRadius: '6px', 
-            border: 'none',
-            fontSize: '0.875rem'
-          }}>
-            Configure Proxy
-          </button>
-        </div>
-
-        <div style={{ 
-          background: 'white', 
-          borderRadius: '8px', 
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)', 
-          padding: '1.5rem' 
-        }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#333', marginBottom: '0.75rem' }}>
             Logging & Audit
           </h2>
           <p style={{ color: '#666', marginBottom: '1rem' }}>
@@ -151,7 +127,7 @@ export default function HomePage() {
         <ul style={{ color: '#666', paddingLeft: '1.5rem' }}>
           <li style={{ marginBottom: '0.5rem' }}>Manage and monitor MCP server instances</li>
           <li style={{ marginBottom: '0.5rem' }}>Monitor system logs and audit administrative actions</li>
-          <li style={{ marginBottom: '0.5rem' }}>Configure gateway proxy settings</li>
+          <li style={{ marginBottom: '0.5rem' }}>Configure gateway settings and policies</li>
           <li style={{ marginBottom: '0.5rem' }}>View real-time analytics and performance metrics</li>
           <li style={{ marginBottom: '0.5rem' }}>Set up authentication and access policies</li>
         </ul>

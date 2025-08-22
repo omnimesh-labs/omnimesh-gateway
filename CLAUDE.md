@@ -8,13 +8,13 @@ The **MCP Gateway** is a production-ready API gateway for Model Context Protocol
 - **Enterprise Infrastructure**: Organization-level policies, JWT authentication, and RBAC
 - **Multi-Protocol Support**: JSON-RPC, WebSocket, SSE, HTTP, and STDIO transports
 - **Service Virtualization**: Wrap REST/GraphQL/gRPC services as virtual MCP servers
-- **Production Ready**: Comprehensive logging, rate limiting, health monitoring, and load balancing
+- **Production Ready**: Comprehensive logging, rate limiting, and health monitoring
 
 ### Key Features
 - 🔐 **Authentication & Authorization** - JWT-based auth with org-level policies and API keys
 - 📊 **Comprehensive Logging** - Request/response logging, audit trails, performance metrics
 - ⚡ **Rate Limiting** - Multi-level rate limiting (user, org, endpoint) with sliding window algorithms
-- 🔍 **MCP Server Discovery** - Dynamic registration, health checking, and load balancing
+- 🔍 **MCP Server Discovery** - Dynamic registration and health checking
 - 🌐 **Service Virtualization** - Wrap non-MCP services as virtual MCP servers
 - 🔌 **Multi-Protocol Support** - JSON-RPC, WebSocket, SSE, HTTP, and STDIO transports
 - 🚀 **High Performance** - Built with Go and Gin for maximum throughput and low latency
@@ -55,10 +55,7 @@ mcp-gateway/
 │   │   │   │   ├── mcp_discovery.go # MCP discovery service
 │   │   │   │   └── service.go # Discovery service
 │   │   │   ├── gateway/      # Core gateway functionality
-│   │   │   │   ├── proxy.go  # HTTP proxy logic
-│   │   │   │   ├── router.go # Request routing
-│   │   │   │   ├── loadbalancer.go # Load balancing
-│   │   │   │   └── mcp_proxy.go # MCP-specific proxy
+│   │   │   │   └── service.go # Gateway service logic
 │   │   │   ├── logging/      # Logging & Audit
 │   │   │   │   ├── audit.go  # Audit logging
 │   │   │   │   ├── interfaces.go # Logging interfaces
@@ -177,7 +174,6 @@ CREATE TABLE mcp_servers (
     environment TEXT[],
     working_dir VARCHAR(500),
     version VARCHAR(50),
-    weight INTEGER DEFAULT 100,
     timeout_seconds INTEGER DEFAULT 300,
     max_retries INTEGER DEFAULT 3,
     status server_status_enum DEFAULT 'active',
@@ -294,7 +290,7 @@ CREATE TABLE virtual_servers (
 
 #### Health & Monitoring
 - **health_checks**: Track server health status over time
-- **server_stats**: Aggregate statistics for load balancing and monitoring
+- **server_stats**: Aggregate statistics for monitoring
 
 ## API Endpoints
 
@@ -475,14 +471,8 @@ Following the **IMPLEMENTATION_GUIDE.md**, the main areas needing business logic
 #### Phase 5: MCP Server Discovery
 1. Server registration and management
 2. Health monitoring implementation
-3. Load balancing algorithms
 
-#### Phase 6: Gateway Core
-1. HTTP proxy implementation
-2. Routing engine
-3. Circuit breaker patterns
-
-#### Phase 7: API Endpoints
+#### Phase 6: API Endpoints
 1. Authentication endpoints completion
 2. Gateway management endpoints
 3. Admin interface implementation
