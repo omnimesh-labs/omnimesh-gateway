@@ -14,6 +14,7 @@ export function Navigation() {
     { href: '/servers', label: 'Server Management' },
     { href: '/content', label: 'Content Management' },
     { href: '/policies', label: 'Policy Management' },
+    { href: '/configuration', label: 'Configuration' },
     { href: '/logs', label: 'Logging & Audit' },
   ];
 

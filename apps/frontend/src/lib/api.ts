@@ -157,7 +157,7 @@ export interface User {
     id: string;
     organization_id: string;
     email: string;
-    role: 'admin' | 'user' | 'viewer';
+    role: 'admin' | 'user' | 'viewer' | 'system_admin';
     is_active: boolean;
     created_at: string;
     updated_at: string;
@@ -183,7 +183,7 @@ export interface ApiKey {
     id: string;
     name: string;
     key_hash: string;
-    role: 'admin' | 'user' | 'viewer';
+    role: 'admin' | 'user' | 'viewer' | 'system_admin';
     is_active: boolean;
     expires_at?: string;
     created_at: string;
@@ -192,7 +192,7 @@ export interface ApiKey {
 
 export interface CreateApiKeyRequest {
     name: string;
-    role: 'admin' | 'user' | 'viewer';
+    role: 'admin' | 'user' | 'viewer' | 'system_admin';
     expires_at?: string;
 }
 
@@ -1054,4 +1054,289 @@ export const toolApi = {
         });
         return response;
     },
+};
+
+// Configuration Management Types
+export interface ConfigurationExport {
+    metadata: ExportMetadata;
+    servers?: any[];
+    virtualServers?: any[];
+    tools?: any[];
+    prompts?: any[];
+    resources?: any[];
+    policies?: any[];
+    rateLimits?: any[];
+}
+
+export interface ExportMetadata {
+    exportId: string;
+    timestamp: string;
+    version: string;
+    gateway: string;
+    organization: string;
+    entityTypes: string[];
+    totalEntities: number;
+    filters: ExportFilters;
+    exportedBy: string;
+    tags?: Record<string, string>;
+}
+
+export interface ExportFilters {
+    includeInactive: boolean;
+    includeDependencies: boolean;
+    tags?: string[];
+    dateRange?: DateRange;
+}
+
+export interface DateRange {
+    start: string;
+    end: string;
+}
+
+export interface ExportRequest {
+    entityTypes: string[];
+    includeInactive: boolean;
+    includeDependencies: boolean;
+    tags?: string[];
+    filters?: ExportFilters;
+}
+
+export interface ImportRequest {
+    configData: ConfigurationExport;
+    conflictStrategy: 'update' | 'skip' | 'rename' | 'fail';
+    dryRun: boolean;
+    rekeySecret?: string;
+    options?: ImportOptions;
+}
+
+export interface ImportOptions {
+    preserveIds?: boolean;
+    updateTimestamps?: boolean;
+    validateReferences?: boolean;
+    ignoreEntityTypes?: string[];
+}
+
+export interface ImportResult {
+    importId: string;
+    status: 'pending' | 'running' | 'completed' | 'failed' | 'partial' | 'validating';
+    summary: ImportSummary;
+    details?: ImportItemResult[];
+    errors?: ImportError[];
+    warnings?: ImportWarning[];
+    startedAt: string;
+    completedAt?: string;
+    duration?: number;
+}
+
+export interface ImportSummary {
+    totalItems: number;
+    processedItems: number;
+    createdItems: number;
+    updatedItems: number;
+    skippedItems: number;
+    failedItems: number;
+    entityCounts: Record<string, ImportEntityCount>;
+}
+
+export interface ImportEntityCount {
+    total: number;
+    created: number;
+    updated: number;
+    skipped: number;
+    failed: number;
+}
+
+export interface ImportItemResult {
+    entityType: string;
+    entityId?: string;
+    entityName: string;
+    action: 'create' | 'update' | 'skip' | 'rename';
+    status: string;
+    message?: string;
+    error?: string;
+    oldId?: string;
+    newId?: string;
+}
+
+export interface ImportError {
+    code: string;
+    message: string;
+    entityType?: string;
+    entityName?: string;
+    details?: Record<string, any>;
+}
+
+export interface ImportWarning {
+    code: string;
+    message: string;
+    entityType?: string;
+    entityName?: string;
+    details?: Record<string, any>;
+}
+
+export interface ImportHistory {
+    id: string;
+    organizationId: string;
+    filename: string;
+    entityTypes: string[];
+    status: 'pending' | 'running' | 'completed' | 'failed' | 'partial' | 'validating';
+    conflictStrategy: 'update' | 'skip' | 'rename' | 'fail';
+    dryRun: boolean;
+    summary: ImportSummary;
+    errorCount: number;
+    warningCount: number;
+    duration?: number;
+    importedBy: string;
+    metadata: Record<string, any>;
+    createdAt: string;
+    completedAt?: string;
+}
+
+export interface ValidateImportRequest {
+    configData: ConfigurationExport;
+}
+
+export interface ValidationResult {
+    valid: boolean;
+    errors: ValidationError[];
+    warnings: ValidationWarning[];
+    entityCounts: Record<string, number>;
+    conflicts: ConflictItem[];
+    dependencies: DependencyItem[];
+    compatibilityCheck: CompatibilityResult;
+}
+
+export interface ValidationError {
+    code: string;
+    message: string;
+    entityType?: string;
+    entityName?: string;
+    field?: string;
+    details?: Record<string, any>;
+}
+
+export interface ValidationWarning {
+    code: string;
+    message: string;
+    entityType?: string;
+    entityName?: string;
+    details?: Record<string, any>;
+}
+
+export interface ConflictItem {
+    entityType: string;
+    entityName: string;
+    conflictType: string;
+    existingValue: any;
+    importValue: any;
+    suggestion?: string;
+    details?: Record<string, any>;
+}
+
+export interface DependencyItem {
+    entityType: string;
+    entityName: string;
+    dependsOnType: string;
+    dependsOnName: string;
+    dependsOnId: string;
+    required: boolean;
+    missing: boolean;
+}
+
+export interface CompatibilityResult {
+    compatible: boolean;
+    version: string;
+    requiredVersion?: string;
+    missingFeatures?: string[];
+    unsupportedTypes?: string[];
+}
+
+export interface ImportHistoryQuery {
+    status?: string;
+    entityType?: string;
+    importedBy?: string;
+    startDate?: string;
+    endDate?: string;
+    limit?: number;
+    offset?: number;
+}
+
+// Configuration Management APIs
+export const configApi = {
+    // Export configuration with specified options
+    async exportConfiguration(request: ExportRequest): Promise<ConfigurationExport> {
+        const response = await apiRequest<ApiResponse<ConfigurationExport>>('/admin/config/export', {
+            method: 'POST',
+            body: JSON.stringify(request),
+        });
+        return response.data;
+    },
+
+    // Import configuration from file data
+    async importConfiguration(request: ImportRequest): Promise<ImportResult> {
+        const response = await apiRequest<ApiResponse<ImportResult>>('/admin/config/import', {
+            method: 'POST',
+            body: JSON.stringify(request),
+        });
+        return response.data;
+    },
+
+    // Validate import file without executing import
+    async validateImport(request: ValidateImportRequest): Promise<ValidationResult> {
+        const response = await apiRequest<ApiResponse<ValidationResult>>('/admin/config/validate', {
+            method: 'POST',
+            body: JSON.stringify(request),
+        });
+        return response.data;
+    },
+
+    // Get import history with optional filtering
+    async getImportHistory(params?: ImportHistoryQuery): Promise<{ data: ImportHistory[], pagination: { limit: number, offset: number, total: number } }> {
+        const queryParams = new URLSearchParams();
+        if (params) {
+            Object.entries(params).forEach(([key, value]) => {
+                if (value !== undefined) {
+                    queryParams.append(key, value.toString());
+                }
+            });
+        }
+
+        const response = await apiRequest<ApiResponse<{ data: ImportHistory[], pagination: { limit: number, offset: number, total: number } }>>(
+            `/admin/config/imports${queryParams.toString() ? '?' + queryParams.toString() : ''}`
+        );
+        return response.data;
+    },
+
+    // Helper function to parse configuration from file
+    async parseConfigurationFile(file: File): Promise<ConfigurationExport> {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const content = e.target?.result as string;
+                    const config = JSON.parse(content) as ConfigurationExport;
+                    resolve(config);
+                } catch (error) {
+                    reject(new Error('Invalid JSON file format'));
+                }
+            };
+            reader.onerror = () => reject(new Error('Failed to read file'));
+            reader.readAsText(file);
+        });
+    },
+
+    // Helper function to download configuration as file
+    downloadConfiguration(config: ConfigurationExport, filename?: string): void {
+        const blob = new Blob([JSON.stringify(config, null, 2)], {
+            type: 'application/json'
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename || `mcp-gateway-config-${Date.now()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
 };

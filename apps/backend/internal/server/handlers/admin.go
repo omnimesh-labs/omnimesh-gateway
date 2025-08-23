@@ -351,3 +351,280 @@ mcp_gateway_request_duration_seconds_sum 45.2
 mcp_gateway_request_duration_seconds_count 150
 `)
 }
+
+// ExportConfiguration exports configuration entities based on the request
+func (h *AdminHandler) ExportConfiguration(c *gin.Context) {
+	var req types.ExportRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   types.NewValidationError(err.Error()),
+			Success: false,
+		})
+		return
+	}
+
+	orgID, exists := c.Get("organization_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
+			Error:   types.NewUnauthorizedError("Organization ID not found"),
+			Success: false,
+		})
+		return
+	}
+
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
+			Error:   types.NewUnauthorizedError("User ID not found"),
+			Success: false,
+		})
+		return
+	}
+
+	// TODO: Implement actual configuration export logic
+	// This would involve:
+	// 1. Gathering all requested entity types from database
+	// 2. Applying filters (tags, active status, etc.)
+	// 3. Building the ConfigurationExport structure
+	// 4. Optionally storing export record in config_exports table
+
+	// For now, return a mock export structure
+	export := &types.ConfigurationExport{
+		Metadata: types.ExportMetadata{
+			ExportID:      "export-" + time.Now().Format("20060102-150405"),
+			Timestamp:     time.Now(),
+			Version:       "1.0.0",
+			Gateway:       "mcp-gateway",
+			Organization:  orgID.(string),
+			EntityTypes:   req.EntityTypes,
+			TotalEntities: 0,
+			Filters:       req.Filters,
+			ExportedBy:    userID.(string),
+		},
+		Servers:        []interface{}{},
+		VirtualServers: []interface{}{},
+		Tools:          []interface{}{},
+		Prompts:        []interface{}{},
+		Resources:      []interface{}{},
+		Policies:       []interface{}{},
+		RateLimits:     []interface{}{},
+	}
+
+	c.Header("Content-Type", "application/json")
+	c.Header("Content-Disposition", `attachment; filename="mcp-gateway-config-export.json"`)
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    export,
+	})
+}
+
+// ImportConfiguration imports configuration from an uploaded file
+func (h *AdminHandler) ImportConfiguration(c *gin.Context) {
+	var req types.ImportRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   types.NewValidationError(err.Error()),
+			Success: false,
+		})
+		return
+	}
+
+	orgID, exists := c.Get("organization_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
+			Error:   types.NewUnauthorizedError("Organization ID not found"),
+			Success: false,
+		})
+		return
+	}
+
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
+			Error:   types.NewUnauthorizedError("User ID not found"),
+			Success: false,
+		})
+		return
+	}
+
+	// TODO: Implement actual configuration import logic
+	// This would involve:
+	// 1. Validating the import data structure
+	// 2. Checking for conflicts based on strategy
+	// 3. Creating/updating entities based on conflict resolution
+	// 4. Recording the import operation in config_imports table
+	// 5. Handling dependencies and references
+
+	// For now, return a mock import result
+	importID := "import-" + time.Now().Format("20060102-150405")
+	startTime := time.Now()
+	
+	// Use orgID and userID to prevent "unused" warnings
+	_ = orgID
+	_ = userID
+	
+	// Simulate processing
+	result := &types.ImportResult{
+		ImportID:  importID,
+		Status:    types.ImportStatusCompleted,
+		Summary: types.ImportSummary{
+			TotalItems:     0,
+			ProcessedItems: 0,
+			CreatedItems:   0,
+			UpdatedItems:   0,
+			SkippedItems:   0,
+			FailedItems:    0,
+			EntityCounts:   make(map[string]types.ImportEntityCount),
+		},
+		Details:   []types.ImportItemResult{},
+		Errors:    []types.ImportError{},
+		Warnings:  []types.ImportWarning{},
+		StartedAt: startTime,
+	}
+
+	if !req.DryRun {
+		completedAt := time.Now()
+		duration := completedAt.Sub(startTime)
+		result.CompletedAt = &completedAt
+		result.Duration = &duration
+	}
+
+	// Record the import operation
+	// TODO: Save to config_imports table
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    result,
+	})
+}
+
+// ValidateImport validates an import file without performing the import
+func (h *AdminHandler) ValidateImport(c *gin.Context) {
+	var req types.ValidateImportRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   types.NewValidationError(err.Error()),
+			Success: false,
+		})
+		return
+	}
+
+	orgID, exists := c.Get("organization_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
+			Error:   types.NewUnauthorizedError("Organization ID not found"),
+			Success: false,
+		})
+		return
+	}
+
+	// TODO: Implement actual validation logic
+	// This would involve:
+	// 1. Validating the structure of the import data
+	// 2. Checking for required fields and valid values
+	// 3. Identifying potential conflicts with existing data
+	// 4. Validating references between entities
+	// 5. Checking compatibility with current system version
+
+	// For now, return a mock validation result
+	validation := &types.ValidationResult{
+		Valid:    true,
+		Errors:   []types.ValidationError{},
+		Warnings: []types.ValidationWarning{},
+		EntityCounts: map[string]int{
+			"servers":         0,
+			"virtual_servers": 0,
+			"tools":           0,
+			"prompts":         0,
+			"resources":       0,
+			"policies":        0,
+			"rate_limits":     0,
+		},
+		Conflicts:    []types.ConflictItem{},
+		Dependencies: []types.DependencyItem{},
+		CompatibilityCheck: types.CompatibilityResult{
+			Compatible:      true,
+			Version:         "1.0.0",
+			RequiredVersion: "1.0.0",
+		},
+	}
+
+	_ = orgID // Use orgID for validation logic
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    validation,
+	})
+}
+
+// GetImportHistory returns the history of import operations
+func (h *AdminHandler) GetImportHistory(c *gin.Context) {
+	// Parse query parameters
+	query := &types.ImportHistoryQuery{}
+	
+	if status := c.Query("status"); status != "" {
+		query.Status = types.ImportStatus(status)
+	}
+	
+	query.EntityType = c.Query("entity_type")
+	query.ImportedBy = c.Query("imported_by")
+	
+	if startDate := c.Query("start_date"); startDate != "" {
+		if t, err := time.Parse(time.RFC3339, startDate); err == nil {
+			query.StartDate = &t
+		}
+	}
+	
+	if endDate := c.Query("end_date"); endDate != "" {
+		if t, err := time.Parse(time.RFC3339, endDate); err == nil {
+			query.EndDate = &t
+		}
+	}
+
+	if limit := c.Query("limit"); limit != "" {
+		if l, err := strconv.Atoi(limit); err == nil && l > 0 && l <= 1000 {
+			query.Limit = l
+		}
+	}
+	if query.Limit == 0 {
+		query.Limit = 50
+	}
+
+	if offset := c.Query("offset"); offset != "" {
+		if o, err := strconv.Atoi(offset); err == nil && o >= 0 {
+			query.Offset = o
+		}
+	}
+
+	orgID, exists := c.Get("organization_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
+			Error:   types.NewUnauthorizedError("Organization ID not found"),
+			Success: false,
+		})
+		return
+	}
+
+	// TODO: Implement actual database query for import history
+	// This would involve:
+	// 1. Querying config_imports table with filters
+	// 2. Joining with users table for user information
+	// 3. Applying pagination
+	// 4. Returning results with proper structure
+
+	// For now, return empty result
+	history := []types.ImportHistory{}
+	total := 0
+
+	_ = orgID // Use orgID for actual query
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    history,
+		"pagination": gin.H{
+			"limit":  query.Limit,
+			"offset": query.Offset,
+			"total":  total,
+		},
+	})
+}

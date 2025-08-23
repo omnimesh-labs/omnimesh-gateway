@@ -61,6 +61,72 @@ export default function HomePage() {
           padding: '1.5rem' 
         }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#333', marginBottom: '0.75rem' }}>
+            Content Management
+          </h2>
+          <p style={{ color: '#666', marginBottom: '1rem' }}>
+            Manage tools, prompts, and resources
+          </p>
+          <a
+            href="/content"
+            style={{ 
+              background: '#06b6d4', 
+              color: 'white', 
+              padding: '0.5rem 1rem', 
+              borderRadius: '6px', 
+              border: 'none',
+              fontSize: '0.875rem',
+              textDecoration: 'none',
+              display: 'inline-block',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = '#0891b2'}
+            onMouseOut={(e) => e.currentTarget.style.background = '#06b6d4'}
+          >
+            Manage Content
+          </a>
+        </div>
+
+        <div style={{ 
+          background: 'white', 
+          borderRadius: '8px', 
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)', 
+          padding: '1.5rem' 
+        }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#333', marginBottom: '0.75rem' }}>
+            Configuration
+          </h2>
+          <p style={{ color: '#666', marginBottom: '1rem' }}>
+            Export and import your MCP Gateway configuration
+          </p>
+          <a
+            href="/configuration"
+            style={{ 
+              background: '#dc2626', 
+              color: 'white', 
+              padding: '0.5rem 1rem', 
+              borderRadius: '6px', 
+              border: 'none',
+              fontSize: '0.875rem',
+              textDecoration: 'none',
+              display: 'inline-block',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = '#b91c1c'}
+            onMouseOut={(e) => e.currentTarget.style.background = '#dc2626'}
+          >
+            Manage Configuration
+          </a>
+        </div>
+
+        <div style={{ 
+          background: 'white', 
+          borderRadius: '8px', 
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)', 
+          padding: '1.5rem' 
+        }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#333', marginBottom: '0.75rem' }}>
             Logging & Audit
           </h2>
           <p style={{ color: '#666', marginBottom: '1rem' }}>
@@ -159,10 +225,11 @@ export default function HomePage() {
         </p>
         <ul style={{ color: '#666', paddingLeft: '1.5rem' }}>
           <li style={{ marginBottom: '0.5rem' }}>Manage and monitor MCP server instances</li>
+          <li style={{ marginBottom: '0.5rem' }}>Create and manage tools, prompts, and resources</li>
+          <li style={{ marginBottom: '0.5rem' }}>Export and import gateway configurations across environments</li>
+          <li style={{ marginBottom: '0.5rem' }}>Configure authentication, rate limiting, and access policies</li>
           <li style={{ marginBottom: '0.5rem' }}>Monitor system logs and audit administrative actions</li>
-          <li style={{ marginBottom: '0.5rem' }}>Configure gateway settings and policies</li>
           <li style={{ marginBottom: '0.5rem' }}>View real-time analytics and performance metrics</li>
-          <li style={{ marginBottom: '0.5rem' }}>Manage authentication, rate limiting, and access policies</li>
         </ul>
       </section>
       </div>
