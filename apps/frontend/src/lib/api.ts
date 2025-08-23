@@ -682,3 +682,376 @@ export const policyApi = {
         return response;
     },
 };
+
+// Content Management Types
+
+// Resource Types
+export interface Resource {
+    id: string;
+    organization_id: string;
+    name: string;
+    description?: string;
+    resource_type: 'file' | 'url' | 'database' | 'api' | 'memory' | 'custom';
+    uri: string;
+    mime_type?: string;
+    size_bytes?: number;
+    access_permissions?: Record<string, any>;
+    is_active: boolean;
+    metadata?: Record<string, any>;
+    tags?: string[];
+    created_at: string;
+    updated_at: string;
+    created_by?: string;
+}
+
+export interface CreateResourceRequest {
+    name: string;
+    description?: string;
+    resource_type: string;
+    uri: string;
+    mime_type?: string;
+    size_bytes?: number;
+    access_permissions?: Record<string, any>;
+    metadata?: Record<string, any>;
+    tags?: string[];
+}
+
+export interface UpdateResourceRequest {
+    name?: string;
+    description?: string;
+    resource_type?: string;
+    uri?: string;
+    mime_type?: string;
+    size_bytes?: number;
+    access_permissions?: Record<string, any>;
+    is_active?: boolean;
+    metadata?: Record<string, any>;
+    tags?: string[];
+}
+
+// Prompt Types
+export interface Prompt {
+    id: string;
+    organization_id: string;
+    name: string;
+    description?: string;
+    prompt_template: string;
+    parameters?: any[];
+    category: 'general' | 'coding' | 'analysis' | 'creative' | 'educational' | 'business' | 'custom';
+    usage_count: number;
+    is_active: boolean;
+    metadata?: Record<string, any>;
+    tags?: string[];
+    created_at: string;
+    updated_at: string;
+    created_by?: string;
+}
+
+export interface CreatePromptRequest {
+    name: string;
+    description?: string;
+    prompt_template: string;
+    parameters?: any[];
+    category: string;
+    metadata?: Record<string, any>;
+    tags?: string[];
+}
+
+export interface UpdatePromptRequest {
+    name?: string;
+    description?: string;
+    prompt_template?: string;
+    parameters?: any[];
+    category?: string;
+    is_active?: boolean;
+    metadata?: Record<string, any>;
+    tags?: string[];
+}
+
+export interface UsePromptRequest {
+    parameters?: Record<string, any>;
+}
+
+// Tool Types  
+export interface Tool {
+    id: string;
+    organization_id: string;
+    name: string;
+    description?: string;
+    function_name: string;
+    schema?: Record<string, any>;
+    category: 'general' | 'data' | 'file' | 'web' | 'system' | 'ai' | 'dev' | 'custom';
+    implementation_type: 'internal' | 'external' | 'webhook' | 'script';
+    endpoint_url?: string;
+    timeout_seconds: number;
+    max_retries: number;
+    usage_count: number;
+    access_permissions?: Record<string, any>;
+    is_active: boolean;
+    is_public: boolean;
+    metadata?: Record<string, any>;
+    tags?: string[];
+    examples?: any[];
+    documentation?: string;
+    created_at: string;
+    updated_at: string;
+    created_by?: string;
+}
+
+export interface CreateToolRequest {
+    name: string;
+    description?: string;
+    function_name: string;
+    schema: Record<string, any>;
+    category: string;
+    implementation_type?: string;
+    endpoint_url?: string;
+    timeout_seconds?: number;
+    max_retries?: number;
+    access_permissions?: Record<string, any>;
+    is_public?: boolean;
+    metadata?: Record<string, any>;
+    tags?: string[];
+    examples?: any[];
+    documentation?: string;
+}
+
+export interface UpdateToolRequest {
+    name?: string;
+    description?: string;
+    function_name?: string;
+    schema?: Record<string, any>;
+    category?: string;
+    implementation_type?: string;
+    endpoint_url?: string;
+    timeout_seconds?: number;
+    max_retries?: number;
+    access_permissions?: Record<string, any>;
+    is_active?: boolean;
+    is_public?: boolean;
+    metadata?: Record<string, any>;
+    tags?: string[];
+    examples?: any[];
+    documentation?: string;
+}
+
+export interface ExecuteToolRequest {
+    parameters?: Record<string, any>;
+}
+
+// List Response Types
+export interface ContentListResponse<T> {
+    data: T[];
+    pagination: {
+        total: number;
+        limit: number;
+        offset: number;
+        has_more: boolean;
+    };
+}
+
+export interface ContentQueryParams {
+    search?: string;
+    limit?: number;
+    offset?: number;
+    sort?: string;
+    order?: 'asc' | 'desc';
+    type?: string;
+    category?: string;
+    is_active?: boolean;
+    is_public?: boolean;
+}
+
+// Resource Management APIs
+export const resourceApi = {
+    // List resources with filtering
+    async listResources(params?: ContentQueryParams): Promise<ContentListResponse<Resource>> {
+        const queryParams = new URLSearchParams();
+        if (params) {
+            Object.entries(params).forEach(([key, value]) => {
+                if (value !== undefined) {
+                    queryParams.append(key, value.toString());
+                }
+            });
+        }
+
+        const response = await apiRequest<ContentListResponse<Resource>>(
+            `/gateway/resources${queryParams.toString() ? '?' + queryParams.toString() : ''}`
+        );
+        return response;
+    },
+
+    // Get specific resource
+    async getResource(id: string): Promise<Resource> {
+        const response = await apiRequest<Resource>(`/gateway/resources/${id}`);
+        return response;
+    },
+
+    // Create new resource
+    async createResource(resourceData: CreateResourceRequest): Promise<Resource> {
+        const response = await apiRequest<Resource>('/gateway/resources', {
+            method: 'POST',
+            body: JSON.stringify(resourceData),
+        });
+        return response;
+    },
+
+    // Update resource
+    async updateResource(id: string, resourceData: UpdateResourceRequest): Promise<Resource> {
+        const response = await apiRequest<Resource>(`/gateway/resources/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(resourceData),
+        });
+        return response;
+    },
+
+    // Delete resource
+    async deleteResource(id: string): Promise<void> {
+        await apiRequest<ApiResponse<any>>(`/gateway/resources/${id}`, {
+            method: 'DELETE',
+        });
+    },
+};
+
+// Prompt Management APIs
+export const promptApi = {
+    // List prompts with filtering
+    async listPrompts(params?: ContentQueryParams): Promise<ContentListResponse<Prompt>> {
+        const queryParams = new URLSearchParams();
+        if (params) {
+            Object.entries(params).forEach(([key, value]) => {
+                if (value !== undefined) {
+                    queryParams.append(key, value.toString());
+                }
+            });
+        }
+
+        const response = await apiRequest<ContentListResponse<Prompt>>(
+            `/gateway/prompts${queryParams.toString() ? '?' + queryParams.toString() : ''}`
+        );
+        return response;
+    },
+
+    // Get specific prompt
+    async getPrompt(id: string): Promise<Prompt> {
+        const response = await apiRequest<Prompt>(`/gateway/prompts/${id}`);
+        return response;
+    },
+
+    // Create new prompt
+    async createPrompt(promptData: CreatePromptRequest): Promise<Prompt> {
+        const response = await apiRequest<Prompt>('/gateway/prompts', {
+            method: 'POST',
+            body: JSON.stringify(promptData),
+        });
+        return response;
+    },
+
+    // Update prompt
+    async updatePrompt(id: string, promptData: UpdatePromptRequest): Promise<Prompt> {
+        const response = await apiRequest<Prompt>(`/gateway/prompts/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(promptData),
+        });
+        return response;
+    },
+
+    // Delete prompt
+    async deletePrompt(id: string): Promise<void> {
+        await apiRequest<ApiResponse<any>>(`/gateway/prompts/${id}`, {
+            method: 'DELETE',
+        });
+    },
+
+    // Use prompt (increment usage count)
+    async usePrompt(id: string, useData: UsePromptRequest): Promise<{ rendered_prompt: string; usage_count: number }> {
+        const response = await apiRequest<{ rendered_prompt: string; usage_count: number }>(`/gateway/prompts/${id}/use`, {
+            method: 'POST',
+            body: JSON.stringify(useData),
+        });
+        return response;
+    },
+};
+
+// Tool Management APIs
+export const toolApi = {
+    // List tools with filtering
+    async listTools(params?: ContentQueryParams): Promise<ContentListResponse<Tool>> {
+        const queryParams = new URLSearchParams();
+        if (params) {
+            Object.entries(params).forEach(([key, value]) => {
+                if (value !== undefined) {
+                    queryParams.append(key, value.toString());
+                }
+            });
+        }
+
+        const response = await apiRequest<ContentListResponse<Tool>>(
+            `/gateway/tools${queryParams.toString() ? '?' + queryParams.toString() : ''}`
+        );
+        return response;
+    },
+
+    // List public tools
+    async listPublicTools(params?: ContentQueryParams): Promise<ContentListResponse<Tool>> {
+        const queryParams = new URLSearchParams();
+        if (params) {
+            Object.entries(params).forEach(([key, value]) => {
+                if (value !== undefined) {
+                    queryParams.append(key, value.toString());
+                }
+            });
+        }
+
+        const response = await apiRequest<ContentListResponse<Tool>>(
+            `/mcp/tools/public${queryParams.toString() ? '?' + queryParams.toString() : ''}`
+        );
+        return response;
+    },
+
+    // Get specific tool
+    async getTool(id: string): Promise<Tool> {
+        const response = await apiRequest<Tool>(`/gateway/tools/${id}`);
+        return response;
+    },
+
+    // Get tool by function name
+    async getToolByFunction(functionName: string): Promise<Tool> {
+        const response = await apiRequest<Tool>(`/gateway/tools/function/${functionName}`);
+        return response;
+    },
+
+    // Create new tool
+    async createTool(toolData: CreateToolRequest): Promise<Tool> {
+        const response = await apiRequest<Tool>('/gateway/tools', {
+            method: 'POST',
+            body: JSON.stringify(toolData),
+        });
+        return response;
+    },
+
+    // Update tool
+    async updateTool(id: string, toolData: UpdateToolRequest): Promise<Tool> {
+        const response = await apiRequest<Tool>(`/gateway/tools/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(toolData),
+        });
+        return response;
+    },
+
+    // Delete tool
+    async deleteTool(id: string): Promise<void> {
+        await apiRequest<ApiResponse<any>>(`/gateway/tools/${id}`, {
+            method: 'DELETE',
+        });
+    },
+
+    // Execute tool
+    async executeTool(id: string, executeData: ExecuteToolRequest): Promise<{ result: any; usage_count: number }> {
+        const response = await apiRequest<{ result: any; usage_count: number }>(`/gateway/tools/${id}/execute`, {
+            method: 'POST',
+            body: JSON.stringify(executeData),
+        });
+        return response;
+    },
+};

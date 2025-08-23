@@ -38,3 +38,5 @@ api
 **/build/
 **/logs/*
 !**/logs/.gitkeep
+*.log
+venv/

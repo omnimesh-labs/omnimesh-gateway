@@ -47,6 +47,11 @@ var setupFunctions = map[string]SetupFunction{
 		Description: "Adds sample data for testing (users, servers, etc.)",
 		Execute:     (*SetupManager).addDummyData,
 	},
+	"defaults": {
+		Name:        "Add Default MCP Data",
+		Description: "Adds default resources, tools, and prompts for testing",
+		Execute:     (*SetupManager).addDefaultMCPData,
+	},
 	"reset": {
 		Name:        "Reset Database",
 		Description: "WARNING: Removes all data and recreates tables",
@@ -227,7 +232,7 @@ func (s *SetupManager) createAdminUser() error {
 		Name:           "Admin User",
 		PasswordHash:   string(passwordHash),
 		OrganizationID: org.ID.String(),
-		Role:           types.RoleAdmin,
+		Role:           types.RoleSystemAdmin,
 		IsActive:       true,
 	}
 	
@@ -339,6 +344,293 @@ func (s *SetupManager) addDummyData() error {
 	return nil
 }
 
+func (s *SetupManager) addDefaultMCPData() error {
+	fmt.Println("Adding default MCP resources, tools, and prompts...")
+	
+	// Ensure default org exists
+	orgModel := models.NewOrganizationModel(s.db)
+	org, err := orgModel.GetDefault()
+	if err != nil {
+		fmt.Println("Default organization not found, creating it first...")
+		if err := s.createDefaultOrganization(); err != nil {
+			return fmt.Errorf("failed to create default organization: %w", err)
+		}
+		org, err = orgModel.GetDefault()
+		if err != nil {
+			return fmt.Errorf("failed to get default organization after creation: %w", err)
+		}
+	}
+
+	// Add default resources
+	if err := s.addDefaultResources(org.ID); err != nil {
+		return fmt.Errorf("failed to add default resources: %w", err)
+	}
+
+	// Add default tools
+	if err := s.addDefaultTools(org.ID); err != nil {
+		return fmt.Errorf("failed to add default tools: %w", err)
+	}
+
+	// Add default prompts
+	if err := s.addDefaultPrompts(org.ID); err != nil {
+		return fmt.Errorf("failed to add default prompts: %w", err)
+	}
+
+	fmt.Println("✅ Default MCP data added successfully!")
+	return nil
+}
+
+func (s *SetupManager) addDefaultResources(orgID uuid.UUID) error {
+	resourceModel := models.NewMCPResourceModel(s.db)
+	
+	resources := []struct {
+		name         string
+		description  string
+		resourceType string
+		uri          string
+		mimeType     string
+		metadata     map[string]interface{}
+		tags         []string
+	}{
+		{
+			name:         "System Documentation",
+			description:  "Default system documentation resource",
+			resourceType: "url",
+			uri:          "https://docs.example.com/mcp-gateway",
+			mimeType:     "text/html",
+			metadata:     map[string]interface{}{"version": "1.0", "public": true},
+			tags:         []string{"documentation", "system", "help"},
+		},
+		{
+			name:         "API Reference",
+			description:  "MCP Gateway API reference documentation",
+			resourceType: "url",
+			uri:          "https://api.example.com/docs",
+			mimeType:     "application/json",
+			metadata:     map[string]interface{}{"version": "1.0", "swagger": true},
+			tags:         []string{"api", "reference", "documentation"},
+		},
+	}
+
+	for _, r := range resources {
+		// Check if resource already exists
+		_, err := resourceModel.GetByName(orgID, r.name)
+		if err == nil {
+			fmt.Printf("⚠️  Resource already exists: %s\n", r.name)
+			continue
+		}
+
+		resource := &models.MCPResource{
+			OrganizationID:    orgID,
+			Name:              r.name,
+			ResourceType:      r.resourceType,
+			URI:               r.uri,
+			IsActive:          true,
+			Metadata:          r.metadata,
+			Tags:              r.tags,
+			AccessPermissions: map[string]interface{}{"read": []string{"*"}, "write": []string{"admin"}},
+		}
+
+		if r.description != "" {
+			resource.Description = sql.NullString{String: r.description, Valid: true}
+		}
+		if r.mimeType != "" {
+			resource.MimeType = sql.NullString{String: r.mimeType, Valid: true}
+		}
+
+		if err := resourceModel.Create(resource); err != nil {
+			fmt.Printf("❌ Failed to create resource %s: %v\n", r.name, err)
+		} else {
+			fmt.Printf("✅ Created resource: %s\n", r.name)
+		}
+	}
+
+	return nil
+}
+
+func (s *SetupManager) addDefaultTools(orgID uuid.UUID) error {
+	toolModel := models.NewMCPToolModel(s.db)
+	
+	tools := []struct {
+		name               string
+		description        string
+		functionName       string
+		schema             map[string]interface{}
+		category           string
+		implementationType string
+		examples           []interface{}
+		documentation      string
+		metadata           map[string]interface{}
+		tags               []string
+	}{
+		{
+			name:               "Echo Tool",
+			description:        "Simple echo tool that returns the input message",
+			functionName:       "echo",
+			schema:             map[string]interface{}{"type": "object", "properties": map[string]interface{}{"message": map[string]interface{}{"type": "string", "description": "Message to echo back"}}, "required": []string{"message"}},
+			category:           "general",
+			implementationType: "internal",
+			examples:           []interface{}{map[string]interface{}{"input": map[string]interface{}{"message": "Hello World"}, "output": map[string]interface{}{"result": "Hello World"}}},
+			documentation:      "The echo tool simply returns whatever message you send to it. Useful for testing and debugging.",
+			metadata:           map[string]interface{}{"version": "1.0", "simple": true},
+			tags:               []string{"test", "debug", "simple"},
+		},
+		{
+			name:               "Get Current Time",
+			description:        "Returns the current server timestamp",
+			functionName:       "get_current_time",
+			schema:             map[string]interface{}{"type": "object", "properties": map[string]interface{}{"format": map[string]interface{}{"type": "string", "description": "Time format (iso, unix, human)", "default": "iso"}}, "required": []string{}},
+			category:           "system",
+			implementationType: "internal",
+			examples:           []interface{}{map[string]interface{}{"input": map[string]interface{}{"format": "iso"}, "output": map[string]interface{}{"timestamp": "2024-01-01T12:00:00Z"}}, map[string]interface{}{"input": map[string]interface{}{"format": "unix"}, "output": map[string]interface{}{"timestamp": 1704110400}}},
+			documentation:      "Returns the current server time in various formats. Supports ISO 8601, Unix timestamp, or human-readable format.",
+			metadata:           map[string]interface{}{"version": "1.0", "timezone": "UTC"},
+			tags:               []string{"time", "system", "utility"},
+		},
+		{
+			name:               "Generate UUID",
+			description:        "Generates a new UUID v4",
+			functionName:       "generate_uuid",
+			schema:             map[string]interface{}{"type": "object", "properties": map[string]interface{}{"version": map[string]interface{}{"type": "integer", "description": "UUID version (4 or 1)", "default": 4}}, "required": []string{}},
+			category:           "dev",
+			implementationType: "internal",
+			examples:           []interface{}{map[string]interface{}{"input": map[string]interface{}{"version": 4}, "output": map[string]interface{}{"uuid": "550e8400-e29b-41d4-a716-446655440000"}}},
+			documentation:      "Generates a new UUID (Universally Unique Identifier). Supports version 4 (random) and version 1 (timestamp-based).",
+			metadata:           map[string]interface{}{"version": "1.0", "secure": true},
+			tags:               []string{"uuid", "generate", "utility", "dev"},
+		},
+		{
+			name:               "Base64 Encode",
+			description:        "Encodes text to Base64 format",
+			functionName:       "base64_encode",
+			schema:             map[string]interface{}{"type": "object", "properties": map[string]interface{}{"text": map[string]interface{}{"type": "string", "description": "Text to encode"}, "url_safe": map[string]interface{}{"type": "boolean", "description": "Use URL-safe encoding", "default": false}}, "required": []string{"text"}},
+			category:           "data",
+			implementationType: "internal",
+			examples:           []interface{}{map[string]interface{}{"input": map[string]interface{}{"text": "Hello World", "url_safe": false}, "output": map[string]interface{}{"encoded": "SGVsbG8gV29ybGQ="}}},
+			documentation:      "Encodes text to Base64 format. Supports both standard and URL-safe encoding.",
+			metadata:           map[string]interface{}{"version": "1.0", "encoding": "base64"},
+			tags:               []string{"encode", "base64", "data", "utility"},
+		},
+	}
+
+	for _, t := range tools {
+		// Check if tool already exists
+		_, err := toolModel.GetByName(orgID, t.name)
+		if err == nil {
+			fmt.Printf("⚠️  Tool already exists: %s\n", t.name)
+			continue
+		}
+
+		tool := &models.MCPTool{
+			OrganizationID:     orgID,
+			Name:               t.name,
+			FunctionName:       t.functionName,
+			Schema:             t.schema,
+			Category:           t.category,
+			ImplementationType: t.implementationType,
+			TimeoutSeconds:     30,
+			MaxRetries:         3,
+			UsageCount:         0,
+			AccessPermissions:  map[string]interface{}{"execute": []string{"*"}, "read": []string{"*"}},
+			IsActive:           true,
+			IsPublic:           false,
+			Metadata:           t.metadata,
+			Tags:               t.tags,
+			Examples:           t.examples,
+		}
+
+		if t.description != "" {
+			tool.Description = sql.NullString{String: t.description, Valid: true}
+		}
+		if t.documentation != "" {
+			tool.Documentation = sql.NullString{String: t.documentation, Valid: true}
+		}
+
+		if err := toolModel.Create(tool); err != nil {
+			fmt.Printf("❌ Failed to create tool %s: %v\n", t.name, err)
+		} else {
+			fmt.Printf("✅ Created tool: %s\n", t.name)
+		}
+	}
+
+	return nil
+}
+
+func (s *SetupManager) addDefaultPrompts(orgID uuid.UUID) error {
+	promptModel := models.NewMCPPromptModel(s.db)
+	
+	prompts := []struct {
+		name           string
+		description    string
+		promptTemplate string
+		parameters     []interface{}
+		category       string
+		metadata       map[string]interface{}
+		tags           []string
+	}{
+		{
+			name:           "Code Review",
+			description:    "Template for conducting thorough code reviews",
+			promptTemplate: "Please review the following code for:\n1. Correctness and logic\n2. Performance considerations\n3. Security issues\n4. Code style and maintainability\n\nCode:\n{{code}}\n\nPlease provide specific feedback and suggestions for improvement.",
+			parameters:     []interface{}{map[string]interface{}{"name": "code", "type": "string", "required": true, "description": "Code to be reviewed"}},
+			category:       "coding",
+			metadata:       map[string]interface{}{"version": "1.0", "language_agnostic": true},
+			tags:           []string{"code-review", "development", "quality"},
+		},
+		{
+			name:           "Documentation Generation",
+			description:    "Generate comprehensive documentation from code",
+			promptTemplate: "Generate clear, comprehensive documentation for the following code. Include:\n1. Purpose and functionality\n2. Parameters and return values\n3. Usage examples\n4. Any important notes or limitations\n\nCode:\n{{code}}\n\nFormat: {{format}}\n\nPlease provide well-structured documentation.",
+			parameters:     []interface{}{map[string]interface{}{"name": "code", "type": "string", "required": true, "description": "Code to document"}, map[string]interface{}{"name": "format", "type": "string", "required": false, "description": "Documentation format (markdown, rst, etc.)", "default": "markdown"}},
+			category:       "coding",
+			metadata:       map[string]interface{}{"version": "1.0", "supports_multiple_formats": true},
+			tags:           []string{"documentation", "code-generation", "development"},
+		},
+		{
+			name:           "Data Analysis",
+			description:    "Template for structured data analysis tasks",
+			promptTemplate: "Analyze the following data and provide insights:\n\nData: {{data}}\n\nAnalysis Requirements:\n{{requirements}}\n\nPlease provide:\n1. Summary statistics\n2. Key patterns and trends\n3. Actionable insights\n4. Visualizations if applicable",
+			parameters:     []interface{}{map[string]interface{}{"name": "data", "type": "string", "required": true, "description": "Data to analyze"}, map[string]interface{}{"name": "requirements", "type": "string", "required": false, "description": "Specific analysis requirements", "default": "General analysis"}},
+			category:       "analysis",
+			metadata:       map[string]interface{}{"version": "1.0", "supports_visualizations": true},
+			tags:           []string{"data-analysis", "statistics", "insights"},
+		},
+	}
+
+	for _, p := range prompts {
+		// Check if prompt already exists
+		_, err := promptModel.GetByName(orgID, p.name)
+		if err == nil {
+			fmt.Printf("⚠️  Prompt already exists: %s\n", p.name)
+			continue
+		}
+
+		prompt := &models.MCPPrompt{
+			OrganizationID: orgID,
+			Name:           p.name,
+			PromptTemplate: p.promptTemplate,
+			Parameters:     p.parameters,
+			Category:       p.category,
+			UsageCount:     0,
+			IsActive:       true,
+			Metadata:       p.metadata,
+			Tags:           p.tags,
+		}
+
+		if p.description != "" {
+			prompt.Description = sql.NullString{String: p.description, Valid: true}
+		}
+
+		if err := promptModel.Create(prompt); err != nil {
+			fmt.Printf("❌ Failed to create prompt %s: %v\n", p.name, err)
+		} else {
+			fmt.Printf("✅ Created prompt: %s\n", p.name)
+		}
+	}
+
+	return nil
+}
+
 func (s *SetupManager) resetDatabase() error {
 	fmt.Println("⚠️  WARNING: This will delete ALL data in the database!")
 	fmt.Print("Are you sure you want to continue? (type 'yes' to confirm): ")
@@ -357,6 +649,9 @@ func (s *SetupManager) resetDatabase() error {
 	// List of tables to truncate in dependency order
 	tables := []string{
 		"mcp_sessions",
+		"mcp_resources",
+		"mcp_prompts", 
+		"mcp_tools",
 		"log_index", 
 		"audit_logs",
 		"mcp_servers",

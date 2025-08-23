@@ -40,7 +40,6 @@ export function RegisterServerModal({ onClose, onRegister, prefilledData }: Regi
         command: prefilledData.command || '',
         url: prefilledData.url || '',
         version: prefilledData.version || '',
-        weight: 100,
         timeout: 30000,
         max_retries: 3,
       });
@@ -279,30 +278,6 @@ export function RegisterServerModal({ onClose, onRegister, prefilledData }: Regi
                     type="text"
                     value={formData.version || ''}
                     onChange={(e) => handleInputChange('version', e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '6px',
-                      fontSize: '0.875rem',
-                      outline: 'none',
-                      transition: 'border-color 0.2s'
-                    }}
-                    onFocus={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
-                    onBlur={(e) => e.currentTarget.style.borderColor = '#d1d5db'}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
-                    Weight
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.weight || 100}
-                    onChange={(e) => handleInputChange('weight', parseInt(e.target.value) || 100)}
-                    min={1}
-                    max={1000}
                     style={{
                       width: '100%',
                       padding: '0.75rem',

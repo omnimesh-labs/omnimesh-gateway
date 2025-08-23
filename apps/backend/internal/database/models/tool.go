@@ -14,12 +14,12 @@ type MCPTool struct {
 	ID                   uuid.UUID              `db:"id" json:"id"`
 	OrganizationID       uuid.UUID              `db:"organization_id" json:"organization_id"`
 	Name                 string                 `db:"name" json:"name"`
-	Description          sql.NullString         `db:"description" json:"description,omitempty"`
+	Description          sql.NullString         `db:"description" json:"-"`
 	FunctionName         string                 `db:"function_name" json:"function_name"`
 	Schema               map[string]interface{} `db:"schema" json:"schema,omitempty"`
 	Category             string                 `db:"category" json:"category"` // tool_category_enum
 	ImplementationType   string                 `db:"implementation_type" json:"implementation_type"`
-	EndpointURL          sql.NullString         `db:"endpoint_url" json:"endpoint_url,omitempty"`
+	EndpointURL          sql.NullString         `db:"endpoint_url" json:"-"`
 	TimeoutSeconds       int                    `db:"timeout_seconds" json:"timeout_seconds"`
 	MaxRetries           int                    `db:"max_retries" json:"max_retries"`
 	UsageCount           int64                  `db:"usage_count" json:"usage_count"`
@@ -29,10 +29,16 @@ type MCPTool struct {
 	Metadata             map[string]interface{} `db:"metadata" json:"metadata,omitempty"`
 	Tags                 pq.StringArray         `db:"tags" json:"tags,omitempty"`
 	Examples             []interface{}          `db:"examples" json:"examples,omitempty"`
-	Documentation        sql.NullString         `db:"documentation" json:"documentation,omitempty"`
+	Documentation        sql.NullString         `db:"documentation" json:"-"`
 	CreatedAt            time.Time              `db:"created_at" json:"created_at"`
 	UpdatedAt            time.Time              `db:"updated_at" json:"updated_at"`
-	CreatedBy            uuid.NullUUID          `db:"created_by" json:"created_by,omitempty"`
+	CreatedBy            uuid.NullUUID          `db:"created_by" json:"-"`
+	
+	// JSON-friendly fields
+	DescriptionString   *string    `db:"-" json:"description,omitempty"`
+	EndpointURLString   *string    `db:"-" json:"endpoint_url,omitempty"`
+	DocumentationString *string    `db:"-" json:"documentation,omitempty"`
+	CreatedByUUID       *uuid.UUID `db:"-" json:"created_by,omitempty"`
 }
 
 // MCPToolModel handles MCP tool database operations
@@ -163,7 +169,26 @@ func (m *MCPToolModel) GetByID(id uuid.UUID) (*MCPTool, error) {
 		}
 	}
 
+	// Convert SQL null types to JSON-friendly pointers
+	convertToolNullTypes(tool)
+
 	return tool, nil
+}
+
+// convertToolNullTypes converts SQL null types to JSON-friendly pointer types
+func convertToolNullTypes(tool *MCPTool) {
+	if tool.Description.Valid {
+		tool.DescriptionString = &tool.Description.String
+	}
+	if tool.EndpointURL.Valid {
+		tool.EndpointURLString = &tool.EndpointURL.String
+	}
+	if tool.Documentation.Valid {
+		tool.DocumentationString = &tool.Documentation.String
+	}
+	if tool.CreatedBy.Valid {
+		tool.CreatedByUUID = &tool.CreatedBy.UUID
+	}
 }
 
 // GetByName retrieves an MCP tool by name within an organization
@@ -220,6 +245,9 @@ func (m *MCPToolModel) GetByName(orgID uuid.UUID, name string) (*MCPTool, error)
 			return nil, err
 		}
 	}
+
+	// Convert SQL null types to JSON-friendly pointers
+	convertToolNullTypes(tool)
 
 	return tool, nil
 }
@@ -278,6 +306,9 @@ func (m *MCPToolModel) GetByFunctionName(orgID uuid.UUID, functionName string) (
 			return nil, err
 		}
 	}
+
+	// Convert SQL null types to JSON-friendly pointers
+	convertToolNullTypes(tool)
 
 	return tool, nil
 }
@@ -574,6 +605,11 @@ func (m *MCPToolModel) parseToolRows(rows *sql.Rows) ([]*MCPTool, error) {
 		}
 
 		tools = append(tools, tool)
+	}
+
+	// Convert SQL null types to JSON-friendly pointers
+	for _, tool := range tools {
+		convertToolNullTypes(tool)
 	}
 
 	return tools, nil

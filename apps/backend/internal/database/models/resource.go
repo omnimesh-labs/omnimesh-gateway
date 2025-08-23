@@ -14,18 +14,24 @@ type MCPResource struct {
 	ID                 uuid.UUID              `db:"id" json:"id"`
 	OrganizationID     uuid.UUID              `db:"organization_id" json:"organization_id"`
 	Name               string                 `db:"name" json:"name"`
-	Description        sql.NullString         `db:"description" json:"description,omitempty"`
+	Description        sql.NullString         `db:"description" json:"-"`
 	ResourceType       string                 `db:"resource_type" json:"resource_type"` // resource_type_enum
 	URI                string                 `db:"uri" json:"uri"`
-	MimeType           sql.NullString         `db:"mime_type" json:"mime_type,omitempty"`
-	SizeBytes          sql.NullInt64          `db:"size_bytes" json:"size_bytes,omitempty"`
+	MimeType           sql.NullString         `db:"mime_type" json:"-"`
+	SizeBytes          sql.NullInt64          `db:"size_bytes" json:"-"`
 	AccessPermissions  map[string]interface{} `db:"access_permissions" json:"access_permissions,omitempty"`
 	IsActive           bool                   `db:"is_active" json:"is_active"`
 	Metadata           map[string]interface{} `db:"metadata" json:"metadata,omitempty"`
 	Tags               pq.StringArray         `db:"tags" json:"tags,omitempty"`
 	CreatedAt          time.Time              `db:"created_at" json:"created_at"`
 	UpdatedAt          time.Time              `db:"updated_at" json:"updated_at"`
-	CreatedBy          uuid.NullUUID          `db:"created_by" json:"created_by,omitempty"`
+	CreatedBy          uuid.NullUUID          `db:"created_by" json:"-"`
+	
+	// JSON-friendly fields
+	DescriptionString *string    `db:"-" json:"description,omitempty"`
+	MimeTypeString    *string    `db:"-" json:"mime_type,omitempty"`
+	SizeBytesInt64    *int64     `db:"-" json:"size_bytes,omitempty"`
+	CreatedByUUID     *uuid.UUID `db:"-" json:"created_by,omitempty"`
 }
 
 // MCPResourceModel handles MCP resource database operations
@@ -122,6 +128,9 @@ func (m *MCPResourceModel) GetByID(id uuid.UUID) (*MCPResource, error) {
 		}
 	}
 
+	// Convert SQL null types to JSON-friendly pointers
+	convertResourceNullTypes(resource)
+
 	return resource, nil
 }
 
@@ -165,6 +174,9 @@ func (m *MCPResourceModel) GetByName(orgID uuid.UUID, name string) (*MCPResource
 			return nil, err
 		}
 	}
+
+	// Convert SQL null types to JSON-friendly pointers
+	convertResourceNullTypes(resource)
 
 	return resource, nil
 }
@@ -226,6 +238,11 @@ func (m *MCPResourceModel) ListByOrganization(orgID uuid.UUID, activeOnly bool) 
 		resources = append(resources, resource)
 	}
 
+	// Convert SQL null types to JSON-friendly pointers
+	for _, resource := range resources {
+		convertResourceNullTypes(resource)
+	}
+
 	return resources, nil
 }
 
@@ -284,6 +301,11 @@ func (m *MCPResourceModel) ListByType(orgID uuid.UUID, resourceType string, acti
 		}
 
 		resources = append(resources, resource)
+	}
+
+	// Convert SQL null types to JSON-friendly pointers
+	for _, resource := range resources {
+		convertResourceNullTypes(resource)
 	}
 
 	return resources, nil
@@ -391,5 +413,26 @@ func (m *MCPResourceModel) SearchResources(orgID uuid.UUID, searchTerm string, l
 		resources = append(resources, resource)
 	}
 
+	// Convert SQL null types to JSON-friendly pointers
+	for _, resource := range resources {
+		convertResourceNullTypes(resource)
+	}
+
 	return resources, nil
+}
+
+// convertResourceNullTypes converts SQL null types to JSON-friendly pointer types
+func convertResourceNullTypes(resource *MCPResource) {
+	if resource.Description.Valid {
+		resource.DescriptionString = &resource.Description.String
+	}
+	if resource.MimeType.Valid {
+		resource.MimeTypeString = &resource.MimeType.String
+	}
+	if resource.SizeBytes.Valid {
+		resource.SizeBytesInt64 = &resource.SizeBytes.Int64
+	}
+	if resource.CreatedBy.Valid {
+		resource.CreatedByUUID = &resource.CreatedBy.UUID
+	}
 }

@@ -68,6 +68,25 @@ func (r *RBAC) defineRolePermissions() {
 		types.PermissionVirtualServerDelete,
 		types.PermissionVirtualServerManage,
 		
+		// Resource management
+		types.PermissionResourceRead,
+		types.PermissionResourceWrite,
+		types.PermissionResourceDelete,
+		types.PermissionResourceManage,
+		
+		// Prompt management
+		types.PermissionPromptRead,
+		types.PermissionPromptWrite,
+		types.PermissionPromptDelete,
+		types.PermissionPromptManage,
+		
+		// Tool management
+		types.PermissionToolRead,
+		types.PermissionToolWrite,
+		types.PermissionToolDelete,
+		types.PermissionToolManage,
+		types.PermissionToolExecute,
+		
 		// Audit and logging
 		types.PermissionAuditRead,
 		types.PermissionLogsRead,
@@ -116,6 +135,25 @@ func (r *RBAC) defineRolePermissions() {
 		types.PermissionVirtualServerDelete,
 		types.PermissionVirtualServerManage,
 		
+		// Resource management
+		types.PermissionResourceRead,
+		types.PermissionResourceWrite,
+		types.PermissionResourceDelete,
+		types.PermissionResourceManage,
+		
+		// Prompt management
+		types.PermissionPromptRead,
+		types.PermissionPromptWrite,
+		types.PermissionPromptDelete,
+		types.PermissionPromptManage,
+		
+		// Tool management
+		types.PermissionToolRead,
+		types.PermissionToolWrite,
+		types.PermissionToolDelete,
+		types.PermissionToolManage,
+		types.PermissionToolExecute,
+		
 		// Audit and logging (read-only)
 		types.PermissionAuditRead,
 		types.PermissionLogsRead,
@@ -148,6 +186,19 @@ func (r *RBAC) defineRolePermissions() {
 		types.PermissionVirtualServerRead,
 		types.PermissionVirtualServerWrite,
 		
+		// Resource management (limited - no delete)
+		types.PermissionResourceRead,
+		types.PermissionResourceWrite,
+		
+		// Prompt management (limited - no delete)
+		types.PermissionPromptRead,
+		types.PermissionPromptWrite,
+		
+		// Tool management (limited - no delete but can execute)
+		types.PermissionToolRead,
+		types.PermissionToolWrite,
+		types.PermissionToolExecute,
+		
 		// Basic metrics (own data)
 		types.PermissionMetricsRead,
 		
@@ -172,6 +223,15 @@ func (r *RBAC) defineRolePermissions() {
 		// Virtual server read-only
 		types.PermissionVirtualServerRead,
 		
+		// Resource read-only
+		types.PermissionResourceRead,
+		
+		// Prompt read-only
+		types.PermissionPromptRead,
+		
+		// Tool read-only
+		types.PermissionToolRead,
+		
 		// Basic metrics (read-only)
 		types.PermissionMetricsRead,
 		
@@ -195,6 +255,16 @@ func (r *RBAC) defineRolePermissions() {
 		
 		// Virtual server read-only
 		types.PermissionVirtualServerRead,
+		
+		// Resource read-only
+		types.PermissionResourceRead,
+		
+		// Prompt read-only
+		types.PermissionPromptRead,
+		
+		// Tool read-only (and execute for API users)
+		types.PermissionToolRead,
+		types.PermissionToolExecute,
 		
 		// Organization read-only
 		types.PermissionOrgRead,

@@ -14,7 +14,7 @@ type MCPPrompt struct {
 	ID             uuid.UUID              `db:"id" json:"id"`
 	OrganizationID uuid.UUID              `db:"organization_id" json:"organization_id"`
 	Name           string                 `db:"name" json:"name"`
-	Description    sql.NullString         `db:"description" json:"description,omitempty"`
+	Description    sql.NullString         `db:"description" json:"-"`
 	PromptTemplate string                 `db:"prompt_template" json:"prompt_template"`
 	Parameters     []interface{}          `db:"parameters" json:"parameters,omitempty"`
 	Category       string                 `db:"category" json:"category"` // prompt_category_enum
@@ -24,7 +24,11 @@ type MCPPrompt struct {
 	Tags           pq.StringArray         `db:"tags" json:"tags,omitempty"`
 	CreatedAt      time.Time              `db:"created_at" json:"created_at"`
 	UpdatedAt      time.Time              `db:"updated_at" json:"updated_at"`
-	CreatedBy      uuid.NullUUID          `db:"created_by" json:"created_by,omitempty"`
+	CreatedBy      uuid.NullUUID          `db:"created_by" json:"-"`
+	
+	// JSON-friendly fields
+	DescriptionString *string    `db:"-" json:"description,omitempty"`
+	CreatedByUUID     *uuid.UUID `db:"-" json:"created_by,omitempty"`
 }
 
 // MCPPromptModel handles MCP prompt database operations
@@ -120,6 +124,9 @@ func (m *MCPPromptModel) GetByID(id uuid.UUID) (*MCPPrompt, error) {
 		}
 	}
 
+	// Convert SQL null types to JSON-friendly pointers
+	convertPromptNullTypes(prompt)
+
 	return prompt, nil
 }
 
@@ -163,6 +170,9 @@ func (m *MCPPromptModel) GetByName(orgID uuid.UUID, name string) (*MCPPrompt, er
 			return nil, err
 		}
 	}
+
+	// Convert SQL null types to JSON-friendly pointers
+	convertPromptNullTypes(prompt)
 
 	return prompt, nil
 }
@@ -222,6 +232,11 @@ func (m *MCPPromptModel) ListByOrganization(orgID uuid.UUID, activeOnly bool) ([
 		}
 
 		prompts = append(prompts, prompt)
+	}
+
+	// Convert SQL null types to JSON-friendly pointers
+	for _, prompt := range prompts {
+		convertPromptNullTypes(prompt)
 	}
 
 	return prompts, nil
@@ -284,6 +299,11 @@ func (m *MCPPromptModel) ListByCategory(orgID uuid.UUID, category string, active
 		prompts = append(prompts, prompt)
 	}
 
+	// Convert SQL null types to JSON-friendly pointers
+	for _, prompt := range prompts {
+		convertPromptNullTypes(prompt)
+	}
+
 	return prompts, nil
 }
 
@@ -338,6 +358,11 @@ func (m *MCPPromptModel) GetPopularPrompts(orgID uuid.UUID, limit int) ([]*MCPPr
 		}
 
 		prompts = append(prompts, prompt)
+	}
+
+	// Convert SQL null types to JSON-friendly pointers
+	for _, prompt := range prompts {
+		convertPromptNullTypes(prompt)
 	}
 
 	return prompts, nil
@@ -452,5 +477,20 @@ func (m *MCPPromptModel) SearchPrompts(orgID uuid.UUID, searchTerm string, limit
 		prompts = append(prompts, prompt)
 	}
 
+	// Convert SQL null types to JSON-friendly pointers
+	for _, prompt := range prompts {
+		convertPromptNullTypes(prompt)
+	}
+
 	return prompts, nil
+}
+
+// convertPromptNullTypes converts SQL null types to JSON-friendly pointer types
+func convertPromptNullTypes(prompt *MCPPrompt) {
+	if prompt.Description.Valid {
+		prompt.DescriptionString = &prompt.Description.String
+	}
+	if prompt.CreatedBy.Valid {
+		prompt.CreatedByUUID = &prompt.CreatedBy.UUID
+	}
 }

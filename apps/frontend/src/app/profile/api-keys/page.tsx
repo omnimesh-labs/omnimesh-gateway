@@ -409,7 +409,7 @@ export default function ApiKeysPage() {
             • Include your API key in the <code style={{ backgroundColor: '#e5e7eb', padding: '0.125rem 0.25rem', borderRadius: '3px' }}>Authorization</code> header: <code style={{ backgroundColor: '#e5e7eb', padding: '0.125rem 0.25rem', borderRadius: '3px' }}>Bearer your-api-key</code>
           </p>
           <p style={{ marginBottom: '0.5rem' }}>
-            • API keys inherit the permissions of your user role and the key's assigned role (whichever is more restrictive)
+            • API keys inherit the permissions of your user role and the key&apos;s assigned role (whichever is more restrictive)
           </p>
           <p style={{ marginBottom: '0.5rem' }}>
             • Keys can be set to expire automatically for enhanced security

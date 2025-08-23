@@ -14,7 +14,7 @@ export function PolicyFormModal({ isOpen, onClose, onSave, policy }: PolicyFormM
     const [formData, setFormData] = useState({
         name: '',
         description: '',
-        type: 'access' as 'access' | 'rate_limit' | 'routing' | 'security',
+        type: 'access' as 'access' | 'rate_limit' | 'security',
         priority: 100,
         conditions: '',
         actions: '',
@@ -286,7 +286,6 @@ export function PolicyFormModal({ isOpen, onClose, onSave, policy }: PolicyFormM
                                 >
                                     <option value="access">Access</option>
                                     <option value="rate_limit">Rate Limit</option>
-                                    <option value="routing">Routing</option>
                                     <option value="security">Security</option>
                                 </select>
                                 {errors.type && (
