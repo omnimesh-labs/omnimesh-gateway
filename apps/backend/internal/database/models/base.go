@@ -53,6 +53,9 @@ type Models struct {
 	RateLimit      *RateLimitModel
 	RateLimitUsage *RateLimitUsageModel
 	VirtualServer  *VirtualServerModel
+	MCPResource    *MCPResourceModel
+	MCPPrompt      *MCPPromptModel
+	MCPTool        *MCPToolModel
 
 	// Legacy models (deprecated - will be removed in future versions)
 	User *UserModel
@@ -72,6 +75,9 @@ func NewModels(db Database) *Models {
 		RateLimit:      NewRateLimitModel(db),
 		RateLimitUsage: NewRateLimitUsageModel(db),
 		VirtualServer:  NewVirtualServerModel(db),
+		MCPResource:    NewMCPResourceModel(db),
+		MCPPrompt:      NewMCPPromptModel(db),
+		MCPTool:        NewMCPToolModel(db),
 		User:           NewUserModel(db),
 	}
 }

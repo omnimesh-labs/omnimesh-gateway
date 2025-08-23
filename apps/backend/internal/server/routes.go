@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"mcp-gateway/apps/backend/internal/auth"
+	"mcp-gateway/apps/backend/internal/database/models"
 	"mcp-gateway/apps/backend/internal/discovery"
 	"mcp-gateway/apps/backend/internal/logging"
 	"mcp-gateway/apps/backend/internal/middleware"
@@ -82,6 +83,14 @@ func (s *Server) RegisterRoutes() http.Handler {
 	// Initialize policy handler
 	policyHandler := handlers.NewPolicyHandler(s.db.GetDB())
 	
+	// Initialize resource, prompt, and tool models and handlers
+	resourceModel := models.NewMCPResourceModel(s.db.GetDB())
+	promptModel := models.NewMCPPromptModel(s.db.GetDB())
+	toolModel := models.NewMCPToolModel(s.db.GetDB())
+	resourceHandler := handlers.NewResourceHandler(resourceModel)
+	promptHandler := handlers.NewPromptHandler(promptModel)
+	toolHandler := handlers.NewToolHandler(toolModel)
+	
 	// Initialize authentication service
 	authConfig := &auth.Config{
 		JWTSecret:          s.cfg.Auth.JWTSecret,
@@ -154,6 +163,9 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 			// Get specific package details
 			mcp.GET("/packages/:packageName", mcpDiscoveryHandler.GetPackageDetails)
+			
+			// Public tools available to all organizations
+			mcp.GET("/tools/public", toolHandler.ListPublicTools)
 		}
 
 		// Gateway management routes (protected)
@@ -199,6 +211,77 @@ func (s *Server) RegisterRoutes() http.Handler {
 			gateway.GET("/ws", 
 				authMiddleware.RequireResourceAccess("session", "write"),
 				gatewayHandler.HandleMCPWebSocket)
+
+			// Resource management - requires resource permissions
+			gateway.GET("/resources", 
+				authMiddleware.RequireResourceAccess("resource", "read"), 
+				resourceHandler.ListResources)
+			gateway.POST("/resources", 
+				authMiddleware.RequireResourceAccess("resource", "write"),
+				loggingMiddleware.AuditLogger("create", "resource"), 
+				resourceHandler.CreateResource)
+			gateway.GET("/resources/:id", 
+				authMiddleware.RequireResourceAccess("resource", "read"), 
+				resourceHandler.GetResource)
+			gateway.PUT("/resources/:id", 
+				authMiddleware.RequireResourceAccess("resource", "write"),
+				loggingMiddleware.AuditLogger("update", "resource"), 
+				resourceHandler.UpdateResource)
+			gateway.DELETE("/resources/:id", 
+				authMiddleware.RequireResourceAccess("resource", "delete"),
+				loggingMiddleware.AuditLogger("delete", "resource"), 
+				resourceHandler.DeleteResource)
+
+			// Prompt management - requires prompt permissions
+			gateway.GET("/prompts", 
+				authMiddleware.RequireResourceAccess("prompt", "read"), 
+				promptHandler.ListPrompts)
+			gateway.POST("/prompts", 
+				authMiddleware.RequireResourceAccess("prompt", "write"),
+				loggingMiddleware.AuditLogger("create", "prompt"), 
+				promptHandler.CreatePrompt)
+			gateway.GET("/prompts/:id", 
+				authMiddleware.RequireResourceAccess("prompt", "read"), 
+				promptHandler.GetPrompt)
+			gateway.PUT("/prompts/:id", 
+				authMiddleware.RequireResourceAccess("prompt", "write"),
+				loggingMiddleware.AuditLogger("update", "prompt"), 
+				promptHandler.UpdatePrompt)
+			gateway.DELETE("/prompts/:id", 
+				authMiddleware.RequireResourceAccess("prompt", "delete"),
+				loggingMiddleware.AuditLogger("delete", "prompt"), 
+				promptHandler.DeletePrompt)
+			gateway.POST("/prompts/:id/use", 
+				authMiddleware.RequireResourceAccess("prompt", "read"), 
+				promptHandler.UsePrompt)
+
+			// Tool management - requires tool permissions
+			gateway.GET("/tools", 
+				authMiddleware.RequireResourceAccess("tool", "read"), 
+				toolHandler.ListTools)
+			gateway.POST("/tools", 
+				authMiddleware.RequireResourceAccess("tool", "write"),
+				loggingMiddleware.AuditLogger("create", "tool"), 
+				toolHandler.CreateTool)
+			gateway.GET("/tools/:id", 
+				authMiddleware.RequireResourceAccess("tool", "read"), 
+				toolHandler.GetTool)
+			gateway.PUT("/tools/:id", 
+				authMiddleware.RequireResourceAccess("tool", "write"),
+				loggingMiddleware.AuditLogger("update", "tool"), 
+				toolHandler.UpdateTool)
+			gateway.DELETE("/tools/:id", 
+				authMiddleware.RequireResourceAccess("tool", "delete"),
+				loggingMiddleware.AuditLogger("delete", "tool"), 
+				toolHandler.DeleteTool)
+			gateway.POST("/tools/:id/execute", 
+				authMiddleware.RequireResourceAccess("tool", "execute"), 
+				toolHandler.ExecuteTool)
+			
+			// Tool function lookup
+			gateway.GET("/tools/function/:function_name", 
+				authMiddleware.RequireResourceAccess("tool", "read"), 
+				toolHandler.GetToolByFunction)
 
 		}
 

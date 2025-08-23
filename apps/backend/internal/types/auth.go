@@ -182,6 +182,25 @@ const (
 	PermissionVirtualServerDelete = "virtual_server_delete"
 	PermissionVirtualServerManage = "virtual_server_manage"
 	
+	// Resource permissions
+	PermissionResourceRead   = "resource_read"
+	PermissionResourceWrite  = "resource_write"
+	PermissionResourceDelete = "resource_delete"
+	PermissionResourceManage = "resource_manage"
+	
+	// Prompt permissions
+	PermissionPromptRead   = "prompt_read"
+	PermissionPromptWrite  = "prompt_write"
+	PermissionPromptDelete = "prompt_delete"
+	PermissionPromptManage = "prompt_manage"
+	
+	// Tool permissions
+	PermissionToolRead    = "tool_read"
+	PermissionToolWrite   = "tool_write"
+	PermissionToolDelete  = "tool_delete"
+	PermissionToolManage  = "tool_manage"
+	PermissionToolExecute = "tool_execute"
+	
 	// Audit and logging permissions
 	PermissionAuditRead      = "audit_read"
 	PermissionLogsRead       = "logs_read"
