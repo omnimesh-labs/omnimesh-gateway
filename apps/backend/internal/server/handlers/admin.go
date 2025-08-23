@@ -6,11 +6,13 @@ import (
 	"time"
 
 	"mcp-gateway/apps/backend/internal/auth"
+	"mcp-gateway/apps/backend/internal/config"
 	"mcp-gateway/apps/backend/internal/logging"
 	"mcp-gateway/apps/backend/internal/ratelimit"
 	"mcp-gateway/apps/backend/internal/types"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 // AdminHandler handles administrative endpoints
@@ -18,14 +20,16 @@ type AdminHandler struct {
 	authService      *auth.Service
 	loggingService   *logging.Service
 	rateLimitService *ratelimit.Service
+	configService    *config.Service
 }
 
 // NewAdminHandler creates a new admin handler
-func NewAdminHandler(authService *auth.Service, loggingService *logging.Service, rateLimitService *ratelimit.Service) *AdminHandler {
+func NewAdminHandler(authService *auth.Service, loggingService *logging.Service, rateLimitService *ratelimit.Service, configService *config.Service) *AdminHandler {
 	return &AdminHandler{
 		authService:      authService,
 		loggingService:   loggingService,
 		rateLimitService: rateLimitService,
+		configService:    configService,
 	}
 }
 
@@ -363,7 +367,7 @@ func (h *AdminHandler) ExportConfiguration(c *gin.Context) {
 		return
 	}
 
-	orgID, exists := c.Get("organization_id")
+	orgIDStr, exists := c.Get("organization_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
 			Error:   types.NewUnauthorizedError("Organization ID not found"),
@@ -372,7 +376,7 @@ func (h *AdminHandler) ExportConfiguration(c *gin.Context) {
 		return
 	}
 
-	userID, exists := c.Get("user_id")
+	userIDStr, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
 			Error:   types.NewUnauthorizedError("User ID not found"),
@@ -381,33 +385,33 @@ func (h *AdminHandler) ExportConfiguration(c *gin.Context) {
 		return
 	}
 
-	// TODO: Implement actual configuration export logic
-	// This would involve:
-	// 1. Gathering all requested entity types from database
-	// 2. Applying filters (tags, active status, etc.)
-	// 3. Building the ConfigurationExport structure
-	// 4. Optionally storing export record in config_exports table
+	// Parse UUIDs
+	orgID, err := uuid.Parse(orgIDStr.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   types.NewValidationError("Invalid organization ID"),
+			Success: false,
+		})
+		return
+	}
 
-	// For now, return a mock export structure
-	export := &types.ConfigurationExport{
-		Metadata: types.ExportMetadata{
-			ExportID:      "export-" + time.Now().Format("20060102-150405"),
-			Timestamp:     time.Now(),
-			Version:       "1.0.0",
-			Gateway:       "mcp-gateway",
-			Organization:  orgID.(string),
-			EntityTypes:   req.EntityTypes,
-			TotalEntities: 0,
-			Filters:       req.Filters,
-			ExportedBy:    userID.(string),
-		},
-		Servers:        []interface{}{},
-		VirtualServers: []interface{}{},
-		Tools:          []interface{}{},
-		Prompts:        []interface{}{},
-		Resources:      []interface{}{},
-		Policies:       []interface{}{},
-		RateLimits:     []interface{}{},
+	userID, err := uuid.Parse(userIDStr.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   types.NewValidationError("Invalid user ID"),
+			Success: false,
+		})
+		return
+	}
+
+	// Export configuration using the config service
+	export, err := h.configService.ExportConfiguration(c.Request.Context(), orgID, userID, &req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			Error:   types.NewInternalError("Failed to export configuration: " + err.Error()),
+			Success: false,
+		})
+		return
 	}
 
 	c.Header("Content-Type", "application/json")
@@ -429,7 +433,7 @@ func (h *AdminHandler) ImportConfiguration(c *gin.Context) {
 		return
 	}
 
-	orgID, exists := c.Get("organization_id")
+	orgIDStr, exists := c.Get("organization_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
 			Error:   types.NewUnauthorizedError("Organization ID not found"),
@@ -438,7 +442,7 @@ func (h *AdminHandler) ImportConfiguration(c *gin.Context) {
 		return
 	}
 
-	userID, exists := c.Get("user_id")
+	userIDStr, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
 			Error:   types.NewUnauthorizedError("User ID not found"),
@@ -447,50 +451,34 @@ func (h *AdminHandler) ImportConfiguration(c *gin.Context) {
 		return
 	}
 
-	// TODO: Implement actual configuration import logic
-	// This would involve:
-	// 1. Validating the import data structure
-	// 2. Checking for conflicts based on strategy
-	// 3. Creating/updating entities based on conflict resolution
-	// 4. Recording the import operation in config_imports table
-	// 5. Handling dependencies and references
-
-	// For now, return a mock import result
-	importID := "import-" + time.Now().Format("20060102-150405")
-	startTime := time.Now()
-	
-	// Use orgID and userID to prevent "unused" warnings
-	_ = orgID
-	_ = userID
-	
-	// Simulate processing
-	result := &types.ImportResult{
-		ImportID:  importID,
-		Status:    types.ImportStatusCompleted,
-		Summary: types.ImportSummary{
-			TotalItems:     0,
-			ProcessedItems: 0,
-			CreatedItems:   0,
-			UpdatedItems:   0,
-			SkippedItems:   0,
-			FailedItems:    0,
-			EntityCounts:   make(map[string]types.ImportEntityCount),
-		},
-		Details:   []types.ImportItemResult{},
-		Errors:    []types.ImportError{},
-		Warnings:  []types.ImportWarning{},
-		StartedAt: startTime,
+	// Parse UUIDs
+	orgID, err := uuid.Parse(orgIDStr.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   types.NewValidationError("Invalid organization ID"),
+			Success: false,
+		})
+		return
 	}
 
-	if !req.DryRun {
-		completedAt := time.Now()
-		duration := completedAt.Sub(startTime)
-		result.CompletedAt = &completedAt
-		result.Duration = &duration
+	userID, err := uuid.Parse(userIDStr.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   types.NewValidationError("Invalid user ID"),
+			Success: false,
+		})
+		return
 	}
 
-	// Record the import operation
-	// TODO: Save to config_imports table
+	// Import configuration using the config service
+	result, err := h.configService.ImportConfiguration(c.Request.Context(), orgID, userID, &req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			Error:   types.NewInternalError("Failed to import configuration: " + err.Error()),
+			Success: false,
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
@@ -509,7 +497,7 @@ func (h *AdminHandler) ValidateImport(c *gin.Context) {
 		return
 	}
 
-	orgID, exists := c.Get("organization_id")
+	orgIDStr, exists := c.Get("organization_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
 			Error:   types.NewUnauthorizedError("Organization ID not found"),
@@ -518,38 +506,25 @@ func (h *AdminHandler) ValidateImport(c *gin.Context) {
 		return
 	}
 
-	// TODO: Implement actual validation logic
-	// This would involve:
-	// 1. Validating the structure of the import data
-	// 2. Checking for required fields and valid values
-	// 3. Identifying potential conflicts with existing data
-	// 4. Validating references between entities
-	// 5. Checking compatibility with current system version
-
-	// For now, return a mock validation result
-	validation := &types.ValidationResult{
-		Valid:    true,
-		Errors:   []types.ValidationError{},
-		Warnings: []types.ValidationWarning{},
-		EntityCounts: map[string]int{
-			"servers":         0,
-			"virtual_servers": 0,
-			"tools":           0,
-			"prompts":         0,
-			"resources":       0,
-			"policies":        0,
-			"rate_limits":     0,
-		},
-		Conflicts:    []types.ConflictItem{},
-		Dependencies: []types.DependencyItem{},
-		CompatibilityCheck: types.CompatibilityResult{
-			Compatible:      true,
-			Version:         "1.0.0",
-			RequiredVersion: "1.0.0",
-		},
+	// Parse UUID
+	orgID, err := uuid.Parse(orgIDStr.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   types.NewValidationError("Invalid organization ID"),
+			Success: false,
+		})
+		return
 	}
 
-	_ = orgID // Use orgID for validation logic
+	// Validate import data using the config service
+	validation, err := h.configService.ValidateImport(c.Request.Context(), orgID, &req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			Error:   types.NewInternalError("Failed to validate import: " + err.Error()),
+			Success: false,
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
@@ -596,7 +571,7 @@ func (h *AdminHandler) GetImportHistory(c *gin.Context) {
 		}
 	}
 
-	orgID, exists := c.Get("organization_id")
+	orgIDStr, exists := c.Get("organization_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
 			Error:   types.NewUnauthorizedError("Organization ID not found"),
@@ -605,18 +580,25 @@ func (h *AdminHandler) GetImportHistory(c *gin.Context) {
 		return
 	}
 
-	// TODO: Implement actual database query for import history
-	// This would involve:
-	// 1. Querying config_imports table with filters
-	// 2. Joining with users table for user information
-	// 3. Applying pagination
-	// 4. Returning results with proper structure
+	// Parse UUID
+	orgID, err := uuid.Parse(orgIDStr.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   types.NewValidationError("Invalid organization ID"),
+			Success: false,
+		})
+		return
+	}
 
-	// For now, return empty result
-	history := []types.ImportHistory{}
-	total := 0
-
-	_ = orgID // Use orgID for actual query
+	// Get import history using the config service
+	history, total, err := h.configService.GetImportHistory(c.Request.Context(), orgID, query)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			Error:   types.NewInternalError("Failed to get import history: " + err.Error()),
+			Success: false,
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
