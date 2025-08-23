@@ -250,20 +250,12 @@ export default function ConfigurationPage() {
 
   return (
     <ProtectedRoute>
-      <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
-        <header style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h1 style={{
-            fontSize: '2rem',
-            fontWeight: 'bold',
-            color: '#111827',
-            marginBottom: '0.5rem'
-          }}>
+      <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+        <header style={{ marginBottom: '2rem' }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#333', marginBottom: '0.5rem' }}>
             Configuration Management
           </h1>
-          <p style={{
-            fontSize: '1rem',
-            color: '#6b7280'
-          }}>
+          <p style={{ fontSize: '1rem', color: '#666' }}>
             Export and import your MCP Gateway configuration
           </p>
         </header>

@@ -257,12 +257,6 @@ function getAccessToken(): string | null {
     return null;
 }
 
-// Set access token in localStorage
-function setAccessToken(token: string): void {
-    if (typeof window !== 'undefined') {
-        localStorage.setItem('access_token', token);
-    }
-}
 
 // Remove tokens from localStorage
 function clearTokens(): void {
@@ -331,7 +325,7 @@ async function apiRequest<T>(
                         if (refreshResponse.ok) {
                             const refreshData = await refreshResponse.json();
                             
-                            // Update tokens in localStorage
+                            // Update tokens in localStorage synchronously
                             if (typeof window !== 'undefined') {
                                 localStorage.setItem('access_token', refreshData.data.access_token);
                                 localStorage.setItem('refresh_token', refreshData.data.refresh_token);
@@ -542,9 +536,12 @@ export const authApi = {
             body: JSON.stringify(credentials),
         });
 
+        // Store tokens synchronously to prevent race conditions
         if (typeof window !== 'undefined') {
             localStorage.setItem('access_token', response.data.access_token);
             localStorage.setItem('refresh_token', response.data.refresh_token);
+            // Force a small delay to ensure localStorage write is complete
+            await new Promise(resolve => setTimeout(resolve, 10));
         }
 
         return response.data;
@@ -566,6 +563,8 @@ export const authApi = {
         if (typeof window !== 'undefined') {
             localStorage.setItem('access_token', response.data.access_token);
             localStorage.setItem('refresh_token', response.data.refresh_token);
+            // Force a small delay to ensure localStorage write is complete
+            await new Promise(resolve => setTimeout(resolve, 10));
         }
 
         return response.data;

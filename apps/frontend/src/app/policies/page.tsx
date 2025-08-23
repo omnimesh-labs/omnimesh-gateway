@@ -63,64 +63,47 @@ export default function PoliciesPage() {
         });
     };
 
-    const showToast = (type: 'success' | 'error', message: string) => {
-        setToast({ type, message });
-    };
 
     return (
         <ProtectedRoute requireRole="admin">
-            <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
-                {/* Header */}
-                <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center', 
-                    marginBottom: '24px' 
-                }}>
-                    <div>
-                        <h1 style={{ 
-                            fontSize: '28px', 
-                            fontWeight: '600', 
-                            color: '#111827', 
-                            margin: 0, 
-                            marginBottom: '8px' 
-                        }}>
-                            Policy Management
-                        </h1>
-                        <p style={{ 
-                            color: '#6b7280', 
-                            margin: 0,
-                            fontSize: '16px'
-                        }}>
-                            Create and manage access control, rate limiting, and security policies
-                        </p>
+            <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+                <header style={{ marginBottom: '2rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                        <div>
+                            <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#333', marginBottom: '0.5rem' }}>
+                                Policy Management
+                            </h1>
+                            <p style={{ fontSize: '1rem', color: '#666' }}>
+                                Create and manage access control, rate limiting, and security policies
+                            </p>
+                        </div>
+                        <button
+                            onClick={handleCreatePolicy}
+                            style={{
+                                backgroundColor: '#3b82f6',
+                                color: '#ffffff',
+                                border: 'none',
+                                padding: '0.75rem 1.25rem',
+                                borderRadius: '8px',
+                                fontSize: '0.875rem',
+                                fontWeight: '500',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                transition: 'background-color 0.2s',
+                            }}
+                            onMouseOver={(e) => {
+                                e.currentTarget.style.backgroundColor = '#2563eb';
+                            }}
+                            onMouseOut={(e) => {
+                                e.currentTarget.style.backgroundColor = '#3b82f6';
+                            }}
+                        >
+                            ➕ Create Policy
+                        </button>
                     </div>
-                    <button
-                        onClick={handleCreatePolicy}
-                        style={{
-                            backgroundColor: '#3b82f6',
-                            color: '#ffffff',
-                            border: 'none',
-                            padding: '12px 20px',
-                            borderRadius: '8px',
-                            fontSize: '14px',
-                            fontWeight: '500',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            transition: 'background-color 0.2s',
-                        }}
-                        onMouseOver={(e) => {
-                            e.currentTarget.style.backgroundColor = '#2563eb';
-                        }}
-                        onMouseOut={(e) => {
-                            e.currentTarget.style.backgroundColor = '#3b82f6';
-                        }}
-                    >
-                        ➕ Create Policy
-                    </button>
-                </div>
+                </header>
 
                 {/* Filters */}
                 <div style={{

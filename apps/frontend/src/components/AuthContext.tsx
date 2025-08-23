@@ -67,6 +67,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const login = async (credentials: LoginRequest) => {
         try {
             const response = await authApi.login(credentials);
+            // Ensure tokens are properly stored before setting user state
             setUser(response.user);
         } catch (error) {
             throw error;
@@ -97,7 +98,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const value: AuthContextType = {
         user,
-        isAuthenticated: !!user,
+        isAuthenticated: !!user && authApi.isAuthenticated(),
         isLoading,
         login,
         logout,
