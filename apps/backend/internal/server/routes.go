@@ -22,6 +22,15 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r := gin.New()
 	r.Use(gin.Recovery())
 
+	// Add security headers middleware early in the chain
+	var securityConfig *middleware.SecurityConfig
+	if s.cfg.Logging.Environment == "development" {
+		securityConfig = middleware.DevelopmentSecurityConfig()
+	} else {
+		securityConfig = middleware.DefaultSecurityConfig()
+	}
+	r.Use(middleware.SecurityHeadersWithConfig(securityConfig))
+
 	// Initialize logging middleware
 	loggingMiddleware := logging.NewMiddleware(s.logging.(*logging.Service))
 	r.Use(loggingMiddleware.RequestLogger())
@@ -60,7 +69,6 @@ func (s *Server) RegisterRoutes() http.Handler {
 	}
 	discoveryService := discovery.NewService(s.db.GetDB(), discoveryConfig)
 
-
 	// Initialize transport manager
 	transportConfig := s.cfg.Transport.ToTransportConfig()
 	transportManager := transport.NewManager(transportConfig)
@@ -76,13 +84,13 @@ func (s *Server) RegisterRoutes() http.Handler {
 	gatewayHandler := handlers.NewGatewayHandler(discoveryService)
 	virtualAdminHandler := handlers.NewVirtualAdminHandler(virtualService)
 	virtualMCPHandler := handlers.NewVirtualMCPHandler(virtualService)
-	
+
 	// Initialize admin handler (for logging and system management)
-	adminHandler := handlers.NewAdminHandler(nil, s.logging.(*logging.Service), nil)
-	
+	adminHandler := handlers.NewAdminHandler(nil, s.logging.(*logging.Service), nil, nil)
+
 	// Initialize policy handler
 	policyHandler := handlers.NewPolicyHandler(s.db.GetDB())
-	
+
 	// Initialize resource, prompt, and tool models and handlers
 	resourceModel := models.NewMCPResourceModel(s.db.GetDB())
 	promptModel := models.NewMCPPromptModel(s.db.GetDB())
@@ -90,7 +98,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	resourceHandler := handlers.NewResourceHandler(resourceModel)
 	promptHandler := handlers.NewPromptHandler(promptModel)
 	toolHandler := handlers.NewToolHandler(toolModel)
-	
+
 	// Initialize authentication service
 	authConfig := &auth.Config{
 		JWTSecret:          s.cfg.Auth.JWTSecret,
@@ -98,7 +106,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 		RefreshTokenExpiry: s.cfg.Auth.RefreshTokenExpiry,
 		BCryptCost:         s.cfg.Auth.BCryptCost,
 	}
-	
+
 	// Set defaults if not configured
 	if authConfig.JWTSecret == "" {
 		authConfig.JWTSecret = "development-secret-change-in-production" // TODO: Get from env
@@ -112,10 +120,10 @@ func (s *Server) RegisterRoutes() http.Handler {
 	if authConfig.BCryptCost == 0 {
 		authConfig.BCryptCost = 12
 	}
-	
+
 	authService := auth.NewService(s.db.GetDB(), authConfig)
 	authHandler := handlers.NewAuthHandler(authService)
-	
+
 	// Initialize auth middleware
 	authMiddleware := auth.NewMiddleware(authService.GetJWTManager(), authService)
 
@@ -138,7 +146,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 			// Public routes (no auth required)
 			auth.POST("/login", authHandler.Login)
 			auth.POST("/refresh", authHandler.RefreshToken)
-			
+
 			// Protected routes (auth required)
 			protected := auth.Group("/")
 			protected.Use(authMiddleware.RequireAuth())
@@ -163,7 +171,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 			// Get specific package details
 			mcp.GET("/packages/:packageName", mcpDiscoveryHandler.GetPackageDetails)
-			
+
 			// Public tools available to all organizations
 			mcp.GET("/tools/public", toolHandler.ListPublicTools)
 		}
@@ -174,113 +182,113 @@ func (s *Server) RegisterRoutes() http.Handler {
 		gateway.Use(authMiddleware.RequireOrganizationAccess())
 		{
 			// Server management - requires appropriate permissions
-			gateway.GET("/servers", 
-				authMiddleware.RequireResourceAccess("server", "read"), 
+			gateway.GET("/servers",
+				authMiddleware.RequireResourceAccess("server", "read"),
 				gatewayHandler.ListServers)
-			gateway.POST("/servers", 
+			gateway.POST("/servers",
 				authMiddleware.RequireResourceAccess("server", "write"),
-				loggingMiddleware.AuditLogger("register", "server"), 
+				loggingMiddleware.AuditLogger("register", "server"),
 				gatewayHandler.RegisterServer)
-			gateway.GET("/servers/:id", 
-				authMiddleware.RequireResourceAccess("server", "read"), 
+			gateway.GET("/servers/:id",
+				authMiddleware.RequireResourceAccess("server", "read"),
 				gatewayHandler.GetServer)
-			gateway.PUT("/servers/:id", 
+			gateway.PUT("/servers/:id",
 				authMiddleware.RequireResourceAccess("server", "write"),
-				loggingMiddleware.AuditLogger("update", "server"), 
+				loggingMiddleware.AuditLogger("update", "server"),
 				gatewayHandler.UpdateServer)
-			gateway.DELETE("/servers/:id", 
+			gateway.DELETE("/servers/:id",
 				authMiddleware.RequireResourceAccess("server", "delete"),
-				loggingMiddleware.AuditLogger("unregister", "server"), 
+				loggingMiddleware.AuditLogger("unregister", "server"),
 				gatewayHandler.UnregisterServer)
-			gateway.GET("/servers/:id/stats", 
-				authMiddleware.RequireResourceAccess("server", "read"), 
+			gateway.GET("/servers/:id/stats",
+				authMiddleware.RequireResourceAccess("server", "read"),
 				gatewayHandler.GetServerStats)
 
 			// MCP session management - requires session permissions
-			gateway.POST("/sessions", 
+			gateway.POST("/sessions",
 				authMiddleware.RequireResourceAccess("session", "write"),
 				gatewayHandler.CreateMCPSession)
-			gateway.GET("/sessions", 
+			gateway.GET("/sessions",
 				authMiddleware.RequireResourceAccess("session", "read"),
 				gatewayHandler.ListMCPSessions)
-			gateway.DELETE("/sessions/:session_id", 
+			gateway.DELETE("/sessions/:session_id",
 				authMiddleware.RequireResourceAccess("session", "delete"),
 				gatewayHandler.CloseMCPSession)
 
 			// WebSocket endpoint for MCP communication
-			gateway.GET("/ws", 
+			gateway.GET("/ws",
 				authMiddleware.RequireResourceAccess("session", "write"),
 				gatewayHandler.HandleMCPWebSocket)
 
 			// Resource management - requires resource permissions
-			gateway.GET("/resources", 
-				authMiddleware.RequireResourceAccess("resource", "read"), 
+			gateway.GET("/resources",
+				authMiddleware.RequireResourceAccess("resource", "read"),
 				resourceHandler.ListResources)
-			gateway.POST("/resources", 
+			gateway.POST("/resources",
 				authMiddleware.RequireResourceAccess("resource", "write"),
-				loggingMiddleware.AuditLogger("create", "resource"), 
+				loggingMiddleware.AuditLogger("create", "resource"),
 				resourceHandler.CreateResource)
-			gateway.GET("/resources/:id", 
-				authMiddleware.RequireResourceAccess("resource", "read"), 
+			gateway.GET("/resources/:id",
+				authMiddleware.RequireResourceAccess("resource", "read"),
 				resourceHandler.GetResource)
-			gateway.PUT("/resources/:id", 
+			gateway.PUT("/resources/:id",
 				authMiddleware.RequireResourceAccess("resource", "write"),
-				loggingMiddleware.AuditLogger("update", "resource"), 
+				loggingMiddleware.AuditLogger("update", "resource"),
 				resourceHandler.UpdateResource)
-			gateway.DELETE("/resources/:id", 
+			gateway.DELETE("/resources/:id",
 				authMiddleware.RequireResourceAccess("resource", "delete"),
-				loggingMiddleware.AuditLogger("delete", "resource"), 
+				loggingMiddleware.AuditLogger("delete", "resource"),
 				resourceHandler.DeleteResource)
 
 			// Prompt management - requires prompt permissions
-			gateway.GET("/prompts", 
-				authMiddleware.RequireResourceAccess("prompt", "read"), 
+			gateway.GET("/prompts",
+				authMiddleware.RequireResourceAccess("prompt", "read"),
 				promptHandler.ListPrompts)
-			gateway.POST("/prompts", 
+			gateway.POST("/prompts",
 				authMiddleware.RequireResourceAccess("prompt", "write"),
-				loggingMiddleware.AuditLogger("create", "prompt"), 
+				loggingMiddleware.AuditLogger("create", "prompt"),
 				promptHandler.CreatePrompt)
-			gateway.GET("/prompts/:id", 
-				authMiddleware.RequireResourceAccess("prompt", "read"), 
+			gateway.GET("/prompts/:id",
+				authMiddleware.RequireResourceAccess("prompt", "read"),
 				promptHandler.GetPrompt)
-			gateway.PUT("/prompts/:id", 
+			gateway.PUT("/prompts/:id",
 				authMiddleware.RequireResourceAccess("prompt", "write"),
-				loggingMiddleware.AuditLogger("update", "prompt"), 
+				loggingMiddleware.AuditLogger("update", "prompt"),
 				promptHandler.UpdatePrompt)
-			gateway.DELETE("/prompts/:id", 
+			gateway.DELETE("/prompts/:id",
 				authMiddleware.RequireResourceAccess("prompt", "delete"),
-				loggingMiddleware.AuditLogger("delete", "prompt"), 
+				loggingMiddleware.AuditLogger("delete", "prompt"),
 				promptHandler.DeletePrompt)
-			gateway.POST("/prompts/:id/use", 
-				authMiddleware.RequireResourceAccess("prompt", "read"), 
+			gateway.POST("/prompts/:id/use",
+				authMiddleware.RequireResourceAccess("prompt", "read"),
 				promptHandler.UsePrompt)
 
 			// Tool management - requires tool permissions
-			gateway.GET("/tools", 
-				authMiddleware.RequireResourceAccess("tool", "read"), 
+			gateway.GET("/tools",
+				authMiddleware.RequireResourceAccess("tool", "read"),
 				toolHandler.ListTools)
-			gateway.POST("/tools", 
+			gateway.POST("/tools",
 				authMiddleware.RequireResourceAccess("tool", "write"),
-				loggingMiddleware.AuditLogger("create", "tool"), 
+				loggingMiddleware.AuditLogger("create", "tool"),
 				toolHandler.CreateTool)
-			gateway.GET("/tools/:id", 
-				authMiddleware.RequireResourceAccess("tool", "read"), 
+			gateway.GET("/tools/:id",
+				authMiddleware.RequireResourceAccess("tool", "read"),
 				toolHandler.GetTool)
-			gateway.PUT("/tools/:id", 
+			gateway.PUT("/tools/:id",
 				authMiddleware.RequireResourceAccess("tool", "write"),
-				loggingMiddleware.AuditLogger("update", "tool"), 
+				loggingMiddleware.AuditLogger("update", "tool"),
 				toolHandler.UpdateTool)
-			gateway.DELETE("/tools/:id", 
+			gateway.DELETE("/tools/:id",
 				authMiddleware.RequireResourceAccess("tool", "delete"),
-				loggingMiddleware.AuditLogger("delete", "tool"), 
+				loggingMiddleware.AuditLogger("delete", "tool"),
 				toolHandler.DeleteTool)
-			gateway.POST("/tools/:id/execute", 
-				authMiddleware.RequireResourceAccess("tool", "execute"), 
+			gateway.POST("/tools/:id/execute",
+				authMiddleware.RequireResourceAccess("tool", "execute"),
 				toolHandler.ExecuteTool)
-			
+
 			// Tool function lookup
-			gateway.GET("/tools/function/:function_name", 
-				authMiddleware.RequireResourceAccess("tool", "read"), 
+			gateway.GET("/tools/function/:function_name",
+				authMiddleware.RequireResourceAccess("tool", "read"),
 				toolHandler.GetToolByFunction)
 
 		}
@@ -291,80 +299,80 @@ func (s *Server) RegisterRoutes() http.Handler {
 		admin.Use(authMiddleware.RequireOrganizationAccess())
 		{
 			// Logging and audit routes - require admin access
-			admin.GET("/logs", 
+			admin.GET("/logs",
 				authMiddleware.RequireAdmin(),
 				authMiddleware.RequirePermission(types.PermissionLogsRead),
 				adminHandler.GetLogs)
-			admin.GET("/audit", 
+			admin.GET("/audit",
 				authMiddleware.RequireAdmin(),
 				authMiddleware.RequirePermission(types.PermissionAuditRead),
 				adminHandler.GetAuditLogs)
-			admin.GET("/stats", 
+			admin.GET("/stats",
 				authMiddleware.RequireAdmin(),
 				authMiddleware.RequirePermission(types.PermissionMetricsRead),
 				adminHandler.GetStats)
-			admin.GET("/metrics", 
+			admin.GET("/metrics",
 				authMiddleware.RequireAdmin(),
 				authMiddleware.RequirePermission(types.PermissionMetricsRead),
 				adminHandler.GetMetrics)
-			
+
 			// Virtual server management - role-based access
 			virtual := admin.Group("/virtual-servers")
 			{
-				virtual.POST("", 
+				virtual.POST("",
 					authMiddleware.RequireResourceAccess("virtual_server", "write"),
-					loggingMiddleware.AuditLogger("create", "virtual-server"), 
+					loggingMiddleware.AuditLogger("create", "virtual-server"),
 					virtualAdminHandler.CreateVirtualServer)
-				virtual.GET("", 
+				virtual.GET("",
 					authMiddleware.RequireResourceAccess("virtual_server", "read"),
 					virtualAdminHandler.ListVirtualServers)
-				virtual.GET("/:id", 
+				virtual.GET("/:id",
 					authMiddleware.RequireResourceAccess("virtual_server", "read"),
 					virtualAdminHandler.GetVirtualServer)
-				virtual.PUT("/:id", 
+				virtual.PUT("/:id",
 					authMiddleware.RequireResourceAccess("virtual_server", "write"),
-					loggingMiddleware.AuditLogger("update", "virtual-server"), 
+					loggingMiddleware.AuditLogger("update", "virtual-server"),
 					virtualAdminHandler.UpdateVirtualServer)
-				virtual.DELETE("/:id", 
+				virtual.DELETE("/:id",
 					authMiddleware.RequireResourceAccess("virtual_server", "delete"),
-					loggingMiddleware.AuditLogger("delete", "virtual-server"), 
+					loggingMiddleware.AuditLogger("delete", "virtual-server"),
 					virtualAdminHandler.DeleteVirtualServer)
-				virtual.GET("/:id/tools", 
+				virtual.GET("/:id/tools",
 					authMiddleware.RequireResourceAccess("virtual_server", "read"),
 					virtualAdminHandler.GetVirtualServerTools)
-				virtual.POST("/:id/tools/:tool/test", 
+				virtual.POST("/:id/tools/:tool/test",
 					authMiddleware.RequireResourceAccess("virtual_server", "write"),
 					virtualAdminHandler.TestVirtualServerTool)
 			}
-			
-			// Policy management - requires admin access and policy permissions  
+
+			// Policy management - requires admin access and policy permissions
 			policies := admin.Group("/policies")
 			{
-				policies.GET("", 
+				policies.GET("",
 					authMiddleware.RequireAdmin(),
 					authMiddleware.RequirePermission(types.PermissionRead),
 					policyHandler.ListPolicies)
-				policies.POST("", 
+				policies.POST("",
 					authMiddleware.RequireAdmin(),
 					authMiddleware.RequirePermission(types.PermissionWrite),
-					loggingMiddleware.AuditLogger("create", "policy"), 
+					loggingMiddleware.AuditLogger("create", "policy"),
 					policyHandler.CreatePolicy)
-				policies.GET("/:id", 
+				policies.GET("/:id",
 					authMiddleware.RequireAdmin(),
 					authMiddleware.RequirePermission(types.PermissionRead),
 					policyHandler.GetPolicy)
-				policies.PUT("/:id", 
+				policies.PUT("/:id",
 					authMiddleware.RequireAdmin(),
 					authMiddleware.RequirePermission(types.PermissionWrite),
-					loggingMiddleware.AuditLogger("update", "policy"), 
+					loggingMiddleware.AuditLogger("update", "policy"),
 					policyHandler.UpdatePolicy)
-				policies.DELETE("/:id", 
+				policies.DELETE("/:id",
 					authMiddleware.RequireAdmin(),
 					authMiddleware.RequirePermission(types.PermissionDelete),
-					loggingMiddleware.AuditLogger("delete", "policy"), 
+					loggingMiddleware.AuditLogger("delete", "policy"),
 					policyHandler.DeletePolicy)
 			}
-			
+
 		}
 	}
 
