@@ -20,27 +20,29 @@ import (
 
 func (s *Server) RegisterRoutes() http.Handler {
 	r := gin.New()
-	r.Use(gin.Recovery())
 
-	// Add security headers middleware early in the chain
+	// Initialize logging middleware
+	loggingMiddleware := logging.NewMiddleware(s.logging.(*logging.Service))
+
+	// Configure security headers based on environment
 	var securityConfig *middleware.SecurityConfig
 	if s.cfg.Logging.Environment == "development" {
 		securityConfig = middleware.DevelopmentSecurityConfig()
 	} else {
 		securityConfig = middleware.DefaultSecurityConfig()
 	}
-	r.Use(middleware.SecurityHeadersWithConfig(securityConfig))
 
-	// Initialize logging middleware
-	loggingMiddleware := logging.NewMiddleware(s.logging.(*logging.Service))
-	r.Use(loggingMiddleware.RequestLogger())
-
-	r.Use(cors.New(cors.Config{
+	// Apply default middleware chain to root router
+	defaultChain := middleware.DefaultChainWithConfig(securityConfig)
+	defaultChain.Use(loggingMiddleware.RequestLogger())
+	defaultChain.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowHeaders:     []string{"Accept", "Authorization", "Content-Type", "X-Requested-With"},
 		AllowCredentials: true,
 	}))
+	rootGroup := &r.RouterGroup
+	defaultChain.Apply(rootGroup)
 
 	r.GET("/", s.HelloWorldHandler)
 
@@ -49,12 +51,16 @@ func (s *Server) RegisterRoutes() http.Handler {
 	// Initialize middleware
 	pathRewriteMiddleware := middleware.NewPathRewriteMiddleware()
 
+	// Create transport middleware chain
+	transportChain := middleware.NewChain().
+		Use(pathRewriteMiddleware.Handler()).
+		Use(middleware.ServerContextMiddleware()).
+		Use(middleware.TransportTypeMiddleware()).
+		Use(middleware.SessionIDMiddleware())
+
 	// Apply transport middleware for all transport routes
 	transportGroup := r.Group("/")
-	transportGroup.Use(pathRewriteMiddleware.Handler())
-	transportGroup.Use(middleware.ServerContextMiddleware())
-	transportGroup.Use(middleware.TransportTypeMiddleware())
-	transportGroup.Use(middleware.SessionIDMiddleware())
+	transportChain.Apply(transportGroup)
 
 	// Initialize services
 	mcpDiscoveryService := discovery.NewMCPDiscoveryService(s.cfg.MCPDiscovery.BaseURL)
@@ -148,8 +154,9 @@ func (s *Server) RegisterRoutes() http.Handler {
 			auth.POST("/refresh", authHandler.RefreshToken)
 
 			// Protected routes (auth required)
+			authenticatedChain := middleware.AuthenticatedChain().Use(authMiddleware.RequireAuth())
 			protected := auth.Group("/")
-			protected.Use(authMiddleware.RequireAuth())
+			authenticatedChain.Apply(protected)
 			{
 				protected.POST("/logout", authHandler.Logout)
 				protected.GET("/profile", authHandler.GetProfile)
@@ -159,9 +166,11 @@ func (s *Server) RegisterRoutes() http.Handler {
 		}
 
 		// MCP Discovery routes (require authentication and read permission)
+		mcpChain := middleware.AuthenticatedChain().
+			Use(authMiddleware.RequireAuth()).
+			Use(authMiddleware.RequirePermission(types.PermissionRead))
 		mcp := api.Group("/mcp")
-		mcp.Use(authMiddleware.RequireAuth())
-		mcp.Use(authMiddleware.RequirePermission(types.PermissionRead))
+		mcpChain.Apply(mcp)
 		{
 			// Search for MCP packages
 			mcp.GET("/search", mcpDiscoveryHandler.SearchPackages)
@@ -177,9 +186,11 @@ func (s *Server) RegisterRoutes() http.Handler {
 		}
 
 		// Gateway management routes (protected)
+		gatewayChain := middleware.AuthenticatedChain().
+			Use(authMiddleware.RequireAuth()).
+			Use(authMiddleware.RequireOrganizationAccess())
 		gateway := api.Group("/gateway")
-		gateway.Use(authMiddleware.RequireAuth())
-		gateway.Use(authMiddleware.RequireOrganizationAccess())
+		gatewayChain.Apply(gateway)
 		{
 			// Server management - requires appropriate permissions
 			gateway.GET("/servers",
@@ -294,9 +305,11 @@ func (s *Server) RegisterRoutes() http.Handler {
 		}
 
 		// Admin routes for virtual servers and system management (protected)
+		adminChain := middleware.AdminChain().
+			Use(authMiddleware.RequireAuth()).
+			Use(authMiddleware.RequireOrganizationAccess())
 		admin := api.Group("/admin")
-		admin.Use(authMiddleware.RequireAuth())
-		admin.Use(authMiddleware.RequireOrganizationAccess())
+		adminChain.Apply(admin)
 		{
 			// Logging and audit routes - require admin access
 			admin.GET("/logs",

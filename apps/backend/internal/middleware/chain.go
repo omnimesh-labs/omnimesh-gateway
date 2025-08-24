@@ -36,6 +36,16 @@ func (c *Chain) Apply(group *gin.RouterGroup) {
 func DefaultChain() *Chain {
 	return NewChain().
 		Use(Recovery()).
+		Use(SecurityHeaders()).
+		Use(CORS()).
+		Use(Timeout())
+}
+
+// DefaultChainWithConfig creates a default middleware chain with custom security config
+func DefaultChainWithConfig(securityConfig *SecurityConfig) *Chain {
+	return NewChain().
+		Use(Recovery()).
+		Use(SecurityHeadersWithConfig(securityConfig)).
 		Use(CORS()).
 		Use(Timeout())
 }

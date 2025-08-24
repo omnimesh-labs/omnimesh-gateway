@@ -1,4 +1,4 @@
-package filters
+package plugins
 
 import (
 	"bytes"
@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"mcp-gateway/apps/backend/internal/database/models"
+	"mcp-gateway/apps/backend/internal/plugins/shared"
 	"mcp-gateway/apps/backend/internal/types"
 
 	"github.com/gin-gonic/gin"
@@ -106,7 +107,7 @@ func (m *FilterMiddleware) processInboundRequest(c *gin.Context, orgID, userID, 
 	}
 
 	// Create filter content
-	content := CreateFilterContent(
+	content := shared.CreateFilterContent(
 		string(requestBody),
 		nil,
 		m.extractHeaders(c.Request.Header),
@@ -182,7 +183,7 @@ func (m *FilterMiddleware) processOutboundResponse(c *gin.Context, orgID, userID
 	}
 
 	// Create basic filter content for logging purposes
-	content := CreateFilterContent("", nil, nil, nil)
+	content := shared.CreateFilterContent("", nil, nil, nil)
 
 	// Apply filters (this is a simplified version)
 	result, _, err := m.service.ProcessContent(context.Background(), filterCtx, content)
@@ -491,7 +492,7 @@ func (m *AdvancedFilterMiddleware) processOutboundResponseAdvanced(c *gin.Contex
 	}
 
 	// Create filter content from response body
-	content := CreateFilterContent(
+	content := shared.CreateFilterContent(
 		responseWriter.GetBody(),
 		nil,
 		m.extractResponseHeaders(c.Writer.Header()),

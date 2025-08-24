@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"mcp-gateway/apps/backend/internal/filters/shared"
+	"mcp-gateway/apps/backend/internal/plugins/shared"
 )
 
 // RegexFilter implements pattern-based search and replace functionality
@@ -280,6 +280,16 @@ func (f *RegexFilterFactory) GetName() string {
 // GetDescription returns the factory description
 func (f *RegexFilterFactory) GetDescription() string {
 	return "Pattern-based content filtering with search and replace functionality"
+}
+
+// GetSupportedExecutionModes returns supported execution modes
+func (f *RegexFilterFactory) GetSupportedExecutionModes() []string {
+	return []string{
+		string(shared.PluginModeEnforcing),
+		string(shared.PluginModePermissive),
+		string(shared.PluginModeDisabled),
+		string(shared.PluginModeAuditOnly),
+	}
 }
 
 // ValidateConfig validates the configuration for Regex filters

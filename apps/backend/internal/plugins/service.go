@@ -1,4 +1,4 @@
-package filters
+package plugins
 
 import (
 	"context"
@@ -8,37 +8,47 @@ import (
 	"sync"
 
 	"mcp-gateway/apps/backend/internal/database/models"
-	"mcp-gateway/apps/backend/internal/filters/plugins/deny"
-	"mcp-gateway/apps/backend/internal/filters/plugins/pii"
-	"mcp-gateway/apps/backend/internal/filters/plugins/regex"
-	"mcp-gateway/apps/backend/internal/filters/plugins/resource"
-	"mcp-gateway/apps/backend/internal/filters/shared"
+	"mcp-gateway/apps/backend/internal/plugins/content_filters/deny"
+	"mcp-gateway/apps/backend/internal/plugins/content_filters/pii"
+	"mcp-gateway/apps/backend/internal/plugins/content_filters/regex"
+	"mcp-gateway/apps/backend/internal/plugins/content_filters/resource"
+	"mcp-gateway/apps/backend/internal/plugins/ai_middleware/llamaguard"
+	"mcp-gateway/apps/backend/internal/plugins/ai_middleware/openai_mod"
+	"mcp-gateway/apps/backend/internal/plugins/shared"
 	"mcp-gateway/apps/backend/internal/types"
 )
 
-// filterService implements FilterService interface
-type filterService struct {
+// pluginService implements PluginService interface
+type pluginService struct {
 	db          *sql.DB
-	manager     FilterManager
-	registry    FilterRegistry
+	manager     shared.PluginManager
+	registry    shared.PluginRegistry
 	mu          sync.RWMutex
-	orgFilters  map[string][]Filter // Cache of organization filters
+	orgPlugins  map[string][]Plugin // Cache of organization plugins
 	initialized bool
 }
 
-// NewFilterService creates a new filter service
-func NewFilterService(db *sql.DB) FilterService {
-	return &filterService{
-		db:         db,
-		manager:    NewFilterManager(),
-		registry:   GetGlobalRegistry(),
-		orgFilters: make(map[string][]Filter),
+// Legacy alias for backward compatibility
+type filterService = pluginService
+
+// NewPluginService creates a new plugin service
+func NewPluginService(db *sql.DB) PluginService {
+	return &pluginService{
+		db:          db,
+		manager:     NewPluginManager(),
+		registry:    GetGlobalRegistry(),
+		orgPlugins:  make(map[string][]Plugin),
 		initialized: false,
 	}
 }
 
-// Initialize sets up the filtering service
-func (s *filterService) Initialize(ctx context.Context) error {
+// NewFilterService creates a new filter service (legacy compatibility)
+func NewFilterService(db *sql.DB) PluginService {
+	return NewPluginService(db)
+}
+
+// Initialize sets up the plugin service
+func (s *pluginService) Initialize(ctx context.Context) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -46,51 +56,51 @@ func (s *filterService) Initialize(ctx context.Context) error {
 		return nil
 	}
 
-	// Register built-in filter factories
+	// Register built-in plugin factories
 	if err := s.registerBuiltinFilters(); err != nil {
-		return fmt.Errorf("failed to register builtin filters: %w", err)
+		return fmt.Errorf("failed to register builtin plugins: %w", err)
 	}
 
 	s.initialized = true
 	return nil
 }
 
-// ProcessContent processes content through all applicable filters
-func (s *filterService) ProcessContent(ctx context.Context, filterCtx *FilterContext, content *FilterContent) (*FilterResult, *FilterContent, error) {
-	// Load organization-specific filters if not cached
-	if err := s.ensureOrganizationFiltersLoaded(ctx, filterCtx.OrganizationID); err != nil {
-		return nil, content, fmt.Errorf("failed to load organization filters: %w", err)
+// ProcessContent processes content through all applicable plugins
+func (s *pluginService) ProcessContent(ctx context.Context, pluginCtx *PluginContext, content *PluginContent) (*PluginResult, *PluginContent, error) {
+	// Load organization-specific plugins if not cached
+	if err := s.ensureOrganizationFiltersLoaded(ctx, pluginCtx.OrganizationID); err != nil {
+		return nil, content, fmt.Errorf("failed to load organization plugins: %w", err)
 	}
 
-	// Create a temporary manager with organization-specific filters
-	tempManager := NewFilterManager()
-	
+	// Create a temporary manager with organization-specific plugins
+	tempManager := NewPluginManager()
+
 	s.mu.RLock()
-	orgFilters := s.orgFilters[filterCtx.OrganizationID]
+	orgPlugins := s.orgPlugins[pluginCtx.OrganizationID]
 	s.mu.RUnlock()
 
-	for _, filter := range orgFilters {
-		if err := tempManager.AddFilter(filter); err != nil {
-			return nil, content, fmt.Errorf("failed to add filter to temporary manager: %w", err)
+	for _, plugin := range orgPlugins {
+		if err := tempManager.AddPlugin(plugin); err != nil {
+			return nil, content, fmt.Errorf("failed to add plugin to temporary manager: %w", err)
 		}
 	}
 
-	// Apply filters
-	return tempManager.ApplyFilters(ctx, filterCtx, content)
+	// Apply plugins
+	return tempManager.ApplyPlugins(ctx, pluginCtx, content)
 }
 
-// GetManager returns the filter manager
-func (s *filterService) GetManager() FilterManager {
+// GetManager returns the plugin manager
+func (s *pluginService) GetManager() PluginManager {
 	return s.manager
 }
 
-// GetRegistry returns the filter registry
-func (s *filterService) GetRegistry() FilterRegistry {
+// GetRegistry returns the plugin registry
+func (s *pluginService) GetRegistry() PluginRegistry {
 	return s.registry
 }
 
-// LoadFiltersFromDatabase loads filters from database configuration
-func (s *filterService) LoadFiltersFromDatabase(ctx context.Context, organizationID string) error {
+// LoadPluginsFromDatabase loads plugins from database configuration
+func (s *pluginService) LoadPluginsFromDatabase(ctx context.Context, organizationID string) error {
 	query := `
 		SELECT id, organization_id, name, description, type, enabled, priority, config, created_at, updated_at, created_by
 		FROM content_filters 
@@ -136,24 +146,24 @@ func (s *filterService) LoadFiltersFromDatabase(ctx context.Context, organizatio
 		return fmt.Errorf("error iterating over filter rows: %w", err)
 	}
 
-	// Cache the filters for this organization
+	// Cache the plugins for this organization
 	s.mu.Lock()
-	s.orgFilters[organizationID] = filters
+	s.orgPlugins[organizationID] = filters
 	s.mu.Unlock()
 
 	return nil
 }
 
-// SaveFilterToDatabase saves a filter configuration to the database
-func (s *filterService) SaveFilterToDatabase(ctx context.Context, organizationID string, filter Filter) error {
+// SavePluginToDatabase saves a plugin configuration to the database
+func (s *pluginService) SavePluginToDatabase(ctx context.Context, organizationID string, plugin Plugin) error {
 	cf := models.NewContentFilter(
 		organizationID,
-		filter.GetName(),
+		plugin.GetName(),
 		"", // Description should be set separately
-		string(filter.GetType()),
-		filter.IsEnabled(),
-		filter.GetPriority(),
-		filter.GetConfig(),
+		string(plugin.GetType()),
+		plugin.IsEnabled(),
+		plugin.GetPriority(),
+		plugin.GetConfig(),
 		nil,
 	)
 
@@ -185,17 +195,17 @@ func (s *filterService) SaveFilterToDatabase(ctx context.Context, organizationID
 
 	// Invalidate cache for this organization
 	s.mu.Lock()
-	delete(s.orgFilters, organizationID)
+	delete(s.orgPlugins, organizationID)
 	s.mu.Unlock()
 
 	return nil
 }
 
-// DeleteFilterFromDatabase deletes a filter configuration from the database
-func (s *filterService) DeleteFilterFromDatabase(ctx context.Context, organizationID, filterName string) error {
+// DeletePluginFromDatabase deletes a plugin configuration from the database
+func (s *pluginService) DeletePluginFromDatabase(ctx context.Context, organizationID, pluginName string) error {
 	query := `DELETE FROM content_filters WHERE organization_id = $1 AND name = $2`
 
-	result, err := s.db.ExecContext(ctx, query, organizationID, filterName)
+	result, err := s.db.ExecContext(ctx, query, organizationID, pluginName)
 	if err != nil {
 		return fmt.Errorf("failed to delete content filter: %w", err)
 	}
@@ -206,46 +216,46 @@ func (s *filterService) DeleteFilterFromDatabase(ctx context.Context, organizati
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("filter '%s' not found for organization '%s'", filterName, organizationID)
+		return fmt.Errorf("filter '%s' not found for organization '%s'", pluginName, organizationID)
 	}
 
 	// Invalidate cache for this organization
 	s.mu.Lock()
-	delete(s.orgFilters, organizationID)
+	delete(s.orgPlugins, organizationID)
 	s.mu.Unlock()
 
 	return nil
 }
 
-// ReloadOrganizationFilters reloads filters for a specific organization
-func (s *filterService) ReloadOrganizationFilters(ctx context.Context, organizationID string) error {
+// ReloadOrganizationPlugins reloads plugins for a specific organization
+func (s *pluginService) ReloadOrganizationPlugins(ctx context.Context, organizationID string) error {
 	// Clear cache
 	s.mu.Lock()
-	delete(s.orgFilters, organizationID)
+	delete(s.orgPlugins, organizationID)
 	s.mu.Unlock()
 
 	// Reload from database
-	return s.LoadFiltersFromDatabase(ctx, organizationID)
+	return s.LoadPluginsFromDatabase(ctx, organizationID)
 }
 
-// GetOrganizationFilters returns all filters for an organization
-func (s *filterService) GetOrganizationFilters(ctx context.Context, organizationID string) ([]Filter, error) {
+// GetOrganizationPlugins returns all plugins for an organization
+func (s *pluginService) GetOrganizationPlugins(ctx context.Context, organizationID string) ([]Plugin, error) {
 	if err := s.ensureOrganizationFiltersLoaded(ctx, organizationID); err != nil {
 		return nil, err
 	}
 
 	s.mu.RLock()
-	filters := s.orgFilters[organizationID]
+	plugins := s.orgPlugins[organizationID]
 	s.mu.RUnlock()
 
 	// Return a copy to prevent external modification
-	result := make([]Filter, len(filters))
-	copy(result, filters)
+	result := make([]Plugin, len(plugins))
+	copy(result, plugins)
 	return result, nil
 }
 
 // HealthCheck verifies the service is operational
-func (s *filterService) HealthCheck(ctx context.Context) error {
+func (s *pluginService) HealthCheck(ctx context.Context) error {
 	// Test database connectivity
 	if err := s.db.PingContext(ctx); err != nil {
 		return fmt.Errorf("database connectivity check failed: %w", err)
@@ -260,37 +270,37 @@ func (s *filterService) HealthCheck(ctx context.Context) error {
 }
 
 // Close shuts down the service
-func (s *filterService) Close() error {
+func (s *pluginService) Close() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	// Clear caches
-	s.orgFilters = make(map[string][]Filter)
+	s.orgPlugins = make(map[string][]Plugin)
 	s.initialized = false
 
 	return nil
 }
 
 // GetMetrics returns filtering metrics
-func (s *filterService) GetMetrics() (*types.FilteringMetrics, error) {
+func (s *pluginService) GetMetrics() (*types.FilteringMetrics, error) {
 	return s.manager.GetStats()
 }
 
 // ensureOrganizationFiltersLoaded ensures filters are loaded for an organization
-func (s *filterService) ensureOrganizationFiltersLoaded(ctx context.Context, organizationID string) error {
+func (s *pluginService) ensureOrganizationFiltersLoaded(ctx context.Context, organizationID string) error {
 	s.mu.RLock()
-	_, exists := s.orgFilters[organizationID]
+	_, exists := s.orgPlugins[organizationID]
 	s.mu.RUnlock()
 
 	if !exists {
-		return s.LoadFiltersFromDatabase(ctx, organizationID)
+		return s.LoadPluginsFromDatabase(ctx, organizationID)
 	}
 
 	return nil
 }
 
 // registerBuiltinFilters registers the built-in filter factories
-func (s *filterService) registerBuiltinFilters() error {
+func (s *pluginService) registerBuiltinFilters() error {
 	// Register PII filter factory
 	piiFactory := &pii.PIIFilterFactory{}
 	if err := s.registry.Register(piiFactory); err != nil {
@@ -315,28 +325,44 @@ func (s *filterService) registerBuiltinFilters() error {
 		return fmt.Errorf("failed to register Regex filter factory: %w", err)
 	}
 
+	// Register LlamaGuard AI middleware factory
+	llamaGuardFactory := &llamaguard.LlamaGuardPluginFactory{}
+	if err := s.registry.Register(llamaGuardFactory); err != nil {
+		return fmt.Errorf("failed to register LlamaGuard plugin factory: %w", err)
+	}
+
+	// Register OpenAI Moderation AI middleware factory
+	openaiModFactory := &openai_mod.OpenAIModerationPluginFactory{}
+	if err := s.registry.Register(openaiModFactory); err != nil {
+		return fmt.Errorf("failed to register OpenAI Moderation plugin factory: %w", err)
+	}
+
 	return nil
 }
 
 // createFilterFromModel converts a database model to a Filter instance
-func (s *filterService) createFilterFromModel(cf *models.ContentFilter) (Filter, error) {
-	// Convert string type to FilterType
-	var filterType FilterType
+func (s *pluginService) createFilterFromModel(cf *models.ContentFilter) (Filter, error) {
+	// Convert string type to PluginType (updated from FilterType)
+	var pluginType shared.PluginType
 	switch cf.Type {
 	case "pii":
-		filterType = FilterTypePII
+		pluginType = shared.PluginTypePII
 	case "resource":
-		filterType = FilterTypeResource
+		pluginType = shared.PluginTypeResource
 	case "deny":
-		filterType = FilterTypeDeny
+		pluginType = shared.PluginTypeDeny
 	case "regex":
-		filterType = FilterTypeRegex
+		pluginType = shared.PluginTypeRegex
+	case "llamaguard":
+		pluginType = shared.PluginTypeLlamaGuard
+	case "openai_moderation":
+		pluginType = shared.PluginTypeOpenAIMod
 	default:
-		return nil, fmt.Errorf("unknown filter type: %s", cf.Type)
+		return nil, fmt.Errorf("unknown plugin type: %s", cf.Type)
 	}
 
-	// Get the factory for this filter type
-	factory, err := s.registry.Get(filterType)
+	// Get the factory for this plugin type
+	factory, err := s.registry.Get(pluginType)
 	if err != nil {
 		return nil, err
 	}
@@ -357,7 +383,7 @@ func (s *filterService) createFilterFromModel(cf *models.ContentFilter) (Filter,
 }
 
 // LogViolation logs a filter violation to the database
-func (s *filterService) LogViolation(ctx context.Context, violation *models.FilterViolation) error {
+func (s *pluginService) LogViolation(ctx context.Context, violation *models.FilterViolation) error {
 	query := `
 		INSERT INTO filter_violations (
 			id, organization_id, filter_id, request_id, session_id, server_id,
@@ -388,7 +414,7 @@ func (s *filterService) LogViolation(ctx context.Context, violation *models.Filt
 }
 
 // GetViolations retrieves filter violations with optional filtering
-func (s *filterService) GetViolations(ctx context.Context, organizationID string, limit, offset int) ([]*models.FilterViolation, error) {
+func (s *pluginService) GetViolations(ctx context.Context, organizationID string, limit, offset int) ([]interface{}, error) {
 	query := `
 		SELECT id, organization_id, filter_id, request_id, session_id, server_id,
 			   violation_type, action_taken, content_snippet, pattern_matched, severity,
@@ -434,5 +460,65 @@ func (s *filterService) GetViolations(ctx context.Context, organizationID string
 		return nil, fmt.Errorf("error iterating over violation rows: %w", err)
 	}
 
-	return violations, nil
+	// Convert to []interface{}
+	result := make([]interface{}, len(violations))
+	for i, v := range violations {
+		result[i] = v
+	}
+	return result, nil
+}
+
+// ProcessContentWithDirection processes content for specific direction
+func (s *pluginService) ProcessContentWithDirection(ctx context.Context, pluginCtx *PluginContext, content *PluginContent, direction PluginDirection) (*PluginResult, *PluginContent, error) {
+	// Create a new context with the specified direction
+	directionCtx := *pluginCtx
+	directionCtx.Direction = direction
+	
+	return s.ProcessContent(ctx, &directionCtx, content)
+}
+
+// ExportPluginConfig exports plugin configuration as JSON/YAML
+func (s *pluginService) ExportPluginConfig(ctx context.Context, organizationID string, format string) ([]byte, error) {
+	plugins, err := s.GetOrganizationPlugins(ctx, organizationID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get organization plugins: %w", err)
+	}
+
+	// Create export structure
+	export := make(map[string]interface{})
+	export["version"] = "1.0"
+	export["organization_id"] = organizationID
+	export["plugins"] = plugins
+
+	// Marshal based on format
+	switch format {
+	case "json":
+		return json.Marshal(export)
+	default:
+		return nil, fmt.Errorf("unsupported export format: %s", format)
+	}
+}
+
+// ImportPluginConfig imports plugin configuration from JSON/YAML
+func (s *pluginService) ImportPluginConfig(ctx context.Context, organizationID string, configData []byte, format string) error {
+	// Parse based on format
+	var config map[string]interface{}
+	switch format {
+	case "json":
+		if err := json.Unmarshal(configData, &config); err != nil {
+			return fmt.Errorf("failed to parse JSON config: %w", err)
+		}
+	default:
+		return fmt.Errorf("unsupported import format: %s", format)
+	}
+
+	// Process imported plugins
+	pluginsData, ok := config["plugins"].([]interface{})
+	if !ok {
+		return fmt.Errorf("invalid plugins data in config")
+	}
+
+	// For now, return an error indicating this functionality needs implementation
+	_ = pluginsData
+	return fmt.Errorf("plugin import functionality not yet implemented")
 }

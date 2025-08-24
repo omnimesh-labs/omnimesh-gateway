@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"mcp-gateway/apps/backend/internal/database/models"
-	"mcp-gateway/apps/backend/internal/filters"
+	"mcp-gateway/apps/backend/internal/plugins"
 	"net/http"
 	"strconv"
 
@@ -15,11 +15,11 @@ import (
 // FiltersHandler handles filter-related requests
 type FiltersHandler struct {
 	db            *sql.DB
-	filterService filters.FilterService
+	filterService plugins.FilterService
 }
 
 // NewFiltersHandler creates a new filters handler
-func NewFiltersHandler(db *sql.DB, filterService filters.FilterService) *FiltersHandler {
+func NewFiltersHandler(db *sql.DB, filterService plugins.FilterService) *FiltersHandler {
 	return &FiltersHandler{
 		db:            db,
 		filterService: filterService,
@@ -48,7 +48,7 @@ func (h *FiltersHandler) CreateFilter(c *gin.Context) {
 	}
 
 	// Validate filter configuration
-	factory, err := h.filterService.GetRegistry().Get(filters.FilterType(req.Type))
+	factory, err := h.filterService.GetRegistry().Get(plugins.PluginType(req.Type))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid filter type", "details": err.Error()})
 		return
@@ -98,7 +98,7 @@ func (h *FiltersHandler) CreateFilter(c *gin.Context) {
 	}
 
 	// Reload filters for this organization
-	if err := h.filterService.ReloadOrganizationFilters(c.Request.Context(), orgID.(string)); err != nil {
+	if err := h.filterService.ReloadOrganizationPlugins(c.Request.Context(), orgID.(string)); err != nil {
 		// Log error but don't fail the request
 		c.Header("X-Warning", "Filter created but failed to reload filters")
 	}
@@ -274,7 +274,7 @@ func (h *FiltersHandler) UpdateFilter(c *gin.Context) {
 
 	// Validate filter configuration if provided
 	if req.Config != nil {
-		factory, err := h.filterService.GetRegistry().Get(filters.FilterType(existingFilter.Type))
+		factory, err := h.filterService.GetRegistry().Get(plugins.PluginType(existingFilter.Type))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid filter type", "details": err.Error()})
 			return
@@ -351,7 +351,7 @@ func (h *FiltersHandler) UpdateFilter(c *gin.Context) {
 	}
 
 	// Reload filters for this organization
-	if err := h.filterService.ReloadOrganizationFilters(c.Request.Context(), orgID.(string)); err != nil {
+	if err := h.filterService.ReloadOrganizationPlugins(c.Request.Context(), orgID.(string)); err != nil {
 		c.Header("X-Warning", "Filter updated but failed to reload filters")
 	}
 
@@ -397,7 +397,7 @@ func (h *FiltersHandler) DeleteFilter(c *gin.Context) {
 	}
 
 	// Reload filters for this organization
-	if err := h.filterService.ReloadOrganizationFilters(c.Request.Context(), orgID.(string)); err != nil {
+	if err := h.filterService.ReloadOrganizationPlugins(c.Request.Context(), orgID.(string)); err != nil {
 		c.Header("X-Warning", "Filter deleted but failed to reload filters")
 	}
 

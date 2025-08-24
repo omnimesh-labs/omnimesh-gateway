@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"mcp-gateway/apps/backend/internal/filters/shared"
+	"mcp-gateway/apps/backend/internal/plugins/shared"
 )
 
 // DenyFilter implements simple word/phrase blocking with violation reporting
@@ -346,6 +346,16 @@ func (f *DenyFilterFactory) GetName() string {
 // GetDescription returns the factory description
 func (f *DenyFilterFactory) GetDescription() string {
 	return "Blocks content containing prohibited words, phrases, or patterns"
+}
+
+// GetSupportedExecutionModes returns supported execution modes
+func (f *DenyFilterFactory) GetSupportedExecutionModes() []string {
+	return []string{
+		string(shared.PluginModeEnforcing),
+		string(shared.PluginModePermissive),
+		string(shared.PluginModeDisabled),
+		string(shared.PluginModeAuditOnly),
+	}
 }
 
 // ValidateConfig validates the configuration for Deny filters

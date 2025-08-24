@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"mcp-gateway/apps/backend/internal/filters/shared"
+	"mcp-gateway/apps/backend/internal/plugins/shared"
 )
 
 // PIIFilter implements the PII detection and masking filter
@@ -47,16 +47,16 @@ type CustomPattern struct {
 type MaskingStrategy string
 
 const (
-	MaskingStrategyRedact    MaskingStrategy = "redact"
-	MaskingStrategyHash      MaskingStrategy = "hash"
-	MaskingStrategyPartial   MaskingStrategy = "partial"
-	MaskingStrategyTokenize  MaskingStrategy = "tokenize"
+	MaskingStrategyRedact   MaskingStrategy = "redact"
+	MaskingStrategyHash     MaskingStrategy = "hash"
+	MaskingStrategyPartial  MaskingStrategy = "partial"
+	MaskingStrategyTokenize MaskingStrategy = "tokenize"
 )
 
 // NewPIIFilter creates a new PII filter instance
 func NewPIIFilter(name string, config map[string]interface{}) (*PIIFilter, error) {
 	baseFilter := shared.NewBaseFilter(shared.FilterTypePII, name, 10)
-	
+
 	// Set capabilities
 	baseFilter.SetCapabilities(shared.FilterCapabilities{
 		SupportsInbound:       true,
@@ -314,6 +314,16 @@ func (f *PIIFilterFactory) GetName() string {
 // GetDescription returns the factory description
 func (f *PIIFilterFactory) GetDescription() string {
 	return "Detects and masks personally identifiable information (PII) in content"
+}
+
+// GetSupportedExecutionModes returns supported execution modes
+func (f *PIIFilterFactory) GetSupportedExecutionModes() []string {
+	return []string{
+		string(shared.PluginModeEnforcing),
+		string(shared.PluginModePermissive),
+		string(shared.PluginModeDisabled),
+		string(shared.PluginModeAuditOnly),
+	}
 }
 
 // ValidateConfig validates the configuration for PII filters

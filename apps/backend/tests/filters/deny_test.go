@@ -1,11 +1,11 @@
-package filters
+package plugins
 
 import (
 	"context"
 	"testing"
 
-	"mcp-gateway/apps/backend/internal/filters/plugins/deny"
-	"mcp-gateway/apps/backend/internal/filters/shared"
+	"mcp-gateway/apps/backend/internal/plugins/content_filters/deny"
+	"mcp-gateway/apps/backend/internal/plugins/shared"
 )
 
 func TestDenyFilter_NewDenyFilter(t *testing.T) {

@@ -1,11 +1,11 @@
-package filters
+package plugins
 
 import (
 	"context"
 	"testing"
 
-	"mcp-gateway/apps/backend/internal/filters/plugins/resource"
-	"mcp-gateway/apps/backend/internal/filters/shared"
+	"mcp-gateway/apps/backend/internal/plugins/content_filters/resource"
+	"mcp-gateway/apps/backend/internal/plugins/shared"
 )
 
 func TestResourceFilter_NewResourceFilter(t *testing.T) {

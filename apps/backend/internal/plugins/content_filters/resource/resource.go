@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"mcp-gateway/apps/backend/internal/filters/shared"
+	"mcp-gateway/apps/backend/internal/plugins/shared"
 )
 
 // ResourceFilter implements URI validation, protocol filtering, domain blocking, and content filtering
@@ -466,6 +466,16 @@ func (f *ResourceFilterFactory) GetName() string {
 // GetDescription returns the factory description
 func (f *ResourceFilterFactory) GetDescription() string {
 	return "Validates URI access, filters protocols and domains, enforces content size limits"
+}
+
+// GetSupportedExecutionModes returns supported execution modes
+func (f *ResourceFilterFactory) GetSupportedExecutionModes() []string {
+	return []string{
+		string(shared.PluginModeEnforcing),
+		string(shared.PluginModePermissive),
+		string(shared.PluginModeDisabled),
+		string(shared.PluginModeAuditOnly),
+	}
 }
 
 // ValidateConfig validates the configuration for Resource filters
