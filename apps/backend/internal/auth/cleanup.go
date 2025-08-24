@@ -88,7 +88,9 @@ func (c *TokenCleanupService) runCleanup(ctx context.Context) {
 	fmt.Printf("Starting token cleanup at %s\n", time.Now().Format(time.RFC3339))
 
 	// Clean up expired JWT tokens from blacklist
-	c.jwtManager.CleanupExpiredTokens()
+	if err := c.jwtManager.CleanupExpiredTokens(ctx); err != nil {
+		fmt.Printf("Error cleaning up expired tokens: %v\n", err)
+	}
 
 	// Clean up old audit logs
 	if err := c.cleanupAuditLogs(ctx); err != nil {

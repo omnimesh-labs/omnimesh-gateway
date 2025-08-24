@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"net"
@@ -27,11 +28,19 @@ type Config struct {
 	AccessTokenExpiry  time.Duration
 	RefreshTokenExpiry time.Duration
 	BCryptCost         int
+	Cache              CacheConfig
 }
 
 // NewService creates a new authentication service
 func NewService(db *sql.DB, config *Config) *Service {
-	jwtManager := NewJWTManager(config.JWTSecret, config.AccessTokenExpiry, config.RefreshTokenExpiry)
+	// Create token cache
+	cache, err := NewTokenCache(config.Cache)
+	if err != nil {
+		// Fallback to memory cache if Redis fails
+		cache = NewMemoryTokenCache()
+	}
+	
+	jwtManager := NewJWTManagerWithCache(config.JWTSecret, config.AccessTokenExpiry, config.RefreshTokenExpiry, cache)
 	auditLogger := NewAuditLogger(db)
 	attemptTracker := NewLoginAttemptTracker(db)
 
@@ -353,7 +362,7 @@ func (s *Service) RefreshTokenWithRotation(refreshToken string, ctx *LoginContex
 	}
 
 	// Invalidate the old refresh token first
-	err = s.jwtManager.InvalidateToken(refreshToken)
+	err = s.jwtManager.InvalidateToken(context.Background(), refreshToken)
 	if err != nil {
 		// Log but don't fail - continue with new token generation
 		fmt.Printf("Warning: failed to invalidate old refresh token: %v\n", err)
@@ -448,7 +457,7 @@ func (s *Service) LogoutWithContext(accessToken string, ctx *LoginContext, volun
 	}
 
 	// Add to blacklist
-	err = s.jwtManager.InvalidateToken(accessToken)
+	err = s.jwtManager.InvalidateToken(context.Background(), accessToken)
 	if err != nil {
 		// Log failed logout attempt
 		s.auditLogger.LogEvent(&AuditEvent{

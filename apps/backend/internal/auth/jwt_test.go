@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -117,7 +118,7 @@ func TestJWTManager_InvalidateToken(t *testing.T) {
 	}
 
 	// Invalidate token
-	err = jwtManager.InvalidateToken(token)
+	err = jwtManager.InvalidateToken(context.Background(), token)
 	if err != nil {
 		t.Fatalf("Failed to invalidate token: %v", err)
 	}

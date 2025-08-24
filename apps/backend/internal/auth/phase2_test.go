@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"net"
 	"testing"
 	"time"
@@ -212,7 +213,7 @@ func TestTokenInvalidation(t *testing.T) {
 	}
 
 	// Invalidate access token
-	err = service.jwtManager.InvalidateToken(accessToken)
+	err = service.jwtManager.InvalidateToken(context.Background(), accessToken)
 	if err != nil {
 		t.Fatalf("Failed to invalidate access token: %v", err)
 	}
@@ -230,7 +231,7 @@ func TestTokenInvalidation(t *testing.T) {
 	}
 
 	// Invalidate refresh token
-	err = service.jwtManager.InvalidateToken(refreshToken)
+	err = service.jwtManager.InvalidateToken(context.Background(), refreshToken)
 	if err != nil {
 		t.Fatalf("Failed to invalidate refresh token: %v", err)
 	}
@@ -282,11 +283,11 @@ func TestCleanupExpiredTokens(t *testing.T) {
 
 	// Add token to blacklist manually for testing
 	// This simulates a token that was blacklisted before expiring
-	err = jwtManager.InvalidateToken("dummy.expired.token")
+	err = jwtManager.InvalidateToken(context.Background(), "dummy.expired.token")
 	// This will fail because the token format is invalid, but that's expected
 
 	// Run cleanup
-	jwtManager.CleanupExpiredTokens()
+	jwtManager.CleanupExpiredTokens(context.Background())
 
 	// The expired token should still be rejected
 	_, err = jwtManager.ValidateToken(token)

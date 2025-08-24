@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -15,14 +16,29 @@ type JWTManager struct {
 	secret             []byte
 	accessTokenExpiry  time.Duration
 	refreshTokenExpiry time.Duration
+	cache              TokenCache
 }
 
 // NewJWTManager creates a new JWT manager
 func NewJWTManager(secret string, accessExpiry, refreshExpiry time.Duration) *JWTManager {
+	// Use memory cache as fallback
+	cache := NewMemoryTokenCache()
+	
 	return &JWTManager{
 		secret:             []byte(secret),
 		accessTokenExpiry:  accessExpiry,
 		refreshTokenExpiry: refreshExpiry,
+		cache:              cache,
+	}
+}
+
+// NewJWTManagerWithCache creates a new JWT manager with custom cache
+func NewJWTManagerWithCache(secret string, accessExpiry, refreshExpiry time.Duration, cache TokenCache) *JWTManager {
+	return &JWTManager{
+		secret:             []byte(secret),
+		accessTokenExpiry:  accessExpiry,
+		refreshTokenExpiry: refreshExpiry,
+		cache:              cache,
 	}
 }
 
@@ -109,22 +125,21 @@ func (j *JWTManager) ValidateToken(tokenString string) (*Claims, error) {
 	}
 
 	// Check if token is blacklisted
-	if j.isTokenBlacklisted(tokenString) {
+	if isBlacklisted, err := j.isTokenBlacklisted(context.Background(), tokenString); err != nil {
+		return nil, fmt.Errorf("failed to check token blacklist: %w", err)
+	} else if isBlacklisted {
 		return nil, errors.New("token has been revoked")
 	}
 
 	return claims, nil
 }
 
-// tokenBlacklist stores revoked tokens (in production, use Redis)
-var tokenBlacklist = make(map[string]time.Time)
-
 // InvalidateToken adds token to blacklist
-func (j *JWTManager) InvalidateToken(tokenString string) error {
-	// Parse token to get expiration time
+func (j *JWTManager) InvalidateToken(ctx context.Context, tokenString string) error {
+	// Parse token to get expiration time, allowing expired tokens for blacklisting
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (any, error) {
 		return j.secret, nil
-	})
+	}, jwt.WithoutClaimsValidation())
 
 	if err != nil {
 		return fmt.Errorf("failed to parse token for blacklisting: %w", err)
@@ -135,38 +150,33 @@ func (j *JWTManager) InvalidateToken(tokenString string) error {
 		return errors.New("invalid token claims")
 	}
 
-	// Store token in blacklist until it expires
-	tokenBlacklist[tokenString] = claims.ExpiresAt.Time
+	// Calculate time until expiration
+	expiration := time.Until(claims.ExpiresAt.Time)
+	if expiration <= 0 {
+		// Token already expired, no need to blacklist
+		return nil
+	}
 
-	// TODO: In production, implement with Redis:
-	// j.redisClient.Set(ctx, "blacklist:"+tokenString, "revoked", time.Until(claims.ExpiresAt.Time))
+	// Store token in cache until it expires
+	if err := j.cache.Set(ctx, tokenString, expiration); err != nil {
+		return fmt.Errorf("failed to blacklist token: %w", err)
+	}
 
 	return nil
 }
 
 // isTokenBlacklisted checks if token is in blacklist
-func (j *JWTManager) isTokenBlacklisted(tokenString string) bool {
-	expiry, exists := tokenBlacklist[tokenString]
-	if !exists {
-		return false
-	}
-
-	// Remove expired tokens from blacklist
-	if time.Now().After(expiry) {
-		delete(tokenBlacklist, tokenString)
-		return false
-	}
-
-	return true
+func (j *JWTManager) isTokenBlacklisted(ctx context.Context, tokenString string) (bool, error) {
+	return j.cache.IsBlacklisted(ctx, tokenString)
 }
 
 // CleanupExpiredTokens removes expired tokens from blacklist
 // Should be called periodically by a background job
-func (j *JWTManager) CleanupExpiredTokens() {
-	now := time.Now()
-	for token, expiry := range tokenBlacklist {
-		if now.After(expiry) {
-			delete(tokenBlacklist, token)
-		}
-	}
+func (j *JWTManager) CleanupExpiredTokens(ctx context.Context) error {
+	return j.cache.Cleanup(ctx)
+}
+
+// Close closes the cache connection
+func (j *JWTManager) Close() error {
+	return j.cache.Close()
 }
