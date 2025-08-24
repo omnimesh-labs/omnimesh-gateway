@@ -24,8 +24,8 @@ func TestResourceFilter_NewResourceFilter(t *testing.T) {
 		t.Errorf("Expected name 'test-resource', got '%s'", filter.GetName())
 	}
 
-	if filter.GetType() != shared.FilterTypeResource {
-		t.Errorf("Expected type '%s', got '%s'", shared.FilterTypeResource, filter.GetType())
+	if filter.GetType() != shared.PluginTypeResource {
+		t.Errorf("Expected type '%s', got '%s'", shared.PluginTypeResource, filter.GetType())
 	}
 
 	if !filter.IsEnabled() {
@@ -45,8 +45,8 @@ func TestResourceFilter_ApplyBlockedProtocol(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("Please visit http://example.com for more info", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("Please visit http://example.com for more info", nil, nil, nil)
 
 	result, _, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -88,8 +88,8 @@ func TestResourceFilter_ApplyAllowedProtocol(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("Please visit https://example.com for more info", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("Please visit https://example.com for more info", nil, nil, nil)
 
 	result, _, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -119,8 +119,8 @@ func TestResourceFilter_ApplyBlockedDomain(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("Don't visit https://malicious.com/bad", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("Don't visit https://malicious.com/bad", nil, nil, nil)
 
 	result, _, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -164,8 +164,8 @@ func TestResourceFilter_ApplyAllowedDomainWhitelist(t *testing.T) {
 
 	// Test allowed domain
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("Visit https://safe.com for help", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("Visit https://safe.com for help", nil, nil, nil)
 
 	result, _, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -177,7 +177,7 @@ func TestResourceFilter_ApplyAllowedDomainWhitelist(t *testing.T) {
 	}
 
 	// Test non-allowed domain
-	content2 := shared.CreateFilterContent("Visit https://unknown.com for help", nil, nil, nil)
+	content2 := shared.CreatePluginContent("Visit https://unknown.com for help", nil, nil, nil)
 	result2, _, err2 := filter.Apply(ctx, filterCtx, content2)
 	if err2 != nil {
 		t.Fatalf("Filter apply failed: %v", err2)
@@ -210,10 +210,10 @@ func TestResourceFilter_ApplyWildcardDomain(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
 
 	// Test subdomain match
-	content := shared.CreateFilterContent("Visit https://api.example.com/data", nil, nil, nil)
+	content := shared.CreatePluginContent("Visit https://api.example.com/data", nil, nil, nil)
 	result, _, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
 		t.Fatalf("Filter apply failed: %v", err)
@@ -224,7 +224,7 @@ func TestResourceFilter_ApplyWildcardDomain(t *testing.T) {
 	}
 
 	// Test exact domain match  
-	content2 := shared.CreateFilterContent("Visit https://example.com/data", nil, nil, nil)
+	content2 := shared.CreatePluginContent("Visit https://example.com/data", nil, nil, nil)
 	result2, _, err2 := filter.Apply(ctx, filterCtx, content2)
 	if err2 != nil {
 		t.Fatalf("Filter apply failed: %v", err2)
@@ -257,8 +257,8 @@ func TestResourceFilter_ApplyLocalhostBlocked(t *testing.T) {
 
 	for _, testURL := range testCases {
 		ctx := context.Background()
-		filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-		content := shared.CreateFilterContent("Connect to "+testURL, nil, nil, nil)
+		filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+		content := shared.CreatePluginContent("Connect to "+testURL, nil, nil, nil)
 
 		result, _, err := filter.Apply(ctx, filterCtx, content)
 		if err != nil {
@@ -301,8 +301,8 @@ func TestResourceFilter_ApplyPrivateNetworkBlocked(t *testing.T) {
 
 	for _, testURL := range testCases {
 		ctx := context.Background()
-		filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-		content := shared.CreateFilterContent("Connect to "+testURL, nil, nil, nil)
+		filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+		content := shared.CreatePluginContent("Connect to "+testURL, nil, nil, nil)
 
 		result, _, err := filter.Apply(ctx, filterCtx, content)
 		if err != nil {
@@ -336,14 +336,14 @@ func TestResourceFilter_ApplyContentSizeExceeded(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
 	
 	// Create content larger than the limit
 	largeContent := make([]byte, 150)
 	for i := range largeContent {
 		largeContent[i] = 'A'
 	}
-	content := shared.CreateFilterContent(string(largeContent), nil, nil, nil)
+	content := shared.CreatePluginContent(string(largeContent), nil, nil, nil)
 
 	result, _, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -380,8 +380,8 @@ func TestResourceFilter_ApplyBlockedContentType(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/html")
-	content := shared.CreateFilterContent("<html><body>Test</body></html>", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/html")
+	content := shared.CreatePluginContent("<html><body>Test</body></html>", nil, nil, nil)
 
 	result, _, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -420,8 +420,8 @@ func TestResourceFilter_ApplyAllowedContentType(t *testing.T) {
 	ctx := context.Background()
 
 	// Test allowed content type
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "application/json")
-	content := shared.CreateFilterContent(`{"key": "value"}`, nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "application/json")
+	content := shared.CreatePluginContent(`{"key": "value"}`, nil, nil, nil)
 
 	result, _, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -433,8 +433,8 @@ func TestResourceFilter_ApplyAllowedContentType(t *testing.T) {
 	}
 
 	// Test disallowed content type
-	filterCtx2 := shared.CreateFilterContext("req-2", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/html")
-	content2 := shared.CreateFilterContent("<html></html>", nil, nil, nil)
+	filterCtx2 := shared.CreatePluginContext("req-2", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/html")
+	content2 := shared.CreatePluginContent("<html></html>", nil, nil, nil)
 
 	result2, _, err2 := filter.Apply(ctx, filterCtx2, content2)
 	if err2 != nil {
@@ -466,8 +466,8 @@ func TestResourceFilter_ApplyInvalidURL(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("Visit ://invalid-url for more info", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("Visit ://invalid-url for more info", nil, nil, nil)
 
 	result, _, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -504,8 +504,8 @@ func TestResourceFilter_ApplyNoUrls(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("This is just plain text with no URLs", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("This is just plain text with no URLs", nil, nil, nil)
 
 	result, _, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -540,8 +540,8 @@ func TestResourceFilter_ApplyDisabled(t *testing.T) {
 	filter.SetEnabled(false)
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("Visit https://malicious.com/bad", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("Visit https://malicious.com/bad", nil, nil, nil)
 
 	result, _, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {

@@ -31,8 +31,8 @@ func TestRegexFilter_NewRegexFilter(t *testing.T) {
 		t.Errorf("Expected name 'test-regex', got '%s'", filter.GetName())
 	}
 
-	if filter.GetType() != shared.FilterTypeRegex {
-		t.Errorf("Expected type '%s', got '%s'", shared.FilterTypeRegex, filter.GetType())
+	if filter.GetType() != shared.PluginTypeRegex {
+		t.Errorf("Expected type '%s', got '%s'", shared.PluginTypeRegex, filter.GetType())
 	}
 
 	if !filter.IsEnabled() {
@@ -62,8 +62,8 @@ func TestRegexFilter_ApplyReplaceRule(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("This  has    extra     spaces", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("This  has    extra     spaces", nil, nil, nil)
 
 	result, modifiedContent, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -123,8 +123,8 @@ func TestRegexFilter_ApplyBlockRule(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("This contains a badword in it", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("This contains a badword in it", nil, nil, nil)
 
 	result, _, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -181,8 +181,8 @@ func TestRegexFilter_ApplyMultipleRules(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("This  has\textra     spaces", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("This  has\textra     spaces", nil, nil, nil)
 
 	result, modifiedContent, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -228,8 +228,8 @@ func TestRegexFilter_ApplyWarnAction(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("I have 123 items", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("I have 123 items", nil, nil, nil)
 
 	result, modifiedContent, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -285,8 +285,8 @@ func TestRegexFilter_ApplyDisabledRule(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("Test 123 HELLO", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("Test 123 HELLO", nil, nil, nil)
 
 	result, modifiedContent, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -333,8 +333,8 @@ func TestRegexFilter_ApplyNoMatches(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("This has no numbers", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("This has no numbers", nil, nil, nil)
 
 	result, modifiedContent, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -385,8 +385,8 @@ func TestRegexFilter_ApplyDisabled(t *testing.T) {
 	filter.SetEnabled(false)
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("This has 123 numbers", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("This has 123 numbers", nil, nil, nil)
 
 	result, _, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {

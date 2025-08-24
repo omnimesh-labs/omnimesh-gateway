@@ -400,37 +400,3 @@ func (s *Service) LogMetric(ctx context.Context, metric *types.Metric) error {
 	})
 }
 
-// Legacy compatibility methods for existing code
-
-// CreateLogEntry creates a new log entry (legacy compatibility)
-func CreateLogEntry(level LogLevel, logger, message string, data map[string]interface{}) *LogEntry {
-	return &LogEntry{
-		ID:        uuid.New().String(),
-		Timestamp: time.Now(),
-		Level:     level,
-		Logger:    logger,
-		Message:   message,
-		Data:      data,
-	}
-}
-
-// CreateAuditEntry creates a new audit log entry (legacy compatibility)
-func CreateAuditEntry(userID, orgID, action, resource, resourceID string, details map[string]interface{}) *LogEntry {
-	return &LogEntry{
-		ID:         uuid.New().String(),
-		Timestamp:  time.Now(),
-		Level:      LogLevelInfo,
-		Logger:     "audit",
-		Message:    fmt.Sprintf("User %s performed %s on %s %s", userID, action, resource, resourceID),
-		UserID:     userID,
-		OrgID:      orgID,
-		EntityType: resource,
-		EntityID:   resourceID,
-		Data: map[string]interface{}{
-			"action":    action,
-			"resource":  resource,
-			"details":   details,
-			"audit_log": true,
-		},
-	}
-}

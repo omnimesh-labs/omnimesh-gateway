@@ -12,7 +12,7 @@ import (
 
 // ResourceFilter implements URI validation, protocol filtering, domain blocking, and content filtering
 type ResourceFilter struct {
-	*shared.BaseFilter
+	*shared.BasePlugin
 	config *ResourceConfig
 }
 
@@ -32,10 +32,10 @@ type ResourceConfig struct {
 
 // NewResourceFilter creates a new Resource filter instance
 func NewResourceFilter(name string, config map[string]interface{}) (*ResourceFilter, error) {
-	baseFilter := shared.NewBaseFilter(shared.FilterTypeResource, name, 20)
+	basePlugin := shared.NewBasePlugin(shared.PluginTypeResource, name, 20)
 
 	// Set capabilities
-	baseFilter.SetCapabilities(shared.FilterCapabilities{
+	basePlugin.SetCapabilities(shared.PluginCapabilities{
 		SupportsInbound:       true,
 		SupportsOutbound:      true,
 		SupportsModification:  false, // Resource filter blocks but doesn't modify
@@ -46,7 +46,7 @@ func NewResourceFilter(name string, config map[string]interface{}) (*ResourceFil
 	})
 
 	filter := &ResourceFilter{
-		BaseFilter: baseFilter,
+		BasePlugin: basePlugin,
 	}
 
 	if err := filter.Configure(config); err != nil {
@@ -57,12 +57,12 @@ func NewResourceFilter(name string, config map[string]interface{}) (*ResourceFil
 }
 
 // Apply applies the Resource filter to content
-func (f *ResourceFilter) Apply(ctx context.Context, filterCtx *shared.FilterContext, content *shared.FilterContent) (*shared.FilterResult, *shared.FilterContent, error) {
-	if !f.BaseFilter.IsEnabled() {
-		return shared.CreateFilterResult(false, false, shared.FilterActionAllow, "", nil), content, nil
+func (f *ResourceFilter) Apply(ctx context.Context, pluginCtx *shared.PluginContext, content *shared.PluginContent) (*shared.PluginResult, *shared.PluginContent, error) {
+	if !f.BasePlugin.IsEnabled() {
+		return shared.CreatePluginResult(false, false, shared.PluginActionAllow, "", nil), content, nil
 	}
 
-	violations := []shared.FilterViolation{}
+	violations := []shared.PluginViolation{}
 
 	// Extract URLs from content
 	urls := f.extractURLs(content.Raw)
@@ -71,7 +71,7 @@ func (f *ResourceFilter) Apply(ctx context.Context, filterCtx *shared.FilterCont
 	for _, urlStr := range urls {
 		parsedURL, err := url.Parse(urlStr)
 		if err != nil {
-			violation := shared.CreateFilterViolation(
+			violation := shared.CreatePluginViolation(
 				"invalid_url",
 				"",
 				urlStr,
@@ -105,7 +105,7 @@ func (f *ResourceFilter) Apply(ctx context.Context, filterCtx *shared.FilterCont
 	}
 
 	// Check content type
-	if violation := f.checkContentType(filterCtx, content); violation != nil {
+	if violation := f.checkContentType(pluginCtx, content); violation != nil {
 		violations = append(violations, *violation)
 	}
 
@@ -117,7 +117,7 @@ func (f *ResourceFilter) Apply(ctx context.Context, filterCtx *shared.FilterCont
 	if len(violations) > 0 {
 		switch f.config.Action {
 		case "block":
-			action = shared.FilterActionBlock
+			action = shared.PluginActionBlock
 			blocked = true
 			reason = fmt.Sprintf("Resource access denied: %d violations found", len(violations))
 		case "warn":
@@ -129,15 +129,15 @@ func (f *ResourceFilter) Apply(ctx context.Context, filterCtx *shared.FilterCont
 			blocked = false
 			reason = fmt.Sprintf("Resource violations logged: %d issues found for audit", len(violations))
 		default:
-			action = shared.FilterActionAllow
+			action = shared.PluginActionAllow
 			blocked = false
 		}
 	} else {
-		action = shared.FilterActionAllow
+		action = shared.PluginActionAllow
 		blocked = false
 	}
 
-	result := shared.CreateFilterResult(blocked, false, action, reason, violations)
+	result := shared.CreatePluginResult(blocked, false, action, reason, violations)
 
 	return result, content, nil
 }
@@ -198,9 +198,9 @@ func (f *ResourceFilter) Configure(config map[string]interface{}) error {
 	resourceConfig.LogViolations = shared.GetConfigValue(config, "log_violations", true)
 
 	f.config = resourceConfig
-	f.BaseFilter.SetConfig(config)
+	f.BasePlugin.SetConfig(config)
 
-	return f.BaseFilter.Validate()
+	return f.BasePlugin.Validate()
 }
 
 // extractURLs extracts URLs from content using a simple regex
@@ -227,7 +227,7 @@ func (f *ResourceFilter) checkProtocol(parsedURL *url.URL) *shared.FilterViolati
 		}
 	}
 
-	violation := shared.CreateFilterViolation(
+	violation := shared.CreatePluginViolation(
 		"blocked_protocol",
 		"",
 		parsedURL.String(),
@@ -252,7 +252,7 @@ func (f *ResourceFilter) checkDomain(parsedURL *url.URL) *shared.FilterViolation
 			}
 		}
 
-		violation := shared.CreateFilterViolation(
+		violation := shared.CreatePluginViolation(
 			"domain_not_allowed",
 			"",
 			parsedURL.String(),
@@ -268,7 +268,7 @@ func (f *ResourceFilter) checkDomain(parsedURL *url.URL) *shared.FilterViolation
 	// Check blocked domains
 	for _, blocked := range f.config.BlockedDomains {
 		if f.matchesDomain(hostname, blocked) {
-			violation := shared.CreateFilterViolation(
+			violation := shared.CreatePluginViolation(
 				"blocked_domain",
 				"",
 				parsedURL.String(),
@@ -300,7 +300,7 @@ func (f *ResourceFilter) checkPrivateNetworks(parsedURL *url.URL) *shared.Filter
 
 		for _, pattern := range localhostPatterns {
 			if hostname == pattern {
-				violation := shared.CreateFilterViolation(
+				violation := shared.CreatePluginViolation(
 					"localhost_access",
 					"",
 					parsedURL.String(),
@@ -324,7 +324,7 @@ func (f *ResourceFilter) checkPrivateNetworks(parsedURL *url.URL) *shared.Filter
 
 		for _, pattern := range privatePatterns {
 			if pattern.MatchString(hostname) {
-				violation := shared.CreateFilterViolation(
+				violation := shared.CreatePluginViolation(
 					"private_network_access",
 					pattern.String(),
 					parsedURL.String(),
@@ -349,7 +349,7 @@ func (f *ResourceFilter) checkContentSize(content *shared.FilterContent) *shared
 
 	contentSize := int64(len(content.Raw))
 	if contentSize > f.config.MaxContentSize {
-		violation := shared.CreateFilterViolation(
+		violation := shared.CreatePluginViolation(
 			"content_size_exceeded",
 			"",
 			"",
@@ -366,8 +366,8 @@ func (f *ResourceFilter) checkContentSize(content *shared.FilterContent) *shared
 }
 
 // checkContentType checks if content type is allowed or blocked
-func (f *ResourceFilter) checkContentType(filterCtx *shared.FilterContext, content *shared.FilterContent) *shared.FilterViolation {
-	contentType := filterCtx.ContentType
+func (f *ResourceFilter) checkContentType(pluginCtx *shared.FilterContext, content *shared.FilterContent) *shared.FilterViolation {
+	contentType := pluginCtx.ContentType
 	if contentType == "" {
 		// Try to get from headers
 		if ct, exists := content.Headers["content-type"]; exists {
@@ -388,7 +388,7 @@ func (f *ResourceFilter) checkContentType(filterCtx *shared.FilterContext, conte
 	// Check blocked content types
 	for _, blocked := range f.config.BlockedContentTypes {
 		if contentType == strings.ToLower(blocked) {
-			violation := shared.CreateFilterViolation(
+			violation := shared.CreatePluginViolation(
 				"blocked_content_type",
 				"",
 				"",
@@ -410,7 +410,7 @@ func (f *ResourceFilter) checkContentType(filterCtx *shared.FilterContext, conte
 			}
 		}
 
-		violation := shared.CreateFilterViolation(
+		violation := shared.CreatePluginViolation(
 			"content_type_not_allowed",
 			"",
 			"",

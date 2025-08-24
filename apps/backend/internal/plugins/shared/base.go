@@ -22,8 +22,6 @@ type BasePlugin struct {
 	stats         *types.FilterStat
 }
 
-// Legacy alias for backward compatibility
-type BaseFilter = BasePlugin
 
 // NewBasePlugin creates a new base plugin instance
 func NewBasePlugin(pluginType PluginType, name string, priority int) *BasePlugin {
@@ -48,10 +46,6 @@ func NewBasePlugin(pluginType PluginType, name string, priority int) *BasePlugin
 	}
 }
 
-// NewBaseFilter creates a new base filter instance (legacy compatibility)
-func NewBaseFilter(filterType FilterType, name string, priority int) *BaseFilter {
-	return NewBasePlugin(PluginType(filterType), name, priority)
-}
 
 // GetType returns the plugin type
 func (b *BasePlugin) GetType() PluginType {
@@ -256,10 +250,6 @@ func CreatePluginResult(blocked, modified bool, action PluginAction, reason stri
 	}
 }
 
-// CreateFilterResult creates a standard filter result (legacy compatibility)
-func CreateFilterResult(blocked, modified bool, action FilterAction, reason string, violations []FilterViolation) *FilterResult {
-	return CreatePluginResult(blocked, modified, PluginAction(action), reason, violations)
-}
 
 // CreatePluginViolation creates a standard plugin violation
 func CreatePluginViolation(violationType, pattern, match string, position int, severity string) PluginViolation {
@@ -273,10 +263,6 @@ func CreatePluginViolation(violationType, pattern, match string, position int, s
 	}
 }
 
-// CreateFilterViolation creates a standard filter violation (legacy compatibility)
-func CreateFilterViolation(violationType, pattern, match string, position int, severity string) FilterViolation {
-	return CreatePluginViolation(violationType, pattern, match, position, severity)
-}
 
 // CreatePluginContext creates a plugin context from request data
 func CreatePluginContext(requestID, orgID, userID, serverID, sessionID string, direction PluginDirection, contentType string) *PluginContext {
@@ -294,10 +280,6 @@ func CreatePluginContext(requestID, orgID, userID, serverID, sessionID string, d
 	}
 }
 
-// CreateFilterContext creates a filter context from request data (legacy compatibility)
-func CreateFilterContext(requestID, orgID, userID, serverID, sessionID string, direction FilterDirection, contentType string) *FilterContext {
-	return CreatePluginContext(requestID, orgID, userID, serverID, sessionID, PluginDirection(direction), contentType)
-}
 
 // CreatePluginContent creates plugin content from raw data
 func CreatePluginContent(raw string, parsed interface{}, headers map[string]string, params map[string]interface{}) *PluginContent {
@@ -321,10 +303,6 @@ func CreatePluginContent(raw string, parsed interface{}, headers map[string]stri
 	return content
 }
 
-// CreateFilterContent creates filter content from raw data (legacy compatibility)
-func CreateFilterContent(raw string, parsed interface{}, headers map[string]string, params map[string]interface{}) *FilterContent {
-	return CreatePluginContent(raw, parsed, headers, params)
-}
 
 // GetConfigValue safely gets a configuration value with type checking
 func GetConfigValue[T any](config map[string]interface{}, key string, defaultValue T) T {
@@ -358,7 +336,7 @@ func GetConfigStringSlice(config map[string]interface{}, key string, defaultValu
 // MergeFilterResults combines multiple filter results into one
 func MergeFilterResults(results []*FilterResult) *FilterResult {
 	if len(results) == 0 {
-		return CreateFilterResult(false, false, FilterActionAllow, "", nil)
+		return CreatePluginResult(false, false, PluginActionAllow, "", nil)
 	}
 
 	if len(results) == 1 {

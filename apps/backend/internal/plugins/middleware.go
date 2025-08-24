@@ -21,11 +21,11 @@ import (
 
 // FilterMiddleware provides content filtering middleware for HTTP requests/responses
 type FilterMiddleware struct {
-	service FilterService
+	service PluginService
 }
 
 // NewFilterMiddleware creates a new filter middleware
-func NewFilterMiddleware(service FilterService) *FilterMiddleware {
+func NewFilterMiddleware(service PluginService) *FilterMiddleware {
 	return &FilterMiddleware{
 		service: service,
 	}
@@ -95,11 +95,11 @@ func (m *FilterMiddleware) processInboundRequest(c *gin.Context, orgID, userID, 
 	}
 
 	// Create filter context
-	filterCtx := &FilterContext{
+	filterCtx := &PluginContext{
 		RequestID:      requestID,
 		OrganizationID: orgID,
 		UserID:         userID,
-		Direction:      FilterDirectionInbound,
+		Direction:      PluginDirectionInbound,
 		ContentType:    c.GetHeader("Content-Type"),
 		Transport:      m.getTransportType(c),
 		Metadata:       m.extractRequestMetadata(c),
@@ -107,7 +107,7 @@ func (m *FilterMiddleware) processInboundRequest(c *gin.Context, orgID, userID, 
 	}
 
 	// Create filter content
-	content := shared.CreateFilterContent(
+	content := shared.CreatePluginContent(
 		string(requestBody),
 		nil,
 		m.extractHeaders(c.Request.Header),
@@ -129,7 +129,7 @@ func (m *FilterMiddleware) processInboundRequest(c *gin.Context, orgID, userID, 
 
 		// Return appropriate response based on action
 		switch result.Action {
-		case FilterActionBlock:
+		case PluginActionBlock:
 			c.JSON(http.StatusForbidden, gin.H{
 				"error":   "Content blocked by security filters",
 				"reason":  result.Reason,
@@ -150,7 +150,7 @@ func (m *FilterMiddleware) processInboundRequest(c *gin.Context, orgID, userID, 
 	}
 
 	// Log warnings/audit events
-	if result.Action == FilterActionWarn || result.Action == FilterActionAudit {
+	if result.Action == PluginActionWarn || result.Action == PluginActionAudit {
 		if err := m.logViolations(c.Request.Context(), filterCtx, result); err != nil {
 			log.Printf("Failed to log filter violations: %v", err)
 		}
@@ -171,11 +171,11 @@ func (m *FilterMiddleware) processOutboundResponse(c *gin.Context, orgID, userID
 	// version that could be enhanced with a response writer wrapper.
 
 	// Create filter context for outbound
-	filterCtx := &FilterContext{
+	filterCtx := &PluginContext{
 		RequestID:      requestID,
 		OrganizationID: orgID,
 		UserID:         userID,
-		Direction:      FilterDirectionOutbound,
+		Direction:      PluginDirectionOutbound,
 		ContentType:    c.Writer.Header().Get("Content-Type"),
 		Transport:      m.getTransportType(c),
 		Metadata:       m.extractResponseMetadata(c),
@@ -183,7 +183,7 @@ func (m *FilterMiddleware) processOutboundResponse(c *gin.Context, orgID, userID
 	}
 
 	// Create basic filter content for logging purposes
-	content := shared.CreateFilterContent("", nil, nil, nil)
+	content := shared.CreatePluginContent("", nil, nil, nil)
 
 	// Apply filters (this is a simplified version)
 	result, _, err := m.service.ProcessContent(context.Background(), filterCtx, content)
@@ -294,7 +294,7 @@ func (m *FilterMiddleware) extractQueryParams(c *gin.Context) map[string]interfa
 }
 
 // logViolations logs filter violations to the database
-func (m *FilterMiddleware) logViolations(ctx context.Context, filterCtx *FilterContext, result *FilterResult) error {
+func (m *FilterMiddleware) logViolations(ctx context.Context, filterCtx *PluginContext, result *PluginResult) error {
 	if len(result.Violations) == 0 {
 		return nil
 	}
@@ -335,7 +335,7 @@ func (m *FilterMiddleware) logViolations(ctx context.Context, filterCtx *FilterC
 			dbViolation.UserAgent = &userAgent
 		}
 
-		// Note: LogViolation method would need to be added to FilterService interface
+		// Note: LogViolation method would need to be added to PluginService interface
 		// For now, just log that we would save the violation
 		log.Printf("Would log violation: %+v", dbViolation)
 	}
@@ -344,7 +344,7 @@ func (m *FilterMiddleware) logViolations(ctx context.Context, filterCtx *FilterC
 }
 
 // sanitizeViolations removes sensitive information from violations before returning to client
-func (m *FilterMiddleware) sanitizeViolations(violations []FilterViolation) []map[string]interface{} {
+func (m *FilterMiddleware) sanitizeViolations(violations []PluginViolation) []map[string]interface{} {
 	sanitized := make([]map[string]interface{}, len(violations))
 
 	for i, violation := range violations {
@@ -371,13 +371,13 @@ func (m *FilterMiddleware) ApplyToTransports() {
 	// This would be called during server initialization to integrate
 	// filtering with the transport layer. Each transport would need
 	// to be updated to call the filtering service at appropriate points.
-	
+
 	// For example:
 	// - JSON-RPC: Filter method calls and responses
 	// - WebSocket: Filter incoming/outgoing messages
 	// - SSE: Filter outgoing events
 	// - MCP: Filter MCP protocol messages
-	
+
 	log.Println("Content filtering integrated with transport layers")
 }
 
@@ -418,7 +418,7 @@ type AdvancedFilterMiddleware struct {
 }
 
 // NewAdvancedFilterMiddleware creates a new advanced filter middleware
-func NewAdvancedFilterMiddleware(service FilterService) *AdvancedFilterMiddleware {
+func NewAdvancedFilterMiddleware(service PluginService) *AdvancedFilterMiddleware {
 	return &AdvancedFilterMiddleware{
 		FilterMiddleware: NewFilterMiddleware(service),
 	}
@@ -480,11 +480,11 @@ func (m *AdvancedFilterMiddleware) processOutboundResponseAdvanced(c *gin.Contex
 	}
 
 	// Create filter context for outbound
-	filterCtx := &FilterContext{
+	filterCtx := &PluginContext{
 		RequestID:      requestID,
 		OrganizationID: orgID,
 		UserID:         userID,
-		Direction:      FilterDirectionOutbound,
+		Direction:      PluginDirectionOutbound,
 		ContentType:    c.Writer.Header().Get("Content-Type"),
 		Transport:      m.getTransportType(c),
 		Metadata:       m.extractResponseMetadata(c),
@@ -492,7 +492,7 @@ func (m *AdvancedFilterMiddleware) processOutboundResponseAdvanced(c *gin.Contex
 	}
 
 	// Create filter content from response body
-	content := shared.CreateFilterContent(
+	content := shared.CreatePluginContent(
 		responseWriter.GetBody(),
 		nil,
 		m.extractResponseHeaders(c.Writer.Header()),
@@ -524,7 +524,7 @@ func (m *AdvancedFilterMiddleware) processOutboundResponseAdvanced(c *gin.Contex
 	}
 
 	// Log warnings/audit events
-	if result.Action == FilterActionWarn || result.Action == FilterActionAudit {
+	if result.Action == PluginActionWarn || result.Action == PluginActionAudit {
 		if err := m.logViolations(c.Request.Context(), filterCtx, result); err != nil {
 			log.Printf("Failed to log response filter violations: %v", err)
 		}

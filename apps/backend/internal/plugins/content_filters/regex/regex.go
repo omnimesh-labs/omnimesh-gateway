@@ -10,7 +10,7 @@ import (
 
 // RegexFilter implements pattern-based search and replace functionality
 type RegexFilter struct {
-	*shared.BaseFilter
+	*shared.BasePlugin
 	config *RegexConfig
 	rules  []*RegexRule
 }
@@ -49,10 +49,10 @@ type RegexRule struct {
 
 // NewRegexFilter creates a new Regex filter instance
 func NewRegexFilter(name string, config map[string]interface{}) (*RegexFilter, error) {
-	baseFilter := shared.NewBaseFilter(shared.FilterTypeRegex, name, 40)
+	basePlugin := shared.NewBasePlugin(shared.PluginTypeRegex, name, 40)
 
 	// Set capabilities
-	baseFilter.SetCapabilities(shared.FilterCapabilities{
+	basePlugin.SetCapabilities(shared.PluginCapabilities{
 		SupportsInbound:       true,
 		SupportsOutbound:      true,
 		SupportsModification:  true, // Regex filter can modify content
@@ -63,7 +63,7 @@ func NewRegexFilter(name string, config map[string]interface{}) (*RegexFilter, e
 	})
 
 	filter := &RegexFilter{
-		BaseFilter: baseFilter,
+		BasePlugin: basePlugin,
 	}
 
 	if err := filter.Configure(config); err != nil {
@@ -74,9 +74,9 @@ func NewRegexFilter(name string, config map[string]interface{}) (*RegexFilter, e
 }
 
 // Apply applies the Regex filter to content
-func (f *RegexFilter) Apply(ctx context.Context, filterCtx *shared.FilterContext, content *shared.FilterContent) (*shared.FilterResult, *shared.FilterContent, error) {
-	if !f.BaseFilter.IsEnabled() {
-		return shared.CreateFilterResult(false, false, shared.FilterActionAllow, "", nil), content, nil
+func (f *RegexFilter) Apply(ctx context.Context, pluginCtx *shared.PluginContext, content *shared.PluginContent) (*shared.PluginResult, *shared.PluginContent, error) {
+	if !f.BasePlugin.IsEnabled() {
+		return shared.CreatePluginResult(false, false, shared.PluginActionAllow, "", nil), content, nil
 	}
 
 	violations := []shared.FilterViolation{}
@@ -101,7 +101,7 @@ func (f *RegexFilter) Apply(ctx context.Context, filterCtx *shared.FilterContext
 					position = matchIndices[i][0]
 				}
 
-				violation := shared.CreateFilterViolation(
+				violation := shared.CreatePluginViolation(
 					"regex_match",
 					rule.Pattern.String(),
 					match[0],
@@ -141,13 +141,13 @@ func (f *RegexFilter) Apply(ctx context.Context, filterCtx *shared.FilterContext
 
 	if shouldBlock {
 		// If any rule requires blocking, block regardless of filter action
-		action = shared.FilterActionBlock
+		action = shared.PluginActionBlock
 		blocked = true
 		reason = fmt.Sprintf("Content blocked by regex rules: %d violations found", len(violations))
 	} else if len(violations) > 0 {
 		switch f.config.Action {
 		case "block":
-			action = shared.FilterActionBlock
+			action = shared.PluginActionBlock
 			blocked = true
 			reason = fmt.Sprintf("Content blocked: %d regex violations found", len(violations))
 		case "warn":
@@ -159,20 +159,20 @@ func (f *RegexFilter) Apply(ctx context.Context, filterCtx *shared.FilterContext
 			blocked = false
 			reason = fmt.Sprintf("Content audit: %d regex matches logged", len(violations))
 		default:
-			action = shared.FilterActionAllow
+			action = shared.PluginActionAllow
 			blocked = false
 		}
 	} else {
-		action = shared.FilterActionAllow
+		action = shared.PluginActionAllow
 		blocked = false
 	}
 
-	result := shared.CreateFilterResult(blocked, contentModified, action, reason, violations)
+	result := shared.CreatePluginResult(blocked, contentModified, action, reason, violations)
 
 	// Return modified content if applicable
-	var resultContent *shared.FilterContent
+	var resultContent *shared.PluginContent
 	if contentModified {
-		resultContent = shared.CreateFilterContent(modifiedContent, content.Parsed, content.Headers, content.Params)
+		resultContent = shared.CreatePluginContent(modifiedContent, content.Parsed, content.Headers, content.Params)
 	} else {
 		resultContent = content
 	}
@@ -221,7 +221,7 @@ func (f *RegexFilter) Configure(config map[string]interface{}) error {
 	regexConfig.LogMatches = shared.GetConfigValue(config, "log_matches", false)
 
 	f.config = regexConfig
-	f.BaseFilter.SetConfig(config)
+	f.BasePlugin.SetConfig(config)
 
 	// Compile regex patterns
 	return f.compileRules()

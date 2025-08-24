@@ -11,7 +11,7 @@ import (
 
 // DenyFilter implements simple word/phrase blocking with violation reporting
 type DenyFilter struct {
-	*shared.BaseFilter
+	*shared.BasePlugin
 	config        *DenyConfig
 	blockedWords  []*BlockedWord
 	compiledRegex []*regexp.Regexp
@@ -49,10 +49,10 @@ type CustomRule struct {
 
 // NewDenyFilter creates a new Deny filter instance
 func NewDenyFilter(name string, config map[string]interface{}) (*DenyFilter, error) {
-	baseFilter := shared.NewBaseFilter(shared.FilterTypeDeny, name, 30)
+	basePlugin := shared.NewBasePlugin(shared.PluginTypeDeny, name, 30)
 
 	// Set capabilities
-	baseFilter.SetCapabilities(shared.FilterCapabilities{
+	basePlugin.SetCapabilities(shared.PluginCapabilities{
 		SupportsInbound:       true,
 		SupportsOutbound:      true,
 		SupportsModification:  false, // Deny filter blocks but doesn't modify
@@ -63,7 +63,7 @@ func NewDenyFilter(name string, config map[string]interface{}) (*DenyFilter, err
 	})
 
 	filter := &DenyFilter{
-		BaseFilter: baseFilter,
+		BasePlugin: basePlugin,
 	}
 
 	if err := filter.Configure(config); err != nil {
@@ -74,9 +74,9 @@ func NewDenyFilter(name string, config map[string]interface{}) (*DenyFilter, err
 }
 
 // Apply applies the Deny filter to content
-func (f *DenyFilter) Apply(ctx context.Context, filterCtx *shared.FilterContext, content *shared.FilterContent) (*shared.FilterResult, *shared.FilterContent, error) {
-	if !f.BaseFilter.IsEnabled() {
-		return shared.CreateFilterResult(false, false, shared.FilterActionAllow, "", nil), content, nil
+func (f *DenyFilter) Apply(ctx context.Context, pluginCtx *shared.PluginContext, content *shared.PluginContent) (*shared.PluginResult, *shared.PluginContent, error) {
+	if !f.BasePlugin.IsEnabled() {
+		return shared.CreatePluginResult(false, false, shared.PluginActionAllow, "", nil), content, nil
 	}
 
 	violations := []shared.FilterViolation{}
@@ -97,7 +97,7 @@ func (f *DenyFilter) Apply(ctx context.Context, filterCtx *shared.FilterContext,
 		matches := regex.FindAllStringSubmatch(searchText, -1)
 		for _, match := range matches {
 			if len(match) > 0 {
-				violation := shared.CreateFilterViolation(
+				violation := shared.CreatePluginViolation(
 					"blocked_pattern",
 					regex.String(),
 					match[0],
@@ -118,7 +118,7 @@ func (f *DenyFilter) Apply(ctx context.Context, filterCtx *shared.FilterContext,
 	if len(violations) > 0 {
 		switch f.config.Action {
 		case "block":
-			action = shared.FilterActionBlock
+			action = shared.PluginActionBlock
 			blocked = true
 			reason = fmt.Sprintf("Content blocked: %d prohibited items found", len(violations))
 		case "warn":
@@ -130,15 +130,15 @@ func (f *DenyFilter) Apply(ctx context.Context, filterCtx *shared.FilterContext,
 			blocked = false
 			reason = fmt.Sprintf("Content audit: %d prohibited items logged", len(violations))
 		default:
-			action = shared.FilterActionAllow
+			action = shared.PluginActionAllow
 			blocked = false
 		}
 	} else {
-		action = shared.FilterActionAllow
+		action = shared.PluginActionAllow
 		blocked = false
 	}
 
-	result := shared.CreateFilterResult(blocked, false, action, reason, violations)
+	result := shared.CreatePluginResult(blocked, false, action, reason, violations)
 
 	return result, content, nil
 }
@@ -158,7 +158,7 @@ func (f *DenyFilter) checkWord(originalContent, searchText string, blockedWord *
 
 		matches := regex.FindAllStringIndex(searchText, -1)
 		for _, match := range matches {
-			violation := shared.CreateFilterViolation(
+			violation := shared.CreatePluginViolation(
 				"blocked_word",
 				pattern,
 				originalContent[match[0]:match[1]],
@@ -181,7 +181,7 @@ func (f *DenyFilter) checkWord(originalContent, searchText string, blockedWord *
 			absoluteIndex := startIndex + index
 			actualMatch := originalContent[absoluteIndex : absoluteIndex+len(searchWord)]
 
-			violation := shared.CreateFilterViolation(
+			violation := shared.CreatePluginViolation(
 				"blocked_word",
 				searchWord,
 				actualMatch,
@@ -254,7 +254,7 @@ func (f *DenyFilter) Configure(config map[string]interface{}) error {
 	}
 
 	f.config = denyConfig
-	f.BaseFilter.SetConfig(config)
+	f.BasePlugin.SetConfig(config)
 
 	// Compile blocked words and patterns
 	return f.compileBlockedItems()

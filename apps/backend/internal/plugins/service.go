@@ -8,12 +8,12 @@ import (
 	"sync"
 
 	"mcp-gateway/apps/backend/internal/database/models"
+	"mcp-gateway/apps/backend/internal/plugins/ai_middleware/llamaguard"
+	"mcp-gateway/apps/backend/internal/plugins/ai_middleware/openai_mod"
 	"mcp-gateway/apps/backend/internal/plugins/content_filters/deny"
 	"mcp-gateway/apps/backend/internal/plugins/content_filters/pii"
 	"mcp-gateway/apps/backend/internal/plugins/content_filters/regex"
 	"mcp-gateway/apps/backend/internal/plugins/content_filters/resource"
-	"mcp-gateway/apps/backend/internal/plugins/ai_middleware/llamaguard"
-	"mcp-gateway/apps/backend/internal/plugins/ai_middleware/openai_mod"
 	"mcp-gateway/apps/backend/internal/plugins/shared"
 	"mcp-gateway/apps/backend/internal/types"
 )
@@ -28,9 +28,6 @@ type pluginService struct {
 	initialized bool
 }
 
-// Legacy alias for backward compatibility
-type filterService = pluginService
-
 // NewPluginService creates a new plugin service
 func NewPluginService(db *sql.DB) PluginService {
 	return &pluginService{
@@ -40,11 +37,6 @@ func NewPluginService(db *sql.DB) PluginService {
 		orgPlugins:  make(map[string][]Plugin),
 		initialized: false,
 	}
-}
-
-// NewFilterService creates a new filter service (legacy compatibility)
-func NewFilterService(db *sql.DB) PluginService {
-	return NewPluginService(db)
 }
 
 // Initialize sets up the plugin service
@@ -114,7 +106,7 @@ func (s *pluginService) LoadPluginsFromDatabase(ctx context.Context, organizatio
 	}
 	defer rows.Close()
 
-	var filters []Filter
+	var filters []Plugin
 	for rows.Next() {
 		var cf models.ContentFilter
 		var configJSON []byte
@@ -341,7 +333,7 @@ func (s *pluginService) registerBuiltinFilters() error {
 }
 
 // createFilterFromModel converts a database model to a Filter instance
-func (s *pluginService) createFilterFromModel(cf *models.ContentFilter) (Filter, error) {
+func (s *pluginService) createFilterFromModel(cf *models.ContentFilter) (Plugin, error) {
 	// Convert string type to PluginType (updated from FilterType)
 	var pluginType shared.PluginType
 	switch cf.Type {
@@ -374,9 +366,9 @@ func (s *pluginService) createFilterFromModel(cf *models.ContentFilter) (Filter,
 	}
 
 	// Set the enabled state and priority if the filter supports it
-	if baseFilter, ok := filter.(*shared.BaseFilter); ok {
-		baseFilter.SetEnabled(cf.Enabled)
-		baseFilter.SetPriority(cf.Priority)
+	if basePlugin, ok := filter.(*shared.BasePlugin); ok {
+		basePlugin.SetEnabled(cf.Enabled)
+		basePlugin.SetPriority(cf.Priority)
 	}
 
 	return filter, nil
@@ -473,7 +465,7 @@ func (s *pluginService) ProcessContentWithDirection(ctx context.Context, pluginC
 	// Create a new context with the specified direction
 	directionCtx := *pluginCtx
 	directionCtx.Direction = direction
-	
+
 	return s.ProcessContent(ctx, &directionCtx, content)
 }
 
@@ -490,7 +482,6 @@ func (s *pluginService) ExportPluginConfig(ctx context.Context, organizationID s
 	export["organization_id"] = organizationID
 	export["plugins"] = plugins
 
-	// Marshal based on format
 	switch format {
 	case "json":
 		return json.Marshal(export)
@@ -512,7 +503,6 @@ func (s *pluginService) ImportPluginConfig(ctx context.Context, organizationID s
 		return fmt.Errorf("unsupported import format: %s", format)
 	}
 
-	// Process imported plugins
 	pluginsData, ok := config["plugins"].([]interface{})
 	if !ok {
 		return fmt.Errorf("invalid plugins data in config")

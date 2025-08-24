@@ -7,6 +7,7 @@ import (
 	"mcp-gateway/apps/backend/internal/discovery"
 	"mcp-gateway/apps/backend/internal/logging"
 	"mcp-gateway/apps/backend/internal/middleware"
+	"mcp-gateway/apps/backend/internal/plugins"
 	"mcp-gateway/apps/backend/internal/server/handlers"
 	"mcp-gateway/apps/backend/internal/transport"
 	"mcp-gateway/apps/backend/internal/types"
@@ -24,6 +25,13 @@ func (s *Server) RegisterRoutes() http.Handler {
 	// Initialize logging middleware
 	loggingMiddleware := logging.NewMiddleware(s.logging.(*logging.Service))
 
+	// Initialize plugin service for content filtering
+	pluginService := plugins.NewPluginService(s.db.GetDB())
+	if err := pluginService.Initialize(context.TODO()); err != nil {
+		// Log error but continue - content filtering is optional for basic functionality
+	}
+	contentFilterMiddleware := plugins.NewFilterMiddleware(pluginService)
+
 	// Configure security headers based on environment
 	var securityConfig *middleware.SecurityConfig
 	if s.cfg.Logging.Environment == "development" {
@@ -35,6 +43,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	// Apply default middleware chain to root router
 	defaultChain := middleware.DefaultChainWithConfig(securityConfig)
 	defaultChain.Use(loggingMiddleware.RequestLogger())
+	defaultChain.Use(contentFilterMiddleware.Handler())
 	defaultChain.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},

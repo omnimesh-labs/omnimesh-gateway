@@ -11,7 +11,7 @@ import (
 
 // PIIFilter implements the PII detection and masking filter
 type PIIFilter struct {
-	*shared.BaseFilter
+	*shared.BasePlugin
 	patterns map[string]*PIIPattern
 	config   *PIIConfig
 }
@@ -55,10 +55,10 @@ const (
 
 // NewPIIFilter creates a new PII filter instance
 func NewPIIFilter(name string, config map[string]interface{}) (*PIIFilter, error) {
-	baseFilter := shared.NewBaseFilter(shared.FilterTypePII, name, 10)
+	basePlugin := shared.NewBasePlugin(shared.PluginTypePII, name, 10)
 
 	// Set capabilities
-	baseFilter.SetCapabilities(shared.FilterCapabilities{
+	basePlugin.SetCapabilities(shared.PluginCapabilities{
 		SupportsInbound:       true,
 		SupportsOutbound:      true,
 		SupportsModification:  true,
@@ -69,7 +69,7 @@ func NewPIIFilter(name string, config map[string]interface{}) (*PIIFilter, error
 	})
 
 	filter := &PIIFilter{
-		BaseFilter: baseFilter,
+		BasePlugin: basePlugin,
 		patterns:   make(map[string]*PIIPattern),
 	}
 
@@ -81,9 +81,9 @@ func NewPIIFilter(name string, config map[string]interface{}) (*PIIFilter, error
 }
 
 // Apply applies the PII filter to content
-func (f *PIIFilter) Apply(ctx context.Context, filterCtx *shared.FilterContext, content *shared.FilterContent) (*shared.FilterResult, *shared.FilterContent, error) {
-	if !f.BaseFilter.IsEnabled() {
-		return shared.CreateFilterResult(false, false, shared.FilterActionAllow, "", nil), content, nil
+func (f *PIIFilter) Apply(ctx context.Context, pluginCtx *shared.PluginContext, content *shared.PluginContent) (*shared.PluginResult, *shared.PluginContent, error) {
+	if !f.BasePlugin.IsEnabled() {
+		return shared.CreatePluginResult(false, false, shared.PluginActionAllow, "", nil), content, nil
 	}
 
 	violations := []shared.FilterViolation{}
@@ -99,7 +99,7 @@ func (f *PIIFilter) Apply(ctx context.Context, filterCtx *shared.FilterContext, 
 		matches := pattern.Pattern.FindAllStringSubmatch(content.Raw, -1)
 		for _, match := range matches {
 			if len(match) > 0 {
-				violation := shared.CreateFilterViolation(
+				violation := shared.CreatePluginViolation(
 					pattern.Name,
 					pattern.Pattern.String(),
 					match[0],
@@ -126,7 +126,7 @@ func (f *PIIFilter) Apply(ctx context.Context, filterCtx *shared.FilterContext, 
 	if len(violations) > 0 {
 		switch f.config.Action {
 		case "block":
-			action = shared.FilterActionBlock
+			action = shared.PluginActionBlock
 			blocked = true
 			reason = fmt.Sprintf("PII detected: %d violations found", len(violations))
 		case "warn":
@@ -138,20 +138,20 @@ func (f *PIIFilter) Apply(ctx context.Context, filterCtx *shared.FilterContext, 
 			blocked = false
 			reason = fmt.Sprintf("PII detected: %d violations logged for audit", len(violations))
 		default:
-			action = shared.FilterActionAllow
+			action = shared.PluginActionAllow
 			blocked = false
 		}
 	} else {
-		action = shared.FilterActionAllow
+		action = shared.PluginActionAllow
 		blocked = false
 	}
 
-	result := shared.CreateFilterResult(blocked, contentModified, action, reason, violations)
+	result := shared.CreatePluginResult(blocked, contentModified, action, reason, violations)
 
 	// Return modified content if applicable
 	var resultContent *shared.FilterContent
 	if contentModified {
-		resultContent = shared.CreateFilterContent(modifiedContent, content.Parsed, content.Headers, content.Params)
+		resultContent = shared.CreatePluginContent(modifiedContent, content.Parsed, content.Headers, content.Params)
 	} else {
 		resultContent = content
 	}
@@ -213,7 +213,7 @@ func (f *PIIFilter) Configure(config map[string]interface{}) error {
 	}
 
 	f.config = piiConfig
-	f.BaseFilter.SetConfig(config)
+	f.BasePlugin.SetConfig(config)
 
 	// Compile patterns
 	return f.compilePatterns()

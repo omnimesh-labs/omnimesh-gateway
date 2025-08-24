@@ -23,8 +23,8 @@ func TestDenyFilter_NewDenyFilter(t *testing.T) {
 		t.Errorf("Expected name 'test-deny', got '%s'", filter.GetName())
 	}
 
-	if filter.GetType() != shared.FilterTypeDeny {
-		t.Errorf("Expected type '%s', got '%s'", shared.FilterTypeDeny, filter.GetType())
+	if filter.GetType() != shared.PluginTypeDeny {
+		t.Errorf("Expected type '%s', got '%s'", shared.PluginTypeDeny, filter.GetType())
 	}
 
 	if !filter.IsEnabled() {
@@ -45,8 +45,8 @@ func TestDenyFilter_ApplyBlockedWord(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("Please enter your password here", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("Please enter your password here", nil, nil, nil)
 
 	result, _, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -93,8 +93,8 @@ func TestDenyFilter_ApplyBlockedPhrase(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("Please provide your credit card number", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("Please provide your credit card number", nil, nil, nil)
 
 	result, _, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -137,10 +137,10 @@ func TestDenyFilter_ApplyCaseSensitive(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
 
 	// Test exact case match - should block
-	content1 := shared.CreateFilterContent("Enter your Password", nil, nil, nil)
+	content1 := shared.CreatePluginContent("Enter your Password", nil, nil, nil)
 	result1, _, err := filter.Apply(ctx, filterCtx, content1)
 	if err != nil {
 		t.Fatalf("Filter apply failed: %v", err)
@@ -151,7 +151,7 @@ func TestDenyFilter_ApplyCaseSensitive(t *testing.T) {
 	}
 
 	// Test different case - should not block
-	content2 := shared.CreateFilterContent("Enter your password", nil, nil, nil)
+	content2 := shared.CreatePluginContent("Enter your password", nil, nil, nil)
 	result2, _, err := filter.Apply(ctx, filterCtx, content2)
 	if err != nil {
 		t.Fatalf("Filter apply failed: %v", err)
@@ -180,10 +180,10 @@ func TestDenyFilter_ApplyWholeWordsOnly(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
 
 	// Test whole word match - should block
-	content1 := shared.CreateFilterContent("Enter the pass code", nil, nil, nil)
+	content1 := shared.CreatePluginContent("Enter the pass code", nil, nil, nil)
 	result1, _, err := filter.Apply(ctx, filterCtx, content1)
 	if err != nil {
 		t.Fatalf("Filter apply failed: %v", err)
@@ -194,7 +194,7 @@ func TestDenyFilter_ApplyWholeWordsOnly(t *testing.T) {
 	}
 
 	// Test partial word match - should not block
-	content2 := shared.CreateFilterContent("Enter the password", nil, nil, nil)
+	content2 := shared.CreatePluginContent("Enter the password", nil, nil, nil)
 	result2, _, err := filter.Apply(ctx, filterCtx, content2)
 	if err != nil {
 		t.Fatalf("Filter apply failed: %v", err)
@@ -221,8 +221,8 @@ func TestDenyFilter_ApplyBlockedPattern(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("My SSN is 123-45-6789", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("My SSN is 123-45-6789", nil, nil, nil)
 
 	result, _, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -273,8 +273,8 @@ func TestDenyFilter_ApplyCustomRules(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("api_key=abcdef1234567890123456789", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("api_key=abcdef1234567890123456789", nil, nil, nil)
 
 	result, _, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -313,8 +313,8 @@ func TestDenyFilter_ApplyMultipleMatches(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("Enter password and secret key", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("Enter password and secret key", nil, nil, nil)
 
 	result, _, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -348,8 +348,8 @@ func TestDenyFilter_ApplyRepeatedWord(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("This is a test and another test", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("This is a test and another test", nil, nil, nil)
 
 	result, _, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -382,8 +382,8 @@ func TestDenyFilter_ApplyNoMatches(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("This is clean content with no blocked words", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("This is clean content with no blocked words", nil, nil, nil)
 
 	result, _, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -432,8 +432,8 @@ func TestDenyFilter_ApplyDisabledCustomRule(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("This is a test sample", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("This is a test sample", nil, nil, nil)
 
 	result, _, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -472,8 +472,8 @@ func TestDenyFilter_ApplyDisabled(t *testing.T) {
 	filter.SetEnabled(false)
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("Enter your password", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("Enter your password", nil, nil, nil)
 
 	result, _, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {

@@ -23,18 +23,6 @@ type (
 	PluginManager       = shared.PluginManager
 	PluginService       = shared.PluginService
 
-	// Legacy compatibility
-	Filter              = shared.Filter
-	FilterFactory       = shared.FilterFactory
-	FilterType          = shared.FilterType
-	FilterAction        = shared.FilterAction
-	FilterResult        = shared.FilterResult
-	FilterViolation     = shared.FilterViolation
-	FilterContext       = shared.FilterContext
-	FilterDirection     = shared.FilterDirection
-	FilterContent       = shared.FilterContent
-	FilterCapabilities  = shared.FilterCapabilities
-	FilterService       = shared.PluginService // Alias FilterService to PluginService
 )
 
 // Re-export constants
@@ -68,25 +56,4 @@ const (
 	PluginModeDisabled   = shared.PluginModeDisabled
 	PluginModeAuditOnly  = shared.PluginModeAuditOnly
 )
-
-// Legacy filter constants for backward compatibility
-const (
-	FilterTypePII      = shared.FilterTypePII
-	FilterTypeResource = shared.FilterTypeResource
-	FilterTypeDeny     = shared.FilterTypeDeny
-	FilterTypeRegex    = shared.FilterTypeRegex
-)
-
-const (
-	FilterActionBlock = shared.FilterActionBlock
-	FilterActionWarn  = shared.FilterActionWarn
-	FilterActionAudit = shared.FilterActionAudit
-	FilterActionAllow = shared.FilterActionAllow
-)
-
-const (
-	FilterDirectionInbound  = shared.FilterDirectionInbound
-	FilterDirectionOutbound = shared.FilterDirectionOutbound
-)
-
 

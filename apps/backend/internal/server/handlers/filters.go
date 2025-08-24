@@ -15,14 +15,14 @@ import (
 // FiltersHandler handles filter-related requests
 type FiltersHandler struct {
 	db            *sql.DB
-	filterService plugins.FilterService
+	pluginService plugins.PluginService
 }
 
 // NewFiltersHandler creates a new filters handler
-func NewFiltersHandler(db *sql.DB, filterService plugins.FilterService) *FiltersHandler {
+func NewFiltersHandler(db *sql.DB, pluginService plugins.PluginService) *FiltersHandler {
 	return &FiltersHandler{
 		db:            db,
-		filterService: filterService,
+		pluginService: pluginService,
 	}
 }
 
@@ -48,7 +48,7 @@ func (h *FiltersHandler) CreateFilter(c *gin.Context) {
 	}
 
 	// Validate filter configuration
-	factory, err := h.filterService.GetRegistry().Get(plugins.PluginType(req.Type))
+	factory, err := h.pluginService.GetRegistry().Get(plugins.PluginType(req.Type))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid filter type", "details": err.Error()})
 		return
@@ -98,7 +98,7 @@ func (h *FiltersHandler) CreateFilter(c *gin.Context) {
 	}
 
 	// Reload filters for this organization
-	if err := h.filterService.ReloadOrganizationPlugins(c.Request.Context(), orgID.(string)); err != nil {
+	if err := h.pluginService.ReloadOrganizationPlugins(c.Request.Context(), orgID.(string)); err != nil {
 		// Log error but don't fail the request
 		c.Header("X-Warning", "Filter created but failed to reload filters")
 	}
@@ -274,7 +274,7 @@ func (h *FiltersHandler) UpdateFilter(c *gin.Context) {
 
 	// Validate filter configuration if provided
 	if req.Config != nil {
-		factory, err := h.filterService.GetRegistry().Get(plugins.PluginType(existingFilter.Type))
+		factory, err := h.pluginService.GetRegistry().Get(plugins.PluginType(existingFilter.Type))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid filter type", "details": err.Error()})
 			return
@@ -351,7 +351,7 @@ func (h *FiltersHandler) UpdateFilter(c *gin.Context) {
 	}
 
 	// Reload filters for this organization
-	if err := h.filterService.ReloadOrganizationPlugins(c.Request.Context(), orgID.(string)); err != nil {
+	if err := h.pluginService.ReloadOrganizationPlugins(c.Request.Context(), orgID.(string)); err != nil {
 		c.Header("X-Warning", "Filter updated but failed to reload filters")
 	}
 
@@ -397,7 +397,7 @@ func (h *FiltersHandler) DeleteFilter(c *gin.Context) {
 	}
 
 	// Reload filters for this organization
-	if err := h.filterService.ReloadOrganizationPlugins(c.Request.Context(), orgID.(string)); err != nil {
+	if err := h.pluginService.ReloadOrganizationPlugins(c.Request.Context(), orgID.(string)); err != nil {
 		c.Header("X-Warning", "Filter deleted but failed to reload filters")
 	}
 
@@ -409,7 +409,7 @@ func (h *FiltersHandler) DeleteFilter(c *gin.Context) {
 
 // GetFilterTypes handles GET /api/admin/filters/types
 func (h *FiltersHandler) GetFilterTypes(c *gin.Context) {
-	filterTypes, err := h.filterService.GetRegistry().GetAllInfo()
+	filterTypes, err := h.pluginService.GetRegistry().GetAllInfo()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get filter types", "details": err.Error()})
 		return
@@ -434,7 +434,7 @@ func (h *FiltersHandler) GetFilterViolations(c *gin.Context) {
 	limit, _ := strconv.Atoi(limitStr)
 	offset, _ := strconv.Atoi(offsetStr)
 
-	violations, err := h.filterService.GetViolations(c.Request.Context(), orgID.(string), limit, offset)
+	violations, err := h.pluginService.GetViolations(c.Request.Context(), orgID.(string), limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get violations", "details": err.Error()})
 		return
@@ -450,7 +450,7 @@ func (h *FiltersHandler) GetFilterViolations(c *gin.Context) {
 
 // GetFilterMetrics handles GET /api/admin/filters/metrics
 func (h *FiltersHandler) GetFilterMetrics(c *gin.Context) {
-	metrics, err := h.filterService.GetMetrics()
+	metrics, err := h.pluginService.GetMetrics()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get metrics", "details": err.Error()})
 		return

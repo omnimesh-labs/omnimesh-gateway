@@ -102,7 +102,7 @@ test-all-transports: test-rpc test-sse test-websocket test-mcp test-stdio
 # Clean the binary
 clean:
 	@echo "Cleaning..."
-	@rm -f main
+	@rm -f main apps/backend/api
 
 # Live Reload
 watch:

@@ -27,8 +27,8 @@ func TestPIIFilter_NewPIIFilter(t *testing.T) {
 		t.Errorf("Expected name 'test-pii', got '%s'", filter.GetName())
 	}
 
-	if filter.GetType() != shared.FilterTypePII {
-		t.Errorf("Expected type '%s', got '%s'", shared.FilterTypePII, filter.GetType())
+	if filter.GetType() != shared.PluginTypePII {
+		t.Errorf("Expected type '%s', got '%s'", shared.PluginTypePII, filter.GetType())
 	}
 
 	if !filter.IsEnabled() {
@@ -51,8 +51,8 @@ func TestPIIFilter_ApplySSNDetection(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("My SSN is 123-45-6789", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("My SSN is 123-45-6789", nil, nil, nil)
 
 	result, modifiedContent, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -100,8 +100,8 @@ func TestPIIFilter_ApplyEmailDetection(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("Contact me at john.doe@example.com", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("Contact me at john.doe@example.com", nil, nil, nil)
 
 	result, modifiedContent, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -145,8 +145,8 @@ func TestPIIFilter_ApplyCreditCardDetection(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("My credit card is 4111111111111111", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("My credit card is 4111111111111111", nil, nil, nil)
 
 	result, modifiedContent, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -197,8 +197,8 @@ func TestPIIFilter_ApplyCustomPattern(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("Here is my key: api_key_abcdef1234567890abcdef1234567890", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("Here is my key: api_key_abcdef1234567890abcdef1234567890", nil, nil, nil)
 
 	result, modifiedContent, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -249,8 +249,8 @@ func TestPIIFilter_ApplyNoViolations(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("This is clean content with no PII", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("This is clean content with no PII", nil, nil, nil)
 
 	result, modifiedContent, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -295,8 +295,8 @@ func TestPIIFilter_ApplyDisabled(t *testing.T) {
 	filter.SetEnabled(false)
 
 	ctx := context.Background()
-	filterCtx := shared.CreateFilterContext("req-1", "org-1", "user-1", "", "", shared.FilterDirectionInbound, "text/plain")
-	content := shared.CreateFilterContent("My SSN is 123-45-6789", nil, nil, nil)
+	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
+	content := shared.CreatePluginContent("My SSN is 123-45-6789", nil, nil, nil)
 
 	result, _, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {
@@ -401,8 +401,8 @@ func TestPIIFilter_GetStats(t *testing.T) {
 		t.Errorf("Expected stats name 'test-pii', got '%s'", stats.Name)
 	}
 
-	if stats.Type != string(shared.FilterTypePII) {
-		t.Errorf("Expected stats type '%s', got '%s'", shared.FilterTypePII, stats.Type)
+	if stats.Type != string(shared.PluginTypePII) {
+		t.Errorf("Expected stats type '%s', got '%s'", shared.PluginTypePII, stats.Type)
 	}
 }
 
