@@ -40,16 +40,18 @@ func (s *Server) RegisterRoutes() http.Handler {
 		securityConfig = middleware.DefaultSecurityConfig()
 	}
 
-	// Apply default middleware chain to root router
-	defaultChain := middleware.DefaultChainWithConfig(securityConfig)
-	defaultChain.Use(loggingMiddleware.RequestLogger())
-	defaultChain.Use(contentFilterMiddleware.Handler())
-	defaultChain.Use(cors.New(cors.Config{
+	// Apply CORS middleware globally to all routes
+	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowHeaders:     []string{"Accept", "Authorization", "Content-Type", "X-Requested-With"},
 		AllowCredentials: true,
 	}))
+
+	// Apply default middleware chain to root router
+	defaultChain := middleware.DefaultChainWithConfig(securityConfig)
+	defaultChain.Use(loggingMiddleware.RequestLogger())
+	defaultChain.Use(contentFilterMiddleware.Handler())
 	rootGroup := &r.RouterGroup
 	defaultChain.Apply(rootGroup)
 

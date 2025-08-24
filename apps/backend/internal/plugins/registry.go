@@ -135,7 +135,7 @@ func (r *pluginRegistry) GetByCategory(category string) []PluginFactory {
 		if pluginType.IsAIPlugin() {
 			pluginCategory = "ai"
 		}
-		
+
 		if pluginCategory == category {
 			factories = append(factories, factory)
 		}

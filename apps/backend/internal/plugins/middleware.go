@@ -182,8 +182,8 @@ func (m *FilterMiddleware) processOutboundResponse(c *gin.Context, orgID, userID
 		Timestamp:      time.Now(),
 	}
 
-	// Create basic filter content for logging purposes
-	content := shared.CreatePluginContent("", nil, nil, nil)
+	// Create basic filter content for logging purposes - use placeholder content
+	content := shared.CreatePluginContent(" ", nil, nil, nil)
 
 	// Apply filters (this is a simplified version)
 	result, _, err := m.service.ProcessContent(context.Background(), filterCtx, content)
@@ -205,6 +205,7 @@ func (m *FilterMiddleware) shouldSkipFiltering(path string) bool {
 		"/health",
 		"/metrics",
 		"/api/auth/login",
+		"/api/auth/logout",
 		"/api/auth/refresh",
 		"/api/admin/filters", // Avoid recursive filtering on filter management endpoints
 	}
