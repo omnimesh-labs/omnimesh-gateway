@@ -8,12 +8,13 @@ The **MCP Gateway** is a production-ready API gateway for Model Context Protocol
 - **Enterprise Infrastructure**: Organization-level policies, JWT authentication, and RBAC
 - **Multi-Protocol Support**: JSON-RPC, WebSocket, SSE, HTTP, and STDIO transports
 - **Service Virtualization**: Wrap REST/GraphQL/gRPC services as virtual MCP servers
-- **Production Ready**: Comprehensive logging, rate limiting, and health monitoring
+- **Production Ready**: Comprehensive logging, IP rate limiting with Redis/memory backends, and health monitoring
 
 ### Key Features
 - 🔐 **Authentication & Authorization** - JWT-based auth with org-level policies and API keys
 - 📊 **Comprehensive Logging** - Request/response logging, audit trails, performance metrics
 - ⚡ **Rate Limiting** - Multi-level rate limiting (user, org, endpoint) with sliding window algorithms
+- 🛡️ **IP Rate Limiting** - Redis-backed sliding window or in-memory per-IP rate limiting with smart proxy detection
 - 🔍 **MCP Server Discovery** - Dynamic registration and health checking
 - 🌐 **Service Virtualization** - Wrap non-MCP services as virtual MCP servers
 - 🔌 **Multi-Protocol Support** - JSON-RPC, WebSocket, SSE, HTTP, and STDIO transports
@@ -24,8 +25,15 @@ The **MCP Gateway** is a production-ready API gateway for Model Context Protocol
 ### Technology Stack
 - **Backend**: Go 1.25 with Gin framework
 - **Database**: PostgreSQL with comprehensive migration system
+- **Cache**: Redis (optional, falls back to in-memory when disabled)
 - **Frontend**: Next.js 14 TypeScript dashboard
 - **Testing**: Extensive test suites for all transport layers
+
+### Architectural Decisions
+- **Rate Limiting**: Uses industry-standard `ulule/limiter` library instead of custom implementations
+- **Redis Integration**: Sliding window rate limiting for distributed deployments with memory fallback
+- **Middleware Pattern**: Composable middleware chain for cross-cutting concerns
+- **Clean Architecture**: Separation of concerns with internal packages for different domains
 
 ### Project Structure
 ```
@@ -68,13 +76,9 @@ mcp-gateway/
 │   │   │   │   ├── cors.go   # CORS middleware
 │   │   │   │   ├── recovery.go # Panic recovery
 │   │   │   │   ├── timeout.go # Request timeout
-│   │   │   │   └── path_rewrite.go # Path rewriting
-│   │   │   ├── ratelimit/    # Rate Limiting
-│   │   │   │   ├── limiter.go # Rate limiter implementation
-│   │   │   │   ├── middleware.go # Rate limiting middleware
-│   │   │   │   ├── storage.go # Rate limit storage (Redis/Memory)
-│   │   │   │   ├── service.go # Rate limiting service
-│   │   │   │   └── policies.go # Rate limiting policies
+│   │   │   │   ├── path_rewrite.go # Path rewriting
+│   │   │   │   ├── security.go # Security headers middleware
+│   │   │   │   ├── iratelimit.go # IP-based rate limiting with Redis/Memory backends
 │   │   │   ├── server/       # HTTP Server
 │   │   │   │   ├── handlers/ # HTTP handlers
 │   │   │   │   │   ├── auth.go # Auth endpoints
@@ -443,6 +447,7 @@ make setup-reset            # Reset database (WARNING: deletes all data)
 - Transport layer interfaces
 - Virtual server framework
 - Testing infrastructure
+- IP-based rate limiting with Redis sliding window and memory fallback
 
 ### 🔄 Implementation Needed
 Following the **IMPLEMENTATION_GUIDE.md**, the main areas needing business logic:
@@ -463,10 +468,11 @@ Following the **IMPLEMENTATION_GUIDE.md**, the main areas needing business logic
 2. Audit trail implementation
 3. Performance metrics tracking
 
-#### Phase 4: Rate Limiting
-1. Storage backends (Redis integration)
-2. Rate limiting algorithms (sliding window, token bucket)
-3. Policy management
+#### Phase 4: Rate Limiting ✅ IP Rate Limiting Complete
+1. ✅ IP-based rate limiting with Redis sliding window and memory fallback (using ulule/limiter)
+2. TODO: User/organization-level rate limiting (requires auth implementation)
+3. TODO: Per-endpoint rate limiting policies
+4. TODO: Rate limiting management API
 
 #### Phase 5: MCP Server Discovery
 1. Server registration and management
@@ -479,7 +485,7 @@ Following the **IMPLEMENTATION_GUIDE.md**, the main areas needing business logic
 
 ### Key Dependencies
 - **Database**: PostgreSQL with extensions (uuid-ossp, pgcrypto, citext)
-- **Go Modules**: Gin, JWT, PostgreSQL drivers, testcontainers
+- **Go Modules**: Gin, JWT, PostgreSQL drivers, Redis client, ulule/limiter (rate limiting), testcontainers
 - **Frontend**: Next.js 14, React 18, TypeScript
 
 ### Security Considerations

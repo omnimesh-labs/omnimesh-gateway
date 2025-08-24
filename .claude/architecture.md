@@ -17,10 +17,10 @@ mcp-gateway/
 ├── apps/
 │   ├── backend/              # Go API backend
 │   │   ├── cmd/
-│   │   │   ├── api/          # API server entrypoint
+│   │   │   ├── api/          # API server entrypoint (main.go)
 │   │   │   ├── migrate/      # Database migration tool
-│   │   │   └── worker/       # Background worker for health checks, cleanup
-│   │   ├── internal/
+│   │   │   └── worker/       # Background worker for health checks
+│   │   ├── internal/         # Core business logic modules
 │   │   │   ├── auth/         # Authentication & Authorization
 │   │   │   │   ├── jwt.go    # JWT token management
 │   │   │   │   ├── middleware.go # Auth middleware
@@ -39,25 +39,22 @@ mcp-gateway/
 │   │   │   │   ├── mcp_discovery.go # MCP discovery service
 │   │   │   │   └── service.go # Discovery service
 │   │   │   ├── gateway/      # Core gateway functionality
-│   │   │   │   ├── proxy.go  # HTTP proxy logic
-│   │   │   │   ├── router.go # Request routing
-│   │   │   │   └── loadbalancer.go # Load balancing
+│   │   │   │   └── service.go # Gateway service logic
 │   │   │   ├── logging/      # Logging & Audit
 │   │   │   │   ├── audit.go  # Audit logging
+│   │   │   │   ├── interfaces.go # Logging interfaces
 │   │   │   │   ├── middleware.go # Request logging middleware
-│   │   │   │   └── service.go # Logging service
+│   │   │   │   ├── service.go # Logging service
+│   │   │   │   ├── registry.go # Logging plugin registry
+│   │   │   │   └── plugins/  # Logging plugins (AWS, File)
 │   │   │   ├── middleware/   # HTTP Middleware
 │   │   │   │   ├── chain.go  # Middleware chain builder
 │   │   │   │   ├── cors.go   # CORS middleware
 │   │   │   │   ├── recovery.go # Panic recovery
 │   │   │   │   ├── timeout.go # Request timeout
-│   │   │   │   └── path_rewrite.go # Path rewriting for server-specific endpoints
-│   │   │   ├── ratelimit/    # Rate Limiting
-│   │   │   │   ├── limiter.go # Rate limiter implementation
-│   │   │   │   ├── middleware.go # Rate limiting middleware
-│   │   │   │   ├── storage.go # Rate limit storage (Redis/Memory)
-│   │   │   │   ├── service.go # Rate limiting service
-│   │   │   │   └── policies.go # Rate limiting policies
+│   │   │   │   ├── path_rewrite.go # Path rewriting
+│   │   │   │   ├── security.go # Security headers middleware
+│   │   │   │   ├── iratelimit.go # IP-based rate limiting with Redis/Memory backends
 │   │   │   ├── server/       # HTTP Server
 │   │   │   │   ├── handlers/ # HTTP handlers
 │   │   │   │   │   ├── auth.go # Auth endpoints
@@ -65,54 +62,57 @@ mcp-gateway/
 │   │   │   │   │   ├── health.go # Health check endpoints
 │   │   │   │   │   ├── admin.go # Admin endpoints
 │   │   │   │   │   ├── mcp_discovery.go # MCP discovery endpoints
-│   │   │   │   │   ├── transport_rpc.go # JSON-RPC transport handler
-│   │   │   │   │   ├── transport_sse.go # SSE transport handler
-│   │   │   │   │   ├── transport_ws.go # WebSocket transport handler
-│   │   │   │   │   ├── transport_mcp.go # Streamable HTTP transport handler
-│   │   │   │   │   └── transport_stdio.go # STDIO transport handler
+│   │   │   │   │   ├── transport_*.go # Transport handlers
+│   │   │   │   │   ├── virtual_admin.go # Virtual server admin
+│   │   │   │   │   └── virtual_mcp.go # Virtual server MCP
 │   │   │   │   ├── routes.go # Route definitions
 │   │   │   │   └── server.go # Server setup
-│   │   │   ├── transport/    # Transport Layer (NEW)
-│   │   │   │   ├── base.go   # Transport interface and base implementation
+│   │   │   ├── transport/    # Transport Layer
+│   │   │   │   ├── base.go   # Transport interface
 │   │   │   │   ├── manager.go # Transport manager/multiplexer
-│   │   │   │   ├── session.go # Session management for stateful transports
-│   │   │   │   ├── jsonrpc.go # JSON-RPC over HTTP transport
-│   │   │   │   ├── sse.go     # Server-Sent Events transport
-│   │   │   │   ├── websocket.go # WebSocket transport
-│   │   │   │   ├── streamable.go # Streamable HTTP transport
+│   │   │   │   ├── session.go # Session management
+│   │   │   │   ├── jsonrpc.go # JSON-RPC over HTTP
+│   │   │   │   ├── sse.go     # Server-Sent Events
+│   │   │   │   ├── websocket.go # WebSocket
+│   │   │   │   ├── streamable.go # Streamable HTTP
 │   │   │   │   └── stdio.go  # STDIO transport bridge
-│   │   │   └── types/        # Shared types and interfaces
-│   │   │       ├── auth.go   # Auth-related types
-│   │   │       ├── config.go # Configuration types
-│   │   │       ├── discovery.go # Discovery types
-│   │   │       ├── errors.go # Custom error types
-│   │   │       ├── gateway.go # Gateway types
-│   │   │       ├── mcp.go    # MCP protocol types
-│   │   │       └── transport.go # Transport-related types
+│   │   │   ├── types/        # Shared types and interfaces
+│   │   │   │   ├── auth.go   # Auth-related types
+│   │   │   │   ├── config.go # Configuration types
+│   │   │   │   ├── discovery.go # Discovery types
+│   │   │   │   ├── errors.go # Custom error types
+│   │   │   │   ├── gateway.go # Gateway types
+│   │   │   │   ├── mcp.go    # MCP protocol types
+│   │   │   │   ├── transport.go # Transport types
+│   │   │   │   └── virtual.go # Virtual server types
+│   │   │   └── virtual/      # Service Virtualization
+│   │   │       ├── adapter.go # Virtual server adapters
+│   │   │       ├── server.go # Virtual server implementation
+│   │   │       └── service.go # Virtual server service
 │   │   ├── migrations/       # Database migrations
-│   │   └── configs/          # Configuration files
-│   │       ├── development.yaml
-│   │       ├── production.yaml
-│   │       └── test.yaml
-│   └── frontend/             # Next.js frontend dashboard
+│   │   ├── configs/          # Configuration files
+│   │   └── tests/            # Test suites
+│   │       ├── helpers/      # Test helpers
+│   │       ├── integration/  # Integration tests
+│   │       ├── transport/    # Transport-specific tests
+│   │       └── unit/         # Unit tests
+│   └── frontend/             # Next.js dashboard
 │       ├── src/
-│       │   └── app/          # Next.js App Router
+│       │   ├── app/          # Next.js App Router
+│       │   ├── components/   # React components
+│       │   └── lib/          # Frontend utilities
 │       ├── package.json
-│       ├── next.config.js
 │       └── tsconfig.json
 ├── pkg/                      # Shared Go packages
 │   ├── client/               # MCP client library
 │   ├── protocol/             # MCP protocol definitions
 │   └── utils/                # Utility functions
 ├── docs/                     # Documentation
-│   ├── api/                  # API documentation
-│   └── deployment/           # Deployment guides
+├── examples/                 # Usage examples
 ├── scripts/                  # Build and deployment scripts
 ├── go.mod                    # Go module definition
-├── go.sum                    # Go dependencies
 ├── Makefile                  # Build commands
-├── docker-compose.yml        # Docker services
-└── .air.toml                 # Hot reload configuration
+└── docker-compose.yml        # Docker services
 ```
 
 ## Key Components
