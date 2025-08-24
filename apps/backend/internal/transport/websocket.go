@@ -360,13 +360,115 @@ func (w *WebSocketTransport) handleTextMessage(data []byte) {
 		}
 	}
 
-	// TODO: Handle notifications and other message types
+	// Handle notifications and other message types
+	w.handleIncomingMessage(&mcpMessage)
+}
+
+// handleIncomingMessage processes incoming MCP messages
+func (w *WebSocketTransport) handleIncomingMessage(mcpMessage *types.MCPMessage) {
+	// Handle different types of MCP messages
+	switch mcpMessage.Type {
+	case types.MCPMessageTypeNotification:
+		w.handleNotification(mcpMessage)
+	case types.MCPMessageTypeError:
+		w.handleError(mcpMessage)
+	default:
+		// For other message types, we might want to forward them to the application layer
+		// For now, we'll store them in the base transport's message queue if available
+		w.forwardMessage(mcpMessage)
+	}
+}
+
+// handleNotification processes MCP notification messages
+func (w *WebSocketTransport) handleNotification(mcpMessage *types.MCPMessage) {
+	// Handle specific notification methods
+	switch mcpMessage.Method {
+	case "notifications/tools/list_changed":
+		// Tool list changed notification
+		w.onToolsListChanged()
+	case "notifications/resources/list_changed":
+		// Resource list changed notification
+		w.onResourcesListChanged() 
+	case "notifications/prompts/list_changed":
+		// Prompts list changed notification
+		w.onPromptsListChanged()
+	case "notifications/progress":
+		// Progress notification
+		w.onProgress(mcpMessage.Params)
+	default:
+		// Unknown notification, forward to application
+		w.forwardMessage(mcpMessage)
+	}
+}
+
+// handleError processes MCP error messages
+func (w *WebSocketTransport) handleError(mcpMessage *types.MCPMessage) {
+	// Log the error and potentially notify the application layer
+	if mcpMessage.Error != nil {
+		// Could emit an error event or store in error log
+		w.onTransportError(mcpMessage.Error)
+	}
+}
+
+// Event handlers for MCP notifications
+func (w *WebSocketTransport) onToolsListChanged() {
+	// Emit event that tools list has changed
+	// Applications can listen for this to refresh their tool cache
+}
+
+func (w *WebSocketTransport) onResourcesListChanged() {
+	// Emit event that resources list has changed
+}
+
+func (w *WebSocketTransport) onPromptsListChanged() {
+	// Emit event that prompts list has changed
+}
+
+func (w *WebSocketTransport) onProgress(params map[string]interface{}) {
+	// Handle progress updates - could update UI, emit events, etc.
+}
+
+func (w *WebSocketTransport) onTransportError(err *types.MCPError) {
+	// Handle transport-level errors
+	// Could trigger reconnection logic, emit error events, etc.
+}
+
+func (w *WebSocketTransport) forwardMessage(mcpMessage *types.MCPMessage) {
+	// Forward message to application layer or store for processing
+	// This could involve callbacks, event emitters, or message queues
 }
 
 // handleBinaryMessage processes incoming binary messages
 func (w *WebSocketTransport) handleBinaryMessage(data []byte) {
 	// Handle binary data (could be file transfers, etc.)
-	// For now, just log that we received binary data
+	// Try to parse as MCP message first
+	var mcpMessage types.MCPMessage
+	if err := json.Unmarshal(data, &mcpMessage); err == nil {
+		w.handleIncomingMessage(&mcpMessage)
+		return
+	}
+
+	// If not MCP message, handle as raw binary data
+	w.handleRawBinaryData(data)
+}
+
+// handleRawBinaryData processes raw binary data
+func (w *WebSocketTransport) handleRawBinaryData(data []byte) {
+	// Handle raw binary data - could be file uploads, media, etc.
+	// For now, just create a transport event
+	event := &types.TransportEvent{
+		ID:        uuid.New().String(),
+		SessionID: w.GetSessionID(),
+		Type:      "binary_data",
+		Data: map[string]interface{}{
+			"size":      len(data),
+			"timestamp": time.Now(),
+		},
+		Timestamp: time.Now(),
+	}
+	
+	// Store or forward the event as needed
+	_ = event // Placeholder for now
 }
 
 // convertToWebSocketMessage converts various message types to WebSocket message format

@@ -383,6 +383,158 @@ func (j *JSONRPCTransport) GetEndpoint() string {
 	return j.endpoint
 }
 
+// SendBatchRequest sends multiple JSON-RPC requests in a single batch
+func (j *JSONRPCTransport) SendBatchRequest(ctx context.Context, requests []*JSONRPCRequest) ([]*JSONRPCResponse, error) {
+	if !j.IsConnected() {
+		return nil, fmt.Errorf("transport not connected")
+	}
+
+	if len(requests) == 0 {
+		return []*JSONRPCResponse{}, nil
+	}
+
+	// Marshal batch request
+	requestBody, err := json.Marshal(requests)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal batch request: %w", err)
+	}
+
+	// Send HTTP request
+	req, err := http.NewRequestWithContext(ctx, "POST", j.endpoint, bytes.NewBuffer(requestBody))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	// Add session ID if available
+	if sessionID := j.GetSessionID(); sessionID != "" {
+		req.Header.Set("X-Session-ID", sessionID)
+	}
+
+	resp, err := j.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Read response body
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("HTTP request failed with status %d: %s", resp.StatusCode, string(responseBody))
+	}
+
+	// Parse JSON-RPC batch response
+	var rpcResponses []*JSONRPCResponse
+	if err := json.Unmarshal(responseBody, &rpcResponses); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal batch response: %w", err)
+	}
+
+	return rpcResponses, nil
+}
+
+// SendMCPBatchRequest sends multiple MCP requests in a JSON-RPC batch
+func (j *JSONRPCTransport) SendMCPBatchRequest(ctx context.Context, mcpMessages []*types.MCPMessage) ([]*types.MCPMessage, error) {
+	// Convert MCP messages to JSON-RPC requests
+	var rpcRequests []*JSONRPCRequest
+	for _, mcpMsg := range mcpMessages {
+		rpcReq := &JSONRPCRequest{
+			ID:      mcpMsg.ID,
+			JSONRPC: "2.0",
+			Method:  mcpMsg.Method,
+			Params:  mcpMsg.Params,
+		}
+		rpcRequests = append(rpcRequests, rpcReq)
+	}
+
+	// Send batch request
+	rpcResponses, err := j.SendBatchRequest(ctx, rpcRequests)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert JSON-RPC responses to MCP messages
+	var mcpResponses []*types.MCPMessage
+	for i, rpcResp := range rpcResponses {
+		var version string
+		if i < len(mcpMessages) {
+			version = mcpMessages[i].Version
+		} else {
+			version = "2024-11-05"
+		}
+
+		mcpResponse := &types.MCPMessage{
+			ID:      rpcResp.ID,
+			Type:    types.MCPMessageTypeResponse,
+			Version: version,
+		}
+
+		if rpcResp.Error != nil {
+			mcpResponse.Error = &types.MCPError{
+				Code:    rpcResp.Error.Code,
+				Message: rpcResp.Error.Message,
+				Data:    rpcResp.Error.Data,
+			}
+		} else {
+			mcpResponse.Result = rpcResp.Result
+		}
+
+		mcpResponses = append(mcpResponses, mcpResponse)
+	}
+
+	return mcpResponses, nil
+}
+
+// ValidateJSONRPCRequest validates a JSON-RPC request
+func ValidateJSONRPCRequest(req *JSONRPCRequest) error {
+	if req.JSONRPC != "2.0" {
+		return fmt.Errorf("invalid JSON-RPC version: %s, expected 2.0", req.JSONRPC)
+	}
+	if req.ID == "" {
+		return fmt.Errorf("missing request ID")
+	}
+	if req.Method == "" {
+		return fmt.Errorf("missing method")
+	}
+	return nil
+}
+
+// ValidateJSONRPCResponse validates a JSON-RPC response
+func ValidateJSONRPCResponse(resp *JSONRPCResponse) error {
+	if resp.JSONRPC != "2.0" {
+		return fmt.Errorf("invalid JSON-RPC version: %s, expected 2.0", resp.JSONRPC)
+	}
+	if resp.ID == "" {
+		return fmt.Errorf("missing response ID")
+	}
+	if resp.Result == nil && resp.Error == nil {
+		return fmt.Errorf("response must have either result or error")
+	}
+	if resp.Result != nil && resp.Error != nil {
+		return fmt.Errorf("response cannot have both result and error")
+	}
+	return nil
+}
+
+// GetConnectionMetrics returns detailed metrics about the JSON-RPC transport
+func (j *JSONRPCTransport) GetConnectionMetrics() map[string]interface{} {
+	return map[string]interface{}{
+		"transport_type":     types.TransportTypeHTTP,
+		"endpoint":           j.endpoint,
+		"timeout":            j.timeout,
+		"connected":          j.IsConnected(),
+		"session_id":         j.GetSessionID(),
+		"pending_requests":   len(j.requestQueue),
+		"pending_responses":  len(j.responseMap),
+		"client_timeout":     j.client.Timeout,
+	}
+}
+
 // init registers the JSON-RPC transport factory
 func init() {
 	RegisterTransport(types.TransportTypeHTTP, NewJSONRPCTransport)

@@ -145,7 +145,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	authMiddleware := auth.NewMiddleware(authService.GetJWTManager(), authService)
 
 	// Initialize transport handlers
-	rpcHandler := handlers.NewRPCHandler(transportManager)
+	rpcHandler := handlers.NewRPCHandler(transportManager, discoveryService)
 	sseHandler := handlers.NewSSEHandler(transportManager)
 	wsHandler := handlers.NewWebSocketHandler(transportManager)
 	mcpHandler := handlers.NewMCPHandler(transportManager)

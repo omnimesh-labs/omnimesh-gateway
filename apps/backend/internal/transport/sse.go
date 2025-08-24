@@ -235,6 +235,9 @@ func (s *SSETransport) writeEvent(event *types.SSEEvent) {
 		return
 	}
 
+	// Add event to history for replay
+	sseEventHistory.addEvent(event)
+
 	// Write event ID
 	if event.ID != "" {
 		fmt.Fprintf(s.writer, "id: %s\n", event.ID)
@@ -439,16 +442,89 @@ func (s *SSETransport) GetMetrics() map[string]interface{} {
 	}
 }
 
+// eventHistory stores events for replay functionality  
+type eventHistory struct {
+	events   []*types.SSEEvent
+	maxSize  int
+	lastID   string
+	mu       sync.RWMutex
+}
+
+// newEventHistory creates a new event history store
+func newEventHistory(maxSize int) *eventHistory {
+	return &eventHistory{
+		events:  make([]*types.SSEEvent, 0),
+		maxSize: maxSize,
+	}
+}
+
+// addEvent adds an event to the history
+func (eh *eventHistory) addEvent(event *types.SSEEvent) {
+	eh.mu.Lock()
+	defer eh.mu.Unlock()
+	
+	eh.events = append(eh.events, event)
+	eh.lastID = event.ID
+	
+	// Keep only the most recent events
+	if len(eh.events) > eh.maxSize {
+		eh.events = eh.events[len(eh.events)-eh.maxSize:]
+	}
+}
+
+// getEventsSince returns events since a specific event ID
+func (eh *eventHistory) getEventsSince(since string, limit int) ([]*types.SSEEvent, error) {
+	eh.mu.RLock()
+	defer eh.mu.RUnlock()
+	
+	if since == "" {
+		// Return latest events if no since ID provided
+		start := 0
+		if limit > 0 && len(eh.events) > limit {
+			start = len(eh.events) - limit
+		}
+		return eh.events[start:], nil
+	}
+	
+	// Find the event with the since ID
+	var sinceIndex = -1
+	for i, event := range eh.events {
+		if event.ID == since {
+			sinceIndex = i
+			break
+		}
+	}
+	
+	if sinceIndex == -1 {
+		return nil, fmt.Errorf("event ID %s not found in history", since)
+	}
+	
+	// Return events after the since ID
+	start := sinceIndex + 1
+	end := len(eh.events)
+	
+	if limit > 0 && (end-start) > limit {
+		end = start + limit
+	}
+	
+	if start >= len(eh.events) {
+		return []*types.SSEEvent{}, nil
+	}
+	
+	return eh.events[start:end], nil
+}
+
+// Add event history to SSETransport
+var sseEventHistory = newEventHistory(1000) // Store last 1000 events
+
 // GetEventHistory returns recent events for replay (if supported)
 func (s *SSETransport) GetEventHistory(since string, limit int) ([]*types.SSEEvent, error) {
-	// This would typically be implemented with event storage
-	// For now, return empty slice
-	return []*types.SSEEvent{}, nil
+	return sseEventHistory.getEventsSince(since, limit)
 }
 
 // SupportsReplay indicates whether this transport supports event replay
 func (s *SSETransport) SupportsReplay() bool {
-	return false // Can be implemented with event storage
+	return true // Now implemented with in-memory event storage
 }
 
 // init registers the SSE transport factory

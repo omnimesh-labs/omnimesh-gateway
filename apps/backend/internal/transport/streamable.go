@@ -568,6 +568,242 @@ func (s *StreamableHTTPTransport) ClearEventStore() {
 	s.eventStore = make([]*types.TransportEvent, 0)
 }
 
+// Reconnection and failure handling
+
+// IsHealthy checks if the transport is healthy
+func (s *StreamableHTTPTransport) IsHealthy() bool {
+	if !s.IsConnected() {
+		return false
+	}
+
+	// Simple health check by sending a ping-like request
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	healthReq := &StreamableRequest{
+		Method:    "GET",
+		Headers:   map[string]string{"X-Health-Check": "true"},
+		Stateful:  false,
+		SessionID: s.GetSessionID(),
+		Mode:      s.streamMode,
+	}
+
+	err := s.sendJSONRequest(ctx, healthReq)
+	return err == nil
+}
+
+// Reconnect attempts to reconnect the transport
+func (s *StreamableHTTPTransport) Reconnect(ctx context.Context) error {
+	if s.IsConnected() {
+		// Disconnect first
+		if err := s.Disconnect(ctx); err != nil {
+			return fmt.Errorf("failed to disconnect before reconnect: %w", err)
+		}
+	}
+
+	// Wait a moment
+	time.Sleep(100 * time.Millisecond)
+
+	// Attempt to reconnect
+	return s.Connect(ctx)
+}
+
+// SetRetryPolicy configures retry behavior
+type RetryPolicy struct {
+	MaxRetries    int
+	InitialDelay  time.Duration
+	MaxDelay      time.Duration
+	BackoffFactor float64
+}
+
+// DefaultRetryPolicy returns a sensible default retry policy
+func DefaultRetryPolicy() *RetryPolicy {
+	return &RetryPolicy{
+		MaxRetries:    3,
+		InitialDelay:  1 * time.Second,
+		MaxDelay:      30 * time.Second,
+		BackoffFactor: 2.0,
+	}
+}
+
+// SendMessageWithRetry sends a message with retry logic
+func (s *StreamableHTTPTransport) SendMessageWithRetry(ctx context.Context, message interface{}, policy *RetryPolicy) error {
+	if policy == nil {
+		policy = DefaultRetryPolicy()
+	}
+
+	var lastErr error
+	delay := policy.InitialDelay
+
+	for attempt := 0; attempt <= policy.MaxRetries; attempt++ {
+		if attempt > 0 {
+			// Wait before retry
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(delay):
+				// Continue with retry
+			}
+
+			// Exponential backoff
+			delay = time.Duration(float64(delay) * policy.BackoffFactor)
+			if delay > policy.MaxDelay {
+				delay = policy.MaxDelay
+			}
+		}
+
+		// Attempt to send message
+		err := s.SendMessage(ctx, message)
+		if err == nil {
+			return nil // Success
+		}
+
+		lastErr = err
+
+		// Check if we should retry based on error type
+		if !s.shouldRetry(err) {
+			break
+		}
+	}
+
+	return fmt.Errorf("failed after %d attempts, last error: %w", policy.MaxRetries, lastErr)
+}
+
+// shouldRetry determines if an error is retryable
+func (s *StreamableHTTPTransport) shouldRetry(err error) bool {
+	// Check for network errors, timeouts, etc.
+	// Don't retry on client errors (4xx), but do retry on server errors (5xx)
+	errStr := err.Error()
+	
+	// Retry on connection errors
+	if strings.Contains(errStr, "connection refused") ||
+		strings.Contains(errStr, "timeout") ||
+		strings.Contains(errStr, "no such host") {
+		return true
+	}
+
+	// Retry on server errors (5xx)
+	if strings.Contains(errStr, "status 5") {
+		return true
+	}
+
+	// Don't retry on client errors (4xx)
+	if strings.Contains(errStr, "status 4") {
+		return false
+	}
+
+	// Default to retry for unknown errors
+	return true
+}
+
+// Event filtering and transformation
+
+// FilterEvents filters events based on criteria
+func (s *StreamableHTTPTransport) FilterEvents(events []*types.TransportEvent, filter EventFilter) []*types.TransportEvent {
+	var filtered []*types.TransportEvent
+
+	for _, event := range events {
+		if filter.Matches(event) {
+			filtered = append(filtered, event)
+		}
+	}
+
+	return filtered
+}
+
+// EventFilter defines criteria for filtering events
+type EventFilter struct {
+	EventTypes []string
+	Since      *time.Time
+	Until      *time.Time
+	SessionID  string
+	DataFilter func(map[string]interface{}) bool
+}
+
+// Matches checks if an event matches the filter criteria
+func (ef *EventFilter) Matches(event *types.TransportEvent) bool {
+	// Check event type
+	if len(ef.EventTypes) > 0 {
+		found := false
+		for _, eventType := range ef.EventTypes {
+			if event.Type == eventType {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+
+	// Check time range
+	if ef.Since != nil && event.Timestamp.Before(*ef.Since) {
+		return false
+	}
+	if ef.Until != nil && event.Timestamp.After(*ef.Until) {
+		return false
+	}
+
+	// Check session ID
+	if ef.SessionID != "" && event.SessionID != ef.SessionID {
+		return false
+	}
+
+	// Check data filter
+	if ef.DataFilter != nil && !ef.DataFilter(event.Data) {
+		return false
+	}
+
+	return true
+}
+
+// GetFilteredEvents returns events matching the filter
+func (s *StreamableHTTPTransport) GetFilteredEvents(filter EventFilter, limit int) []*types.TransportEvent {
+	s.mu.RLock()
+	events := make([]*types.TransportEvent, len(s.eventStore))
+	copy(events, s.eventStore)
+	s.mu.RUnlock()
+
+	filtered := s.FilterEvents(events, filter)
+
+	if limit > 0 && len(filtered) > limit {
+		// Return the most recent events
+		return filtered[len(filtered)-limit:]
+	}
+
+	return filtered
+}
+
+// Statistical methods
+
+// GetEventStats returns statistics about events
+func (s *StreamableHTTPTransport) GetEventStats() map[string]interface{} {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if len(s.eventStore) == 0 {
+		return map[string]interface{}{
+			"total_events":  0,
+			"event_types":   map[string]int{},
+			"oldest_event":  nil,
+			"newest_event":  nil,
+		}
+	}
+
+	// Count event types
+	eventTypes := make(map[string]int)
+	for _, event := range s.eventStore {
+		eventTypes[event.Type]++
+	}
+
+	return map[string]interface{}{
+		"total_events": len(s.eventStore),
+		"event_types":  eventTypes,
+		"oldest_event": s.eventStore[0].Timestamp,
+		"newest_event": s.eventStore[len(s.eventStore)-1].Timestamp,
+	}
+}
+
 // init registers the Streamable HTTP transport factory
 func init() {
 	RegisterTransport(types.TransportTypeStreamable, NewStreamableHTTPTransport)

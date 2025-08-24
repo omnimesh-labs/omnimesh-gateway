@@ -14,7 +14,7 @@ func AssertEqual(t *testing.T, expected, actual interface{}, msgAndArgs ...inter
 		if len(msgAndArgs) > 0 {
 			msg = fmt.Sprintf(msgAndArgs[0].(string), msgAndArgs[1:]...) + " - " + msg
 		}
-		t.Errorf(msg)
+		t.Errorf("%s", msg)
 	}
 }
 
@@ -26,7 +26,7 @@ func AssertNotEqual(t *testing.T, expected, actual interface{}, msgAndArgs ...in
 		if len(msgAndArgs) > 0 {
 			msg = fmt.Sprintf(msgAndArgs[0].(string), msgAndArgs[1:]...) + " - " + msg
 		}
-		t.Errorf(msg)
+		t.Errorf("%s", msg)
 	}
 }
 
@@ -38,7 +38,7 @@ func AssertNil(t *testing.T, value interface{}, msgAndArgs ...interface{}) {
 		if len(msgAndArgs) > 0 {
 			msg = fmt.Sprintf(msgAndArgs[0].(string), msgAndArgs[1:]...) + " - " + msg
 		}
-		t.Errorf(msg)
+		t.Errorf("%s", msg)
 	}
 }
 
@@ -50,7 +50,7 @@ func AssertNotNil(t *testing.T, value interface{}, msgAndArgs ...interface{}) {
 		if len(msgAndArgs) > 0 {
 			msg = fmt.Sprintf(msgAndArgs[0].(string), msgAndArgs[1:]...)
 		}
-		t.Errorf(msg)
+		t.Errorf("%s", msg)
 	}
 }
 
@@ -62,7 +62,7 @@ func AssertTrue(t *testing.T, condition bool, msgAndArgs ...interface{}) {
 		if len(msgAndArgs) > 0 {
 			msg = fmt.Sprintf(msgAndArgs[0].(string), msgAndArgs[1:]...)
 		}
-		t.Errorf(msg)
+		t.Errorf("%s", msg)
 	}
 }
 
@@ -74,7 +74,7 @@ func AssertFalse(t *testing.T, condition bool, msgAndArgs ...interface{}) {
 		if len(msgAndArgs) > 0 {
 			msg = fmt.Sprintf(msgAndArgs[0].(string), msgAndArgs[1:]...)
 		}
-		t.Errorf(msg)
+		t.Errorf("%s", msg)
 	}
 }
 
@@ -86,7 +86,7 @@ func AssertContains(t *testing.T, str, substr string, msgAndArgs ...interface{})
 		if len(msgAndArgs) > 0 {
 			msg = fmt.Sprintf(msgAndArgs[0].(string), msgAndArgs[1:]...) + " - " + msg
 		}
-		t.Errorf(msg)
+		t.Errorf("%s", msg)
 	}
 }
 
@@ -98,7 +98,7 @@ func AssertNotContains(t *testing.T, str, substr string, msgAndArgs ...interface
 		if len(msgAndArgs) > 0 {
 			msg = fmt.Sprintf(msgAndArgs[0].(string), msgAndArgs[1:]...) + " - " + msg
 		}
-		t.Errorf(msg)
+		t.Errorf("%s", msg)
 	}
 }
 
@@ -110,7 +110,7 @@ func AssertStatusCode(t *testing.T, expected int, resp *JSONResponse, msgAndArgs
 		if len(msgAndArgs) > 0 {
 			msg = fmt.Sprintf(msgAndArgs[0].(string), msgAndArgs[1:]...) + " - " + msg
 		}
-		t.Errorf(msg)
+		t.Errorf("%s", msg)
 	}
 }
 
@@ -122,14 +122,14 @@ func AssertJSONRPCSuccess(t *testing.T, resp *JSONRPCResponse, msgAndArgs ...int
 		if len(msgAndArgs) > 0 {
 			msg = fmt.Sprintf(msgAndArgs[0].(string), msgAndArgs[1:]...) + " - " + msg
 		}
-		t.Errorf(msg)
+		t.Errorf("%s", msg)
 	}
 	if resp.Result == nil {
 		msg := "Expected JSON-RPC result to be present"
 		if len(msgAndArgs) > 0 {
 			msg = fmt.Sprintf(msgAndArgs[0].(string), msgAndArgs[1:]...)
 		}
-		t.Errorf(msg)
+		t.Errorf("%s", msg)
 	}
 }
 
@@ -141,7 +141,7 @@ func AssertJSONRPCError(t *testing.T, resp *JSONRPCResponse, expectedCode int, m
 		if len(msgAndArgs) > 0 {
 			msg = fmt.Sprintf(msgAndArgs[0].(string), msgAndArgs[1:]...)
 		}
-		t.Errorf(msg)
+		t.Errorf("%s", msg)
 		return
 	}
 	if expectedCode != 0 && resp.Error.Code != expectedCode {
@@ -149,7 +149,7 @@ func AssertJSONRPCError(t *testing.T, resp *JSONRPCResponse, expectedCode int, m
 		if len(msgAndArgs) > 0 {
 			msg = fmt.Sprintf(msgAndArgs[0].(string), msgAndArgs[1:]...) + " - " + msg
 		}
-		t.Errorf(msg)
+		t.Errorf("%s", msg)
 	}
 }
 
@@ -161,7 +161,7 @@ func AssertMapKeyExists(t *testing.T, m map[string]interface{}, key string, msgA
 		if len(msgAndArgs) > 0 {
 			msg = fmt.Sprintf(msgAndArgs[0].(string), msgAndArgs[1:]...) + " - " + msg
 		}
-		t.Errorf(msg)
+		t.Errorf("%s", msg)
 	}
 }
 
@@ -174,7 +174,7 @@ func AssertMapKeyValue(t *testing.T, m map[string]interface{}, key string, expec
 		if len(msgAndArgs) > 0 {
 			msg = fmt.Sprintf(msgAndArgs[0].(string), msgAndArgs[1:]...) + " - " + msg
 		}
-		t.Errorf(msg)
+		t.Errorf("%s", msg)
 		return
 	}
 	if !reflect.DeepEqual(expectedValue, value) {
@@ -182,7 +182,7 @@ func AssertMapKeyValue(t *testing.T, m map[string]interface{}, key string, expec
 		if len(msgAndArgs) > 0 {
 			msg = fmt.Sprintf(msgAndArgs[0].(string), msgAndArgs[1:]...) + " - " + msg
 		}
-		t.Errorf(msg)
+		t.Errorf("%s", msg)
 	}
 }
 
