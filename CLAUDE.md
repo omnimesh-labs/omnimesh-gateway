@@ -62,8 +62,6 @@ mcp-gateway/
 │   │   │   │   ├── registry.go # Server registry
 │   │   │   │   ├── mcp_discovery.go # MCP discovery service
 │   │   │   │   └── service.go # Discovery service
-│   │   │   ├── gateway/      # Core gateway functionality
-│   │   │   │   └── service.go # Gateway service logic
 │   │   │   ├── logging/      # Logging & Audit
 │   │   │   │   ├── audit.go  # Audit logging
 │   │   │   │   ├── interfaces.go # Logging interfaces

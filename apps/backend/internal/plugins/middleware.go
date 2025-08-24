@@ -106,9 +106,14 @@ func (m *FilterMiddleware) processInboundRequest(c *gin.Context, orgID, userID, 
 		Timestamp:      time.Now(),
 	}
 
-	// Create filter content
+	// Create filter content - use placeholder for empty request bodies
+	rawContent := string(requestBody)
+	if rawContent == "" {
+		rawContent = "{}" // Use empty JSON object as placeholder for empty bodies
+	}
+	
 	content := shared.CreatePluginContent(
-		string(requestBody),
+		rawContent,
 		nil,
 		m.extractHeaders(c.Request.Header),
 		m.extractQueryParams(c),
@@ -183,7 +188,7 @@ func (m *FilterMiddleware) processOutboundResponse(c *gin.Context, orgID, userID
 	}
 
 	// Create basic filter content for logging purposes - use placeholder content
-	content := shared.CreatePluginContent(" ", nil, nil, nil)
+	content := shared.CreatePluginContent("{}", nil, nil, nil)
 
 	// Apply filters (this is a simplified version)
 	result, _, err := m.service.ProcessContent(context.Background(), filterCtx, content)
