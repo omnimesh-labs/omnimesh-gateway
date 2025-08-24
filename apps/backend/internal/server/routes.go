@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"time"
+	"mcp-gateway/apps/backend/internal/a2a"
 	"mcp-gateway/apps/backend/internal/auth"
 	"mcp-gateway/apps/backend/internal/database/models"
 	"mcp-gateway/apps/backend/internal/discovery"
@@ -13,7 +15,6 @@ import (
 	"mcp-gateway/apps/backend/internal/types"
 	"mcp-gateway/apps/backend/internal/virtual"
 	"net/http"
-	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -96,11 +97,17 @@ func (s *Server) RegisterRoutes() http.Handler {
 	// Initialize virtual server service
 	virtualService := virtual.NewService(s.db.GetDB())
 
+	// Initialize A2A services
+	a2aService := a2a.NewService(s.db.GetDB())
+	a2aClient := a2a.NewClient(30*time.Second, 3)
+	a2aAdapter := a2a.NewAdapter(a2aService, a2aClient)
+
 	// Initialize handlers
 	mcpDiscoveryHandler := handlers.NewMCPDiscoveryHandler(mcpDiscoveryService)
 	gatewayHandler := handlers.NewGatewayHandler(discoveryService)
 	virtualAdminHandler := handlers.NewVirtualAdminHandler(virtualService)
 	virtualMCPHandler := handlers.NewVirtualMCPHandler(virtualService)
+	a2aHandler := handlers.NewA2AHandler(a2aService, a2aClient, a2aAdapter)
 
 	// Initialize admin handler (for logging and system management)
 	adminHandler := handlers.NewAdminHandler(nil, s.logging.(*logging.Service), nil)
@@ -313,6 +320,67 @@ func (s *Server) RegisterRoutes() http.Handler {
 				authMiddleware.RequireResourceAccess("tool", "read"),
 				toolHandler.GetToolByFunction)
 
+		}
+
+		// A2A (Agent-to-Agent) management routes (protected)
+		a2aChain := middleware.AuthenticatedChain().
+			Use(authMiddleware.RequireAuth()).
+			Use(authMiddleware.RequireOrganizationAccess())
+		a2aGroup := api.Group("/a2a")
+		a2aChain.Apply(a2aGroup)
+		{
+			// Agent management - requires appropriate permissions
+			a2aGroup.GET("",
+				authMiddleware.RequireResourceAccess("a2a_agent", "read"),
+				a2aHandler.ListAgents)
+			a2aGroup.POST("",
+				authMiddleware.RequireResourceAccess("a2a_agent", "write"),
+				loggingMiddleware.AuditLogger("create", "a2a-agent"),
+				a2aHandler.RegisterAgent)
+			a2aGroup.GET("/:id",
+				authMiddleware.RequireResourceAccess("a2a_agent", "read"),
+				a2aHandler.GetAgent)
+			a2aGroup.PUT("/:id",
+				authMiddleware.RequireResourceAccess("a2a_agent", "write"),
+				loggingMiddleware.AuditLogger("update", "a2a-agent"),
+				a2aHandler.UpdateAgent)
+			a2aGroup.DELETE("/:id",
+				authMiddleware.RequireResourceAccess("a2a_agent", "delete"),
+				loggingMiddleware.AuditLogger("delete", "a2a-agent"),
+				a2aHandler.DeleteAgent)
+
+			// Agent status management
+			a2aGroup.POST("/:id/toggle",
+				authMiddleware.RequireResourceAccess("a2a_agent", "write"),
+				loggingMiddleware.AuditLogger("toggle", "a2a-agent"),
+				a2aHandler.ToggleAgent)
+
+			// Agent health checking
+			a2aGroup.GET("/:id/health",
+				authMiddleware.RequireResourceAccess("a2a_agent", "read"),
+				a2aHandler.HealthCheckAgent)
+
+			// Agent tools
+			a2aGroup.GET("/:id/tools",
+				authMiddleware.RequireResourceAccess("a2a_agent", "read"),
+				a2aHandler.GetAgentTools)
+
+			// Agent invocation by name
+			a2aGroup.POST("/:name/invoke",
+				authMiddleware.RequireResourceAccess("a2a_agent", "execute"),
+				loggingMiddleware.AuditLogger("invoke", "a2a-agent"),
+				a2aHandler.InvokeAgent)
+
+			// Agent chat by name
+			a2aGroup.POST("/:name/chat",
+				authMiddleware.RequireResourceAccess("a2a_agent", "execute"),
+				loggingMiddleware.AuditLogger("chat", "a2a-agent"),
+				a2aHandler.ChatWithAgent)
+
+			// A2A statistics
+			a2aGroup.GET("/stats",
+				authMiddleware.RequireResourceAccess("a2a_agent", "read"),
+				a2aHandler.GetAgentStats)
 		}
 
 		// Admin routes for virtual servers and system management (protected)
