@@ -38,6 +38,7 @@ func DefaultChain() *Chain {
 		Use(Recovery()).
 		Use(SecurityHeaders()).
 		Use(CORS()).
+		Use(IPRateLimitWithMemory(100)). // 100 requests per minute by default
 		Use(Timeout())
 }
 
@@ -47,6 +48,17 @@ func DefaultChainWithConfig(securityConfig *SecurityConfig) *Chain {
 		Use(Recovery()).
 		Use(SecurityHeadersWithConfig(securityConfig)).
 		Use(CORS()).
+		Use(IPRateLimitWithMemory(100)). // 100 requests per minute by default
+		Use(Timeout())
+}
+
+// DefaultChainWithRateLimit creates a default middleware chain with Redis rate limiting
+func DefaultChainWithRateLimit(requestsPerMin int, redisAddr, redisPassword string, redisDB int) *Chain {
+	return NewChain().
+		Use(Recovery()).
+		Use(SecurityHeaders()).
+		Use(CORS()).
+		Use(IPRateLimitWithRedis(requestsPerMin, redisAddr, redisPassword, redisDB)).
 		Use(Timeout())
 }
 

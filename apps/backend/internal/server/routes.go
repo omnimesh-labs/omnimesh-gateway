@@ -101,7 +101,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	virtualMCPHandler := handlers.NewVirtualMCPHandler(virtualService)
 
 	// Initialize admin handler (for logging and system management)
-	adminHandler := handlers.NewAdminHandler(nil, s.logging.(*logging.Service), nil, nil)
+	adminHandler := handlers.NewAdminHandler(nil, s.logging.(*logging.Service), nil)
 
 	// Initialize policy handler
 	policyHandler := handlers.NewPolicyHandler(s.db.GetDB())

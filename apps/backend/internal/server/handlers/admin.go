@@ -8,7 +8,6 @@ import (
 	"mcp-gateway/apps/backend/internal/auth"
 	"mcp-gateway/apps/backend/internal/config"
 	"mcp-gateway/apps/backend/internal/logging"
-	"mcp-gateway/apps/backend/internal/ratelimit"
 	"mcp-gateway/apps/backend/internal/types"
 
 	"github.com/gin-gonic/gin"
@@ -17,19 +16,17 @@ import (
 
 // AdminHandler handles administrative endpoints
 type AdminHandler struct {
-	authService      *auth.Service
-	loggingService   *logging.Service
-	rateLimitService *ratelimit.Service
-	configService    *config.Service
+	authService    *auth.Service
+	loggingService *logging.Service
+	configService  *config.Service
 }
 
 // NewAdminHandler creates a new admin handler
-func NewAdminHandler(authService *auth.Service, loggingService *logging.Service, rateLimitService *ratelimit.Service, configService *config.Service) *AdminHandler {
+func NewAdminHandler(authService *auth.Service, loggingService *logging.Service, configService *config.Service) *AdminHandler {
 	return &AdminHandler{
-		authService:      authService,
-		loggingService:   loggingService,
-		rateLimitService: rateLimitService,
-		configService:    configService,
+		authService:    authService,
+		loggingService: loggingService,
+		configService:  configService,
 	}
 }
 
@@ -325,7 +322,7 @@ func (h *AdminHandler) GetStats(c *gin.Context) {
 
 	if orgID != nil {
 		// Get organization-specific stats
-		// rateLimitStats, _ := h.rateLimitService.GetStats(orgID.(string))
+		// TODO: Implement organization-specific statistics gathering
 		// logStats, _ := h.loggingService.GetLogStats(orgID.(string), time.Now().Add(-24*time.Hour), time.Now())
 	}
 

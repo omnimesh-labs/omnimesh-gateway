@@ -27,7 +27,7 @@ auth:
 
 rate_limit:
   enabled: true
-  storage: "memory"
+  storage: "redis"
   default_limit: 100
   default_window: 1m
   cleanup_interval: 1h
@@ -65,9 +65,10 @@ logging:
   retention_days: 30
 
 redis:
-  enabled: false
+  enabled: true
   host: "localhost"
   port: 6379
+  password: "password123"
   database: 0
   max_retries: 3
   pool_size: 10
