@@ -5,13 +5,14 @@
 The **MCP Gateway** is a production-ready API gateway for Model Context Protocol (MCP) servers, providing enterprise-grade infrastructure with authentication, logging, rate limiting, server discovery, and multi-protocol transport support.
 
 ### Core Purpose
-- **Enterprise Infrastructure**: Organization-level policies, JWT authentication, and RBAC
+- **Enterprise Infrastructure**: Organization-level policies, JWT authentication, RBAC, and A2A authentication
 - **Multi-Protocol Support**: JSON-RPC, WebSocket, SSE, HTTP, and STDIO transports
 - **Service Virtualization**: Wrap REST/GraphQL/gRPC services as virtual MCP servers
 - **Production Ready**: Comprehensive logging, IP rate limiting with Redis/memory backends, and health monitoring
+- **Multi-tenancy**: Namespace-based isolation for resources and configurations
 
 ### Key Features
-- 🔐 **Authentication & Authorization** - JWT-based auth with org-level policies and API keys
+- 🔐 **Authentication & Authorization** - JWT-based auth with org-level policies, API keys, and A2A authentication
 - 📊 **Comprehensive Logging** - Request/response logging, audit trails, performance metrics
 - ⚡ **Rate Limiting** - Multi-level rate limiting (user, org, endpoint) with sliding window algorithms
 - 🛡️ **IP Rate Limiting** - Redis-backed sliding window or in-memory per-IP rate limiting with smart proxy detection
@@ -19,6 +20,7 @@ The **MCP Gateway** is a production-ready API gateway for Model Context Protocol
 - 🌐 **Service Virtualization** - Wrap non-MCP services as virtual MCP servers
 - 🔌 **Multi-Protocol Support** - JSON-RPC, WebSocket, SSE, HTTP, and STDIO transports
 - 🚀 **High Performance** - Built with Go and Gin for maximum throughput and low latency
+- 🏢 **Multi-tenant Namespaces** - Resource isolation and management through namespace scoping
 
 ## Architecture
 
@@ -146,6 +148,22 @@ mcp-gateway/
 
 ### Core Tables
 
+#### Namespaces
+```sql
+CREATE TABLE namespaces (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL,
+    slug CITEXT UNIQUE NOT NULL,
+    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    description TEXT,
+    is_active BOOLEAN DEFAULT true,
+    metadata JSONB DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(organization_id, slug)
+);
+```
+
 #### Organizations
 ```sql
 CREATE TABLE organizations (
@@ -167,6 +185,7 @@ CREATE TABLE organizations (
 CREATE TABLE mcp_servers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    namespace_id UUID NOT NULL REFERENCES namespaces(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     protocol protocol_enum NOT NULL,
@@ -185,7 +204,7 @@ CREATE TABLE mcp_servers (
     tags TEXT[],
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    UNIQUE(organization_id, name)
+    UNIQUE(namespace_id, name)
 );
 ```
 
@@ -194,6 +213,7 @@ CREATE TABLE mcp_servers (
 CREATE TABLE virtual_servers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    namespace_id UUID NOT NULL REFERENCES namespaces(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     adapter_type adapter_type_enum NOT NULL DEFAULT 'REST',
@@ -202,7 +222,7 @@ CREATE TABLE virtual_servers (
     metadata JSONB DEFAULT '{}',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    UNIQUE(organization_id, name)
+    UNIQUE(namespace_id, name)
 );
 ```
 
@@ -211,6 +231,7 @@ CREATE TABLE virtual_servers (
 CREATE TABLE mcp_sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    namespace_id UUID NOT NULL REFERENCES namespaces(id) ON DELETE CASCADE,
     server_id UUID NOT NULL REFERENCES mcp_servers(id) ON DELETE CASCADE,
     status session_status_enum DEFAULT 'initializing',
     protocol protocol_enum NOT NULL,
@@ -250,11 +271,13 @@ CREATE TABLE users (
 ```sql
 CREATE TABLE api_keys (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,  -- Nullable for A2A keys
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    namespace_id UUID REFERENCES namespaces(id) ON DELETE CASCADE,  -- Optional namespace scope
     name VARCHAR(255) NOT NULL,
     key_hash VARCHAR(255) UNIQUE NOT NULL,
     prefix VARCHAR(20) NOT NULL,
+    key_type VARCHAR(20) NOT NULL DEFAULT 'user' CHECK (key_type IN ('user', 'a2a')),
     permissions TEXT[] DEFAULT ARRAY[]::TEXT[],
     expires_at TIMESTAMP WITH TIME ZONE,
     last_used_at TIMESTAMP WITH TIME ZONE,
@@ -269,6 +292,7 @@ CREATE TABLE api_keys (
 CREATE TABLE virtual_servers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    namespace_id UUID NOT NULL REFERENCES namespaces(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     adapter_type adapter_type_enum NOT NULL DEFAULT 'REST',
@@ -277,7 +301,7 @@ CREATE TABLE virtual_servers (
     metadata JSONB DEFAULT '{}',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    UNIQUE(organization_id, name)
+    UNIQUE(namespace_id, name)
 );
 ```
 
@@ -303,6 +327,7 @@ CREATE TABLE virtual_servers (
 - `POST /auth/api-keys` - Create API keys
 - `GET /auth/profile` - Get user profile
 - `PUT /auth/profile` - Update user profile
+- `POST /auth/a2a/token` - App-to-app authentication token exchange
 
 ### Gateway Management
 - `GET /gateway/servers` - List available MCP servers
@@ -343,6 +368,15 @@ CREATE TABLE virtual_servers (
 - `GET /servers/{server_id}/sse` - Server-specific SSE
 - `GET /servers/{server_id}/ws` - Server-specific WebSocket
 - `GET|POST /servers/{server_id}/mcp` - Server-specific MCP
+
+### Namespace Management
+- `GET /api/admin/namespaces` - List all namespaces
+- `GET /api/admin/namespaces/{id}` - Get namespace details
+- `POST /api/admin/namespaces` - Create new namespace
+- `PUT /api/admin/namespaces/{id}` - Update namespace
+- `DELETE /api/admin/namespaces/{id}` - Delete namespace
+- `GET /api/admin/namespaces/{id}/servers` - List servers in namespace
+- `GET /api/admin/namespaces/{id}/sessions` - List sessions in namespace
 
 ### Virtual Server Management
 - `GET /api/admin/virtual-servers` - List virtual servers

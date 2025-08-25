@@ -4,11 +4,12 @@
 This MCP (Model Context Protocol) Gateway provides organization-level policies, authentication, logging, and rate limiting for MCP server access.
 
 ## Core Features
-1. **Authentication & Authorization** - JWT-based auth with org-level policies
+1. **Authentication & Authorization** - JWT-based auth with org-level policies and A2A support
 2. **Logging & Audit** - Comprehensive request/response logging and audit trails
 3. **Rate Limiting** - Per-user, per-org, and per-endpoint rate limiting
 4. **MCP Server Discovery** - Dynamic discovery and health checking of MCP servers
 5. **Gateway Configuration** - Flexible policy management and configuration
+6. **Namespace Management** - Multi-tenant isolation with namespace-scoped resources
 
 ## Directory Structure
 
@@ -173,14 +174,17 @@ mcp-gateway/
 ## Database Schema Design
 
 ### Core Tables
-- `organizations` - Organization metadata
+- `namespaces` - Multi-tenant namespace isolation
+- `organizations` - Organization metadata  
 - `users` - User accounts and roles
-- `api_keys` - API key management
-- `mcp_servers` - Registered MCP servers
+- `api_keys` - API key management (both user and A2A)
+- `mcp_servers` - Registered MCP servers (namespace-scoped)
 - `policies` - Organization policies
 - `rate_limits` - Rate limiting configurations
 - `audit_logs` - Audit trail
 - `request_logs` - Request/response logs
+- `virtual_servers` - Service virtualization configurations (namespace-scoped)
+- `mcp_sessions` - Active MCP sessions (namespace-scoped)
 
 ## API Endpoints
 
@@ -189,6 +193,7 @@ mcp-gateway/
 - `POST /auth/refresh` - Token refresh
 - `POST /auth/logout` - User logout
 - `POST /auth/api-keys` - Generate API key
+- `POST /auth/a2a/token` - App-to-app authentication token exchange
 
 ### Gateway Management
 - `GET /gateway/servers` - List available MCP servers
@@ -240,6 +245,15 @@ mcp-gateway/
 - `GET /servers/{server_id}/sse` - Server-specific SSE
 - `GET /servers/{server_id}/ws` - Server-specific WebSocket
 - `GET|POST /servers/{server_id}/mcp` - Server-specific MCP
+
+### Namespace Management
+- `GET /api/admin/namespaces` - List all namespaces
+- `GET /api/admin/namespaces/{id}` - Get namespace details
+- `POST /api/admin/namespaces` - Create new namespace
+- `PUT /api/admin/namespaces/{id}` - Update namespace
+- `DELETE /api/admin/namespaces/{id}` - Delete namespace
+- `GET /api/admin/namespaces/{id}/servers` - List servers in namespace
+- `GET /api/admin/namespaces/{id}/sessions` - List sessions in namespace
 
 ### Admin & Monitoring
 - `GET /health` - Health check
