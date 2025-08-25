@@ -55,6 +55,29 @@ linters-settings:
       G104: # Audit errors not checked
         fmt: true
 
+  depguard:
+    rules:
+      main:
+        allow:
+          - $gostd
+          - github.com/gin-gonic/gin
+          - github.com/golang-jwt/jwt/v5
+          - github.com/google/uuid
+          - github.com/jackc/pgx/v5
+          - github.com/jackc/pgx/v5/stdlib
+          - github.com/joho/godotenv
+          - github.com/joho/godotenv/autoload
+          - github.com/lib/pq
+          - github.com/redis/go-redis/v9
+          - github.com/stretchr/testify
+          - github.com/testcontainers/testcontainers-go
+          - github.com/testcontainers/testcontainers-go/modules/postgres
+          - github.com/testcontainers/testcontainers-go/wait
+          - github.com/ulule/limiter/v3
+          - github.com/gorilla/websocket
+          - golang.org/x/crypto/bcrypt
+          - mcp-gateway
+
 linters:
   enable:
     - bodyclose

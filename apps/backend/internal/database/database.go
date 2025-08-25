@@ -31,6 +31,8 @@ type service struct {
 	db *sql.DB
 }
 
+const healthyMessage = "It's healthy"
+
 var (
 	database   = os.Getenv("DB_DATABASE")
 	password   = os.Getenv("DB_PASSWORD")
@@ -80,13 +82,13 @@ func (s *service) Health() map[string]string {
 	if err != nil {
 		stats["status"] = "down"
 		stats["error"] = fmt.Sprintf("db down: %v", err)
-		log.Fatalf("db down: %v", err)
+		log.Printf("db down: %v", err)
 		return stats
 	}
 
 	// Database is up, add more statistics
 	stats["status"] = "up"
-	stats["message"] = "It's healthy"
+	stats["message"] = healthyMessage
 
 	// Get database stats (like open connections, in use, idle, etc.)
 	dbStats := s.db.Stats()
