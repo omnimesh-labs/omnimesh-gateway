@@ -1,6 +1,10 @@
 package middleware
 
-import "github.com/gin-gonic/gin"
+import (
+	"mcp-gateway/apps/backend/internal/config"
+
+	"github.com/gin-gonic/gin"
+)
 
 // Chain represents a middleware chain
 type Chain struct {
@@ -41,12 +45,30 @@ func DefaultChain() *Chain {
 		Use(Timeout())
 }
 
+// DefaultChainFromConfig creates a default middleware chain from app config
+func DefaultChainFromConfig(cfg *config.Config) *Chain {
+	return NewChain().
+		Use(Recovery()).
+		Use(SecurityHeaders()).
+		Use(IPRateLimitFromAppConfig(&cfg.RateLimit, &cfg.Redis)).
+		Use(Timeout())
+}
+
 // DefaultChainWithConfig creates a default middleware chain with custom security config
 func DefaultChainWithConfig(securityConfig *SecurityConfig) *Chain {
 	return NewChain().
 		Use(Recovery()).
 		Use(SecurityHeadersWithConfig(securityConfig)).
 		Use(IPRateLimitWithMemory(100)). // 100 requests per minute by default
+		Use(Timeout())
+}
+
+// DefaultChainWithAppConfig creates a default middleware chain with app and security config
+func DefaultChainWithAppConfig(cfg *config.Config, securityConfig *SecurityConfig) *Chain {
+	return NewChain().
+		Use(Recovery()).
+		Use(SecurityHeadersWithConfig(securityConfig)).
+		Use(IPRateLimitFromAppConfig(&cfg.RateLimit, &cfg.Redis)).
 		Use(Timeout())
 }
 

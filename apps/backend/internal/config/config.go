@@ -97,6 +97,11 @@ type RateLimitConfig struct {
 	DefaultWindow   time.Duration `yaml:"default_window"`
 	CleanupInterval time.Duration `yaml:"cleanup_interval"`
 	Enabled         bool          `yaml:"enabled"`
+	// IP-based rate limiting fields
+	IPEnabled           bool     `yaml:"ip_enabled"`
+	IPRequestsPerMinute int      `yaml:"ip_requests_per_minute"`
+	IPSkipPaths         []string `yaml:"ip_skip_paths"`
+	IPCustomHeaders     []string `yaml:"ip_custom_headers"`
 }
 
 // DiscoveryConfig holds MCP server discovery configuration

@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"time"
 
+	"mcp-gateway/apps/backend/internal/config"
+
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 	"github.com/ulule/limiter/v3"
@@ -40,6 +42,35 @@ func DefaultIPRateLimitConfig() *IPRateLimitConfig {
 		SkipPaths:      []string{"/health", "/metrics"},
 		CustomHeaders:  []string{"X-Real-IP", "X-Forwarded-For"},
 	}
+}
+
+// IPRateLimitFromAppConfig creates IP-based rate limiting middleware from app config
+func IPRateLimitFromAppConfig(cfg *config.RateLimitConfig, redisCfg *config.RedisConfig) gin.HandlerFunc {
+	if !cfg.IPEnabled {
+		return func(c *gin.Context) {
+			c.Next()
+		}
+	}
+
+	// Build IPRateLimitConfig from app config
+	ipConfig := &IPRateLimitConfig{
+		Enabled:        cfg.IPEnabled,
+		RequestsPerMin: cfg.IPRequestsPerMinute,
+		SkipPaths:      cfg.IPSkipPaths,
+		CustomHeaders:  cfg.IPCustomHeaders,
+	}
+
+	// Determine storage backend
+	if cfg.Storage == "redis" && redisCfg != nil {
+		ipConfig.RedisEnabled = true
+		ipConfig.RedisAddr = fmt.Sprintf("%s:%d", redisCfg.Host, redisCfg.Port)
+		ipConfig.RedisPassword = redisCfg.Password
+		ipConfig.RedisDB = redisCfg.Database
+	} else {
+		ipConfig.RedisEnabled = false
+	}
+
+	return IPRateLimit(ipConfig)
 }
 
 // IPRateLimit creates IP-based rate limiting middleware

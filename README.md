@@ -1,10 +1,10 @@
 # MCP Gateway
 
-[![CI](https://github.com/yourusername/mcp-gateway/workflows/CI/badge.svg)](https://github.com/yourusername/mcp-gateway/actions)
+[![CI](https://github.com/theognis1002/mcp-gateway/workflows/CI/badge.svg)](https://github.com/theognis1002/mcp-gateway/actions)
 [![Go Version](https://img.shields.io/badge/Go-1.25+-blue.svg)](https://golang.org)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Go Report Card](https://goreportcard.com/badge/github.com/yourusername/mcp-gateway)](https://goreportcard.com/report/github.com/yourusername/mcp-gateway)
-[![codecov](https://codecov.io/gh/yourusername/mcp-gateway/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/mcp-gateway)
+[![Go Report Card](https://goreportcard.com/badge/github.com/theognis1002/mcp-gateway)](https://goreportcard.com/report/github.com/theognis1002/mcp-gateway)
+[![codecov](https://codecov.io/gh/theognis1002/mcp-gateway/branch/main/graph/badge.svg)](https://codecov.io/gh/theognis1002/mcp-gateway)
 [![Security](https://img.shields.io/badge/Security-Enabled-green.svg)](SECURITY.md)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
@@ -17,7 +17,7 @@ A production-ready API gateway for Model Context Protocol (MCP) servers, providi
 - **🔐 Authentication & Authorization** - JWT-based auth with API keys and role-based access control
 - **📊 Comprehensive Logging** - Request/response logging, audit trails, performance metrics, and security events
 - **⚡ Rate Limiting** - Per-user, per-organization, and per-endpoint rate limiting with multiple algorithms
-- **🛡️ IP Rate Limiting** - Redis-backed sliding window or in-memory per-IP rate limiting with smart proxy detection
+- **🛡️ IP Rate Limiting** - Redis-backed sliding window or in-memory per-IP rate limiting with smart proxy detection and configurable limits
 - **🔍 MCP Server Discovery** - Dynamic server registration, health checking, and load balancing
 - **⚙️ Policy Management** - Flexible organization-level policies for access control and routing
 - **🌐 Service Virtualization** - Wrap non-MCP services (REST APIs, GraphQL, gRPC) as virtual MCP servers
@@ -132,63 +132,6 @@ curl -X POST http://localhost:8080/mcp/rpc \
 
 See [examples/virtual_servers_example.md](./examples/virtual_servers_example.md) for comprehensive usage examples and testing guide.
 
-## IP Rate Limiting
-
-The MCP Gateway includes sophisticated IP-based rate limiting to protect against abuse and ensure fair resource usage across clients.
-
-### 🎯 **Key Features**
-- **Redis Sliding Window** - Precise rate limiting using Redis sorted sets for distributed deployments
-- **Memory Fallback** - Automatic fallback to in-memory token bucket when Redis is unavailable
-- **Smart IP Detection** - Extracts real client IPs from X-Real-IP, X-Forwarded-For headers with proxy support
-- **Path Exclusions** - Skip rate limiting for health checks, metrics, and other system endpoints
-- **Configurable Limits** - Flexible per-minute request limits with burst capacity
-
-### 🛠️ **Configuration**
-IP rate limiting is automatically enabled in the middleware chain with sensible defaults:
-
-```yaml
-# Development: Redis-backed with 100 req/min default
-redis:
-  enabled: true
-  host: "localhost"
-  port: 6379
-  password: "password123"
-
-# Automatically applied to all routes except /health, /metrics
-```
-
-### 🔧 **Custom Configuration**
-```go
-// Memory-based rate limiting (single instance)
-router.Use(middleware.IPRateLimitWithMemory(60)) // 60 requests per minute
-
-// Redis-based rate limiting (distributed)
-router.Use(middleware.IPRateLimitWithRedis(100, "localhost:6379", "password", 0))
-
-// Advanced configuration
-config := &middleware.IPRateLimitConfig{
-    RequestsPerMin: 120,
-    RedisEnabled:   true,
-    SkipPaths:     []string{"/health", "/metrics", "/debug"},
-    CustomHeaders: []string{"X-Real-IP", "CF-Connecting-IP"},
-}
-router.Use(middleware.IPRateLimit(config))
-```
-
-### 📊 **Rate Limit Response**
-When rate limits are exceeded, clients receive a structured JSON response:
-```json
-{
-  "error": "rate_limit_exceeded",
-  "message": "Too many requests from this IP address. Please try again later.",
-  "code": "RATE_LIMIT_EXCEEDED"
-}
-```
-
-### 🚀 **Performance**
-- **Redis Mode**: Supports thousands of concurrent clients with precise sliding window tracking
-- **Memory Mode**: High-performance in-memory storage with automatic cleanup for single-instance deployments
-- **Smart Fallback**: Automatic Redis → Memory fallback ensures service continuity
 
 ## 🚀 Quick Start
 
@@ -203,7 +146,7 @@ When rate limits are exceeded, clients receive a structured JSON response:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/mcp-gateway.git
+git clone https://github.com/theognis1002/mcp-gateway.git
 cd mcp-gateway
 
 # Copy environment configuration
@@ -344,15 +287,15 @@ Security is a top priority. Please review our [Security Policy](SECURITY.md) and
 
 - [Model Context Protocol](https://modelcontextprotocol.io/) for the core specification
 - [Gin Framework](https://gin-gonic.com/) for the HTTP framework
-- All our [contributors](https://github.com/yourusername/mcp-gateway/contributors)
+- All our [contributors](https://github.com/theognis1002/mcp-gateway/contributors)
 
 ---
 
 <div align="center">
   <p>Built with ❤️ for the MCP community</p>
   <p>
-    <a href="https://github.com/yourusername/mcp-gateway">⭐ Star us on GitHub</a> •
-    <a href="https://github.com/yourusername/mcp-gateway/issues">🐛 Report Bug</a> •
-    <a href="https://github.com/yourusername/mcp-gateway/issues">💡 Request Feature</a>
+    <a href="https://github.com/theognis1002/mcp-gateway">⭐ Star us on GitHub</a> •
+    <a href="https://github.com/theognis1002/mcp-gateway/issues">🐛 Report Bug</a> •
+    <a href="https://github.com/theognis1002/mcp-gateway/issues">💡 Request Feature</a>
   </p>
 </div>

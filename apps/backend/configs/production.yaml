@@ -38,6 +38,16 @@ rate_limit:
   burst_multiplier: 1.5
   cleanup_interval: 1h
   key_prefix: "ratelimit:prod"
+  # IP-based rate limiting
+  ip_enabled: true
+  ip_requests_per_minute: 60
+  ip_skip_paths:
+    - "/health"
+    - "/metrics"
+  ip_custom_headers:
+    - "X-Real-IP"
+    - "X-Forwarded-For"
+    - "CF-Connecting-IP"
 
 discovery:
   enabled: true

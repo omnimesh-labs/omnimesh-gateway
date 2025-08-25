@@ -39,7 +39,7 @@ Before you begin, ensure you have:
    ```
 3. Add the original repository as a remote:
    ```bash
-   git remote add upstream https://github.com/yourusername/mcp-gateway.git
+   git remote add upstream https://github.com/theognis1002/mcp-gateway.git
    ```
 
 ## 🛠️ Development Setup

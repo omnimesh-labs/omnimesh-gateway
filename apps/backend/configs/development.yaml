@@ -31,6 +31,17 @@ rate_limit:
   default_limit: 100
   default_window: 1m
   cleanup_interval: 1h
+  # IP-based rate limiting
+  ip_enabled: true
+  ip_requests_per_minute: 100
+  ip_skip_paths:
+    - "/health"
+    - "/metrics"
+    - "/debug"
+  ip_custom_headers:
+    - "X-Real-IP"
+    - "X-Forwarded-For"
+    - "CF-Connecting-IP"
 
 discovery:
   enabled: true
