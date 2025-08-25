@@ -27,6 +27,21 @@ type ErrorResponse struct {
 	Success bool   `json:"success"`
 }
 
+// JSONRPCError represents a JSON-RPC error
+type JSONRPCError struct {
+	Code    int         `json:"code"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data,omitempty"`
+}
+
+// Error implements the error interface for JSONRPCError
+func (e *JSONRPCError) Error() string {
+	if e.Data != nil {
+		return fmt.Sprintf("JSON-RPC error %d: %s (%v)", e.Code, e.Message, e.Data)
+	}
+	return fmt.Sprintf("JSON-RPC error %d: %s", e.Code, e.Message)
+}
+
 // Predefined error codes
 const (
 	// Authentication errors

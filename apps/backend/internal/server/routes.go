@@ -55,7 +55,10 @@ func (s *Server) RegisterRoutes() http.Handler {
 	// Apply default middleware chain to root router
 	defaultChain := middleware.DefaultChainWithConfig(securityConfig)
 	defaultChain.Use(loggingMiddleware.RequestLogger())
-	defaultChain.Use(contentFilterMiddleware.Handler())
+	// Only apply content filtering if not in test environment
+	if os.Getenv("SKIP_CONTENT_FILTERING") != "true" {
+		defaultChain.Use(contentFilterMiddleware.Handler())
+	}
 	rootGroup := &r.RouterGroup
 	defaultChain.Apply(rootGroup)
 

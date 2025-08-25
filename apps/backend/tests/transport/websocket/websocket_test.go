@@ -77,8 +77,10 @@ func TestWebSocketMetrics(t *testing.T) {
 	t.Run("WebSocket Metrics with Session ID", func(t *testing.T) {
 		resp, err := client.Get("/ws/metrics?session_id=test-session")
 		helpers.AssertNil(t, err, "Metrics request should not fail")
-		// Should return 200 even if session doesn't exist
+		// Should return 200 and empty metrics if session doesn't exist
 		helpers.AssertStatusCode(t, http.StatusOK, resp, "HTTP status should be 200")
+		helpers.AssertMapKeyExists(t, resp.Body, "connections", "Response should contain connections metrics")
+		helpers.AssertMapKeyExists(t, resp.Body, "messages", "Response should contain messages metrics")
 	})
 }
 
@@ -105,8 +107,8 @@ func TestWebSocketSendMessage(t *testing.T) {
 
 		resp, err := client.Post("/ws/send", messageData)
 		helpers.AssertNil(t, err, "HTTP request should not fail")
-		// Should return an error since no session ID is provided
-		helpers.AssertTrue(t, resp.StatusCode >= 400, "Should return error without session ID")
+		// Should return 400 Bad Request since no session ID is provided
+		helpers.AssertStatusCode(t, http.StatusBadRequest, resp, "Should return 400 without session ID")
 	})
 
 	t.Run("Send WebSocket Message with Session", func(t *testing.T) {
@@ -123,9 +125,9 @@ func TestWebSocketSendMessage(t *testing.T) {
 
 		resp, err := client.Post("/ws/send", messageData, headers)
 		helpers.AssertNil(t, err, "HTTP request should not fail")
-		// May return error if session doesn't exist, which is expected
-		helpers.AssertTrue(t, resp.StatusCode == http.StatusOK || resp.StatusCode >= 400,
-			"Should handle session appropriately")
+		// Should return 404 if session doesn't exist, 200 if it does
+		helpers.AssertTrue(t, resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusOK,
+			"Should return 404 for non-existent session or 200 for existing session, got %d", resp.StatusCode)
 	})
 
 	t.Run("Broadcast WebSocket Message", func(t *testing.T) {
@@ -139,7 +141,8 @@ func TestWebSocketSendMessage(t *testing.T) {
 		resp, err := client.Post("/ws/broadcast", messageData)
 		helpers.AssertNil(t, err, "Broadcast request should not fail")
 		helpers.AssertStatusCode(t, http.StatusOK, resp, "HTTP status should be 200")
-		helpers.AssertMapKeyExists(t, resp.Body, "success", "Response should indicate success")
+		helpers.AssertMapKeyExists(t, resp.Body, "success", "Response should contain success field")
+		helpers.AssertMapKeyValue(t, resp.Body, "success", true, "Broadcast should succeed")
 	})
 }
 
@@ -159,8 +162,9 @@ func TestWebSocketPing(t *testing.T) {
 	t.Run("WebSocket Ping without Session", func(t *testing.T) {
 		resp, err := client.Post("/ws/ping", nil)
 		helpers.AssertNil(t, err, "HTTP request should not fail")
-		// Should return an error since no session ID is provided
-		helpers.AssertTrue(t, resp.StatusCode >= 400, "Should return error without session ID")
+
+		// Should return 400 Bad Request since no session ID is provided
+		helpers.AssertStatusCode(t, http.StatusBadRequest, resp, "Should return 400 without session ID")
 	})
 
 	t.Run("WebSocket Ping with Session", func(t *testing.T) {
@@ -170,9 +174,9 @@ func TestWebSocketPing(t *testing.T) {
 
 		resp, err := client.Post("/ws/ping", nil, headers)
 		helpers.AssertNil(t, err, "HTTP request should not fail")
-		// May return error if session doesn't exist, which is expected
-		helpers.AssertTrue(t, resp.StatusCode == http.StatusOK || resp.StatusCode >= 400,
-			"Should handle session appropriately")
+		// Should return 404 if session doesn't exist, 200 if it does
+		helpers.AssertTrue(t, resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusOK,
+			"Should return 404 for non-existent session or 200 for existing session, got %d", resp.StatusCode)
 	})
 }
 
@@ -192,8 +196,8 @@ func TestWebSocketClose(t *testing.T) {
 	t.Run("Close WebSocket Connection without Session", func(t *testing.T) {
 		resp, err := client.Delete("/ws/close")
 		helpers.AssertNil(t, err, "HTTP request should not fail")
-		// Should return an error since no session ID is provided
-		helpers.AssertTrue(t, resp.StatusCode >= 400, "Should return error without session ID")
+		// Should return 400 Bad Request since no session ID is provided
+		helpers.AssertStatusCode(t, http.StatusBadRequest, resp, "Should return 400 without session ID")
 	})
 
 	t.Run("Close WebSocket Connection with Session", func(t *testing.T) {
@@ -203,9 +207,8 @@ func TestWebSocketClose(t *testing.T) {
 
 		resp, err := client.Delete("/ws/close", headers)
 		helpers.AssertNil(t, err, "HTTP request should not fail")
-		// May return success even if session doesn't exist
-		helpers.AssertTrue(t, resp.StatusCode == http.StatusOK || resp.StatusCode >= 400,
-			"Should handle session appropriately")
+		// Should return 200 OK (idempotent - closing non-existent session is a no-op)
+		helpers.AssertStatusCode(t, http.StatusOK, resp, "Should return 200 (idempotent operation)")
 	})
 }
 
@@ -233,9 +236,8 @@ func TestWebSocketErrorHandling(t *testing.T) {
 
 		resp, err := client.Post("/ws/send", invalidMessageData, headers)
 		helpers.AssertNil(t, err, "HTTP request should not fail")
-		// Depending on implementation, this might return 400 or handle gracefully
-		helpers.AssertTrue(t, resp.StatusCode >= 400 || resp.StatusCode == 200,
-			"Should handle invalid message data appropriately")
+		// Should return 400 Bad Request for invalid message format
+		helpers.AssertStatusCode(t, http.StatusBadRequest, resp, "Should return 400 for invalid message data")
 	})
 
 	t.Run("Empty Session ID", func(t *testing.T) {
@@ -252,11 +254,6 @@ func TestWebSocketErrorHandling(t *testing.T) {
 
 		resp, err := client.Post("/ws/send", messageData, headers)
 		helpers.AssertNil(t, err, "HTTP request should not fail")
-		helpers.AssertTrue(t, resp.StatusCode >= 400, "Should return error with empty session ID")
+		helpers.AssertStatusCode(t, http.StatusBadRequest, resp, "Should return 400 with empty session ID")
 	})
 }
-
-// Note: Actual WebSocket connection testing would require a WebSocket client library
-// These tests focus on the HTTP endpoints that control WebSocket functionality
-// For full WebSocket testing, you would need to use a library like gorilla/websocket
-// and establish actual WebSocket connections to test bidirectional communication

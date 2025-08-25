@@ -98,8 +98,13 @@ func (h *WebSocketHandler) HandleServerWebSocket(c *gin.Context) {
 
 // HandleWebSocketSend handles sending messages to WebSocket connections
 func (h *WebSocketHandler) HandleWebSocketSend(c *gin.Context) {
-	// Get session ID
-	sessionID := middleware.GetSessionID(c)
+	// Get session ID from header or query param directly
+	// Don't use middleware.GetSessionID as it may return auto-generated IDs
+	sessionID := c.GetHeader("X-Session-ID")
+	if sessionID == "" {
+		sessionID = c.Query("session_id")
+	}
+
 	if sessionID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "session_id is required",
@@ -143,9 +148,18 @@ func (h *WebSocketHandler) HandleWebSocketSend(c *gin.Context) {
 
 	// Send message
 	if err := h.transportManager.SendMessage(c.Request.Context(), sessionID, wsMessage); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to send WebSocket message: " + err.Error(),
-		})
+		// Check if error is due to session not found
+		if err.Error() == "connection not found for session "+sessionID ||
+		   err.Error() == "session not found" ||
+		   err.Error() == "transport not found" {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Session not found: " + sessionID,
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to send WebSocket message: " + err.Error(),
+			})
+		}
 		return
 	}
 
@@ -248,7 +262,13 @@ func (h *WebSocketHandler) HandleWebSocketStatus(c *gin.Context) {
 
 // HandleWebSocketPing handles ping requests to WebSocket connections
 func (h *WebSocketHandler) HandleWebSocketPing(c *gin.Context) {
-	sessionID := middleware.GetSessionID(c)
+	// Get session ID from header or query param directly
+	// Don't use middleware.GetSessionID as it may return auto-generated IDs
+	sessionID := c.GetHeader("X-Session-ID")
+	if sessionID == "" {
+		sessionID = c.Query("session_id")
+	}
+
 	if sessionID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "session_id is required",
@@ -265,9 +285,18 @@ func (h *WebSocketHandler) HandleWebSocketPing(c *gin.Context) {
 
 	// Send ping
 	if err := h.transportManager.SendMessage(c.Request.Context(), sessionID, pingMessage); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to send ping: " + err.Error(),
-		})
+		// Check if error is due to session not found
+		if err.Error() == "connection not found for session "+sessionID ||
+		   err.Error() == "session not found" ||
+		   err.Error() == "transport not found" {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Session not found: " + sessionID,
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to send ping: " + err.Error(),
+			})
+		}
 		return
 	}
 
@@ -280,7 +309,13 @@ func (h *WebSocketHandler) HandleWebSocketPing(c *gin.Context) {
 
 // HandleWebSocketClose handles closing WebSocket connections
 func (h *WebSocketHandler) HandleWebSocketClose(c *gin.Context) {
-	sessionID := middleware.GetSessionID(c)
+	// Get session ID from header or query param directly
+	// Don't use middleware.GetSessionID as it may return auto-generated IDs
+	sessionID := c.GetHeader("X-Session-ID")
+	if sessionID == "" {
+		sessionID = c.Query("session_id")
+	}
+
 	if sessionID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "session_id is required",
@@ -290,9 +325,22 @@ func (h *WebSocketHandler) HandleWebSocketClose(c *gin.Context) {
 
 	// Close connection
 	if err := h.transportManager.CloseConnection(sessionID); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to close WebSocket connection: " + err.Error(),
-		})
+		// Check if error is due to session not found
+		errStr := err.Error()
+		if errStr == "connection not found for session "+sessionID ||
+		   errStr == "session not found" ||
+		   errStr == "transport not found" ||
+		   errStr == "connection not found" {
+			// For close, we return 200 even if session doesn't exist (idempotent)
+			c.JSON(http.StatusOK, gin.H{
+				"message":    "WebSocket connection closed or not found",
+				"session_id": sessionID,
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to close WebSocket connection: " + err.Error(),
+			})
+		}
 		return
 	}
 
@@ -368,9 +416,17 @@ func (h *WebSocketHandler) HandleWebSocketMetrics(c *gin.Context) {
 			}
 		}
 
+		// Return with connections and messages format for consistency
 		c.JSON(http.StatusOK, gin.H{
 			"session_id": sessionID,
 			"metrics":    metrics,
+			"connections": map[string]interface{}{
+				"session_id": sessionID,
+				"connected":  metrics["connected"],
+			},
+			"messages": map[string]interface{}{
+				"total": 0,
+			},
 		})
 		return
 	}

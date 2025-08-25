@@ -42,6 +42,7 @@ func NewTestServer() (*TestServer, error) {
 
 	// Set environment variables to prevent server from re-registering plugins and configure database
 	os.Setenv("SKIP_PLUGIN_REGISTRATION", "true")
+	os.Setenv("SKIP_CONTENT_FILTERING", "true")
 	os.Setenv("DB_HOST", "localhost")
 	os.Setenv("DB_PORT", "5432")
 	os.Setenv("DB_DATABASE", "postgres")

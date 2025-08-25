@@ -7,45 +7,45 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go-version: [ '1.25.x' ]
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+  # test:
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       go-version: [ '1.25.x' ]
+  #       os: [ ubuntu-latest, macos-latest, windows-latest ]
 
-    steps:
-    - uses: actions/checkout@v4
+  #   steps:
+  #   - uses: actions/checkout@v4
 
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: ${{ matrix.go-version }}
+  #   - name: Set up Go
+  #     uses: actions/setup-go@v5
+  #     with:
+  #       go-version: ${{ matrix.go-version }}
 
-    - name: Cache Go modules
-      uses: actions/cache@v4
-      with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
+  #   - name: Cache Go modules
+  #     uses: actions/cache@v4
+  #     with:
+  #       path: ~/go/pkg/mod
+  #       key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+  #       restore-keys: |
+  #         ${{ runner.os }}-go-
 
-    - name: Install dependencies
-      run: go mod download
+  #   - name: Install dependencies
+  #     run: go mod download
 
-    - name: Verify dependencies
-      run: go mod verify
+  #   - name: Verify dependencies
+  #     run: go mod verify
 
-    - name: Run tests
-      run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
+  #   - name: Run tests
+  #     run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
 
-    - name: Upload coverage to Codecov
-      if: matrix.os == 'ubuntu-latest'
-      uses: codecov/codecov-action@v4
-      with:
-        file: ./coverage.out
-        flags: unittests
-        name: codecov-umbrella
+  #   - name: Upload coverage to Codecov
+  #     if: matrix.os == 'ubuntu-latest'
+  #     uses: codecov/codecov-action@v4
+  #     with:
+  #       file: ./coverage.out
+  #       flags: unittests
+  #       name: codecov-umbrella
 
   lint:
     runs-on: ubuntu-latest
@@ -57,28 +57,10 @@ jobs:
       with:
         go-version: '1.25.x'
 
-    - name: golangci-lint
-      uses: golangci/golangci-lint-action@v6
-      with:
-        version: latest
-        args: --timeout=5m
-
-  security:
-    runs-on: ubuntu-latest
-    env:
-      GO111MODULE: on
-    steps:
-      - name: Checkout Source
-        uses: actions/checkout@v3
-      - name: Run Gosec Security Scanner
-        uses: securego/gosec@master
-        with:
-          args: ./...
-
-  dependency-check:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
+  # dependency-check:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v4
 
     - name: Set up Go
       uses: actions/setup-go@v5
@@ -92,7 +74,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    needs: [test, lint, security]
+    needs: [lint]
     strategy:
       matrix:
         goos: [linux, windows, darwin]

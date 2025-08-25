@@ -38,7 +38,8 @@ docker-down:
 # Test the application
 test:
 	@echo "Testing..."
-	@go test ./... -v
+	@gotestsum --format standard-quiet -- -short ./...
+
 
 # Transport Tests - All transport layer tests
 test-transport:

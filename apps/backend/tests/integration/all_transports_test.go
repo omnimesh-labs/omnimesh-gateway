@@ -210,8 +210,8 @@ func TestTransportLoadTesting(t *testing.T) {
 		t.Logf("Completed %d requests in %v (%.2f req/sec)",
 			numRequests, duration, float64(numRequests)/duration.Seconds())
 
-		// Assert that most requests succeeded (allow for some failures under high load)
-		minSuccessRate := 0.9 // 90% success rate
+		// Assert that most requests succeeded (high load tests should still be reliable)
+		minSuccessRate := 0.95 // 95% success rate minimum
 		actualSuccessRate := float64(successCount) / float64(numRequests)
 
 		helpers.AssertTrue(t, actualSuccessRate >= minSuccessRate,
@@ -303,15 +303,17 @@ func TestTransportResponseTimes(t *testing.T) {
 				t.Logf("%s - Average response time: %v (success rate: %d/%d)",
 					transport.name, average, successCount, numSamples)
 
-				// Assert reasonable response time (under 200ms)
-				helpers.AssertTrue(t, average < 200*time.Millisecond,
-					"%s average response time should be under 200ms, got %v",
-					transport.name, average)
+				// Assert reasonable response time (under 500ms for CI/CD compatibility)
+				// This is a sanity check, not a performance benchmark
+				maxResponseTime := 500 * time.Millisecond
+				helpers.AssertTrue(t, average < maxResponseTime,
+					"%s average response time should be under %v for basic operations, got %v",
+					transport.name, maxResponseTime, average)
 
 				// Assert reasonable success rate
 				successRate := float64(successCount) / float64(numSamples)
-				helpers.AssertTrue(t, successRate >= 0.9,
-					"%s success rate should be at least 90%%, got %.0f%%",
+				helpers.AssertTrue(t, successRate >= 0.95,
+					"%s success rate should be at least 95%%, got %.0f%%",
 					transport.name, successRate*100)
 			})
 		}

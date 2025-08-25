@@ -139,15 +139,28 @@ func (h *RPCHandler) HandleJSONRPC(c *gin.Context) {
 	// Process the JSON-RPC request locally for gateway endpoints
 	result, err := h.processRPCMethod(c.Request.Context(), rpcRequest.Method, mcpMessage.Params, transportCtx)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"jsonrpc": "2.0",
-			"id":      rpcRequest.ID,
-			"error": map[string]interface{}{
-				"code":    -32603,
-				"message": "Internal error",
-				"data":    err.Error(),
-			},
-		})
+		// Check if the error is a structured JSON-RPC error
+		if rpcErr, ok := err.(*types.JSONRPCError); ok {
+			c.JSON(http.StatusOK, gin.H{
+				"jsonrpc": "2.0",
+				"id":      rpcRequest.ID,
+				"error": map[string]interface{}{
+					"code":    rpcErr.Code,
+					"message": rpcErr.Message,
+					"data":    rpcErr.Data,
+				},
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"jsonrpc": "2.0",
+				"id":      rpcRequest.ID,
+				"error": map[string]interface{}{
+					"code":    -32603,
+					"message": "Internal error",
+					"data":    err.Error(),
+				},
+			})
+		}
 		return
 	}
 
@@ -378,7 +391,7 @@ func (h *RPCHandler) sendJSONRPCToSTDIOProcess(ctx context.Context, transport ty
 			}
 		default:
 			mockResponse["error"] = map[string]interface{}{
-				"code":    -32601,
+				"code":    -32602,
 				"message": fmt.Sprintf("Tool '%s' not found", toolName),
 			}
 		}
@@ -486,7 +499,11 @@ func (h *RPCHandler) processRPCMethod(ctx context.Context, method string, params
 				},
 			}, nil
 		default:
-			return nil, fmt.Errorf("unknown tool: %s", toolName)
+			return nil, &types.JSONRPCError{
+				Code:    -32602,
+				Message: "Invalid params",
+				Data:    fmt.Sprintf("Unknown tool: %s", toolName),
+			}
 		}
 	case types.MCPMethodListResources:
 		return map[string]interface{}{
