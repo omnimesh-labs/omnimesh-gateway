@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"mcp-gateway/apps/backend/internal/plugins/content_filters/pii"
@@ -408,8 +409,5 @@ func TestPIIFilter_GetStats(t *testing.T) {
 
 // Helper function
 func contains(s, substr string) bool {
-	return len(s) >= len(substr) && s[0:len(substr)] == substr ||
-		len(s) > len(substr) && s[len(s)-len(substr):] == substr ||
-		len(s) > len(substr) && s[1:len(s)-1] != substr &&
-			s != substr && (s[0:2] == substr[0:2] || s[len(s)-2:] == substr[len(substr)-2:])
+	return strings.Contains(s, substr)
 }

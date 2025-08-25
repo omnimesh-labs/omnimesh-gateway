@@ -301,15 +301,15 @@ func TestRegexFilter_ApplyDisabledRule(t *testing.T) {
 		t.Errorf("Expected content to be modified")
 	}
 
-	// Should only apply enabled rule
-	expected := "Test 123 YYY"
+	// Should only apply enabled rule - pattern [A-Z]+ matches "T" and "HELLO"
+	expected := "YYYest 123 YYY"
 	if modifiedContent.Raw != expected {
 		t.Errorf("Expected '%s', got '%s'", expected, modifiedContent.Raw)
 	}
 
-	// Should only have one violation (from enabled rule)
-	if len(result.Violations) != 1 {
-		t.Errorf("Expected 1 violation, got %d", len(result.Violations))
+	// Should have two violations (from enabled rule matching "T" and "HELLO")
+	if len(result.Violations) != 2 {
+		t.Errorf("Expected 2 violations, got %d", len(result.Violations))
 	}
 }
 

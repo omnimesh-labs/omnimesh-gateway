@@ -205,8 +205,8 @@ func (f *ResourceFilter) Configure(config map[string]interface{}) error {
 
 // extractURLs extracts URLs from content using a simple regex
 func (f *ResourceFilter) extractURLs(content string) []string {
-	// Simple URL regex - can be improved for better accuracy
-	urlRegex := regexp.MustCompile(`https?://[^\s<>"{}|\\^` + "`" + `\[\]]+`)
+	// Simple URL regex (allows IPv6 brackets)
+	urlRegex := regexp.MustCompile(`https?://[^\s<>"{}|\\^` + "`" + `]+`)
 	matches := urlRegex.FindAllString(content, -1)
 
 	var urls []string
@@ -437,8 +437,8 @@ func (f *ResourceFilter) matchesDomain(hostname, pattern string) bool {
 
 	// Wildcard subdomain match (*.example.com)
 	if strings.HasPrefix(pattern, "*.") {
-		suffix := pattern[1:] // Remove *
-		return strings.HasSuffix(hostname, suffix)
+		domain := pattern[2:]
+		return hostname == domain || strings.HasSuffix(hostname, "."+domain)
 	}
 
 	return false
@@ -481,7 +481,18 @@ func (f *ResourceFilterFactory) GetSupportedExecutionModes() []string {
 // ValidateConfig validates the configuration for Resource filters
 func (f *ResourceFilterFactory) ValidateConfig(config map[string]interface{}) error {
 	// Validate max content size
-	if size, ok := config["max_content_size"].(float64); ok {
+	if sizeVal, exists := config["max_content_size"]; exists {
+		var size float64
+		switch v := sizeVal.(type) {
+		case float64:
+			size = v
+		case int:
+			size = float64(v)
+		case int64:
+			size = float64(v)
+		default:
+			return fmt.Errorf("max_content_size must be a number")
+		}
 		if size < 0 {
 			return fmt.Errorf("max_content_size must be non-negative")
 		}

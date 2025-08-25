@@ -57,8 +57,8 @@ type ExportRequest struct {
 type ImportRequest struct {
 	ConflictStrategy ConflictStrategy    `json:"conflict_strategy"`
 	RekeySecret      string              `json:"rekey_secret,omitempty"`
-	ConfigData       ConfigurationExport `json:"config_data"`
 	Options          ImportOptions       `json:"options,omitempty"`
+	ConfigData       ConfigurationExport `json:"config_data"`
 	DryRun           bool                `json:"dry_run"`
 }
 

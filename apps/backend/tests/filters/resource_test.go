@@ -251,7 +251,7 @@ func TestResourceFilter_ApplyLocalhostBlocked(t *testing.T) {
 	testCases := []string{
 		"http://localhost:8080/api",
 		"https://127.0.0.1:3000/data",
-		"http://::1/test",
+		"http://[::1]/test",
 		"http://0.0.0.0:5000/endpoint",
 	}
 
@@ -467,7 +467,7 @@ func TestResourceFilter_ApplyInvalidURL(t *testing.T) {
 
 	ctx := context.Background()
 	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
-	content := shared.CreatePluginContent("Visit ://invalid-url for more info", nil, nil, nil)
+	content := shared.CreatePluginContent("Visit http://host:invalid-port for more info", nil, nil, nil)
 
 	result, _, err := filter.Apply(ctx, filterCtx, content)
 	if err != nil {

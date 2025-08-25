@@ -519,7 +519,7 @@ func TestDenyFilterFactory_ValidateConfig(t *testing.T) {
 		{
 			name: "invalid blocked pattern regex",
 			config: map[string]interface{}{
-				"blocked_patterns": []string{"[invalid"},
+				"blocked_patterns": []interface{}{"[invalid"},
 			},
 			expectError: true,
 		},
