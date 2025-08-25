@@ -322,7 +322,7 @@ export function A2AAgentList({ agents, onEdit, onDelete, onToggle, onTest, showI
                     </button>
 
                     <button
-                      onClick={() => handleAction(agent.id, () => onToggle(agent.id, !agent.is_active))}
+                      onClick={() => handleAction(agent.id, async () => onToggle(agent.id, !agent.is_active))}
                       disabled={isLoading}
                       style={{
                         padding: '0.375rem 0.75rem',
@@ -363,7 +363,7 @@ export function A2AAgentList({ agents, onEdit, onDelete, onToggle, onTest, showI
                     </button>
 
                     <button
-                      onClick={() => handleAction(agent.id, () => onDelete(agent.id))}
+                      onClick={() => handleAction(agent.id, async () => onDelete(agent.id))}
                       disabled={isLoading}
                       style={{
                         padding: '0.375rem 0.75rem',

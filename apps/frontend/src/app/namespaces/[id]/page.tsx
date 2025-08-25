@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { namespaceApi, serverApi, endpointApi } from '../../../lib/api';
+import { namespaceApi, serverApi, endpointApi, Namespace, Endpoint } from '../../../lib/api';
 import { Toast } from '../../../components/Toast';
 import { EditNamespaceModal } from '../../../components/namespaces/EditNamespaceModal';
 import { NamespaceToolsManager } from '../../../components/namespaces/NamespaceToolsManager';
@@ -17,41 +17,12 @@ interface NamespaceServer {
   joined_at: string;
 }
 
-interface Namespace {
-  id: string;
-  name: string;
-  description: string;
-  servers: NamespaceServer[];
-  created_at: string;
-  updated_at: string;
-  is_active: boolean;
-  metadata?: Record<string, any>;
-}
-
 interface Server {
   id: string;
   name: string;
   protocol: string;
   status: string;
   description?: string;
-}
-
-interface Endpoint {
-  id: string;
-  name: string;
-  description?: string;
-  enable_api_key_auth: boolean;
-  enable_oauth: boolean;
-  enable_public_access: boolean;
-  use_query_param_auth: boolean;
-  is_active: boolean;
-  urls?: {
-    sse: string;
-    http: string;
-    websocket: string;
-    openapi: string;
-    documentation: string;
-  };
 }
 
 export default function NamespaceDetailPage() {
@@ -77,8 +48,8 @@ export default function NamespaceDetailPage() {
 
       // Fetch server details if namespace has servers
       if (data.servers && data.servers.length > 0) {
-        const serverPromises = data.servers.map(serverInfo =>
-          serverApi.getServer(serverInfo.server_id).catch(() => null)
+        const serverPromises = data.servers.map(serverId =>
+          serverApi.getServer(serverId).catch(() => null)
         );
         const serverData = await Promise.all(serverPromises);
         setServers(serverData.filter(s => s !== null) as Server[]);
