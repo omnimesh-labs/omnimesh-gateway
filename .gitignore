@@ -41,3 +41,4 @@ bin/
 !**/logs/.gitkeep
 *.log
 venv/
+todos/

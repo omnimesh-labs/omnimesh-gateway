@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"log"
+	"os"
 	"time"
 	"mcp-gateway/apps/backend/internal/a2a"
 	"mcp-gateway/apps/backend/internal/auth"
@@ -133,7 +135,12 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	// Set defaults if not configured
 	if authConfig.JWTSecret == "" {
-		authConfig.JWTSecret = "development-secret-change-in-production" // TODO: Get from env
+		// Try to get JWT secret from environment variable
+		if jwtSecret := os.Getenv("JWT_SECRET"); jwtSecret != "" {
+			authConfig.JWTSecret = jwtSecret
+		} else {
+			log.Fatal("JWT_SECRET environment variable is required. Please set a secure secret.")
+		}
 	}
 	if authConfig.AccessTokenExpiry == 0 {
 		authConfig.AccessTokenExpiry = 15 * time.Minute

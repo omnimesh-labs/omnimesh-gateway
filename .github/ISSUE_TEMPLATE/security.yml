@@ -1,0 +1,118 @@
+name: 🔒 Security Issue
+description: Report a security vulnerability (use for non-sensitive issues only)
+title: "[Security]: "
+labels: ["security", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ⚠️ **IMPORTANT SECURITY NOTICE** ⚠️
+        
+        **For sensitive security vulnerabilities, please DO NOT use this public issue template.**
+        
+        Instead, please report security vulnerabilities privately via email to: **team@wraithscan.com**
+        
+        See our [Security Policy](https://github.com/yourusername/mcp-gateway/blob/main/SECURITY.md) for detailed reporting instructions.
+        
+        This template should only be used for:
+        - General security improvements
+        - Security-related feature requests
+        - Non-sensitive security questions
+        - Security documentation improvements
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Prerequisites
+      description: Please confirm the following
+      options:
+        - label: I have read the Security Policy
+          required: true
+        - label: This is NOT a sensitive security vulnerability (those should be reported privately)
+          required: true
+        - label: I have searched existing issues to avoid duplicates
+          required: true
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Security Issue Type
+      description: What type of security issue is this?
+      options:
+        - Security Enhancement Request
+        - Security Documentation Improvement
+        - Security Configuration Question
+        - Security Best Practices Discussion
+        - Security Testing/Tooling Improvement
+        - Other (please specify)
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the security issue, improvement, or question
+      placeholder: |
+        Please provide a clear description of the security-related issue or improvement you're suggesting.
+        
+        For enhancements, explain:
+        - What security aspect needs improvement
+        - Why this would make the system more secure
+        - Any relevant security standards or best practices
+    validations:
+      required: true
+
+  - type: textarea
+    id: current_state
+    attributes:
+      label: Current Security State
+      description: What is the current security implementation (if applicable)?
+      placeholder: |
+        Describe the current security implementation or behavior:
+        - How is security currently handled?
+        - What are the current limitations?
+        - Are there any existing mitigations?
+
+  - type: textarea
+    id: proposed_improvement
+    attributes:
+      label: Proposed Security Improvement
+      description: What security improvement do you suggest?
+      placeholder: |
+        Describe your proposed security improvement:
+        - What changes would you suggest?
+        - How would this improve security?
+        - Are there any trade-offs to consider?
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Security Impact
+      description: What would be the security impact of this change?
+      placeholder: |
+        Assess the security impact:
+        - What threats does this address?
+        - How does this improve the overall security posture?
+        - Are there any potential side effects?
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Any relevant security standards, documentation, or examples?
+      placeholder: |
+        Include any relevant references:
+        - Security standards (OWASP, NIST, etc.)
+        - Documentation links
+        - Examples from other projects
+        - Security research papers
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other relevant information
+      placeholder: Any additional context that would help us understand and address this security issue...

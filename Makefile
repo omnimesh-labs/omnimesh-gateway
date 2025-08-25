@@ -6,9 +6,6 @@ endif
 include .env
 export
 
-# Simple Makefile for a Go project
-
-# Build the application
 all: build test
 
 build:
@@ -17,7 +14,6 @@ build:
 	
 	@go build -o main apps/backend/cmd/api/main.go
 
-# Run the application
 run:
 	@go run apps/backend/cmd/api/main.go
 
@@ -102,7 +98,8 @@ test-all-transports: test-rpc test-sse test-websocket test-mcp test-stdio
 # Clean the binary
 clean:
 	@echo "Cleaning..."
-	@rm -f main apps/backend/api
+	@rm -f main api apps/backend/api
+	@rm -f logs/*.log
 
 # Live Reload
 watch:
@@ -147,20 +144,39 @@ setup:
 	@echo "Running local development setup..."
 	@go run apps/backend/cmd/setup/main.go
 
-setup-admin:
-	@echo "Creating admin user..."
-	@go run apps/backend/cmd/setup/main.go admin
-
-setup-org:
-	@echo "Creating default organization..."
-	@go run apps/backend/cmd/setup/main.go org
-
-setup-dummy:
-	@echo "Adding dummy data..."
-	@go run apps/backend/cmd/setup/main.go dummy
-
 setup-reset:
 	@echo "Resetting database..."
 	@go run apps/backend/cmd/setup/main.go reset
 
-.PHONY: all build run test clean watch docker-run docker-down itest migrate migrate-down migrate-status migrate-create test-transport test-integration test-unit test-rpc test-sse test-websocket test-mcp test-stdio test-coverage test-verbose test-all-transports setup setup-admin setup-org setup-dummy setup-reset
+# Pre-commit hooks setup
+setup-precommit:
+	@echo "Installing pre-commit hooks..."
+	@if command -v pre-commit > /dev/null; then \
+		pre-commit install; \
+		echo "Pre-commit hooks installed successfully!"; \
+	else \
+		echo "Installing pre-commit..."; \
+		pip install pre-commit; \
+		pre-commit install; \
+		echo "Pre-commit hooks installed successfully!"; \
+	fi
+
+# Run pre-commit on all files
+precommit-all:
+	@echo "Running pre-commit on all files..."
+	@pre-commit run --all-files
+
+# Code quality checks
+lint:
+	@echo "Running golangci-lint..."
+	@golangci-lint run
+
+lint-fix:
+	@echo "Running golangci-lint with fixes..."
+	@golangci-lint run --fix
+
+security:
+	@echo "Running security checks..."
+	@gosec ./...
+
+.PHONY: all build run test clean watch docker-run docker-down itest migrate migrate-down migrate-status migrate-create test-transport test-integration test-unit test-rpc test-sse test-websocket test-mcp test-stdio test-coverage test-verbose test-all-transports setup setup-admin setup-org setup-dummy setup-reset setup-precommit precommit-all lint lint-fix security

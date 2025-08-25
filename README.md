@@ -1,6 +1,16 @@
 # MCP Gateway
 
-A production-ready API gateway for Model Context Protocol (MCP) servers, providing organization-level policies, authentication, logging, rate limiting, and server discovery.
+[![CI](https://github.com/yourusername/mcp-gateway/workflows/CI/badge.svg)](https://github.com/yourusername/mcp-gateway/actions)
+[![Go Version](https://img.shields.io/badge/Go-1.25+-blue.svg)](https://golang.org)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/yourusername/mcp-gateway)](https://goreportcard.com/report/github.com/yourusername/mcp-gateway)
+[![codecov](https://codecov.io/gh/yourusername/mcp-gateway/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/mcp-gateway)
+[![Security](https://img.shields.io/badge/Security-Enabled-green.svg)](SECURITY.md)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
+A production-ready API gateway for Model Context Protocol (MCP) servers, providing enterprise-grade infrastructure with authentication, logging, rate limiting, server discovery, and multi-protocol transport support.
+
+> **⚡ Enterprise-Ready**: Built for production with comprehensive security, monitoring, and scalability features.
 
 ## Features
 
@@ -180,9 +190,68 @@ When rate limits are exceeded, clients receive a structured JSON response:
 - **Memory Mode**: High-performance in-memory storage with automatic cleanup for single-instance deployments
 - **Smart Fallback**: Automatic Redis → Memory fallback ensures service continuity
 
-## Quick Start
+## 🚀 Quick Start
 
-## MakeFile
+### Prerequisites
+
+- **Go 1.25+** - [Installation Guide](https://golang.org/doc/install)
+- **PostgreSQL 12+** - Database backend
+- **Redis (optional)** - For distributed rate limiting and caching
+- **Docker & Docker Compose** - For development environment
+
+### 1. Clone and Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/mcp-gateway.git
+cd mcp-gateway
+
+# Copy environment configuration
+cp .env.example .env
+# Edit .env with your database credentials and JWT secret
+
+# Install pre-commit hooks (recommended)
+make setup-precommit
+```
+
+### 2. Start Development Environment
+
+```bash
+# Start PostgreSQL and Redis with Docker
+make docker-run
+
+# Run database migrations
+make migrate
+
+# Create admin user (email: admin@admin.com, password: qwerty123)
+make setup-admin
+```
+
+### 3. Run the Application
+
+```bash
+# Start the backend server
+make run
+
+# Or with live reload for development
+make watch
+```
+
+The API will be available at `http://localhost:8080`
+
+### 4. Frontend Dashboard (Optional)
+
+```bash
+cd apps/frontend
+bun install
+bun run dev
+```
+
+The dashboard will be available at `http://localhost:3000`
+
+## 🛠️ Development
+
+### Make Commands
 
 Run build make command with tests
 ```bash
@@ -227,3 +296,63 @@ Clean up binary from the last build:
 ```bash
 make clean
 ```
+
+### Code Quality
+
+```bash
+# Run linting
+make lint
+
+# Run linting with fixes
+make lint-fix
+
+# Run security checks
+make security
+
+# Run pre-commit on all files
+make precommit-all
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+
+### Development Setup
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Run tests (`make test`)
+5. Run linting (`make lint`)
+6. Commit your changes (`git commit -m 'Add amazing feature'`)
+7. Push to the branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
+
+### Code of Conduct
+
+This project follows the [Contributor Covenant Code of Conduct](https://www.contributor-covenant.org/version/2/1/code_of_conduct/).
+
+## 📄 License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+## 🔒 Security
+
+Security is a top priority. Please review our [Security Policy](SECURITY.md) and report vulnerabilities responsibly.
+
+## 🙏 Acknowledgments
+
+- [Model Context Protocol](https://modelcontextprotocol.io/) for the core specification
+- [Gin Framework](https://gin-gonic.com/) for the HTTP framework
+- All our [contributors](https://github.com/yourusername/mcp-gateway/contributors)
+
+---
+
+<div align="center">
+  <p>Built with ❤️ for the MCP community</p>
+  <p>
+    <a href="https://github.com/yourusername/mcp-gateway">⭐ Star us on GitHub</a> •
+    <a href="https://github.com/yourusername/mcp-gateway/issues">🐛 Report Bug</a> •
+    <a href="https://github.com/yourusername/mcp-gateway/issues">💡 Request Feature</a>
+  </p>
+</div>

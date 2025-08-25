@@ -1,0 +1,125 @@
+name: 🚀 Feature Request
+description: Suggest a new feature or enhancement
+title: "[Feature]: "
+labels: ["enhancement", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting a new feature! We appreciate your input and ideas for improving MCP Gateway.
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Prerequisites
+      description: Please confirm the following before submitting a feature request
+      options:
+        - label: I have searched existing issues to ensure this feature hasn't been requested
+          required: true
+        - label: I have checked the roadmap and documentation for planned features
+          required: true
+        - label: This feature aligns with the project's goals and scope
+          required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve? What is the motivation?
+      placeholder: |
+        Is your feature request related to a problem? Please describe.
+        A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: What would you like to see implemented?
+      placeholder: |
+        Describe the solution you'd like.
+        A clear and concise description of what you want to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions
+      description: Have you considered any alternative approaches?
+      placeholder: |
+        Describe alternatives you've considered.
+        A clear and concise description of any alternative solutions or features you've considered.
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Feature Category
+      description: Which area does this feature belong to?
+      options:
+        - Authentication & Authorization
+        - Transport Layer (JSON-RPC, WebSocket, SSE, etc.)
+        - Rate Limiting
+        - Logging & Monitoring
+        - Virtual Server Management
+        - Database & Storage
+        - Configuration & Setup
+        - API & Endpoints
+        - Security
+        - Performance
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature to you?
+      options:
+        - Low - Nice to have
+        - Medium - Would be helpful
+        - High - Important for my use case
+        - Critical - Blocking my adoption
+    validations:
+      required: true
+
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Use Case
+      description: Describe your specific use case and how this feature would help
+      placeholder: |
+        Provide a detailed use case example:
+        - What are you trying to accomplish?
+        - How would this feature help?
+        - What's your current workaround (if any)?
+
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Implementation Ideas
+      description: Do you have any ideas on how this could be implemented? (Optional)
+      placeholder: |
+        If you have technical ideas or suggestions for implementation, please share them here.
+        This could include:
+        - API design suggestions
+        - Configuration options
+        - Integration points
+        - Technical considerations
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context, screenshots, or examples about the feature request
+      placeholder: |
+        Any additional information that would help us understand and implement this feature:
+        - Screenshots or mockups
+        - Links to related projects
+        - Examples from other tools
+        - Documentation references

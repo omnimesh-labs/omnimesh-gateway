@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -174,12 +176,20 @@ func (a *RESTAdapter) prepareRequest(restSpec *types.RESTSpec, args map[string]i
 
 // resolveToken resolves token placeholders like ${SECRET:SLACK_BOT_TOKEN}
 func (a *RESTAdapter) resolveToken(token string) string {
-	// For now, return a placeholder token
-	// TODO: Implement secret resolution from environment variables or secret store
+	// Handle environment variable placeholders
 	if strings.HasPrefix(token, "${SECRET:") && strings.HasSuffix(token, "}") {
 		secretName := strings.TrimSuffix(strings.TrimPrefix(token, "${SECRET:"), "}")
-		// Return a mock token for testing
-		return "xoxb-mock-token-" + secretName
+		
+		// Try to get from environment variable
+		if envValue := os.Getenv(secretName); envValue != "" {
+			return envValue
+		}
+		
+		// Log warning for missing secret (but don't expose the secret name in production logs)
+		log.Printf("Warning: Secret %s not found in environment variables", secretName)
+		
+		// Return empty string for missing secrets (don't use mock tokens)
+		return ""
 	}
 	return token
 }

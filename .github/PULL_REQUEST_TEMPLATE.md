@@ -75,6 +75,17 @@ For API changes, include example requests/responses.
 Delete this section if not applicable.
 -->
 
+## Security Considerations
+<!--
+If this PR has security implications, please address the following:
+-->
+- [ ] No sensitive data (passwords, keys, tokens) is exposed
+- [ ] Input validation is implemented where necessary
+- [ ] Error messages don't leak sensitive information
+- [ ] SQL injection protection is maintained
+- [ ] Authentication/authorization is properly handled
+- [ ] Security tests have been run (`make security`)
+
 ## Checklist
 <!--
 Put an "x" in the boxes that apply. You can also fill these out after creating the PR.
@@ -82,11 +93,13 @@ Put an "x" in the boxes that apply. You can also fill these out after creating t
 - [ ] I have read the [CONTRIBUTING.md](../CONTRIBUTING.md) document
 - [ ] I have updated the documentation accordingly
 - [ ] I have added tests to cover my changes
-- [ ] All new and existing tests passed
+- [ ] All new and existing tests passed (`make test`)
+- [ ] Code passes linting checks (`make lint`)
+- [ ] Security scan passes (`make security`)
 - [ ] My code follows the code style of this project
 - [ ] I have updated the database schema if necessary
-- [ ] I have updated the ERD documentation if necessary
 - [ ] I have added example usage if applicable
+- [ ] Pre-commit hooks pass (`make precommit-all`)
 
 ## Special Notes for Reviewer
 <!--

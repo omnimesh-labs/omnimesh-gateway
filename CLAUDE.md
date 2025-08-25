@@ -417,8 +417,6 @@ make clean                  # Clean build artifacts
 # Local Setup
 make setup                  # Interactive setup menu
 make setup-admin            # Create admin user (team@wraithscan.com)
-make setup-org              # Create default organization
-make setup-dummy            # Add dummy test data
 make setup-reset            # Reset database (WARNING: deletes all data)
 ```
 
@@ -524,5 +522,7 @@ cd apps/frontend && bun run dev
 
 The codebase provides a comprehensive foundation for a production-ready MCP Gateway with enterprise features and multi-protocol support.
 
-## IMPORTANT NOTES
+## DEVELOPMENT GUIDELINES
 - ALWAYS use `bun` instead of `npm`
+- Do NOT expose unhandled exception errors in the API response body - its a security vulnerability!
+- NO estimates. Don't include effort estimates or "phases"

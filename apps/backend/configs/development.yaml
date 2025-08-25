@@ -7,12 +7,12 @@ server:
   tls:
     enabled: false
 database:
-  host: "localhost"
-  port: 5432
-  database: "blueprint"
-  user: "melkey" 
-  password: "password1234"
-  ssl_mode: "disable"
+  host: "${DB_HOST:-localhost}"
+  port: ${DB_PORT:-5432}
+  database: "${DB_DATABASE:-postgres}"
+  user: "${DB_USERNAME:-postgres}" 
+  password: "${DB_PASSWORD:-changeme123}"
+  ssl_mode: "${DB_SSL_MODE:-disable}"
   max_open_conns: 25
   max_idle_conns: 5
   max_lifetime: 1h
@@ -66,10 +66,10 @@ logging:
 
 redis:
   enabled: true
-  host: "localhost"
-  port: 6379
-  password: "password123"
-  database: 0
+  host: "${REDIS_HOST:-localhost}"
+  port: ${REDIS_PORT:-6379}
+  password: "${REDIS_PASSWORD:-}"
+  database: ${REDIS_DATABASE:-0}
   max_retries: 3
   pool_size: 10
   pool_timeout: 30s
