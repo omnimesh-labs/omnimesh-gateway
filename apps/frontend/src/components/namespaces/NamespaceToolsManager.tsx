@@ -45,7 +45,7 @@ export function NamespaceToolsManager({ namespaceId }: NamespaceToolsManagerProp
     try {
       await namespaceApi.updateToolStatus(namespaceId, toolId, newStatus);
       // Update local state optimistically
-      setTools(prev => prev.map(tool => 
+      setTools(prev => prev.map(tool =>
         tool.tool_id === toolId ? { ...tool, status: newStatus as 'ACTIVE' | 'INACTIVE' } : tool
       ));
     } catch (error) {
@@ -55,7 +55,7 @@ export function NamespaceToolsManager({ namespaceId }: NamespaceToolsManagerProp
     }
   };
 
-  const filteredTools = tools.filter(tool =>
+  const filteredTools = (tools || []).filter(tool =>
     tool.tool_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     tool.prefixed_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     tool.server_name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -254,7 +254,7 @@ export function NamespaceToolsManager({ namespaceId }: NamespaceToolsManagerProp
           Total: {filteredTools.length} tools from {Object.keys(groupedTools).length} servers
         </span>
         <span>
-          Active: {filteredTools.filter(t => t.status === 'ACTIVE').length} | 
+          Active: {filteredTools.filter(t => t.status === 'ACTIVE').length} |
           Inactive: {filteredTools.filter(t => t.status === 'INACTIVE').length}
         </span>
       </div>

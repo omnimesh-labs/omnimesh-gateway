@@ -3,16 +3,25 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { namespaceApi, serverApi } from '../../../lib/api';
+import { namespaceApi, serverApi, endpointApi } from '../../../lib/api';
 import { Toast } from '../../../components/Toast';
 import { EditNamespaceModal } from '../../../components/namespaces/EditNamespaceModal';
 import { NamespaceToolsManager } from '../../../components/namespaces/NamespaceToolsManager';
+import { CreateEndpointModal } from '../../../components/endpoints/CreateEndpointModal';
+
+interface NamespaceServer {
+  server_id: string;
+  server_name: string;
+  status: string;
+  priority: number;
+  joined_at: string;
+}
 
 interface Namespace {
   id: string;
   name: string;
   description: string;
-  servers: string[];
+  servers: NamespaceServer[];
   created_at: string;
   updated_at: string;
   is_active: boolean;
@@ -27,6 +36,24 @@ interface Server {
   description?: string;
 }
 
+interface Endpoint {
+  id: string;
+  name: string;
+  description?: string;
+  enable_api_key_auth: boolean;
+  enable_oauth: boolean;
+  enable_public_access: boolean;
+  use_query_param_auth: boolean;
+  is_active: boolean;
+  urls?: {
+    sse: string;
+    http: string;
+    websocket: string;
+    openapi: string;
+    documentation: string;
+  };
+}
+
 export default function NamespaceDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -34,9 +61,11 @@ export default function NamespaceDetailPage() {
 
   const [namespace, setNamespace] = useState<Namespace | null>(null);
   const [servers, setServers] = useState<Server[]>([]);
+  const [endpoints, setEndpoints] = useState<Endpoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showCreateEndpointModal, setShowCreateEndpointModal] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const fetchNamespace = async () => {
@@ -45,14 +74,23 @@ export default function NamespaceDetailPage() {
     try {
       const data = await namespaceApi.getNamespace(namespaceId);
       setNamespace(data);
-      
+
       // Fetch server details if namespace has servers
       if (data.servers && data.servers.length > 0) {
-        const serverPromises = data.servers.map(serverId => 
-          serverApi.getServer(serverId).catch(() => null)
+        const serverPromises = data.servers.map(serverInfo =>
+          serverApi.getServer(serverInfo.server_id).catch(() => null)
         );
         const serverData = await Promise.all(serverPromises);
         setServers(serverData.filter(s => s !== null) as Server[]);
+      }
+
+      // Fetch endpoints for this namespace
+      try {
+        const allEndpoints = await endpointApi.listEndpoints();
+        const namespaceEndpoints = allEndpoints.filter(ep => ep.namespace_id === namespaceId);
+        setEndpoints(namespaceEndpoints);
+      } catch (err) {
+        console.error('Failed to fetch endpoints:', err);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to fetch namespace details';
@@ -162,16 +200,16 @@ export default function NamespaceDetailPage() {
         >
           ← Back to Namespaces
         </Link>
-        
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
+
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
           alignItems: 'flex-start'
         }}>
           <div>
-            <h1 style={{ 
-              fontSize: '1.875rem', 
-              fontWeight: 'bold', 
+            <h1 style={{
+              fontSize: '1.875rem',
+              fontWeight: 'bold',
               color: '#111827',
               marginBottom: '0.5rem'
             }}>
@@ -398,6 +436,201 @@ export default function NamespaceDetailPage() {
         )}
       </div>
 
+      {/* Endpoints */}
+      <div style={{
+        backgroundColor: 'white',
+        border: '1px solid #e5e7eb',
+        borderRadius: '0.5rem',
+        padding: '1.5rem',
+        marginBottom: '1.5rem'
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '1rem'
+        }}>
+          <h2 style={{
+            fontSize: '1.125rem',
+            fontWeight: '600',
+            color: '#111827'
+          }}>
+            Endpoints ({endpoints.length})
+          </h2>
+          <button
+            onClick={() => setShowCreateEndpointModal(true)}
+            style={{
+              padding: '0.375rem 0.75rem',
+              backgroundColor: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '0.375rem',
+              fontSize: '0.75rem',
+              fontWeight: '500',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3b82f6'}
+          >
+            Create Endpoint
+          </button>
+        </div>
+
+        {endpoints.length === 0 ? (
+          <div style={{
+            padding: '2rem',
+            textAlign: 'center',
+            backgroundColor: '#f9fafb',
+            borderRadius: '0.375rem'
+          }}>
+            <svg
+              style={{ width: '2.5rem', height: '2.5rem', margin: '0 auto', color: '#9ca3af' }}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            </svg>
+            <p style={{ color: '#6b7280', fontSize: '0.875rem', marginTop: '1rem' }}>
+              No endpoints created for this namespace yet.
+            </p>
+            <p style={{ color: '#6b7280', fontSize: '0.875rem', marginTop: '0.5rem' }}>
+              Endpoints provide external access to namespace tools via various transport protocols.
+            </p>
+          </div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
+                  <th style={{ padding: '0.75rem', textAlign: 'left', fontWeight: '600', color: '#374151', fontSize: '0.875rem' }}>
+                    Name
+                  </th>
+                  <th style={{ padding: '0.75rem', textAlign: 'center', fontWeight: '600', color: '#374151', fontSize: '0.875rem' }}>
+                    Authentication
+                  </th>
+                  <th style={{ padding: '0.75rem', textAlign: 'center', fontWeight: '600', color: '#374151', fontSize: '0.875rem' }}>
+                    Status
+                  </th>
+                  <th style={{ padding: '0.75rem', textAlign: 'center', fontWeight: '600', color: '#374151', fontSize: '0.875rem' }}>
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {endpoints.map((endpoint) => (
+                  <tr key={endpoint.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                    <td style={{ padding: '0.75rem' }}>
+                      <Link
+                        href={`/endpoints`}
+                        style={{
+                          color: '#3b82f6',
+                          textDecoration: 'none',
+                          fontWeight: '500',
+                          fontSize: '0.875rem'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                        onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+                      >
+                        {endpoint.name}
+                      </Link>
+                      {endpoint.description && (
+                        <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
+                          {endpoint.description}
+                        </p>
+                      )}
+                      {endpoint.urls && (
+                        <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
+                          <span style={{ fontFamily: 'monospace' }}>
+                            {endpoint.urls.http}
+                          </span>
+                        </div>
+                      )}
+                    </td>
+                    <td style={{ padding: '0.75rem', textAlign: 'center' }}>
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '0.25rem', flexWrap: 'wrap' }}>
+                        {endpoint.enable_public_access && (
+                          <span style={{
+                            display: 'inline-block',
+                            padding: '0.125rem 0.375rem',
+                            backgroundColor: '#fef3c7',
+                            color: '#92400e',
+                            borderRadius: '0.25rem',
+                            fontSize: '0.625rem',
+                            fontWeight: '500'
+                          }}>
+                            Public
+                          </span>
+                        )}
+                        {endpoint.enable_api_key_auth && (
+                          <span style={{
+                            display: 'inline-block',
+                            padding: '0.125rem 0.375rem',
+                            backgroundColor: '#dbeafe',
+                            color: '#1e40af',
+                            borderRadius: '0.25rem',
+                            fontSize: '0.625rem',
+                            fontWeight: '500'
+                          }}>
+                            API Key
+                          </span>
+                        )}
+                        {endpoint.enable_oauth && (
+                          <span style={{
+                            display: 'inline-block',
+                            padding: '0.125rem 0.375rem',
+                            backgroundColor: '#e9d5ff',
+                            color: '#6b21a8',
+                            borderRadius: '0.25rem',
+                            fontSize: '0.625rem',
+                            fontWeight: '500'
+                          }}>
+                            OAuth
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td style={{ padding: '0.75rem', textAlign: 'center' }}>
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        padding: '0.25rem 0.5rem',
+                        backgroundColor: endpoint.is_active ? '#d1fae5' : '#fee2e2',
+                        color: endpoint.is_active ? '#065f46' : '#991b1b',
+                        borderRadius: '9999px',
+                        fontSize: '0.625rem',
+                        fontWeight: '500'
+                      }}>
+                        {endpoint.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '0.75rem', textAlign: 'center' }}>
+                      <Link
+                        href={`/endpoints`}
+                        style={{
+                          padding: '0.375rem 0.75rem',
+                          backgroundColor: 'white',
+                          color: '#3b82f6',
+                          border: '1px solid #3b82f6',
+                          borderRadius: '0.375rem',
+                          fontSize: '0.75rem',
+                          fontWeight: '500',
+                          textDecoration: 'none',
+                          display: 'inline-block'
+                        }}
+                      >
+                        Manage
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
       {/* Tools Management */}
       <NamespaceToolsManager namespaceId={namespaceId} />
 
@@ -409,6 +642,19 @@ export default function NamespaceDetailPage() {
           onUpdate={() => {
             setShowEditModal(false);
             fetchNamespace();
+          }}
+        />
+      )}
+
+      {/* Create Endpoint Modal */}
+      {showCreateEndpointModal && (
+        <CreateEndpointModal
+          preselectedNamespaceId={namespaceId}
+          onClose={() => setShowCreateEndpointModal(false)}
+          onCreate={() => {
+            setShowCreateEndpointModal(false);
+            fetchNamespace();
+            setToast({ message: 'Endpoint created successfully', type: 'success' });
           }}
         />
       )}

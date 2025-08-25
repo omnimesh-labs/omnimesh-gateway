@@ -26,27 +26,18 @@ func NewVirtualAdminHandler(virtualService *virtual.Service) *VirtualAdminHandle
 func (h *VirtualAdminHandler) CreateVirtualServer(c *gin.Context) {
 	var req types.VirtualServerSpec
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   "Invalid request format: " + err.Error(),
-		})
+		RespondWithValidationError(c, "Invalid request format")
 		return
 	}
 
 	// Validate required fields
 	if req.ID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   "ID is required",
-		})
+		RespondWithValidationError(c, "ID is required")
 		return
 	}
 
 	if req.Name == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   "Name is required",
-		})
+		RespondWithValidationError(c, "Name is required")
 		return
 	}
 
@@ -61,10 +52,7 @@ func (h *VirtualAdminHandler) CreateVirtualServer(c *gin.Context) {
 
 	// Add the virtual server
 	if err := h.virtualService.Add(&req); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   "Failed to create virtual server: " + err.Error(),
-		})
+		RespondWithError(c, err)
 		return
 	}
 
@@ -79,19 +67,13 @@ func (h *VirtualAdminHandler) CreateVirtualServer(c *gin.Context) {
 func (h *VirtualAdminHandler) GetVirtualServer(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   "Server ID is required",
-		})
+		RespondWithValidationError(c, "Server ID is required")
 		return
 	}
 
 	spec, err := h.virtualService.Get(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"success": false,
-			"error":   "Virtual server not found: " + err.Error(),
-		})
+		RespondWithNotFound(c, "Virtual server")
 		return
 	}
 
@@ -105,10 +87,7 @@ func (h *VirtualAdminHandler) GetVirtualServer(c *gin.Context) {
 func (h *VirtualAdminHandler) ListVirtualServers(c *gin.Context) {
 	specs, err := h.virtualService.List()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   "Failed to list virtual servers: " + err.Error(),
-		})
+		RespondWithError(c, err)
 		return
 	}
 
@@ -123,28 +102,19 @@ func (h *VirtualAdminHandler) ListVirtualServers(c *gin.Context) {
 func (h *VirtualAdminHandler) UpdateVirtualServer(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   "Server ID is required",
-		})
+		RespondWithValidationError(c, "Server ID is required")
 		return
 	}
 
 	var req types.VirtualServerSpec
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   "Invalid request format: " + err.Error(),
-		})
+		RespondWithValidationError(c, "Invalid request format")
 		return
 	}
 
 	// Validate required fields
 	if req.Name == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   "Name is required",
-		})
+		RespondWithValidationError(c, "Name is required")
 		return
 	}
 
@@ -153,10 +123,7 @@ func (h *VirtualAdminHandler) UpdateVirtualServer(c *gin.Context) {
 
 	// Update the virtual server
 	if err := h.virtualService.Update(id, &req); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   "Failed to update virtual server: " + err.Error(),
-		})
+		RespondWithError(c, err)
 		return
 	}
 
@@ -171,18 +138,12 @@ func (h *VirtualAdminHandler) UpdateVirtualServer(c *gin.Context) {
 func (h *VirtualAdminHandler) DeleteVirtualServer(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   "Server ID is required",
-		})
+		RespondWithValidationError(c, "Server ID is required")
 		return
 	}
 
 	if err := h.virtualService.Delete(id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   "Failed to delete virtual server: " + err.Error(),
-		})
+		RespondWithError(c, err)
 		return
 	}
 
@@ -198,10 +159,7 @@ func (h *VirtualAdminHandler) TestVirtualServerTool(c *gin.Context) {
 	toolName := c.Param("tool")
 
 	if id == "" || toolName == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   "Server ID and tool name are required",
-		})
+		RespondWithValidationError(c, "Server ID and tool name are required")
 		return
 	}
 
@@ -215,10 +173,7 @@ func (h *VirtualAdminHandler) TestVirtualServerTool(c *gin.Context) {
 	// Get virtual server spec
 	spec, err := h.virtualService.Get(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"success": false,
-			"error":   "Virtual server not found: " + err.Error(),
-		})
+		RespondWithNotFound(c, "Virtual server")
 		return
 	}
 
@@ -228,10 +183,7 @@ func (h *VirtualAdminHandler) TestVirtualServerTool(c *gin.Context) {
 	// Call the tool
 	result, err := vs.CallTool(toolName, args)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   "Tool call failed: " + err.Error(),
-		})
+		RespondWithError(c, err)
 		return
 	}
 
@@ -251,20 +203,14 @@ func (h *VirtualAdminHandler) TestVirtualServerTool(c *gin.Context) {
 func (h *VirtualAdminHandler) GetVirtualServerTools(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   "Server ID is required",
-		})
+		RespondWithValidationError(c, "Server ID is required")
 		return
 	}
 
 	// Get virtual server spec
 	spec, err := h.virtualService.Get(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"success": false,
-			"error":   "Virtual server not found: " + err.Error(),
-		})
+		RespondWithNotFound(c, "Virtual server")
 		return
 	}
 
@@ -274,10 +220,7 @@ func (h *VirtualAdminHandler) GetVirtualServerTools(c *gin.Context) {
 	// Get tools list
 	result, err := vs.ListTools()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   "Failed to list tools: " + err.Error(),
-		})
+		RespondWithError(c, err)
 		return
 	}
 

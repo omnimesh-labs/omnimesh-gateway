@@ -1340,6 +1340,67 @@ export const configApi = {
     }
 };
 
+// Endpoint Management Types
+export interface EndpointURLs {
+    sse: string;
+    http: string;
+    websocket: string;
+    openapi: string;
+    documentation: string;
+}
+
+export interface Endpoint {
+    id: string;
+    organization_id: string;
+    namespace_id: string;
+    name: string;
+    description?: string;
+    enable_api_key_auth: boolean;
+    enable_oauth: boolean;
+    enable_public_access: boolean;
+    use_query_param_auth: boolean;
+    rate_limit_requests: number;
+    rate_limit_window: number;
+    allowed_origins: string[];
+    allowed_methods: string[];
+    created_at: string;
+    updated_at: string;
+    created_by?: string;
+    is_active: boolean;
+    metadata?: Record<string, any>;
+    urls?: EndpointURLs;
+    namespace?: Namespace;
+}
+
+export interface CreateEndpointRequest {
+    namespace_id: string;
+    name: string;
+    description?: string;
+    enable_api_key_auth?: boolean;
+    enable_oauth?: boolean;
+    enable_public_access?: boolean;
+    use_query_param_auth?: boolean;
+    rate_limit_requests?: number;
+    rate_limit_window?: number;
+    allowed_origins?: string[];
+    allowed_methods?: string[];
+    metadata?: Record<string, any>;
+}
+
+export interface UpdateEndpointRequest {
+    description?: string;
+    enable_api_key_auth?: boolean;
+    enable_oauth?: boolean;
+    enable_public_access?: boolean;
+    use_query_param_auth?: boolean;
+    rate_limit_requests?: number;
+    rate_limit_window?: number;
+    allowed_origins?: string[];
+    allowed_methods?: string[];
+    is_active?: boolean;
+    metadata?: Record<string, any>;
+}
+
 // Namespace Management Types
 export interface Namespace {
     id: string;
@@ -1464,6 +1525,52 @@ export const namespaceApi = {
             body: JSON.stringify(request),
         });
         return response.data;
+    },
+};
+
+// Endpoint Management APIs
+export const endpointApi = {
+    // List all endpoints
+    async listEndpoints(): Promise<Endpoint[]> {
+        const response = await apiRequest<{ endpoints: Endpoint[], total: number }>('/endpoints');
+        return response.endpoints || [];
+    },
+
+    // List public endpoints (requires auth)
+    async listPublicEndpoints(): Promise<Endpoint[]> {
+        const response = await apiRequest<{ endpoints: Endpoint[], total: number }>('/api/public/endpoints');
+        return response.endpoints || [];
+    },
+
+    // Get specific endpoint details
+    async getEndpoint(id: string): Promise<Endpoint> {
+        const response = await apiRequest<Endpoint>(`/endpoints/${id}`);
+        return response;
+    },
+
+    // Create new endpoint
+    async createEndpoint(endpointData: CreateEndpointRequest): Promise<Endpoint> {
+        const response = await apiRequest<Endpoint>('/endpoints', {
+            method: 'POST',
+            body: JSON.stringify(endpointData),
+        });
+        return response;
+    },
+
+    // Update existing endpoint
+    async updateEndpoint(id: string, endpointData: UpdateEndpointRequest): Promise<Endpoint> {
+        const response = await apiRequest<Endpoint>(`/endpoints/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(endpointData),
+        });
+        return response;
+    },
+
+    // Delete endpoint
+    async deleteEndpoint(id: string): Promise<void> {
+        await apiRequest<ApiResponse<any>>(`/endpoints/${id}`, {
+            method: 'DELETE',
+        });
     },
 };
 

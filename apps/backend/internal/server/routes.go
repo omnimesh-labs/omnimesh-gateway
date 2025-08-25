@@ -84,6 +84,10 @@ func (s *Server) RegisterRoutes() http.Handler {
 	// Initialize services
 	mcpDiscoveryService := discovery.NewMCPDiscoveryService(s.cfg.MCPDiscovery.BaseURL)
 
+	// Initialize endpoint service
+	baseURL := "http://localhost:8080" // TODO: Get from config
+	endpointService := services.NewEndpointService(s.db.GetDB(), baseURL)
+
 	// Initialize discovery service
 	discoveryConfig := &discovery.Config{
 		Enabled:          true,
@@ -461,6 +465,36 @@ func (s *Server) RegisterRoutes() http.Handler {
 				a2aHandler.GetAgentStats)
 		}
 
+		// Endpoint management routes (protected)
+		endpointHandler := handlers.NewEndpointHandler(endpointService)
+		endpoints := api.Group("/endpoints")
+		endpoints.Use(authMiddleware.RequireAuth()).
+			Use(authMiddleware.RequireOrganizationAccess())
+		{
+			endpoints.GET("",
+				authMiddleware.RequireResourceAccess("endpoint", "read"),
+				endpointHandler.ListEndpoints)
+			endpoints.POST("",
+				authMiddleware.RequireResourceAccess("endpoint", "write"),
+				loggingMiddleware.AuditLogger("create", "endpoint"),
+				endpointHandler.CreateEndpoint)
+			endpoints.GET("/:id",
+				authMiddleware.RequireResourceAccess("endpoint", "read"),
+				endpointHandler.GetEndpoint)
+			endpoints.PUT("/:id",
+				authMiddleware.RequireResourceAccess("endpoint", "write"),
+				loggingMiddleware.AuditLogger("update", "endpoint"),
+				endpointHandler.UpdateEndpoint)
+			endpoints.DELETE("/:id",
+				authMiddleware.RequireResourceAccess("endpoint", "delete"),
+				loggingMiddleware.AuditLogger("delete", "endpoint"),
+				endpointHandler.DeleteEndpoint)
+			endpoints.POST("/:id/regenerate-keys",
+				authMiddleware.RequireResourceAccess("endpoint", "write"),
+				loggingMiddleware.AuditLogger("regenerate-keys", "endpoint"),
+				endpointHandler.RegenerateEndpointKeys)
+		}
+
 		// Admin routes for virtual servers and system management (protected)
 		adminChain := middleware.AdminChain().
 			Use(authMiddleware.RequireAuth()).
@@ -588,6 +622,48 @@ func (s *Server) RegisterRoutes() http.Handler {
 	transportGroup.GET("/servers/:server_id/sse", sseHandler.HandleServerSSE)
 	transportGroup.GET("/servers/:server_id/ws", wsHandler.HandleServerWebSocket)
 	transportGroup.Any("/servers/:server_id/mcp", mcpHandler.HandleServerStreamableHTTP)
+
+	// Public-facing endpoint routes (requires authentication)
+	// These are public in the sense that they're accessible via custom URLs,
+	// but still require proper authentication based on endpoint configuration
+	// Note: reusing the endpointHandler created above in the protected routes
+	publicEndpoints := api.Group("/public")
+	publicEndpoints.Use(authMiddleware.RequireAuth())
+	{
+		// List all available endpoints for the authenticated user's organization
+		// Get the handler from the protected routes section above
+		endpointHandlerForPublic := handlers.NewEndpointHandler(endpointService)
+		publicEndpoints.GET("/endpoints", endpointHandlerForPublic.ListEndpoints)
+
+		// Endpoint-specific routes with custom URL paths
+		endpoint := publicEndpoints.Group("/endpoints/:endpoint_name")
+		endpoint.Use(
+			middleware.EndpointLookupMiddleware(endpointService),
+			middleware.EndpointAuthMiddleware(endpointService),
+			middleware.EndpointRateLimitMiddleware(),
+			middleware.EndpointCORSMiddleware(),
+		)
+		{
+			// SSE transport
+			endpoint.GET("/sse", handlers.HandleEndpointSSE(namespaceService))
+			endpoint.POST("/message", handlers.HandleEndpointSSEMessage(namespaceService))
+
+			// HTTP transport (MCP protocol)
+			endpoint.Any("/mcp", handlers.HandleEndpointHTTP(namespaceService))
+
+			// WebSocket transport
+			endpoint.GET("/ws", handlers.HandleEndpointWebSocket(namespaceService))
+
+			// OpenAPI/REST interface
+			endpoint.GET("/api/openapi.json", handlers.HandleEndpointOpenAPI(endpointService, namespaceService, baseURL))
+			endpoint.GET("/api/docs", handlers.HandleEndpointOpenAPI(endpointService, namespaceService, baseURL))
+			endpoint.GET("/api/tools", handlers.HandleEndpointToolsList(namespaceService))
+			endpoint.POST("/api/tools/:tool_name", handlers.HandleEndpointToolExecution(namespaceService))
+
+			// Health check
+			endpoint.GET("/health", handlers.HandleEndpointHealth())
+		}
+	}
 
 	return r
 }

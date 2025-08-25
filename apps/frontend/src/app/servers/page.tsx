@@ -134,7 +134,7 @@ export default function ServersPage() {
               transition: 'all 0.2s'
             }}
           >
-            Available Servers
+            MCP Server Catalog
           </button>
         </div>
       </div>
@@ -201,7 +201,7 @@ export default function ServersPage() {
         <div>
           <div style={{ marginBottom: '1.5rem' }}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#333', marginBottom: '0.5rem' }}>
-              Available MCP Servers
+              MCP Server Catalog
             </h2>
             <p style={{ color: '#666', fontSize: '0.875rem' }}>
               Discover and register new MCP servers from the community

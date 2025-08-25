@@ -13,6 +13,7 @@ export function Navigation() {
     { href: '/', label: 'Dashboard' },
     { href: '/servers', label: 'Server Management' },
     { href: '/namespaces', label: 'Namespaces' },
+    { href: '/endpoints', label: 'Endpoints' },
     // { href: '/a2a', label: 'A2A Agent Management' },
     { href: '/content', label: 'Content Management' },
     { href: '/policies', label: 'Policy Management' },

@@ -207,6 +207,10 @@ const (
 	PermissionMetricsRead  = "metrics_read"
 	PermissionSystemManage = "system_manage"
 
+	// Endpoint permissions
+	PermissionEndpointAccess = "endpoint_access"
+	PermissionEndpointAdmin  = "endpoint_admin"
+
 	// Organization permissions
 	PermissionOrgRead   = "org_read"
 	PermissionOrgWrite  = "org_write"
@@ -226,6 +230,7 @@ const (
 	PermissionNamespaceDelete  = "namespace_delete"
 	PermissionNamespaceManage  = "namespace_manage"
 	PermissionNamespaceExecute = "namespace_execute"
+	PermissionNamespaceAdmin   = "namespace_admin"
 )
 
 // PolicyType constants

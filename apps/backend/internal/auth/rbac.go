@@ -106,12 +106,17 @@ func (r *RBAC) defineRolePermissions() {
 		types.PermissionA2AAgentManage,
 		types.PermissionA2AAgentExecute,
 
-		// Namespace management
+		// Namespace management - full access to all namespace endpoints
 		types.PermissionNamespaceRead,
 		types.PermissionNamespaceWrite,
 		types.PermissionNamespaceDelete,
 		types.PermissionNamespaceManage,
 		types.PermissionNamespaceExecute,
+		types.PermissionNamespaceAdmin,
+
+		// Endpoint access - full access to all endpoints
+		types.PermissionEndpointAccess,
+		types.PermissionEndpointAdmin,
 	}
 
 	// Admin - Organization-level admin permissions
@@ -325,6 +330,11 @@ func (r *RBAC) defineRolePermissions() {
 
 // HasPermission checks if a role has a specific permission
 func (r *RBAC) HasPermission(role, permission string) bool {
+	// System admins have all permissions
+	if r.IsSystemAdmin(role) {
+		return true
+	}
+
 	permissions, exists := r.rolePermissions[role]
 	if !exists {
 		return false
@@ -340,6 +350,11 @@ func (r *RBAC) HasPermission(role, permission string) bool {
 
 // HasAnyPermission checks if a role has any of the specified permissions
 func (r *RBAC) HasAnyPermission(role string, permissions []string) bool {
+	// System admins have all permissions
+	if r.IsSystemAdmin(role) {
+		return true
+	}
+
 	for _, permission := range permissions {
 		if r.HasPermission(role, permission) {
 			return true
@@ -350,6 +365,11 @@ func (r *RBAC) HasAnyPermission(role string, permissions []string) bool {
 
 // HasAllPermissions checks if a role has all of the specified permissions
 func (r *RBAC) HasAllPermissions(role string, permissions []string) bool {
+	// System admins have all permissions
+	if r.IsSystemAdmin(role) {
+		return true
+	}
+
 	for _, permission := range permissions {
 		if !r.HasPermission(role, permission) {
 			return false
@@ -389,6 +409,11 @@ func (r *RBAC) GetRoleLevel(role string) int {
 
 // CanAccessResource checks if a role can access a specific resource type with an action
 func (r *RBAC) CanAccessResource(role, resource, action string) bool {
+	// System admins can access any resource
+	if r.IsSystemAdmin(role) {
+		return true
+	}
+
 	// Build permission string: resource_action (e.g., server_read, user_write)
 	permission := strings.ToLower(resource + "_" + action)
 	return r.HasPermission(role, permission)
@@ -396,6 +421,11 @@ func (r *RBAC) CanAccessResource(role, resource, action string) bool {
 
 // CanManageResource checks if a role has management permissions for a resource
 func (r *RBAC) CanManageResource(role, resource string) bool {
+	// System admins can manage any resource
+	if r.IsSystemAdmin(role) {
+		return true
+	}
+
 	managePermission := strings.ToLower(resource + "_manage")
 	return r.HasPermission(role, managePermission)
 }
@@ -451,4 +481,26 @@ func (r *RBAC) CanElevateToRole(currentRole, targetRole string) bool {
 
 	// Regular users cannot elevate anyone
 	return false
+}
+
+// CanAccessNamespaceEndpoints checks if a role has access to namespace endpoints
+func (r *RBAC) CanAccessNamespaceEndpoints(role string) bool {
+	// System admins have full access
+	if r.IsSystemAdmin(role) {
+		return true
+	}
+
+	// Check for namespace admin permission
+	return r.HasPermission(role, types.PermissionNamespaceAdmin)
+}
+
+// CanAccessAllEndpoints checks if a role has access to all endpoints
+func (r *RBAC) CanAccessAllEndpoints(role string) bool {
+	// System admins have full access
+	if r.IsSystemAdmin(role) {
+		return true
+	}
+
+	// Check for endpoint admin permission
+	return r.HasPermission(role, types.PermissionEndpointAdmin)
 }

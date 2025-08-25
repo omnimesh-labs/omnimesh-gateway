@@ -40,7 +40,7 @@ func NewNamespaceHandler(service NamespaceService) *NamespaceHandler {
 func (h *NamespaceHandler) CreateNamespace(c *gin.Context) {
 	var req types.CreateNamespaceRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		RespondWithValidationError(c, "Invalid request format")
 		return
 	}
 
@@ -61,7 +61,7 @@ func (h *NamespaceHandler) CreateNamespace(c *gin.Context) {
 
 	namespace, err := h.service.CreateNamespace(c.Request.Context(), req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		RespondWithError(c, err)
 		return
 	}
 
@@ -79,7 +79,7 @@ func (h *NamespaceHandler) ListNamespaces(c *gin.Context) {
 
 	namespaces, err := h.service.ListNamespaces(c.Request.Context(), orgID.(string))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		RespondWithError(c, err)
 		return
 	}
 
@@ -93,13 +93,13 @@ func (h *NamespaceHandler) ListNamespaces(c *gin.Context) {
 func (h *NamespaceHandler) GetNamespace(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "namespace ID is required"})
+		RespondWithValidationError(c, "namespace ID is required")
 		return
 	}
 
 	namespace, err := h.service.GetNamespace(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		RespondWithNotFound(c, "Namespace")
 		return
 	}
 
@@ -110,19 +110,19 @@ func (h *NamespaceHandler) GetNamespace(c *gin.Context) {
 func (h *NamespaceHandler) UpdateNamespace(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "namespace ID is required"})
+		RespondWithValidationError(c, "namespace ID is required")
 		return
 	}
 
 	var req types.UpdateNamespaceRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		RespondWithValidationError(c, "Invalid request format")
 		return
 	}
 
 	namespace, err := h.service.UpdateNamespace(c.Request.Context(), id, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		RespondWithError(c, err)
 		return
 	}
 
@@ -133,12 +133,12 @@ func (h *NamespaceHandler) UpdateNamespace(c *gin.Context) {
 func (h *NamespaceHandler) DeleteNamespace(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "namespace ID is required"})
+		RespondWithValidationError(c, "namespace ID is required")
 		return
 	}
 
 	if err := h.service.DeleteNamespace(c.Request.Context(), id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		RespondWithError(c, err)
 		return
 	}
 
@@ -149,18 +149,18 @@ func (h *NamespaceHandler) DeleteNamespace(c *gin.Context) {
 func (h *NamespaceHandler) AddServerToNamespace(c *gin.Context) {
 	namespaceID := c.Param("id")
 	if namespaceID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "namespace ID is required"})
+		RespondWithValidationError(c, "namespace ID is required")
 		return
 	}
 
 	var req types.AddServerToNamespaceRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		RespondWithValidationError(c, "Invalid request format")
 		return
 	}
 
 	if err := h.service.AddServerToNamespace(c.Request.Context(), namespaceID, req); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		RespondWithError(c, err)
 		return
 	}
 
@@ -173,12 +173,12 @@ func (h *NamespaceHandler) RemoveServerFromNamespace(c *gin.Context) {
 	serverID := c.Param("server_id")
 
 	if namespaceID == "" || serverID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "namespace ID and server ID are required"})
+		RespondWithValidationError(c, "namespace ID and server ID are required")
 		return
 	}
 
 	if err := h.service.RemoveServerFromNamespace(c.Request.Context(), namespaceID, serverID); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		RespondWithError(c, err)
 		return
 	}
 
@@ -191,18 +191,18 @@ func (h *NamespaceHandler) UpdateServerStatus(c *gin.Context) {
 	serverID := c.Param("server_id")
 
 	if namespaceID == "" || serverID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "namespace ID and server ID are required"})
+		RespondWithValidationError(c, "namespace ID and server ID are required")
 		return
 	}
 
 	var req types.UpdateServerStatusRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		RespondWithValidationError(c, "Invalid request format")
 		return
 	}
 
 	if err := h.service.UpdateServerStatus(c.Request.Context(), namespaceID, serverID, req); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		RespondWithError(c, err)
 		return
 	}
 
@@ -213,13 +213,13 @@ func (h *NamespaceHandler) UpdateServerStatus(c *gin.Context) {
 func (h *NamespaceHandler) GetNamespaceTools(c *gin.Context) {
 	namespaceID := c.Param("id")
 	if namespaceID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "namespace ID is required"})
+		RespondWithValidationError(c, "namespace ID is required")
 		return
 	}
 
 	tools, err := h.service.AggregateTools(c.Request.Context(), namespaceID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		RespondWithError(c, err)
 		return
 	}
 
@@ -236,18 +236,18 @@ func (h *NamespaceHandler) UpdateToolStatus(c *gin.Context) {
 	toolName := c.Param("tool_id")
 
 	if namespaceID == "" || serverID == "" || toolName == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "namespace ID, server ID, and tool name are required"})
+		RespondWithValidationError(c, "namespace ID, server ID, and tool name are required")
 		return
 	}
 
 	var req types.UpdateToolStatusRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		RespondWithValidationError(c, "Invalid request format")
 		return
 	}
 
 	if err := h.service.UpdateToolStatus(c.Request.Context(), namespaceID, serverID, toolName, req); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		RespondWithError(c, err)
 		return
 	}
 
@@ -258,19 +258,19 @@ func (h *NamespaceHandler) UpdateToolStatus(c *gin.Context) {
 func (h *NamespaceHandler) ExecuteNamespaceTool(c *gin.Context) {
 	namespaceID := c.Param("id")
 	if namespaceID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "namespace ID is required"})
+		RespondWithValidationError(c, "namespace ID is required")
 		return
 	}
 
 	var req types.ExecuteNamespaceToolRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		RespondWithValidationError(c, "Invalid request format")
 		return
 	}
 
 	result, err := h.service.ExecuteTool(c.Request.Context(), namespaceID, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		RespondWithError(c, err)
 		return
 	}
 
