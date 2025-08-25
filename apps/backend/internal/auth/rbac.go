@@ -105,6 +105,13 @@ func (r *RBAC) defineRolePermissions() {
 		types.PermissionA2AAgentDelete,
 		types.PermissionA2AAgentManage,
 		types.PermissionA2AAgentExecute,
+
+		// Namespace management
+		types.PermissionNamespaceRead,
+		types.PermissionNamespaceWrite,
+		types.PermissionNamespaceDelete,
+		types.PermissionNamespaceManage,
+		types.PermissionNamespaceExecute,
 	}
 
 	// Admin - Organization-level admin permissions
@@ -176,6 +183,13 @@ func (r *RBAC) defineRolePermissions() {
 		types.PermissionA2AAgentDelete,
 		types.PermissionA2AAgentManage,
 		types.PermissionA2AAgentExecute,
+
+		// Namespace management
+		types.PermissionNamespaceRead,
+		types.PermissionNamespaceWrite,
+		types.PermissionNamespaceDelete,
+		types.PermissionNamespaceManage,
+		types.PermissionNamespaceExecute,
 	}
 
 	// User - Regular user permissions
@@ -223,6 +237,11 @@ func (r *RBAC) defineRolePermissions() {
 		types.PermissionA2AAgentRead,
 		types.PermissionA2AAgentWrite,
 		types.PermissionA2AAgentExecute,
+
+		// Namespace management (limited - no delete)
+		types.PermissionNamespaceRead,
+		types.PermissionNamespaceWrite,
+		types.PermissionNamespaceExecute,
 	}
 
 	// Viewer - Read-only permissions
@@ -259,6 +278,9 @@ func (r *RBAC) defineRolePermissions() {
 
 		// A2A Agent read-only
 		types.PermissionA2AAgentRead,
+
+		// Namespace read-only
+		types.PermissionNamespaceRead,
 	}
 
 	// API User - Similar to viewer but for API access
@@ -294,6 +316,10 @@ func (r *RBAC) defineRolePermissions() {
 		// A2A Agent read and execute for API users
 		types.PermissionA2AAgentRead,
 		types.PermissionA2AAgentExecute,
+
+		// Namespace read and execute for API users
+		types.PermissionNamespaceRead,
+		types.PermissionNamespaceExecute,
 	}
 }
 

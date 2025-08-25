@@ -15,6 +15,7 @@ import (
 	"mcp-gateway/apps/backend/internal/middleware"
 	"mcp-gateway/apps/backend/internal/plugins"
 	"mcp-gateway/apps/backend/internal/server/handlers"
+	"mcp-gateway/apps/backend/internal/services"
 	"mcp-gateway/apps/backend/internal/transport"
 	"mcp-gateway/apps/backend/internal/types"
 	"mcp-gateway/apps/backend/internal/virtual"
@@ -108,12 +109,16 @@ func (s *Server) RegisterRoutes() http.Handler {
 	a2aClient := a2a.NewClient(30*time.Second, 3)
 	a2aAdapter := a2a.NewAdapter(a2aService, a2aClient)
 
+	// Initialize namespace service
+	namespaceService := services.NewNamespaceService(s.db.GetDB())
+
 	// Initialize handlers
 	mcpDiscoveryHandler := handlers.NewMCPDiscoveryHandler(mcpDiscoveryService)
 	gatewayHandler := handlers.NewGatewayHandler(discoveryService)
 	virtualAdminHandler := handlers.NewVirtualAdminHandler(virtualService)
 	virtualMCPHandler := handlers.NewVirtualMCPHandler(virtualService)
 	a2aHandler := handlers.NewA2AHandler(a2aService, a2aClient, a2aAdapter)
+	namespaceHandler := handlers.NewNamespaceHandler(namespaceService)
 
 	// Initialize admin handler (for logging and system management)
 	adminHandler := handlers.NewAdminHandler(nil, s.logging.(*logging.Service), nil)
@@ -330,6 +335,63 @@ func (s *Server) RegisterRoutes() http.Handler {
 			gateway.GET("/tools/function/:function_name",
 				authMiddleware.RequireResourceAccess("tool", "read"),
 				toolHandler.GetToolByFunction)
+		}
+
+		// Namespace management routes (protected)
+		namespaceChain := middleware.AuthenticatedChain().
+			Use(authMiddleware.RequireAuth()).
+			Use(authMiddleware.RequireOrganizationAccess())
+		namespaces := api.Group("/namespaces")
+		namespaceChain.Apply(namespaces)
+		{
+			// Namespace CRUD operations
+			namespaces.GET("",
+				authMiddleware.RequireResourceAccess("namespace", "read"),
+				namespaceHandler.ListNamespaces)
+			namespaces.POST("",
+				authMiddleware.RequireResourceAccess("namespace", "write"),
+				loggingMiddleware.AuditLogger("create", "namespace"),
+				namespaceHandler.CreateNamespace)
+			namespaces.GET("/:id",
+				authMiddleware.RequireResourceAccess("namespace", "read"),
+				namespaceHandler.GetNamespace)
+			namespaces.PUT("/:id",
+				authMiddleware.RequireResourceAccess("namespace", "write"),
+				loggingMiddleware.AuditLogger("update", "namespace"),
+				namespaceHandler.UpdateNamespace)
+			namespaces.DELETE("/:id",
+				authMiddleware.RequireResourceAccess("namespace", "delete"),
+				loggingMiddleware.AuditLogger("delete", "namespace"),
+				namespaceHandler.DeleteNamespace)
+
+			// Server mappings
+			namespaces.POST("/:id/servers",
+				authMiddleware.RequireResourceAccess("namespace", "write"),
+				loggingMiddleware.AuditLogger("add-server", "namespace"),
+				namespaceHandler.AddServerToNamespace)
+			namespaces.DELETE("/:id/servers/:server_id",
+				authMiddleware.RequireResourceAccess("namespace", "write"),
+				loggingMiddleware.AuditLogger("remove-server", "namespace"),
+				namespaceHandler.RemoveServerFromNamespace)
+			namespaces.PUT("/:id/servers/:server_id/status",
+				authMiddleware.RequireResourceAccess("namespace", "write"),
+				loggingMiddleware.AuditLogger("update-server-status", "namespace"),
+				namespaceHandler.UpdateServerStatus)
+
+			// Tool management
+			namespaces.GET("/:id/tools",
+				authMiddleware.RequireResourceAccess("namespace", "read"),
+				namespaceHandler.GetNamespaceTools)
+			namespaces.PUT("/:id/tools/:tool_id/status",
+				authMiddleware.RequireResourceAccess("namespace", "write"),
+				loggingMiddleware.AuditLogger("update-tool-status", "namespace"),
+				namespaceHandler.UpdateToolStatus)
+
+			// MCP operations
+			namespaces.POST("/:id/execute",
+				authMiddleware.RequireResourceAccess("namespace", "execute"),
+				loggingMiddleware.AuditLogger("execute-tool", "namespace"),
+				namespaceHandler.ExecuteNamespaceTool)
 		}
 
 		// A2A (Agent-to-Agent) management routes (protected)

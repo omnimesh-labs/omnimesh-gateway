@@ -1340,6 +1340,133 @@ export const configApi = {
     }
 };
 
+// Namespace Management Types
+export interface Namespace {
+    id: string;
+    organization_id: string;
+    name: string;
+    description?: string;
+    servers?: string[];
+    server_count?: number;
+    created_at: string;
+    updated_at: string;
+    created_by?: string;
+    is_active: boolean;
+    metadata?: Record<string, any>;
+}
+
+export interface CreateNamespaceRequest {
+    name: string;
+    description?: string;
+    server_ids?: string[];
+}
+
+export interface UpdateNamespaceRequest {
+    name?: string;
+    description?: string;
+    server_ids?: string[];
+}
+
+export interface NamespaceTool {
+    tool_id: string;
+    tool_name: string;
+    prefixed_name: string;
+    server_id: string;
+    server_name: string;
+    status: 'ACTIVE' | 'INACTIVE';
+}
+
+export interface ExecuteNamespaceToolRequest {
+    tool_name: string;
+    parameters?: Record<string, any>;
+}
+
+// Namespace Management APIs
+export const namespaceApi = {
+    // List all namespaces
+    async listNamespaces(): Promise<Namespace[]> {
+        const response = await apiRequest<{ namespaces: Namespace[], total: number }>('/namespaces');
+        return response.namespaces;
+    },
+
+    // Get specific namespace details
+    async getNamespace(id: string): Promise<Namespace> {
+        const response = await apiRequest<Namespace>(`/namespaces/${id}`);
+        return response;
+    },
+
+    // Create new namespace
+    async createNamespace(namespaceData: CreateNamespaceRequest): Promise<Namespace> {
+        const response = await apiRequest<Namespace>('/namespaces', {
+            method: 'POST',
+            body: JSON.stringify(namespaceData),
+        });
+        return response;
+    },
+
+    // Update existing namespace
+    async updateNamespace(id: string, namespaceData: UpdateNamespaceRequest): Promise<Namespace> {
+        const response = await apiRequest<Namespace>(`/namespaces/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(namespaceData),
+        });
+        return response;
+    },
+
+    // Delete namespace
+    async deleteNamespace(id: string): Promise<void> {
+        await apiRequest<ApiResponse<any>>(`/namespaces/${id}`, {
+            method: 'DELETE',
+        });
+    },
+
+    // Add server to namespace
+    async addServerToNamespace(namespaceId: string, serverId: string, priority?: number): Promise<void> {
+        await apiRequest<ApiResponse<any>>(`/namespaces/${namespaceId}/servers`, {
+            method: 'POST',
+            body: JSON.stringify({ server_id: serverId, priority }),
+        });
+    },
+
+    // Remove server from namespace
+    async removeServerFromNamespace(namespaceId: string, serverId: string): Promise<void> {
+        await apiRequest<ApiResponse<any>>(`/namespaces/${namespaceId}/servers/${serverId}`, {
+            method: 'DELETE',
+        });
+    },
+
+    // Update server status in namespace
+    async updateServerStatus(namespaceId: string, serverId: string, status: string): Promise<void> {
+        await apiRequest<ApiResponse<any>>(`/namespaces/${namespaceId}/servers/${serverId}/status`, {
+            method: 'PUT',
+            body: JSON.stringify({ status }),
+        });
+    },
+
+    // Get namespace tools
+    async getNamespaceTools(namespaceId: string): Promise<NamespaceTool[]> {
+        const response = await apiRequest<ApiResponse<NamespaceTool[]>>(`/namespaces/${namespaceId}/tools`);
+        return response.data;
+    },
+
+    // Update tool status in namespace
+    async updateToolStatus(namespaceId: string, toolId: string, status: string): Promise<void> {
+        await apiRequest<ApiResponse<any>>(`/namespaces/${namespaceId}/tools/${toolId}/status`, {
+            method: 'PUT',
+            body: JSON.stringify({ status }),
+        });
+    },
+
+    // Execute namespace tool
+    async executeNamespaceTool(namespaceId: string, request: ExecuteNamespaceToolRequest): Promise<any> {
+        const response = await apiRequest<ApiResponse<any>>(`/namespaces/${namespaceId}/execute`, {
+            method: 'POST',
+            body: JSON.stringify(request),
+        });
+        return response.data;
+    },
+};
+
 // A2A Agent Management Types
 export interface A2AAgent {
     id: string;

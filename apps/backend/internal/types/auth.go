@@ -219,6 +219,13 @@ const (
 	PermissionA2AAgentDelete  = "a2a_agent_delete"
 	PermissionA2AAgentManage  = "a2a_agent_manage"
 	PermissionA2AAgentExecute = "a2a_agent_execute"
+
+	// Namespace permissions
+	PermissionNamespaceRead    = "namespace_read"
+	PermissionNamespaceWrite   = "namespace_write"
+	PermissionNamespaceDelete  = "namespace_delete"
+	PermissionNamespaceManage  = "namespace_manage"
+	PermissionNamespaceExecute = "namespace_execute"
 )
 
 // PolicyType constants

@@ -26,7 +26,6 @@ type MCPServer struct {
 	HealthCheckURL sql.NullString         `db:"health_check_url" json:"health_check_url,omitempty"`
 	Description    sql.NullString         `db:"description" json:"description,omitempty"`
 	URL            sql.NullString         `db:"url" json:"url,omitempty"`
-	Weight         int                    `db:"weight" json:"weight"`
 	TimeoutSeconds int                    `db:"timeout_seconds" json:"timeout_seconds"`
 	MaxRetries     int                    `db:"max_retries" json:"max_retries"`
 	ID             uuid.UUID              `db:"id" json:"id"`
@@ -49,10 +48,10 @@ func (m *MCPServerModel) Create(server *MCPServer) error {
 	query := `
 		INSERT INTO mcp_servers (
 			id, organization_id, name, description, protocol, url, command, args,
-			environment, working_dir, version, weight, timeout_seconds, max_retries,
+			environment, working_dir, version, timeout_seconds, max_retries,
 			status, health_check_url, is_active, metadata, tags
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
 		)
 	`
 
@@ -73,7 +72,7 @@ func (m *MCPServerModel) Create(server *MCPServer) error {
 	_, err := m.db.Exec(query,
 		server.ID, server.OrganizationID, server.Name, server.Description,
 		server.Protocol, server.URL, server.Command, server.Args,
-		server.Environment, server.WorkingDir, server.Version, server.Weight,
+		server.Environment, server.WorkingDir, server.Version,
 		server.TimeoutSeconds, server.MaxRetries, server.Status,
 		server.HealthCheckURL, server.IsActive, metadataJSON, server.Tags)
 	return err
@@ -83,7 +82,7 @@ func (m *MCPServerModel) Create(server *MCPServer) error {
 func (m *MCPServerModel) GetByID(id uuid.UUID) (*MCPServer, error) {
 	query := `
 		SELECT id, organization_id, name, description, protocol, url, command, args,
-			   environment, working_dir, version, weight, timeout_seconds, max_retries,
+			   environment, working_dir, version, timeout_seconds, max_retries,
 			   status, health_check_url, is_active, metadata, tags, created_at, updated_at
 		FROM mcp_servers
 		WHERE id = $1
@@ -95,7 +94,7 @@ func (m *MCPServerModel) GetByID(id uuid.UUID) (*MCPServer, error) {
 	err := m.db.QueryRow(query, id).Scan(
 		&server.ID, &server.OrganizationID, &server.Name, &server.Description,
 		&server.Protocol, &server.URL, &server.Command, &server.Args,
-		&server.Environment, &server.WorkingDir, &server.Version, &server.Weight,
+		&server.Environment, &server.WorkingDir, &server.Version,
 		&server.TimeoutSeconds, &server.MaxRetries, &server.Status,
 		&server.HealthCheckURL, &server.IsActive, &metadataJSON, &server.Tags,
 		&server.CreatedAt, &server.UpdatedAt,
@@ -120,7 +119,7 @@ func (m *MCPServerModel) GetByID(id uuid.UUID) (*MCPServer, error) {
 func (m *MCPServerModel) GetByName(orgID uuid.UUID, name string) (*MCPServer, error) {
 	query := `
 		SELECT id, organization_id, name, description, protocol, url, command, args,
-			   environment, working_dir, version, weight, timeout_seconds, max_retries,
+			   environment, working_dir, version, timeout_seconds, max_retries,
 			   status, health_check_url, is_active, metadata, tags, created_at, updated_at
 		FROM mcp_servers
 		WHERE organization_id = $1 AND name = $2 AND is_active = true
@@ -132,7 +131,7 @@ func (m *MCPServerModel) GetByName(orgID uuid.UUID, name string) (*MCPServer, er
 	err := m.db.QueryRow(query, orgID, name).Scan(
 		&server.ID, &server.OrganizationID, &server.Name, &server.Description,
 		&server.Protocol, &server.URL, &server.Command, &server.Args,
-		&server.Environment, &server.WorkingDir, &server.Version, &server.Weight,
+		&server.Environment, &server.WorkingDir, &server.Version,
 		&server.TimeoutSeconds, &server.MaxRetries, &server.Status,
 		&server.HealthCheckURL, &server.IsActive, &metadataJSON, &server.Tags,
 		&server.CreatedAt, &server.UpdatedAt,
@@ -157,7 +156,7 @@ func (m *MCPServerModel) GetByName(orgID uuid.UUID, name string) (*MCPServer, er
 func (m *MCPServerModel) ListByOrganization(orgID uuid.UUID, activeOnly bool) ([]*MCPServer, error) {
 	query := `
 		SELECT id, organization_id, name, description, protocol, url, command, args,
-			   environment, working_dir, version, weight, timeout_seconds, max_retries,
+			   environment, working_dir, version, timeout_seconds, max_retries,
 			   status, health_check_url, is_active, metadata, tags, created_at, updated_at
 		FROM mcp_servers
 		WHERE organization_id = $1
@@ -167,7 +166,7 @@ func (m *MCPServerModel) ListByOrganization(orgID uuid.UUID, activeOnly bool) ([
 	if activeOnly {
 		query += " AND is_active = true"
 	}
-	query += " ORDER BY weight DESC, created_at DESC"
+	query += " ORDER BY created_at DESC"
 
 	rows, err := m.db.Query(query, args...)
 	if err != nil {
@@ -183,7 +182,7 @@ func (m *MCPServerModel) ListByOrganization(orgID uuid.UUID, activeOnly bool) ([
 		err := rows.Scan(
 			&server.ID, &server.OrganizationID, &server.Name, &server.Description,
 			&server.Protocol, &server.URL, &server.Command, &server.Args,
-			&server.Environment, &server.WorkingDir, &server.Version, &server.Weight,
+			&server.Environment, &server.WorkingDir, &server.Version,
 			&server.TimeoutSeconds, &server.MaxRetries, &server.Status,
 			&server.HealthCheckURL, &server.IsActive, &metadataJSON, &server.Tags,
 			&server.CreatedAt, &server.UpdatedAt,
@@ -210,11 +209,11 @@ func (m *MCPServerModel) ListByOrganization(orgID uuid.UUID, activeOnly bool) ([
 func (m *MCPServerModel) GetActiveServers(orgID uuid.UUID) ([]*MCPServer, error) {
 	query := `
 		SELECT id, organization_id, name, description, protocol, url, command, args,
-			   environment, working_dir, version, weight, timeout_seconds, max_retries,
+			   environment, working_dir, version, timeout_seconds, max_retries,
 			   status, health_check_url, is_active, metadata, tags, created_at, updated_at
 		FROM mcp_servers
 		WHERE organization_id = $1 AND is_active = true AND status = 'active'
-		ORDER BY weight DESC, created_at DESC
+		ORDER BY created_at DESC
 	`
 
 	rows, err := m.db.Query(query, orgID)
@@ -231,7 +230,7 @@ func (m *MCPServerModel) GetActiveServers(orgID uuid.UUID) ([]*MCPServer, error)
 		err := rows.Scan(
 			&server.ID, &server.OrganizationID, &server.Name, &server.Description,
 			&server.Protocol, &server.URL, &server.Command, &server.Args,
-			&server.Environment, &server.WorkingDir, &server.Version, &server.Weight,
+			&server.Environment, &server.WorkingDir, &server.Version,
 			&server.TimeoutSeconds, &server.MaxRetries, &server.Status,
 			&server.HealthCheckURL, &server.IsActive, &metadataJSON, &server.Tags,
 			&server.CreatedAt, &server.UpdatedAt,
@@ -260,8 +259,8 @@ func (m *MCPServerModel) Update(server *MCPServer) error {
 		UPDATE mcp_servers
 		SET name = $2, description = $3, protocol = $4, url = $5, command = $6,
 			args = $7, environment = $8, working_dir = $9, version = $10,
-			weight = $11, timeout_seconds = $12, max_retries = $13,
-			health_check_url = $14, metadata = $15, tags = $16
+			timeout_seconds = $11, max_retries = $12,
+			health_check_url = $13, metadata = $14, tags = $15
 		WHERE id = $1
 	`
 
@@ -278,7 +277,7 @@ func (m *MCPServerModel) Update(server *MCPServer) error {
 	_, err := m.db.Exec(query,
 		server.ID, server.Name, server.Description, server.Protocol,
 		server.URL, server.Command, server.Args, server.Environment,
-		server.WorkingDir, server.Version, server.Weight,
+		server.WorkingDir, server.Version,
 		server.TimeoutSeconds, server.MaxRetries, server.HealthCheckURL,
 		metadataJSON, server.Tags)
 	return err

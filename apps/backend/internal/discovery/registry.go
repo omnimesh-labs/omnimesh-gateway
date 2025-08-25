@@ -76,7 +76,6 @@ func (r *Registry) Register(server *types.MCPServer) error {
 		IsActive:       server.IsActive,
 		Metadata:       convertStringMapToInterface(server.Metadata),
 		Tags:           pq.StringArray{},
-		Weight:         1, // Default weight
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 	}

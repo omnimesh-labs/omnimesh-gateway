@@ -42,3 +42,4 @@ bin/
 *.log
 venv/
 todos/
+metamcp/
