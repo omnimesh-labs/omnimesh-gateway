@@ -112,66 +112,66 @@ export function ServerTable({ servers, onUnregister, loading }: ServerTableProps
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead style={{ background: '#f9fafb' }}>
             <tr>
-              <th style={{ 
-                textAlign: 'left', 
-                padding: '0.75rem 1rem', 
-                fontSize: '0.75rem', 
-                fontWeight: '500', 
+              <th style={{
+                textAlign: 'left',
+                padding: '0.75rem 1rem',
+                fontSize: '0.75rem',
+                fontWeight: '500',
                 color: '#6b7280',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em'
               }}>
                 Name
               </th>
-              <th style={{ 
-                textAlign: 'left', 
-                padding: '0.75rem 1rem', 
-                fontSize: '0.75rem', 
-                fontWeight: '500', 
+              <th style={{
+                textAlign: 'left',
+                padding: '0.75rem 1rem',
+                fontSize: '0.75rem',
+                fontWeight: '500',
                 color: '#6b7280',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em'
               }}>
                 Protocol
               </th>
-              <th style={{ 
-                textAlign: 'left', 
-                padding: '0.75rem 1rem', 
-                fontSize: '0.75rem', 
-                fontWeight: '500', 
+              <th style={{
+                textAlign: 'left',
+                padding: '0.75rem 1rem',
+                fontSize: '0.75rem',
+                fontWeight: '500',
                 color: '#6b7280',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em'
               }}>
                 Status
               </th>
-              <th style={{ 
-                textAlign: 'left', 
-                padding: '0.75rem 1rem', 
-                fontSize: '0.75rem', 
-                fontWeight: '500', 
+              <th style={{
+                textAlign: 'left',
+                padding: '0.75rem 1rem',
+                fontSize: '0.75rem',
+                fontWeight: '500',
                 color: '#6b7280',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em'
               }}>
                 Version
               </th>
-              <th style={{ 
-                textAlign: 'left', 
-                padding: '0.75rem 1rem', 
-                fontSize: '0.75rem', 
-                fontWeight: '500', 
+              <th style={{
+                textAlign: 'left',
+                padding: '0.75rem 1rem',
+                fontSize: '0.75rem',
+                fontWeight: '500',
                 color: '#6b7280',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em'
               }}>
                 Created
               </th>
-              <th style={{ 
-                textAlign: 'right', 
-                padding: '0.75rem 1rem', 
-                fontSize: '0.75rem', 
-                fontWeight: '500', 
+              <th style={{
+                textAlign: 'right',
+                padding: '0.75rem 1rem',
+                fontSize: '0.75rem',
+                fontWeight: '500',
                 color: '#6b7280',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em'
@@ -182,9 +182,9 @@ export function ServerTable({ servers, onUnregister, loading }: ServerTableProps
           </thead>
           <tbody>
             {servers.map((server, index) => (
-              <tr 
+              <tr
                 key={server.id}
-                style={{ 
+                style={{
                   borderTop: index > 0 ? '1px solid #f3f4f6' : 'none',
                   opacity: unregisteringIds.has(server.id) ? 0.5 : 1
                 }}

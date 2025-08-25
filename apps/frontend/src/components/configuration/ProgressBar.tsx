@@ -10,7 +10,7 @@ interface ProgressBarProps {
 
 const COLOR_STYLES = {
   blue: '#3b82f6',
-  green: '#10b981', 
+  green: '#10b981',
   red: '#ef4444',
   yellow: '#f59e0b'
 };
@@ -23,7 +23,7 @@ export function ProgressBar({
   color = 'blue'
 }: ProgressBarProps) {
   const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
-  
+
   return (
     <div className={className}>
       {showPercentage && (
@@ -48,7 +48,7 @@ export function ProgressBar({
           </span>
         </div>
       )}
-      
+
       <div style={{
         width: '100%',
         height: '8px',

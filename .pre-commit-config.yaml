@@ -4,12 +4,11 @@ repos:
       - id: go-fmt
         name: go fmt
         entry: gofmt
-        args: [-w]
         language: system
         files: \.go$
         pass_filenames: false
         always_run: true
-      
+
       - id: go-imports
         name: go imports
         entry: goimports
@@ -18,7 +17,7 @@ repos:
         files: \.go$
         pass_filenames: false
         always_run: true
-      
+
       - id: go-mod-tidy
         name: go mod tidy
         entry: go
@@ -27,7 +26,7 @@ repos:
         files: go\.(mod|sum)$
         pass_filenames: false
         always_run: true
-      
+
       - id: go-vet
         name: go vet
         entry: go
@@ -36,7 +35,7 @@ repos:
         files: \.go$
         pass_filenames: false
         always_run: true
-      
+
       - id: golangci-lint
         name: golangci-lint
         entry: golangci-lint
@@ -45,7 +44,7 @@ repos:
         files: \.go$
         pass_filenames: false
         always_run: true
-      
+
       - id: go-sec
         name: gosec (security)
         entry: gosec
@@ -54,7 +53,7 @@ repos:
         files: \.go$
         pass_filenames: false
         always_run: true
-      
+
       - id: go-test
         name: go test
         entry: go

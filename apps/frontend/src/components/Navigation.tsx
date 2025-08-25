@@ -29,7 +29,7 @@ export function Navigation() {
     }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Link 
+          <Link
             href="/"
             style={{
               fontSize: '1.5rem',
@@ -40,7 +40,7 @@ export function Navigation() {
           >
             MCP Gateway
           </Link>
-          
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
             {navItems.map(item => (
               <Link
@@ -59,7 +59,7 @@ export function Navigation() {
                 {item.label}
               </Link>
             ))}
-            
+
             {isAuthenticated && (
               <div style={{ marginLeft: '1rem' }}>
                 <ProfileDropdown />

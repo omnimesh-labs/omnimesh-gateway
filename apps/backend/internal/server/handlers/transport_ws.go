@@ -109,8 +109,8 @@ func (h *WebSocketHandler) HandleWebSocketSend(c *gin.Context) {
 
 	// Parse message data
 	var messageData struct {
-		Type string      `json:"type"` // "text", "binary", "ping", "pong"
 		Data interface{} `json:"data"`
+		Type string      `json:"type"`
 	}
 
 	if err := c.ShouldBindJSON(&messageData); err != nil {

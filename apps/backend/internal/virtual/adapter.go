@@ -179,15 +179,15 @@ func (a *RESTAdapter) resolveToken(token string) string {
 	// Handle environment variable placeholders
 	if strings.HasPrefix(token, "${SECRET:") && strings.HasSuffix(token, "}") {
 		secretName := strings.TrimSuffix(strings.TrimPrefix(token, "${SECRET:"), "}")
-		
+
 		// Try to get from environment variable
 		if envValue := os.Getenv(secretName); envValue != "" {
 			return envValue
 		}
-		
+
 		// Log warning for missing secret (but don't expose the secret name in production logs)
 		log.Printf("Warning: Secret %s not found in environment variables", secretName)
-		
+
 		// Return empty string for missing secrets (don't use mock tokens)
 		return ""
 	}

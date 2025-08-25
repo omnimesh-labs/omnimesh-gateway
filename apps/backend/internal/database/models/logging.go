@@ -11,60 +11,60 @@ import (
 
 // LogIndex represents the log_index table from the ERD
 type LogIndex struct {
-	ID              uuid.UUID      `db:"id" json:"id"`
-	OrganizationID  uuid.UUID      `db:"organization_id" json:"organization_id"`
+	CreatedAt       time.Time      `db:"created_at" json:"created_at"`
+	StartedAt       time.Time      `db:"started_at" json:"started_at"`
 	ServerID        *uuid.UUID     `db:"server_id" json:"server_id,omitempty"`
 	SessionID       *uuid.UUID     `db:"session_id" json:"session_id,omitempty"`
-	RPCMethod       sql.NullString `db:"rpc_method" json:"rpc_method,omitempty"`
-	Level           string         `db:"level" json:"level"` // log_level_enum
-	StartedAt       time.Time      `db:"started_at" json:"started_at"`
-	DurationMS      sql.NullInt32  `db:"duration_ms" json:"duration_ms,omitempty"`
-	StatusCode      sql.NullInt32  `db:"status_code" json:"status_code,omitempty"`
-	ErrorFlag       bool           `db:"error_flag" json:"error_flag"`
-	StorageProvider string         `db:"storage_provider" json:"storage_provider"` // storage_provider_enum
-	ObjectURI       string         `db:"object_uri" json:"object_uri"`
-	ByteOffset      sql.NullInt64  `db:"byte_offset" json:"byte_offset,omitempty"`
-	UserID          string         `db:"user_id" json:"user_id"`
-	RemoteIP        *net.IP        `db:"remote_ip" json:"remote_ip,omitempty"`
-	ClientID        *uuid.UUID     `db:"client_id" json:"client_id,omitempty"`
 	ConnectionID    *uuid.UUID     `db:"connection_id" json:"connection_id,omitempty"`
-	CreatedAt       time.Time      `db:"created_at" json:"created_at"`
+	ClientID        *uuid.UUID     `db:"client_id" json:"client_id,omitempty"`
+	RemoteIP        *net.IP        `db:"remote_ip" json:"remote_ip,omitempty"`
+	UserID          string         `db:"user_id" json:"user_id"`
+	Level           string         `db:"level" json:"level"`
+	StorageProvider string         `db:"storage_provider" json:"storage_provider"`
+	ObjectURI       string         `db:"object_uri" json:"object_uri"`
+	RPCMethod       sql.NullString `db:"rpc_method" json:"rpc_method,omitempty"`
+	ByteOffset      sql.NullInt64  `db:"byte_offset" json:"byte_offset,omitempty"`
+	StatusCode      sql.NullInt32  `db:"status_code" json:"status_code,omitempty"`
+	DurationMS      sql.NullInt32  `db:"duration_ms" json:"duration_ms,omitempty"`
+	ID              uuid.UUID      `db:"id" json:"id"`
+	OrganizationID  uuid.UUID      `db:"organization_id" json:"organization_id"`
+	ErrorFlag       bool           `db:"error_flag" json:"error_flag"`
 }
 
 // AuditLog represents the audit_logs table from the ERD
 type AuditLog struct {
-	ID             uuid.UUID              `db:"id" json:"id"`
-	OrganizationID uuid.UUID              `db:"organization_id" json:"organization_id"`
-	Action         string                 `db:"action" json:"action"`
-	ResourceType   string                 `db:"resource_type" json:"resource_type"`
+	CreatedAt      time.Time              `db:"created_at" json:"created_at"`
 	ResourceID     *uuid.UUID             `db:"resource_id" json:"resource_id,omitempty"`
-	ActorID        string                 `db:"actor_id" json:"actor_id"`
 	ActorIP        *net.IP                `db:"actor_ip" json:"actor_ip,omitempty"`
 	OldValues      map[string]interface{} `db:"old_values" json:"old_values,omitempty"`
 	NewValues      map[string]interface{} `db:"new_values" json:"new_values,omitempty"`
 	Metadata       map[string]interface{} `db:"metadata" json:"metadata,omitempty"`
-	CreatedAt      time.Time              `db:"created_at" json:"created_at"`
+	Action         string                 `db:"action" json:"action"`
+	ResourceType   string                 `db:"resource_type" json:"resource_type"`
+	ActorID        string                 `db:"actor_id" json:"actor_id"`
+	ID             uuid.UUID              `db:"id" json:"id"`
+	OrganizationID uuid.UUID              `db:"organization_id" json:"organization_id"`
 }
 
 // LogAggregate represents the log_aggregates table from the ERD
 type LogAggregate struct {
-	ID              uuid.UUID       `db:"id" json:"id"`
-	OrganizationID  uuid.UUID       `db:"organization_id" json:"organization_id"`
-	ServerID        *uuid.UUID      `db:"server_id" json:"server_id,omitempty"`
-	WindowType      string          `db:"window_type" json:"window_type"` // aggregation_window_enum
+	CreatedAt       time.Time       `db:"created_at" json:"created_at"`
+	UpdatedAt       time.Time       `db:"updated_at" json:"updated_at"`
 	WindowStart     time.Time       `db:"window_start" json:"window_start"`
+	ServerID        *uuid.UUID      `db:"server_id" json:"server_id,omitempty"`
+	WindowType      string          `db:"window_type" json:"window_type"`
 	RPCMethod       sql.NullString  `db:"rpc_method" json:"rpc_method,omitempty"`
-	TotalRequests   int64           `db:"total_requests" json:"total_requests"`
+	AvgDurationMS   sql.NullFloat64 `db:"avg_duration_ms" json:"avg_duration_ms,omitempty"`
 	SuccessRequests int64           `db:"success_requests" json:"success_requests"`
 	ErrorRequests   int64           `db:"error_requests" json:"error_requests"`
+	TotalBytesIn    int64           `db:"total_bytes_in" json:"total_bytes_in"`
+	TotalBytesOut   int64           `db:"total_bytes_out" json:"total_bytes_out"`
+	TotalRequests   int64           `db:"total_requests" json:"total_requests"`
 	P50DurationMS   sql.NullInt32   `db:"p50_duration_ms" json:"p50_duration_ms,omitempty"`
 	P95DurationMS   sql.NullInt32   `db:"p95_duration_ms" json:"p95_duration_ms,omitempty"`
 	P99DurationMS   sql.NullInt32   `db:"p99_duration_ms" json:"p99_duration_ms,omitempty"`
-	AvgDurationMS   sql.NullFloat64 `db:"avg_duration_ms" json:"avg_duration_ms,omitempty"`
-	TotalBytesIn    int64           `db:"total_bytes_in" json:"total_bytes_in"`
-	TotalBytesOut   int64           `db:"total_bytes_out" json:"total_bytes_out"`
-	CreatedAt       time.Time       `db:"created_at" json:"created_at"`
-	UpdatedAt       time.Time       `db:"updated_at" json:"updated_at"`
+	ID              uuid.UUID       `db:"id" json:"id"`
+	OrganizationID  uuid.UUID       `db:"organization_id" json:"organization_id"`
 }
 
 // LogIndexModel handles log index database operations
@@ -423,7 +423,7 @@ func (m *LogAggregateModel) GetDashboardData(orgID uuid.UUID, windowType string,
 			   p95_duration_ms, p99_duration_ms, avg_duration_ms, total_bytes_in,
 			   total_bytes_out, created_at, updated_at
 		FROM log_aggregates
-		WHERE organization_id = $1 AND window_type = $2 
+		WHERE organization_id = $1 AND window_type = $2
 			  AND window_start >= $3 AND window_start <= $4
 			  AND rpc_method IS NULL
 		ORDER BY window_start DESC

@@ -73,7 +73,7 @@ func (h *PromptHandler) ListPrompts(c *gin.Context) {
 				offset = parsed
 			}
 		}
-		
+
 		prompts, err = h.promptModel.SearchPrompts(orgUUID, searchTerm, limit, offset)
 	} else if category != "" {
 		prompts, err = h.promptModel.ListByCategory(orgUUID, category, activeOnly)
@@ -108,7 +108,7 @@ func (h *PromptHandler) CreatePrompt(c *gin.Context) {
 	}
 
 	userID, userExists := c.Get("user_id")
-	
+
 	var req types.CreatePromptRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, types.ErrorResponse{

@@ -165,17 +165,17 @@ export function PolicyFormModal({ isOpen, onClose, onSave, policy }: PolicyFormM
                 overflowY: 'auto',
                 boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
             }}>
-                <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center', 
-                    marginBottom: '24px' 
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '24px'
                 }}>
-                    <h2 style={{ 
-                        fontSize: '20px', 
-                        fontWeight: '600', 
-                        color: '#111827', 
-                        margin: 0 
+                    <h2 style={{
+                        fontSize: '20px',
+                        fontWeight: '600',
+                        color: '#111827',
+                        margin: 0
                     }}>
                         {policy ? 'Edit Policy' : 'Create New Policy'}
                     </h2>
@@ -198,10 +198,10 @@ export function PolicyFormModal({ isOpen, onClose, onSave, policy }: PolicyFormM
                     <div style={{ display: 'grid', gap: '16px' }}>
                         {/* Name */}
                         <div>
-                            <label style={{ 
-                                display: 'block', 
-                                fontSize: '14px', 
-                                fontWeight: '500', 
+                            <label style={{
+                                display: 'block',
+                                fontSize: '14px',
+                                fontWeight: '500',
                                 color: '#374151',
                                 marginBottom: '4px'
                             }}>
@@ -230,10 +230,10 @@ export function PolicyFormModal({ isOpen, onClose, onSave, policy }: PolicyFormM
 
                         {/* Description */}
                         <div>
-                            <label style={{ 
-                                display: 'block', 
-                                fontSize: '14px', 
-                                fontWeight: '500', 
+                            <label style={{
+                                display: 'block',
+                                fontSize: '14px',
+                                fontWeight: '500',
                                 color: '#374151',
                                 marginBottom: '4px'
                             }}>
@@ -260,10 +260,10 @@ export function PolicyFormModal({ isOpen, onClose, onSave, policy }: PolicyFormM
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                             {/* Type */}
                             <div>
-                                <label style={{ 
-                                    display: 'block', 
-                                    fontSize: '14px', 
-                                    fontWeight: '500', 
+                                <label style={{
+                                    display: 'block',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
                                     color: '#374151',
                                     marginBottom: '4px'
                                 }}>
@@ -297,10 +297,10 @@ export function PolicyFormModal({ isOpen, onClose, onSave, policy }: PolicyFormM
 
                             {/* Priority */}
                             <div>
-                                <label style={{ 
-                                    display: 'block', 
-                                    fontSize: '14px', 
-                                    fontWeight: '500', 
+                                <label style={{
+                                    display: 'block',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
                                     color: '#374151',
                                     marginBottom: '4px'
                                 }}>
@@ -331,10 +331,10 @@ export function PolicyFormModal({ isOpen, onClose, onSave, policy }: PolicyFormM
 
                         {/* Conditions */}
                         <div>
-                            <label style={{ 
-                                display: 'block', 
-                                fontSize: '14px', 
-                                fontWeight: '500', 
+                            <label style={{
+                                display: 'block',
+                                fontSize: '14px',
+                                fontWeight: '500',
                                 color: '#374151',
                                 marginBottom: '4px'
                             }}>
@@ -365,10 +365,10 @@ export function PolicyFormModal({ isOpen, onClose, onSave, policy }: PolicyFormM
 
                         {/* Actions */}
                         <div>
-                            <label style={{ 
-                                display: 'block', 
-                                fontSize: '14px', 
-                                fontWeight: '500', 
+                            <label style={{
+                                display: 'block',
+                                fontSize: '14px',
+                                fontWeight: '500',
                                 color: '#374151',
                                 marginBottom: '4px'
                             }}>
@@ -400,11 +400,11 @@ export function PolicyFormModal({ isOpen, onClose, onSave, policy }: PolicyFormM
                         {/* Status (only when editing) */}
                         {policy && (
                             <div>
-                                <label style={{ 
-                                    display: 'flex', 
+                                <label style={{
+                                    display: 'flex',
                                     alignItems: 'center',
-                                    fontSize: '14px', 
-                                    fontWeight: '500', 
+                                    fontSize: '14px',
+                                    fontWeight: '500',
                                     color: '#374151',
                                     cursor: 'pointer',
                                 }}>
@@ -421,7 +421,7 @@ export function PolicyFormModal({ isOpen, onClose, onSave, policy }: PolicyFormM
 
                         {/* Submit Error */}
                         {errors.submit && (
-                            <div style={{ 
+                            <div style={{
                                 padding: '12px',
                                 backgroundColor: '#fef2f2',
                                 border: '1px solid #fecaca',
@@ -434,11 +434,11 @@ export function PolicyFormModal({ isOpen, onClose, onSave, policy }: PolicyFormM
                         )}
 
                         {/* Buttons */}
-                        <div style={{ 
-                            display: 'flex', 
-                            justifyContent: 'flex-end', 
-                            gap: '12px', 
-                            marginTop: '8px' 
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'flex-end',
+                            gap: '12px',
+                            marginTop: '8px'
                         }}>
                             <button
                                 type="button"

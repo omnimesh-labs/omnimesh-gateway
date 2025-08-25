@@ -183,10 +183,10 @@ func (h *STDIOHandler) handleSTDIOStart(c *gin.Context) {
 
 	// Parse process configuration
 	var processConfig struct {
-		Command    string            `json:"command" binding:"required"`
-		Args       []string          `json:"args"`
 		Env        map[string]string `json:"env"`
+		Command    string            `json:"command" binding:"required"`
 		WorkingDir string            `json:"working_dir"`
+		Args       []string          `json:"args"`
 		Timeout    time.Duration     `json:"timeout"`
 	}
 

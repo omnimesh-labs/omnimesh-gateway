@@ -48,10 +48,10 @@ func (h *RPCHandler) HandleJSONRPC(c *gin.Context) {
 
 	// Parse JSON-RPC request
 	var rpcRequest struct {
+		Params  interface{} `json:"params,omitempty"`
 		ID      string      `json:"id"`
 		JSONRPC string      `json:"jsonrpc"`
 		Method  string      `json:"method"`
-		Params  interface{} `json:"params,omitempty"`
 	}
 
 	if err := c.ShouldBindJSON(&rpcRequest); err != nil {
@@ -163,10 +163,10 @@ func (h *RPCHandler) HandleJSONRPC(c *gin.Context) {
 
 // routeToMCPServer routes the request to the actual MCP server via STDIO transport
 func (h *RPCHandler) routeToMCPServer(ctx context.Context, serverID string, rpcRequest *struct {
+	Params  interface{} `json:"params,omitempty"`
 	ID      string      `json:"id"`
 	JSONRPC string      `json:"jsonrpc"`
 	Method  string      `json:"method"`
-	Params  interface{} `json:"params,omitempty"`
 }) (interface{}, error) {
 	// Get the server configuration from discovery service
 	server, err := h.discoveryService.GetServer(serverID)
@@ -192,9 +192,9 @@ func (h *RPCHandler) routeToMCPServer(ctx context.Context, serverID string, rpcR
 	stdioTransport, session, err := h.transportManager.CreateConnectionWithConfig(
 		ctx,
 		types.TransportTypeSTDIO,
-		"system",         // userID
-		"default-org",    // orgID
-		serverID,         // serverID
+		"system",      // userID
+		"default-org", // orgID
+		serverID,      // serverID
 		config,
 	)
 	if err != nil {
@@ -216,7 +216,7 @@ func (h *RPCHandler) routeToMCPServer(ctx context.Context, serverID string, rpcR
 	// Connect to the MCP server with timeout
 	connectCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	
+
 	if err := stdioTransport.Connect(connectCtx); err != nil {
 		return nil, fmt.Errorf("failed to connect to STDIO server: %w", err)
 	}
@@ -257,7 +257,7 @@ func (h *RPCHandler) routeToMCPServer(ctx context.Context, serverID string, rpcR
 func (h *RPCHandler) sendJSONRPCToSTDIOProcess(ctx context.Context, transport types.Transport, message map[string]interface{}) (map[string]interface{}, error) {
 	// We have a types.Transport interface, but we need to actually communicate
 	// For now, we'll work with the interface methods available
-	
+
 	// Marshal the JSON-RPC message to JSON (for future use)
 	_, err := json.Marshal(message)
 	if err != nil {
@@ -317,7 +317,7 @@ func (h *RPCHandler) sendJSONRPCToSTDIOProcess(ctx context.Context, transport ty
 				},
 				{
 					"name":        "add",
-					"description": "Add two numbers together", 
+					"description": "Add two numbers together",
 					"inputSchema": map[string]interface{}{
 						"type": "object",
 						"properties": map[string]interface{}{
@@ -326,7 +326,7 @@ func (h *RPCHandler) sendJSONRPCToSTDIOProcess(ctx context.Context, transport ty
 								"description": "First number",
 							},
 							"b": map[string]interface{}{
-								"type":        "number", 
+								"type":        "number",
 								"description": "Second number",
 							},
 						},
@@ -356,7 +356,7 @@ func (h *RPCHandler) sendJSONRPCToSTDIOProcess(ctx context.Context, transport ty
 				toolName = name
 			}
 		}
-		
+
 		switch toolName {
 		case "echo":
 			mockResponse["result"] = map[string]interface{}{
@@ -392,7 +392,7 @@ func (h *RPCHandler) sendJSONRPCToSTDIOProcess(ctx context.Context, transport ty
 					"mimeType":    "application/json",
 				},
 				{
-					"uri":         "data://sample", 
+					"uri":         "data://sample",
 					"name":        "Sample Data",
 					"description": "Sample data for testing",
 					"mimeType":    "text/plain",
@@ -440,7 +440,7 @@ func (h *RPCHandler) sendJSONRPCToSTDIOProcess(ctx context.Context, transport ty
 
 	// TODO: In the future, implement actual STDIO communication like this:
 	// 1. Write jsonData + "\n" to stdioTransport's stdin
-	// 2. Read response from stdioTransport's stdout 
+	// 2. Read response from stdioTransport's stdout
 	// 3. Parse JSON response and return it
 
 	return mockResponse, nil
@@ -539,7 +539,7 @@ func (h *RPCHandler) HandleBatchRPC(c *gin.Context) {
 	var responses []interface{}
 
 	// Process each request in the batch
-	for _, _ = range batchRequests {
+	for range batchRequests {
 		// Create a new context for each sub-request
 		// This is a simplified implementation
 		response := gin.H{

@@ -34,8 +34,8 @@ func TestDenyFilter_NewDenyFilter(t *testing.T) {
 
 func TestDenyFilter_ApplyBlockedWord(t *testing.T) {
 	config := map[string]interface{}{
-		"blocked_words": []string{"password", "secret", "token"},
-		"action":        "block",
+		"blocked_words":  []string{"password", "secret", "token"},
+		"action":         "block",
 		"case_sensitive": false,
 	}
 
@@ -302,8 +302,8 @@ func TestDenyFilter_ApplyCustomRules(t *testing.T) {
 
 func TestDenyFilter_ApplyMultipleMatches(t *testing.T) {
 	config := map[string]interface{}{
-		"blocked_words": []string{"password", "secret"},
-		"action":        "warn",
+		"blocked_words":  []string{"password", "secret"},
+		"action":         "warn",
 		"case_sensitive": false,
 	}
 
@@ -497,8 +497,8 @@ func TestDenyFilterFactory_ValidateConfig(t *testing.T) {
 	factory := &deny.DenyFilterFactory{}
 
 	tests := []struct {
-		name        string
 		config      map[string]interface{}
+		name        string
 		expectError bool
 	}{
 		{

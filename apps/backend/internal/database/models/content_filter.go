@@ -6,80 +6,80 @@ import (
 
 // ContentFilter represents a content filter configuration in the database
 type ContentFilter struct {
+	CreatedAt      time.Time              `db:"created_at" json:"created_at"`
+	UpdatedAt      time.Time              `db:"updated_at" json:"updated_at"`
+	Config         map[string]interface{} `db:"config" json:"config"`
+	CreatedBy      *string                `db:"created_by" json:"created_by,omitempty"`
 	ID             string                 `db:"id" json:"id"`
 	OrganizationID string                 `db:"organization_id" json:"organization_id"`
 	Name           string                 `db:"name" json:"name"`
 	Description    string                 `db:"description" json:"description"`
 	Type           string                 `db:"type" json:"type"`
-	Enabled        bool                   `db:"enabled" json:"enabled"`
 	Priority       int                    `db:"priority" json:"priority"`
-	Config         map[string]interface{} `db:"config" json:"config"`
-	CreatedAt      time.Time              `db:"created_at" json:"created_at"`
-	UpdatedAt      time.Time              `db:"updated_at" json:"updated_at"`
-	CreatedBy      *string                `db:"created_by" json:"created_by,omitempty"`
+	Enabled        bool                   `db:"enabled" json:"enabled"`
 }
 
 // FilterViolation represents a filter violation record in the database
 type FilterViolation struct {
-	ID               string                 `db:"id" json:"id"`
-	OrganizationID   string                 `db:"organization_id" json:"organization_id"`
-	FilterID         string                 `db:"filter_id" json:"filter_id"`
-	RequestID        string                 `db:"request_id" json:"request_id"`
-	SessionID        *string                `db:"session_id" json:"session_id,omitempty"`
-	ServerID         *string                `db:"server_id" json:"server_id,omitempty"`
-	ViolationType    string                 `db:"violation_type" json:"violation_type"`
-	ActionTaken      string                 `db:"action_taken" json:"action_taken"`
-	ContentSnippet   *string                `db:"content_snippet" json:"content_snippet,omitempty"`
-	PatternMatched   *string                `db:"pattern_matched" json:"pattern_matched,omitempty"`
-	Severity         string                 `db:"severity" json:"severity"`
-	UserID           string                 `db:"user_id" json:"user_id"`
-	RemoteIP         *string                `db:"remote_ip" json:"remote_ip,omitempty"`
-	UserAgent        *string                `db:"user_agent" json:"user_agent,omitempty"`
-	Direction        *string                `db:"direction" json:"direction,omitempty"`
-	Metadata         map[string]interface{} `db:"metadata" json:"metadata"`
-	CreatedAt        time.Time              `db:"created_at" json:"created_at"`
+	CreatedAt      time.Time              `db:"created_at" json:"created_at"`
+	ContentSnippet *string                `db:"content_snippet" json:"content_snippet,omitempty"`
+	PatternMatched *string                `db:"pattern_matched" json:"pattern_matched,omitempty"`
+	Metadata       map[string]interface{} `db:"metadata" json:"metadata"`
+	SessionID      *string                `db:"session_id" json:"session_id,omitempty"`
+	ServerID       *string                `db:"server_id" json:"server_id,omitempty"`
+	Direction      *string                `db:"direction" json:"direction,omitempty"`
+	UserAgent      *string                `db:"user_agent" json:"user_agent,omitempty"`
+	RemoteIP       *string                `db:"remote_ip" json:"remote_ip,omitempty"`
+	Severity       string                 `db:"severity" json:"severity"`
+	ID             string                 `db:"id" json:"id"`
+	UserID         string                 `db:"user_id" json:"user_id"`
+	ActionTaken    string                 `db:"action_taken" json:"action_taken"`
+	FilterID       string                 `db:"filter_id" json:"filter_id"`
+	ViolationType  string                 `db:"violation_type" json:"violation_type"`
+	RequestID      string                 `db:"request_id" json:"request_id"`
+	OrganizationID string                 `db:"organization_id" json:"organization_id"`
 }
 
 // ProxyRoute represents a proxy routing rule in the database
 type ProxyRoute struct {
-	ID                  string                 `db:"id" json:"id"`
-	OrganizationID      string                 `db:"organization_id" json:"organization_id"`
-	Name                string                 `db:"name" json:"name"`
-	Description         string                 `db:"description" json:"description"`
-	PathPattern         string                 `db:"path_pattern" json:"path_pattern"`
-	MethodPattern       string                 `db:"method_pattern" json:"method_pattern"`
-	HostPattern         string                 `db:"host_pattern" json:"host_pattern"`
-	TargetType          string                 `db:"target_type" json:"target_type"`
-	TargetConfig        map[string]interface{} `db:"target_config" json:"target_config"`
-	Enabled             bool                   `db:"enabled" json:"enabled"`
-	Priority            int                    `db:"priority" json:"priority"`
-	TimeoutSeconds      int                    `db:"timeout_seconds" json:"timeout_seconds"`
-	MaxRetries          int                    `db:"max_retries" json:"max_retries"`
-	LoadBalancerType    string                 `db:"load_balancer_type" json:"load_balancer_type"`
-	HealthCheckEnabled  bool                   `db:"health_check_enabled" json:"health_check_enabled"`
-	CreatedAt           time.Time              `db:"created_at" json:"created_at"`
-	UpdatedAt           time.Time              `db:"updated_at" json:"updated_at"`
+	UpdatedAt          time.Time              `db:"updated_at" json:"updated_at"`
+	CreatedAt          time.Time              `db:"created_at" json:"created_at"`
+	TargetConfig       map[string]interface{} `db:"target_config" json:"target_config"`
+	PathPattern        string                 `db:"path_pattern" json:"path_pattern"`
+	LoadBalancerType   string                 `db:"load_balancer_type" json:"load_balancer_type"`
+	MethodPattern      string                 `db:"method_pattern" json:"method_pattern"`
+	HostPattern        string                 `db:"host_pattern" json:"host_pattern"`
+	TargetType         string                 `db:"target_type" json:"target_type"`
+	Description        string                 `db:"description" json:"description"`
+	OrganizationID     string                 `db:"organization_id" json:"organization_id"`
+	Name               string                 `db:"name" json:"name"`
+	ID                 string                 `db:"id" json:"id"`
+	MaxRetries         int                    `db:"max_retries" json:"max_retries"`
+	TimeoutSeconds     int                    `db:"timeout_seconds" json:"timeout_seconds"`
+	Priority           int                    `db:"priority" json:"priority"`
+	HealthCheckEnabled bool                   `db:"health_check_enabled" json:"health_check_enabled"`
+	Enabled            bool                   `db:"enabled" json:"enabled"`
 }
 
 // RequestRoutingLog represents a request routing log entry in the database
 type RequestRoutingLog struct {
-	ID                     string                 `db:"id" json:"id"`
-	OrganizationID         string                 `db:"organization_id" json:"organization_id"`
-	RequestID              string                 `db:"request_id" json:"request_id"`
-	Method                 string                 `db:"method" json:"method"`
-	Path                   string                 `db:"path" json:"path"`
-	Host                   *string                `db:"host" json:"host,omitempty"`
-	UserAgent              *string                `db:"user_agent" json:"user_agent,omitempty"`
-	RemoteIP               *string                `db:"remote_ip" json:"remote_ip,omitempty"`
-	MatchedRouteID         *string                `db:"matched_route_id" json:"matched_route_id,omitempty"`
-	TargetServerID         *string                `db:"target_server_id" json:"target_server_id,omitempty"`
-	RoutingDecision        string                 `db:"routing_decision" json:"routing_decision"`
-	RouteResolutionTimeMs  *int                   `db:"route_resolution_time_ms" json:"route_resolution_time_ms,omitempty"`
-	TotalRequestTimeMs     *int                   `db:"total_request_time_ms" json:"total_request_time_ms,omitempty"`
-	StatusCode             *int                   `db:"status_code" json:"status_code,omitempty"`
-	ErrorMessage           *string                `db:"error_message" json:"error_message,omitempty"`
-	Metadata               map[string]interface{} `db:"metadata" json:"metadata"`
-	CreatedAt              time.Time              `db:"created_at" json:"created_at"`
+	CreatedAt             time.Time              `db:"created_at" json:"created_at"`
+	TotalRequestTimeMs    *int                   `db:"total_request_time_ms" json:"total_request_time_ms,omitempty"`
+	RouteResolutionTimeMs *int                   `db:"route_resolution_time_ms" json:"route_resolution_time_ms,omitempty"`
+	Metadata              map[string]interface{} `db:"metadata" json:"metadata"`
+	ErrorMessage          *string                `db:"error_message" json:"error_message,omitempty"`
+	Host                  *string                `db:"host" json:"host,omitempty"`
+	UserAgent             *string                `db:"user_agent" json:"user_agent,omitempty"`
+	StatusCode            *int                   `db:"status_code" json:"status_code,omitempty"`
+	RemoteIP              *string                `db:"remote_ip" json:"remote_ip,omitempty"`
+	TargetServerID        *string                `db:"target_server_id" json:"target_server_id,omitempty"`
+	MatchedRouteID        *string                `db:"matched_route_id" json:"matched_route_id,omitempty"`
+	RoutingDecision       string                 `db:"routing_decision" json:"routing_decision"`
+	ID                    string                 `db:"id" json:"id"`
+	RequestID             string                 `db:"request_id" json:"request_id"`
+	Path                  string                 `db:"path" json:"path"`
+	Method                string                 `db:"method" json:"method"`
+	OrganizationID        string                 `db:"organization_id" json:"organization_id"`
 }
 
 // NewContentFilter creates a new ContentFilter
@@ -108,7 +108,7 @@ func (cf *ContentFilter) IsValid() bool {
 			break
 		}
 	}
-	
+
 	return cf.Name != "" &&
 		cf.OrganizationID != "" &&
 		typeValid &&
@@ -126,7 +126,7 @@ func (fv *FilterViolation) IsValid() bool {
 			break
 		}
 	}
-	
+
 	return fv.OrganizationID != "" &&
 		fv.FilterID != "" &&
 		fv.RequestID != "" &&

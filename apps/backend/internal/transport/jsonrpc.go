@@ -18,34 +18,34 @@ import (
 type JSONRPCTransport struct {
 	*BaseTransport
 	client       *http.Client
-	endpoint     string
-	timeout      time.Duration
 	requestQueue chan *types.MCPMessage
 	responseMap  map[string]chan *types.MCPMessage
 	config       map[string]interface{}
+	endpoint     string
+	timeout      time.Duration
 }
 
 // JSONRPCRequest represents a JSON-RPC request
 type JSONRPCRequest struct {
+	Params  interface{} `json:"params,omitempty"`
 	ID      string      `json:"id"`
 	JSONRPC string      `json:"jsonrpc"`
 	Method  string      `json:"method"`
-	Params  interface{} `json:"params,omitempty"`
 }
 
 // JSONRPCResponse represents a JSON-RPC response
 type JSONRPCResponse struct {
-	ID      string                 `json:"id"`
-	JSONRPC string                 `json:"jsonrpc"`
 	Result  map[string]interface{} `json:"result,omitempty"`
 	Error   *JSONRPCError          `json:"error,omitempty"`
+	ID      string                 `json:"id"`
+	JSONRPC string                 `json:"jsonrpc"`
 }
 
 // JSONRPCError represents a JSON-RPC error
 type JSONRPCError struct {
-	Code    int         `json:"code"`
-	Message string      `json:"message"`
 	Data    interface{} `json:"data,omitempty"`
+	Message string      `json:"message"`
+	Code    int         `json:"code"`
 }
 
 // NewJSONRPCTransport creates a new JSON-RPC transport instance
@@ -524,14 +524,14 @@ func ValidateJSONRPCResponse(resp *JSONRPCResponse) error {
 // GetConnectionMetrics returns detailed metrics about the JSON-RPC transport
 func (j *JSONRPCTransport) GetConnectionMetrics() map[string]interface{} {
 	return map[string]interface{}{
-		"transport_type":     types.TransportTypeHTTP,
-		"endpoint":           j.endpoint,
-		"timeout":            j.timeout,
-		"connected":          j.IsConnected(),
-		"session_id":         j.GetSessionID(),
-		"pending_requests":   len(j.requestQueue),
-		"pending_responses":  len(j.responseMap),
-		"client_timeout":     j.client.Timeout,
+		"transport_type":    types.TransportTypeHTTP,
+		"endpoint":          j.endpoint,
+		"timeout":           j.timeout,
+		"connected":         j.IsConnected(),
+		"session_id":        j.GetSessionID(),
+		"pending_requests":  len(j.requestQueue),
+		"pending_responses": len(j.responseMap),
+		"client_timeout":    j.client.Timeout,
 	}
 }
 

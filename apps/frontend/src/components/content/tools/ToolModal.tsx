@@ -163,7 +163,7 @@ export function ToolModal({ tool, isOpen, onClose, onSave }: ToolModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -182,7 +182,7 @@ export function ToolModal({ tool, isOpen, onClose, onSave }: ToolModalProps) {
         max_retries: Number(formData.max_retries),
         is_public: formData.is_public,
         metadata: formData.metadata.trim() ? JSON.parse(formData.metadata) : undefined,
-        tags: formData.tags.trim() 
+        tags: formData.tags.trim()
           ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
           : undefined,
         documentation: formData.documentation.trim() || undefined,
@@ -207,7 +207,7 @@ export function ToolModal({ tool, isOpen, onClose, onSave }: ToolModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       style={{
         position: 'fixed',
         top: 0,
@@ -236,17 +236,17 @@ export function ToolModal({ tool, isOpen, onClose, onSave }: ToolModalProps) {
           padding: '1.5rem',
           borderBottom: '1px solid #e5e7eb'
         }}>
-          <h2 style={{ 
-            margin: 0, 
-            fontSize: '1.25rem', 
-            fontWeight: '600', 
-            color: '#111827' 
+          <h2 style={{
+            margin: 0,
+            fontSize: '1.25rem',
+            fontWeight: '600',
+            color: '#111827'
           }}>
             {tool ? 'Edit Tool' : 'Create Tool'}
           </h2>
         </div>
 
-        <div style={{ 
+        <div style={{
           padding: '1.5rem',
           maxHeight: 'calc(90vh - 140px)',
           overflowY: 'auto'

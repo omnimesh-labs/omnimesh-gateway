@@ -7,8 +7,8 @@ import (
 
 // pluginRegistry implements PluginRegistry interface
 type pluginRegistry struct {
-	mu        sync.RWMutex
 	factories map[string]PluginFactory
+	mu        sync.RWMutex
 }
 
 // NewPluginRegistry creates a new plugin registry

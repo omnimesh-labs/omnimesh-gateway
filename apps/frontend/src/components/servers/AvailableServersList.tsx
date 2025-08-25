@@ -26,9 +26,9 @@ export function AvailableServersList({ onRegister }: AvailableServersListProps) 
       setLoading(true);
       const currentOffset = reset ? 0 : offset;
       const response = await discoveryApi.searchPackages(search, currentOffset, pageSize);
-      
+
       const packageList = Object.values(response.results);
-      
+
       if (reset) {
         setPackages(packageList);
         setOffset(pageSize);
@@ -36,7 +36,7 @@ export function AvailableServersList({ onRegister }: AvailableServersListProps) 
         setPackages(prev => [...prev, ...packageList]);
         setOffset(prev => prev + pageSize);
       }
-      
+
       setHasMore(response.hasMore);
       setTotal(response.total);
       setError(null);

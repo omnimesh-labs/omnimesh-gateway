@@ -347,9 +347,9 @@ func generateRandomString(length int) string {
 
 // PathRewriteConfig represents configuration for path rewriting
 type PathRewriteConfig struct {
+	LogLevel string                  `yaml:"log_level" json:"log_level"`
 	Rules    []types.PathRewriteRule `yaml:"rules" json:"rules"`
 	Enabled  bool                    `yaml:"enabled" json:"enabled"`
-	LogLevel string                  `yaml:"log_level" json:"log_level"`
 }
 
 // ValidateConfig validates the path rewrite configuration

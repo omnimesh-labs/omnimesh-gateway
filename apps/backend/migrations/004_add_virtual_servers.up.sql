@@ -8,23 +8,23 @@ CREATE TYPE adapter_type_enum AS ENUM ('REST', 'GraphQL', 'gRPC', 'SOAP');
 CREATE TABLE virtual_servers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    
+
     -- Basic information
     name VARCHAR(255) NOT NULL,
     description TEXT,
     adapter_type adapter_type_enum NOT NULL DEFAULT 'REST',
-    
+
     -- Tool definitions stored as JSONB for flexibility
     tools JSONB NOT NULL DEFAULT '[]',
-    
+
     -- Status and metadata
     is_active BOOLEAN DEFAULT true,
     metadata JSONB DEFAULT '{}',
-    
+
     -- Timestamps
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     -- Constraints
     UNIQUE(organization_id, name),
     CONSTRAINT valid_tools_format CHECK (
@@ -33,8 +33,8 @@ CREATE TABLE virtual_servers (
 );
 
 -- Trigger for updated_at
-CREATE TRIGGER virtual_servers_updated_at 
-    BEFORE UPDATE ON virtual_servers 
+CREATE TRIGGER virtual_servers_updated_at
+    BEFORE UPDATE ON virtual_servers
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- Performance indexes
@@ -49,10 +49,10 @@ CREATE INDEX idx_audit_logs_virtual_server ON audit_logs(virtual_server_id, crea
 
 -- Insert example Slack virtual server for testing
 INSERT INTO virtual_servers (
-    organization_id, 
-    name, 
-    description, 
-    adapter_type, 
+    organization_id,
+    name,
+    description,
+    adapter_type,
     tools,
     metadata
 ) VALUES (

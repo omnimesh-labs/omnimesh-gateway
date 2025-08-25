@@ -12,8 +12,8 @@ import (
 
 // MCPDiscoveryService handles external MCP package discovery
 type MCPDiscoveryService struct {
-	baseURL    string
 	httpClient *http.Client
+	baseURL    string
 }
 
 // NewMCPDiscoveryService creates a new MCP discovery service

@@ -90,9 +90,9 @@ export function A2AAgentList({ agents, onEdit, onDelete, onToggle, onTest, showI
       overflow: 'hidden'
     }}>
       <div style={{ padding: '1.5rem 1.5rem 1rem 1.5rem' }}>
-        <h3 style={{ 
-          fontSize: '1.125rem', 
-          fontWeight: '600', 
+        <h3 style={{
+          fontSize: '1.125rem',
+          fontWeight: '600',
           color: '#111827',
           margin: '0 0 1rem 0'
         }}>
@@ -122,17 +122,17 @@ export function A2AAgentList({ agents, onEdit, onDelete, onToggle, onTest, showI
                   {/* Agent Info */}
                   <div style={{ flex: 1 }}>
                     <div style={{ marginBottom: '0.75rem' }}>
-                      <h4 style={{ 
-                        fontSize: '1.125rem', 
-                        fontWeight: '600', 
+                      <h4 style={{
+                        fontSize: '1.125rem',
+                        fontWeight: '600',
                         color: '#111827',
                         margin: '0 0 0.25rem 0'
                       }}>
                         {agent.name}
                       </h4>
                       {agent.description && (
-                        <p style={{ 
-                          fontSize: '0.875rem', 
+                        <p style={{
+                          fontSize: '0.875rem',
                           color: '#6b7280',
                           margin: 0
                         }}>
@@ -155,7 +155,7 @@ export function A2AAgentList({ agents, onEdit, onDelete, onToggle, onTest, showI
                       }}>
                         {agent.is_active ? 'Active' : 'Inactive'}
                       </span>
-                      
+
                       <span style={{
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -166,7 +166,7 @@ export function A2AAgentList({ agents, onEdit, onDelete, onToggle, onTest, showI
                         backgroundColor: statusColors.health.bg,
                         color: statusColors.health.text
                       }}>
-                        {agent.health_status === 'healthy' ? 'Reachable' : 
+                        {agent.health_status === 'healthy' ? 'Reachable' :
                          agent.health_status === 'unhealthy' ? 'Unreachable' : 'Unknown'}
                       </span>
 
@@ -198,8 +198,8 @@ export function A2AAgentList({ agents, onEdit, onDelete, onToggle, onTest, showI
                     </div>
 
                     {/* Agent Details */}
-                    <div style={{ 
-                      fontSize: '0.75rem', 
+                    <div style={{
+                      fontSize: '0.75rem',
                       color: '#6b7280',
                       lineHeight: '1.5',
                       marginBottom: '0.75rem'
@@ -245,7 +245,7 @@ export function A2AAgentList({ agents, onEdit, onDelete, onToggle, onTest, showI
                         border: `1px solid ${testResult.result.success ? '#bae6fd' : '#fecaca'}`,
                         marginBottom: '0.75rem'
                       }}>
-                        <div style={{ 
+                        <div style={{
                           fontSize: '0.875rem',
                           color: testResult.result.success ? '#0c4a6e' : '#991b1b',
                           fontWeight: '500'
@@ -253,7 +253,7 @@ export function A2AAgentList({ agents, onEdit, onDelete, onToggle, onTest, showI
                           Test {testResult.result.success ? 'Successful' : 'Failed'}
                         </div>
                         {testResult.result.message && (
-                          <div style={{ 
+                          <div style={{
                             fontSize: '0.75rem',
                             color: testResult.result.success ? '#0369a1' : '#b91c1c',
                             marginTop: '0.25rem'

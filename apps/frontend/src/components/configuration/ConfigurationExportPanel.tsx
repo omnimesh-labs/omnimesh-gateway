@@ -19,7 +19,7 @@ interface ConfigurationExportPanelProps {
 
 const DEFAULT_ENTITY_TYPES = [
   'servers',
-  'virtual_servers', 
+  'virtual_servers',
   'tools',
   'prompts',
   'resources',
@@ -44,7 +44,7 @@ export function ConfigurationExportPanel({
       includeDependencies,
       tags: tags.split(',').map(t => t.trim()).filter(Boolean)
     };
-    
+
     await onExport(options);
   };
 
@@ -60,7 +60,7 @@ export function ConfigurationExportPanel({
       includeDependencies,
       tags: tags.split(',').map(t => t.trim()).filter(Boolean)
     };
-    
+
     await onExport(options);
   };
 
@@ -111,7 +111,7 @@ export function ConfigurationExportPanel({
               }}>
                 Filter Options
               </label>
-              
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <input
@@ -128,7 +128,7 @@ export function ConfigurationExportPanel({
                     Include Inactive
                   </span>
                 </label>
-                
+
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <input
                     type="checkbox"
@@ -193,7 +193,7 @@ export function ConfigurationExportPanel({
             }}>
               Export Actions
             </label>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <button
                 onClick={handleExportAll}
@@ -223,7 +223,7 @@ export function ConfigurationExportPanel({
               >
                 📥 Export All Configuration
               </button>
-              
+
               <button
                 onClick={handleExportSelected}
                 disabled={isExporting || selectedTypes.length === 0}

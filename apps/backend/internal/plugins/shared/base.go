@@ -11,17 +11,16 @@ import (
 
 // BasePlugin provides common functionality for all plugin implementations
 type BasePlugin struct {
+	config        map[string]interface{}
+	stats         *types.FilterStat
 	pluginType    PluginType
 	name          string
-	priority      int
-	enabled       bool
 	executionMode PluginExecutionMode
-	config        map[string]interface{}
 	capabilities  PluginCapabilities
+	priority      int
 	mu            sync.RWMutex
-	stats         *types.FilterStat
+	enabled       bool
 }
-
 
 // NewBasePlugin creates a new base plugin instance
 func NewBasePlugin(pluginType PluginType, name string, priority int) *BasePlugin {
@@ -45,7 +44,6 @@ func NewBasePlugin(pluginType PluginType, name string, priority int) *BasePlugin
 		},
 	}
 }
-
 
 // GetType returns the plugin type
 func (b *BasePlugin) GetType() PluginType {
@@ -250,7 +248,6 @@ func CreatePluginResult(blocked, modified bool, action PluginAction, reason stri
 	}
 }
 
-
 // CreatePluginViolation creates a standard plugin violation
 func CreatePluginViolation(violationType, pattern, match string, position int, severity string) PluginViolation {
 	return PluginViolation{
@@ -262,7 +259,6 @@ func CreatePluginViolation(violationType, pattern, match string, position int, s
 		Metadata: make(map[string]interface{}),
 	}
 }
-
 
 // CreatePluginContext creates a plugin context from request data
 func CreatePluginContext(requestID, orgID, userID, serverID, sessionID string, direction PluginDirection, contentType string) *PluginContext {
@@ -279,7 +275,6 @@ func CreatePluginContext(requestID, orgID, userID, serverID, sessionID string, d
 		ExecutionMode:  string(PluginModeEnforcing),
 	}
 }
-
 
 // CreatePluginContent creates plugin content from raw data
 func CreatePluginContent(raw string, parsed interface{}, headers map[string]string, params map[string]interface{}) *PluginContent {
@@ -302,7 +297,6 @@ func CreatePluginContent(raw string, parsed interface{}, headers map[string]stri
 
 	return content
 }
-
 
 // GetConfigValue safely gets a configuration value with type checking
 func GetConfigValue[T any](config map[string]interface{}, key string, defaultValue T) T {

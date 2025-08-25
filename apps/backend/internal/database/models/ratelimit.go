@@ -9,47 +9,47 @@ import (
 
 // RateLimit represents the rate_limits table from the ERD
 type RateLimit struct {
-	ID                uuid.UUID      `db:"id" json:"id"`
-	OrganizationID    uuid.UUID      `db:"organization_id" json:"organization_id"`
-	Scope             string         `db:"scope" json:"scope"` // rate_limit_scope_enum
+	CreatedAt         time.Time      `db:"created_at" json:"created_at"`
+	UpdatedAt         time.Time      `db:"updated_at" json:"updated_at"`
+	Scope             string         `db:"scope" json:"scope"`
 	ScopeID           sql.NullString `db:"scope_id" json:"scope_id,omitempty"`
 	RequestsPerMinute int            `db:"requests_per_minute" json:"requests_per_minute"`
 	RequestsPerHour   sql.NullInt32  `db:"requests_per_hour" json:"requests_per_hour,omitempty"`
 	RequestsPerDay    sql.NullInt32  `db:"requests_per_day" json:"requests_per_day,omitempty"`
 	BurstLimit        sql.NullInt32  `db:"burst_limit" json:"burst_limit,omitempty"`
+	ID                uuid.UUID      `db:"id" json:"id"`
+	OrganizationID    uuid.UUID      `db:"organization_id" json:"organization_id"`
 	IsActive          bool           `db:"is_active" json:"is_active"`
-	CreatedAt         time.Time      `db:"created_at" json:"created_at"`
-	UpdatedAt         time.Time      `db:"updated_at" json:"updated_at"`
 }
 
 // RateLimitUsage represents the rate_limit_usage table from the ERD
 type RateLimitUsage struct {
-	ID             uuid.UUID `db:"id" json:"id"`
-	OrganizationID uuid.UUID `db:"organization_id" json:"organization_id"`
-	RateLimitID    uuid.UUID `db:"rate_limit_id" json:"rate_limit_id"`
-	Identifier     string    `db:"identifier" json:"identifier"`
 	WindowStart    time.Time `db:"window_start" json:"window_start"`
-	RequestCount   int       `db:"request_count" json:"request_count"`
 	ExpiresAt      time.Time `db:"expires_at" json:"expires_at"`
 	CreatedAt      time.Time `db:"created_at" json:"created_at"`
 	UpdatedAt      time.Time `db:"updated_at" json:"updated_at"`
+	Identifier     string    `db:"identifier" json:"identifier"`
+	RequestCount   int       `db:"request_count" json:"request_count"`
+	ID             uuid.UUID `db:"id" json:"id"`
+	OrganizationID uuid.UUID `db:"organization_id" json:"organization_id"`
+	RateLimitID    uuid.UUID `db:"rate_limit_id" json:"rate_limit_id"`
 }
 
 // ServerStats represents the server_stats table from the ERD
 type ServerStats struct {
-	ID                uuid.UUID `db:"id" json:"id"`
-	ServerID          uuid.UUID `db:"server_id" json:"server_id"`
-	TotalRequests     int64     `db:"total_requests" json:"total_requests"`
+	WindowStart       time.Time `db:"window_start" json:"window_start"`
+	UpdatedAt         time.Time `db:"updated_at" json:"updated_at"`
+	CreatedAt         time.Time `db:"created_at" json:"created_at"`
+	WindowEnd         time.Time `db:"window_end" json:"window_end"`
 	SuccessRequests   int64     `db:"success_requests" json:"success_requests"`
-	ErrorRequests     int64     `db:"error_requests" json:"error_requests"`
 	ActiveSessions    int       `db:"active_sessions" json:"active_sessions"`
 	AvgResponseTimeMS float64   `db:"avg_response_time_ms" json:"avg_response_time_ms"`
 	MinResponseTimeMS int       `db:"min_response_time_ms" json:"min_response_time_ms"`
 	MaxResponseTimeMS int       `db:"max_response_time_ms" json:"max_response_time_ms"`
-	WindowStart       time.Time `db:"window_start" json:"window_start"`
-	WindowEnd         time.Time `db:"window_end" json:"window_end"`
-	CreatedAt         time.Time `db:"created_at" json:"created_at"`
-	UpdatedAt         time.Time `db:"updated_at" json:"updated_at"`
+	ErrorRequests     int64     `db:"error_requests" json:"error_requests"`
+	TotalRequests     int64     `db:"total_requests" json:"total_requests"`
+	ID                uuid.UUID `db:"id" json:"id"`
+	ServerID          uuid.UUID `db:"server_id" json:"server_id"`
 }
 
 // RateLimitModel handles rate limit database operations
@@ -226,7 +226,7 @@ func NewRateLimitUsageModel(db Database) *RateLimitUsageModel {
 func (m *RateLimitUsageModel) IncrementUsage(orgID, rateLimitID uuid.UUID, identifier string, windowStart time.Time, expiresAt time.Time) error {
 	query := `
 		INSERT INTO rate_limit_usage (
-			id, organization_id, rate_limit_id, identifier, window_start, 
+			id, organization_id, rate_limit_id, identifier, window_start,
 			request_count, expires_at
 		) VALUES ($1, $2, $3, $4, $5, 1, $6)
 		ON CONFLICT (rate_limit_id, identifier, window_start)
@@ -267,7 +267,7 @@ func (m *RateLimitUsageModel) GetUsageInRange(rateLimitID uuid.UUID, identifier 
 		SELECT id, organization_id, rate_limit_id, identifier, window_start,
 			   request_count, expires_at, created_at, updated_at
 		FROM rate_limit_usage
-		WHERE rate_limit_id = $1 AND identifier = $2 
+		WHERE rate_limit_id = $1 AND identifier = $2
 			  AND window_start >= $3 AND window_start <= $4
 		ORDER BY window_start DESC
 	`

@@ -111,7 +111,7 @@ func (m *FilterMiddleware) processInboundRequest(c *gin.Context, orgID, userID, 
 	if rawContent == "" {
 		rawContent = "{}" // Use empty JSON object as placeholder for empty bodies
 	}
-	
+
 	content := shared.CreatePluginContent(
 		rawContent,
 		nil,

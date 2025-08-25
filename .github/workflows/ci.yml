@@ -13,15 +13,15 @@ jobs:
       matrix:
         go-version: [ '1.25.x' ]
         os: [ ubuntu-latest, macos-latest, windows-latest ]
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go-version }}
-    
+
     - name: Cache Go modules
       uses: actions/cache@v4
       with:
@@ -29,16 +29,16 @@ jobs:
         key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
         restore-keys: |
           ${{ runner.os }}-go-
-    
+
     - name: Install dependencies
       run: go mod download
-    
+
     - name: Verify dependencies
       run: go mod verify
-    
+
     - name: Run tests
       run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
-    
+
     - name: Upload coverage to Codecov
       if: matrix.os == 'ubuntu-latest'
       uses: codecov/codecov-action@v4
@@ -51,12 +51,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
         go-version: '1.25.x'
-    
+
     - name: golangci-lint
       uses: golangci/golangci-lint-action@v6
       with:
@@ -65,34 +65,26 @@ jobs:
 
   security:
     runs-on: ubuntu-latest
+    env:
+      GO111MODULE: on
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.25.x'
-    
-    - name: Run Gosec Security Scanner
-      uses: securecodewarrior/github-action-gosec@master
-      with:
-        args: '-fmt sarif -out gosec.sarif ./...'
-    
-    - name: Upload SARIF file
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: gosec.sarif
+      - name: Checkout Source
+        uses: actions/checkout@v3
+      - name: Run Gosec Security Scanner
+        uses: securego/gosec@master
+        with:
+          args: ./...
 
   dependency-check:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
         go-version: '1.25.x'
-    
+
     - name: Run Nancy (dependency vulnerability scanner)
       run: |
         go install github.com/sonatypeoss/nancy@latest
@@ -108,15 +100,15 @@ jobs:
         exclude:
           - goos: windows
             goarch: arm64
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
         go-version: '1.25.x'
-    
+
     - name: Build binary
       env:
         GOOS: ${{ matrix.goos }}
@@ -128,7 +120,7 @@ jobs:
           BINARY_NAME="${BINARY_NAME}.exe"
         fi
         go build -ldflags="-w -s" -o dist/${BINARY_NAME}-${GOOS}-${GOARCH} ./apps/backend/cmd/api
-    
+
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:

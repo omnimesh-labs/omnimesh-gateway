@@ -18,15 +18,15 @@ type ResourceFilter struct {
 
 // ResourceConfig holds the configuration for the Resource filter
 type ResourceConfig struct {
+	Action               string   `json:"action"`
 	AllowedProtocols     []string `json:"allowed_protocols"`
 	BlockedDomains       []string `json:"blocked_domains"`
 	AllowedDomains       []string `json:"allowed_domains"`
-	MaxContentSize       int64    `json:"max_content_size"`
 	AllowedContentTypes  []string `json:"allowed_content_types"`
 	BlockedContentTypes  []string `json:"blocked_content_types"`
+	MaxContentSize       int64    `json:"max_content_size"`
 	AllowPrivateNetworks bool     `json:"allow_private_networks"`
 	AllowLocalhost       bool     `json:"allow_localhost"`
-	Action               string   `json:"action"`
 	LogViolations        bool     `json:"log_violations"`
 }
 
@@ -387,7 +387,7 @@ func (f *ResourceFilter) checkContentType(pluginCtx *shared.FilterContext, conte
 
 	// Check blocked content types
 	for _, blocked := range f.config.BlockedContentTypes {
-		if contentType == strings.ToLower(blocked) {
+		if strings.EqualFold(contentType, blocked) {
 			violation := shared.CreatePluginViolation(
 				"blocked_content_type",
 				"",
@@ -405,7 +405,7 @@ func (f *ResourceFilter) checkContentType(pluginCtx *shared.FilterContext, conte
 	// Check allowed content types (if specified)
 	if len(f.config.AllowedContentTypes) > 0 {
 		for _, allowed := range f.config.AllowedContentTypes {
-			if contentType == strings.ToLower(allowed) {
+			if strings.EqualFold(contentType, allowed) {
 				return nil
 			}
 		}

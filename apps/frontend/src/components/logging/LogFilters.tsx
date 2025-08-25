@@ -11,7 +11,7 @@ interface LogFiltersProps {
 
 export function LogFilters({ onFilterChange, type, loading }: LogFiltersProps) {
   const [filters, setFilters] = useState<LogQueryParams | AuditQueryParams>(
-    type === 'logs' 
+    type === 'logs'
       ? { limit: 100, offset: 0 }
       : { limit: 100, offset: 0 }
   );
@@ -24,7 +24,7 @@ export function LogFilters({ onFilterChange, type, loading }: LogFiltersProps) {
   };
 
   const clearFilters = () => {
-    const clearedFilters = type === 'logs' 
+    const clearedFilters = type === 'logs'
       ? { limit: 100, offset: 0 }
       : { limit: 100, offset: 0 };
     setFilters(clearedFilters);

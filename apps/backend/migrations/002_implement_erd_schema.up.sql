@@ -59,18 +59,18 @@ CREATE TABLE organizations (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     is_active BOOLEAN DEFAULT true,
-    
+
     -- Commercial fields
     plan_type plan_type_enum DEFAULT 'free',
     max_servers INTEGER DEFAULT 10,
     max_sessions INTEGER DEFAULT 100,
     log_retention_days INTEGER DEFAULT 7,
-    
+
     CONSTRAINT valid_log_retention CHECK (log_retention_days > 0 AND log_retention_days <= 3650)
 );
 
-CREATE TRIGGER organizations_updated_at 
-    BEFORE UPDATE ON organizations 
+CREATE TRIGGER organizations_updated_at
+    BEFORE UPDATE ON organizations
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- MCP Servers - Registry of available MCP servers
@@ -80,7 +80,7 @@ CREATE TABLE mcp_servers (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     protocol protocol_enum NOT NULL,
-    
+
     -- Connection details
     url VARCHAR(500), -- For HTTP-based servers
     command VARCHAR(255), -- For stdio servers
@@ -88,30 +88,30 @@ CREATE TABLE mcp_servers (
     environment TEXT[], -- Environment variables as array (KEY=VALUE format)
     -- NOTE: Store secret refs like 'vault:secret/db/password' not raw values
     working_dir VARCHAR(500),
-    
+
     -- Configuration
     version VARCHAR(50),
     timeout_seconds INTEGER DEFAULT 300,
     max_retries INTEGER DEFAULT 3,
-    
+
     -- Status
     status server_status_enum DEFAULT 'active',
     health_check_url VARCHAR(500),
     is_active BOOLEAN DEFAULT true,
-    
+
     -- Metadata
     metadata JSONB DEFAULT '{}',
     tags TEXT[], -- String array for simple tags, NOT JSONB
-    
+
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     UNIQUE(organization_id, name),
     CONSTRAINT valid_timeout CHECK (timeout_seconds > 0 AND timeout_seconds <= 3600)
 );
 
-CREATE TRIGGER mcp_servers_updated_at 
-    BEFORE UPDATE ON mcp_servers 
+CREATE TRIGGER mcp_servers_updated_at
+    BEFORE UPDATE ON mcp_servers
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- MCP Sessions - Active MCP sessions
@@ -119,42 +119,42 @@ CREATE TABLE mcp_sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     server_id UUID NOT NULL REFERENCES mcp_servers(id) ON DELETE CASCADE,
-    
+
     -- Session details
     status session_status_enum DEFAULT 'initializing',
     protocol protocol_enum NOT NULL,
-    
+
     -- Observability IDs for correlation across sessions <-> DB <-> logs
     client_id UUID, -- Client/request identifier
     connection_id UUID, -- WebSocket/HTTP connection identifier
-    
+
     -- Process info (for stdio sessions)
     process_pid INTEGER,
     process_status proc_status_enum,
     process_exit_code INTEGER,
     process_error TEXT,
-    
+
     -- Timing
     started_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     last_activity TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     ended_at TIMESTAMP WITH TIME ZONE,
-    
+
     -- Metadata
     metadata JSONB DEFAULT '{}',
-    
+
     -- User tracking
     user_id VARCHAR(255) DEFAULT 'default-user',
-    
+
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     CONSTRAINT valid_session_timing CHECK (
         ended_at IS NULL OR ended_at >= started_at
     )
 );
 
-CREATE TRIGGER mcp_sessions_updated_at 
-    BEFORE UPDATE ON mcp_sessions 
+CREATE TRIGGER mcp_sessions_updated_at
+    BEFORE UPDATE ON mcp_sessions
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- Health & Monitoring Tables
@@ -163,14 +163,14 @@ CREATE TRIGGER mcp_sessions_updated_at
 CREATE TABLE health_checks (
     id UUID DEFAULT gen_random_uuid(),
     server_id UUID NOT NULL REFERENCES mcp_servers(id) ON DELETE CASCADE,
-    
+
     status health_status_enum NOT NULL,
     response_time_ms INTEGER,
     response_body TEXT,
     error_message TEXT,
-    
+
     checked_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     -- Primary key must include partition key for partitioned tables
     PRIMARY KEY (id, checked_at)
 ) PARTITION BY RANGE (checked_at);
@@ -183,31 +183,31 @@ CREATE TABLE health_checks_current PARTITION OF health_checks
 CREATE TABLE server_stats (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     server_id UUID NOT NULL REFERENCES mcp_servers(id) ON DELETE CASCADE,
-    
+
     -- Counters
     total_requests BIGINT DEFAULT 0,
     success_requests BIGINT DEFAULT 0,
     error_requests BIGINT DEFAULT 0,
     active_sessions INTEGER DEFAULT 0,
-    
+
     -- Performance
     avg_response_time_ms FLOAT DEFAULT 0,
     min_response_time_ms INTEGER DEFAULT 0,
     max_response_time_ms INTEGER DEFAULT 0,
-    
+
     -- Time window
     window_start TIMESTAMP WITH TIME ZONE NOT NULL,
     window_end TIMESTAMP WITH TIME ZONE NOT NULL,
-    
+
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     UNIQUE(server_id, window_start),
     CONSTRAINT valid_window_order CHECK (window_end > window_start)
 );
 
-CREATE TRIGGER server_stats_updated_at 
-    BEFORE UPDATE ON server_stats 
+CREATE TRIGGER server_stats_updated_at
+    BEFORE UPDATE ON server_stats
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- Logging & Audit Tables
@@ -218,30 +218,30 @@ CREATE TABLE log_index (
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     server_id UUID REFERENCES mcp_servers(id) ON DELETE SET NULL,
     session_id UUID REFERENCES mcp_sessions(id) ON DELETE SET NULL,
-    
+
     -- Request classification
     rpc_method VARCHAR(100), -- e.g., 'tools/call', 'resources/read'
     level log_level_enum NOT NULL DEFAULT 'info',
-    
+
     -- Timing and status
     started_at TIMESTAMP WITH TIME ZONE NOT NULL,
     duration_ms INTEGER,
     status_code INTEGER,
     error_flag BOOLEAN DEFAULT false,
-    
+
     -- Object storage pointers
     storage_provider storage_provider_enum NOT NULL,
     object_uri TEXT NOT NULL, -- e.g., s3://bucket/org/2025-01-20/server123/logs.jsonl.gz
     byte_offset BIGINT, -- Optional: position within file for packed logs
-    
+
     -- Client context (kept minimal)
     user_id VARCHAR(255) DEFAULT 'default-user',
     remote_ip INET,
-    
+
     -- Observability correlation
     client_id UUID, -- Match with mcp_sessions.client_id
     connection_id UUID, -- Match with mcp_sessions.connection_id
-    
+
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -249,23 +249,23 @@ CREATE TABLE log_index (
 CREATE TABLE audit_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    
+
     -- Action details
     action VARCHAR(100) NOT NULL, -- 'server.created', 'session.started', etc.
     resource_type VARCHAR(50) NOT NULL,
     resource_id UUID,
-    
+
     -- Actor
     actor_id VARCHAR(255) DEFAULT 'system',
     actor_ip INET,
-    
+
     -- Changes
     old_values JSONB,
     new_values JSONB,
-    
+
     -- Context
     metadata JSONB DEFAULT '{}',
-    
+
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -275,35 +275,35 @@ CREATE TABLE audit_logs (
 CREATE TABLE rate_limits (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    
+
     -- Scope
     scope rate_limit_scope_enum NOT NULL,
     scope_id VARCHAR(255), -- server_id, user_id, or IP address
-    
+
     -- Limits
     requests_per_minute INTEGER NOT NULL,
     requests_per_hour INTEGER,
     requests_per_day INTEGER,
-    
+
     -- Burst settings
     burst_limit INTEGER,
-    
+
     -- Status
     is_active BOOLEAN DEFAULT true,
-    
+
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     UNIQUE(organization_id, scope, scope_id),
     CONSTRAINT valid_rate_limits CHECK (
-        requests_per_minute > 0 AND 
+        requests_per_minute > 0 AND
         (requests_per_hour IS NULL OR requests_per_hour >= requests_per_minute) AND
         (requests_per_day IS NULL OR requests_per_day >= COALESCE(requests_per_hour, requests_per_minute))
     )
 );
 
-CREATE TRIGGER rate_limits_updated_at 
-    BEFORE UPDATE ON rate_limits 
+CREATE TRIGGER rate_limits_updated_at
+    BEFORE UPDATE ON rate_limits
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- Rate Limit Usage - Track rate limit usage (can be Redis-backed in production)
@@ -311,23 +311,23 @@ CREATE TABLE rate_limit_usage (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     rate_limit_id UUID NOT NULL REFERENCES rate_limits(id) ON DELETE CASCADE,
-    
+
     -- Tracking
     identifier VARCHAR(255) NOT NULL, -- user_id, IP, etc.
     window_start TIMESTAMP WITH TIME ZONE NOT NULL,
     request_count INTEGER DEFAULT 0,
-    
+
     -- TTL for cleanup
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    
+
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     UNIQUE(rate_limit_id, identifier, window_start)
 );
 
-CREATE TRIGGER rate_limit_usage_updated_at 
-    BEFORE UPDATE ON rate_limit_usage 
+CREATE TRIGGER rate_limit_usage_updated_at
+    BEFORE UPDATE ON rate_limit_usage
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- Aggregates Tables
@@ -337,35 +337,35 @@ CREATE TABLE log_aggregates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     server_id UUID REFERENCES mcp_servers(id) ON DELETE SET NULL,
-    
+
     -- Aggregation details
     window_type aggregation_window_enum NOT NULL,
     window_start TIMESTAMP WITH TIME ZONE NOT NULL,
     rpc_method VARCHAR(100), -- NULL for all methods
-    
+
     -- Metrics
     total_requests BIGINT DEFAULT 0,
     success_requests BIGINT DEFAULT 0,
     error_requests BIGINT DEFAULT 0,
-    
+
     -- Performance percentiles (in milliseconds)
     p50_duration_ms INTEGER,
     p95_duration_ms INTEGER,
     p99_duration_ms INTEGER,
     avg_duration_ms FLOAT,
-    
+
     -- Volume stats
     total_bytes_in BIGINT DEFAULT 0,
     total_bytes_out BIGINT DEFAULT 0,
-    
+
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     UNIQUE(organization_id, server_id, window_type, window_start, rpc_method)
 );
 
-CREATE TRIGGER log_aggregates_updated_at 
-    BEFORE UPDATE ON log_aggregates 
+CREATE TRIGGER log_aggregates_updated_at
+    BEFORE UPDATE ON log_aggregates
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- Performance Indexes
@@ -426,7 +426,7 @@ CREATE INDEX idx_log_index_org_method_time ON log_index(organization_id, rpc_met
 
 -- Active Sessions View
 CREATE VIEW active_sessions AS
-SELECT 
+SELECT
     s.id,
     s.organization_id,
     s.server_id,
@@ -442,7 +442,7 @@ WHERE s.status = 'active';
 
 -- Server Health Summary
 CREATE VIEW server_health_summary AS
-SELECT 
+SELECT
     s.id,
     s.organization_id,
     s.name,
@@ -484,8 +484,8 @@ CREATE TABLE users (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TRIGGER users_updated_at 
-    BEFORE UPDATE ON users 
+CREATE TRIGGER users_updated_at
+    BEFORE UPDATE ON users
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- API Keys table
@@ -504,8 +504,8 @@ CREATE TABLE api_keys (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TRIGGER api_keys_updated_at 
-    BEFORE UPDATE ON api_keys 
+CREATE TRIGGER api_keys_updated_at
+    BEFORE UPDATE ON api_keys
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- Policies table - Access control policies
@@ -522,12 +522,12 @@ CREATE TABLE policies (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     created_by UUID NOT NULL REFERENCES users(id),
-    
+
     UNIQUE(organization_id, name)
 );
 
-CREATE TRIGGER policies_updated_at 
-    BEFORE UPDATE ON policies 
+CREATE TRIGGER policies_updated_at
+    BEFORE UPDATE ON policies
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- Users indexes

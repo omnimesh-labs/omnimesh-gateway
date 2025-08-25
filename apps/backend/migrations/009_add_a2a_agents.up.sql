@@ -11,38 +11,38 @@ CREATE TYPE auth_type_enum AS ENUM ('api_key', 'bearer', 'oauth', 'none');
 CREATE TABLE a2a_agents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    
+
     -- Basic information
     name VARCHAR(255) NOT NULL,
     description TEXT,
     endpoint_url VARCHAR(500) NOT NULL,
     agent_type agent_type_enum NOT NULL DEFAULT 'custom',
     protocol_version VARCHAR(50) DEFAULT '1.0',
-    
+
     -- Capabilities stored as JSONB for flexibility
     capabilities JSONB NOT NULL DEFAULT '{"chat": true, "tools": false, "streaming": false}',
-    
+
     -- Configuration parameters (max_tokens, temperature, etc.)
     config JSONB DEFAULT '{}',
-    
+
     -- Authentication configuration
     auth_type auth_type_enum NOT NULL DEFAULT 'none',
     auth_value TEXT, -- Encrypted credentials stored here
-    
+
     -- Status and metadata
     is_active BOOLEAN DEFAULT true,
     tags TEXT[] DEFAULT ARRAY[]::TEXT[],
     metadata JSONB DEFAULT '{}',
-    
+
     -- Health tracking
     last_health_check TIMESTAMP WITH TIME ZONE,
     health_status VARCHAR(50) DEFAULT 'unknown', -- unknown, healthy, unhealthy
     health_error TEXT,
-    
+
     -- Timestamps
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     -- Constraints
     UNIQUE(organization_id, name),
     CONSTRAINT valid_capabilities_format CHECK (
@@ -57,8 +57,8 @@ CREATE TABLE a2a_agents (
 );
 
 -- Trigger for updated_at
-CREATE TRIGGER a2a_agents_updated_at 
-    BEFORE UPDATE ON a2a_agents 
+CREATE TRIGGER a2a_agents_updated_at
+    BEFORE UPDATE ON a2a_agents
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- Performance indexes
@@ -78,13 +78,13 @@ CREATE TABLE a2a_agent_tools (
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     UNIQUE(agent_id, virtual_server_id, tool_name)
 );
 
 -- Trigger for updated_at
-CREATE TRIGGER a2a_agent_tools_updated_at 
-    BEFORE UPDATE ON a2a_agent_tools 
+CREATE TRIGGER a2a_agent_tools_updated_at
+    BEFORE UPDATE ON a2a_agent_tools
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- Performance indexes for agent tools
@@ -98,9 +98,9 @@ CREATE INDEX idx_audit_logs_a2a_agent ON audit_logs(a2a_agent_id, created_at DES
 
 -- Insert example OpenAI agent for testing
 INSERT INTO a2a_agents (
-    organization_id, 
-    name, 
-    description, 
+    organization_id,
+    name,
+    description,
     endpoint_url,
     agent_type,
     protocol_version,
@@ -135,9 +135,9 @@ INSERT INTO a2a_agents (
 
 -- Insert example Anthropic agent for testing
 INSERT INTO a2a_agents (
-    organization_id, 
-    name, 
-    description, 
+    organization_id,
+    name,
+    description,
     endpoint_url,
     agent_type,
     protocol_version,
@@ -169,9 +169,9 @@ INSERT INTO a2a_agents (
 
 -- Insert example custom agent for testing
 INSERT INTO a2a_agents (
-    organization_id, 
-    name, 
-    description, 
+    organization_id,
+    name,
+    description,
     endpoint_url,
     agent_type,
     protocol_version,

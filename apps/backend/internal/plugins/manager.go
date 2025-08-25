@@ -13,9 +13,9 @@ import (
 
 // pluginManager implements PluginManager interface
 type pluginManager struct {
-	mu      sync.RWMutex
 	plugins map[string]shared.Plugin
 	stats   *types.FilteringMetrics
+	mu      sync.RWMutex
 }
 
 // NewPluginManager creates a new plugin manager
@@ -53,7 +53,7 @@ func (m *pluginManager) AddPlugin(plugin Plugin) error {
 	}
 
 	m.plugins[name] = plugin
-	
+
 	// Initialize stats for this plugin
 	m.stats.FilterStats[name] = plugin.GetStats()
 
@@ -110,7 +110,7 @@ func (m *pluginManager) ApplyPlugins(ctx context.Context, pluginCtx *PluginConte
 
 	// Merge all results into a single result
 	mergedResult := shared.MergePluginResults(results)
-	
+
 	return mergedResult, modifiedContent, nil
 }
 
@@ -190,7 +190,7 @@ func (m *pluginManager) ApplyPluginsForDirection(ctx context.Context, pluginCtx 
 	// Create a new context with the specified direction
 	directionCtx := *pluginCtx
 	directionCtx.Direction = direction
-	
+
 	return m.ApplyPluginsInOrder(ctx, &directionCtx, content)
 }
 
@@ -342,13 +342,13 @@ func (m *pluginManager) updateGlobalStats(processingTime time.Duration) {
 	defer m.mu.Unlock()
 
 	m.stats.TotalRequests++
-	
+
 	// Update average processing time using running average
 	if m.stats.TotalRequests == 1 {
 		m.stats.ProcessingTime = processingTime
 	} else {
-		m.stats.ProcessingTime = m.stats.ProcessingTime + 
-			(processingTime - m.stats.ProcessingTime) / time.Duration(m.stats.TotalRequests)
+		m.stats.ProcessingTime = m.stats.ProcessingTime +
+			(processingTime-m.stats.ProcessingTime)/time.Duration(m.stats.TotalRequests)
 	}
 }
 

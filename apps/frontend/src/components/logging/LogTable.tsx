@@ -108,66 +108,66 @@ export function LogTable({ logs, loading, onRefresh }: LogTableProps) {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead style={{ background: '#f9fafb' }}>
             <tr>
-              <th style={{ 
-                textAlign: 'left', 
-                padding: '0.75rem 1rem', 
-                fontSize: '0.75rem', 
-                fontWeight: '500', 
+              <th style={{
+                textAlign: 'left',
+                padding: '0.75rem 1rem',
+                fontSize: '0.75rem',
+                fontWeight: '500',
                 color: '#6b7280',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em'
               }}>
                 Timestamp
               </th>
-              <th style={{ 
-                textAlign: 'left', 
-                padding: '0.75rem 1rem', 
-                fontSize: '0.75rem', 
-                fontWeight: '500', 
+              <th style={{
+                textAlign: 'left',
+                padding: '0.75rem 1rem',
+                fontSize: '0.75rem',
+                fontWeight: '500',
                 color: '#6b7280',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em'
               }}>
                 Level
               </th>
-              <th style={{ 
-                textAlign: 'left', 
-                padding: '0.75rem 1rem', 
-                fontSize: '0.75rem', 
-                fontWeight: '500', 
+              <th style={{
+                textAlign: 'left',
+                padding: '0.75rem 1rem',
+                fontSize: '0.75rem',
+                fontWeight: '500',
                 color: '#6b7280',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em'
               }}>
                 User/Method
               </th>
-              <th style={{ 
-                textAlign: 'left', 
-                padding: '0.75rem 1rem', 
-                fontSize: '0.75rem', 
-                fontWeight: '500', 
+              <th style={{
+                textAlign: 'left',
+                padding: '0.75rem 1rem',
+                fontSize: '0.75rem',
+                fontWeight: '500',
                 color: '#6b7280',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em'
               }}>
                 Status
               </th>
-              <th style={{ 
-                textAlign: 'left', 
-                padding: '0.75rem 1rem', 
-                fontSize: '0.75rem', 
-                fontWeight: '500', 
+              <th style={{
+                textAlign: 'left',
+                padding: '0.75rem 1rem',
+                fontSize: '0.75rem',
+                fontWeight: '500',
                 color: '#6b7280',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em'
               }}>
                 Duration
               </th>
-              <th style={{ 
-                textAlign: 'right', 
-                padding: '0.75rem 1rem', 
-                fontSize: '0.75rem', 
-                fontWeight: '500', 
+              <th style={{
+                textAlign: 'right',
+                padding: '0.75rem 1rem',
+                fontSize: '0.75rem',
+                fontWeight: '500',
                 color: '#6b7280',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em'
@@ -179,8 +179,8 @@ export function LogTable({ logs, loading, onRefresh }: LogTableProps) {
           <tbody>
             {logs && logs.map((log, index) => (
               <React.Fragment key={log.id}>
-                <tr 
-                  style={{ 
+                <tr
+                  style={{
                     borderTop: index > 0 ? '1px solid #f3f4f6' : 'none',
                     background: log.error_flag ? '#fef2f2' : 'white'
                   }}
@@ -282,9 +282,9 @@ export function LogTable({ logs, loading, onRefresh }: LogTableProps) {
                         {log.object_uri && (
                           <div style={{ marginTop: '0.75rem' }}>
                             <strong style={{ color: '#374151' }}>Log Location:</strong>
-                            <div style={{ 
-                              fontFamily: 'monospace', 
-                              fontSize: '0.8125rem', 
+                            <div style={{
+                              fontFamily: 'monospace',
+                              fontSize: '0.8125rem',
                               color: '#6b7280',
                               background: 'white',
                               padding: '0.5rem',

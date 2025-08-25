@@ -16,18 +16,18 @@ import (
 
 // SSETransport implements Server-Sent Events transport for real-time streaming
 type SSETransport struct {
+	writer  http.ResponseWriter
+	flusher http.Flusher
 	*BaseTransport
-	writer          http.ResponseWriter
 	request         *http.Request
-	flusher         http.Flusher
 	eventQueue      chan *types.SSEEvent
 	config          map[string]interface{}
-	mu              sync.RWMutex
 	done            chan struct{}
-	keepAlive       time.Duration
 	keepAliveTicker *time.Ticker
-	bufferSize      int
 	lastEventID     string
+	keepAlive       time.Duration
+	bufferSize      int
+	mu              sync.RWMutex
 }
 
 // NewSSETransport creates a new SSE transport instance
@@ -442,12 +442,12 @@ func (s *SSETransport) GetMetrics() map[string]interface{} {
 	}
 }
 
-// eventHistory stores events for replay functionality  
+// eventHistory stores events for replay functionality
 type eventHistory struct {
-	events   []*types.SSEEvent
-	maxSize  int
-	lastID   string
-	mu       sync.RWMutex
+	lastID  string
+	events  []*types.SSEEvent
+	maxSize int
+	mu      sync.RWMutex
 }
 
 // newEventHistory creates a new event history store
@@ -462,10 +462,10 @@ func newEventHistory(maxSize int) *eventHistory {
 func (eh *eventHistory) addEvent(event *types.SSEEvent) {
 	eh.mu.Lock()
 	defer eh.mu.Unlock()
-	
+
 	eh.events = append(eh.events, event)
 	eh.lastID = event.ID
-	
+
 	// Keep only the most recent events
 	if len(eh.events) > eh.maxSize {
 		eh.events = eh.events[len(eh.events)-eh.maxSize:]
@@ -476,7 +476,7 @@ func (eh *eventHistory) addEvent(event *types.SSEEvent) {
 func (eh *eventHistory) getEventsSince(since string, limit int) ([]*types.SSEEvent, error) {
 	eh.mu.RLock()
 	defer eh.mu.RUnlock()
-	
+
 	if since == "" {
 		// Return latest events if no since ID provided
 		start := 0
@@ -485,7 +485,7 @@ func (eh *eventHistory) getEventsSince(since string, limit int) ([]*types.SSEEve
 		}
 		return eh.events[start:], nil
 	}
-	
+
 	// Find the event with the since ID
 	var sinceIndex = -1
 	for i, event := range eh.events {
@@ -494,23 +494,23 @@ func (eh *eventHistory) getEventsSince(since string, limit int) ([]*types.SSEEve
 			break
 		}
 	}
-	
+
 	if sinceIndex == -1 {
 		return nil, fmt.Errorf("event ID %s not found in history", since)
 	}
-	
+
 	// Return events after the since ID
 	start := sinceIndex + 1
 	end := len(eh.events)
-	
+
 	if limit > 0 && (end-start) > limit {
 		end = start + limit
 	}
-	
+
 	if start >= len(eh.events) {
 		return []*types.SSEEvent{}, nil
 	}
-	
+
 	return eh.events[start:end], nil
 }
 

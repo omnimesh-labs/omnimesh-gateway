@@ -25,7 +25,7 @@ func TestSSEConnection(t *testing.T) {
 	client := &http.Client{Timeout: 30 * time.Second}
 
 	t.Run("Basic SSE Connection", func(t *testing.T) {
-		req, err := http.NewRequest("GET", server.GetURL("/sse"), nil)
+		req, err := http.NewRequest("GET", server.GetURL("/sse"), http.NoBody)
 		helpers.AssertNil(t, err, "Should create request successfully")
 
 		req.Header.Set("Accept", "text/event-stream")
@@ -41,7 +41,7 @@ func TestSSEConnection(t *testing.T) {
 	})
 
 	t.Run("SSE Connection with Session ID", func(t *testing.T) {
-		req, err := http.NewRequest("GET", server.GetURL("/sse"), nil)
+		req, err := http.NewRequest("GET", server.GetURL("/sse"), http.NoBody)
 		helpers.AssertNil(t, err, "Should create request successfully")
 
 		req.Header.Set("Accept", "text/event-stream")
@@ -241,7 +241,7 @@ func TestSSEEventStream(t *testing.T) {
 
 	t.Run("Receive SSE Events", func(t *testing.T) {
 		// Start SSE connection
-		req, err := http.NewRequest("GET", server.GetURL("/sse"), nil)
+		req, err := http.NewRequest("GET", server.GetURL("/sse"), http.NoBody)
 		helpers.AssertNil(t, err, "Should create request successfully")
 
 		req.Header.Set("Accept", "text/event-stream")
@@ -296,7 +296,7 @@ func TestSSEConcurrentConnections(t *testing.T) {
 
 		// Create multiple SSE connections
 		for i := 0; i < numConnections; i++ {
-			req, err := http.NewRequest("GET", server.GetURL("/sse"), nil)
+			req, err := http.NewRequest("GET", server.GetURL("/sse"), http.NoBody)
 			helpers.AssertNil(t, err, "Should create request successfully")
 
 			req.Header.Set("Accept", "text/event-stream")

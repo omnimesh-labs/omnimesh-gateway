@@ -13,7 +13,7 @@ import (
 func TestJWTManager_GenerateAndValidateAccessToken(t *testing.T) {
 	// Setup
 	jwtManager := NewJWTManager("test-secret-key", 15*time.Minute, 7*24*time.Hour)
-	
+
 	user := &types.User{
 		ID:             uuid.New().String(),
 		Email:          "test@example.com",
@@ -60,7 +60,7 @@ func TestJWTManager_GenerateAndValidateAccessToken(t *testing.T) {
 func TestJWTManager_GenerateAndValidateRefreshToken(t *testing.T) {
 	// Setup
 	jwtManager := NewJWTManager("test-secret-key", 15*time.Minute, 7*24*time.Hour)
-	
+
 	user := &types.User{
 		ID:             uuid.New().String(),
 		Email:          "test@example.com",
@@ -95,7 +95,7 @@ func TestJWTManager_GenerateAndValidateRefreshToken(t *testing.T) {
 func TestJWTManager_InvalidateToken(t *testing.T) {
 	// Setup
 	jwtManager := NewJWTManager("test-secret-key", 15*time.Minute, 7*24*time.Hour)
-	
+
 	user := &types.User{
 		ID:             uuid.New().String(),
 		Email:          "test@example.com",
@@ -149,7 +149,7 @@ func TestJWTManager_InvalidToken(t *testing.T) {
 func TestJWTManager_WrongSecret(t *testing.T) {
 	// Generate token with one secret
 	jwtManager1 := NewJWTManager("secret-1", 15*time.Minute, 7*24*time.Hour)
-	
+
 	user := &types.User{
 		ID:             uuid.New().String(),
 		Email:          "test@example.com",

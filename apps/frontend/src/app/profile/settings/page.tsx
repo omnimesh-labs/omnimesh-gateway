@@ -8,7 +8,7 @@ export default function ProfileSettingsPage() {
   const { user, isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-  
+
   // Profile form state
   const [profileForm, setProfileForm] = useState({
     email: user?.email || '',
@@ -19,7 +19,7 @@ export default function ProfileSettingsPage() {
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (profileForm.new_password && profileForm.new_password !== profileForm.confirm_password) {
       setMessage({ type: 'error', text: 'New passwords do not match' });
       return;
@@ -32,14 +32,14 @@ export default function ProfileSettingsPage() {
 
     setIsLoading(true);
     setMessage(null);
-    
+
     try {
       const updates: UpdateProfileRequest = {};
-      
+
       if (profileForm.email !== user?.email) {
         updates.email = profileForm.email;
       }
-      
+
       if (profileForm.new_password) {
         updates.current_password = profileForm.current_password;
         updates.new_password = profileForm.new_password;
@@ -120,7 +120,7 @@ export default function ProfileSettingsPage() {
               required
             />
           </div>
-          
+
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
               Current Password
@@ -140,7 +140,7 @@ export default function ProfileSettingsPage() {
               placeholder="Enter current password to make changes"
             />
           </div>
-          
+
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
               New Password
@@ -160,7 +160,7 @@ export default function ProfileSettingsPage() {
               placeholder="Leave blank to keep current password"
             />
           </div>
-          
+
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
               Confirm New Password
@@ -180,7 +180,7 @@ export default function ProfileSettingsPage() {
               placeholder="Confirm new password"
             />
           </div>
-          
+
           <div style={{ display: 'flex', gap: '0.75rem' }}>
             <button
               type="submit"
@@ -199,7 +199,7 @@ export default function ProfileSettingsPage() {
             >
               {isLoading ? 'Updating...' : 'Update Settings'}
             </button>
-            
+
             <button
               type="button"
               onClick={() => window.history.back()}
@@ -225,13 +225,13 @@ export default function ProfileSettingsPage() {
         <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem', color: '#111827' }}>
           Account Information
         </h3>
-        
+
         <div style={{ display: 'grid', gap: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid #f3f4f6' }}>
             <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>User ID</span>
             <span style={{ fontSize: '0.875rem', color: '#111827', fontFamily: 'monospace' }}>{user.id}</span>
           </div>
-          
+
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid #f3f4f6' }}>
             <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>Role</span>
             <span style={{
@@ -246,12 +246,12 @@ export default function ProfileSettingsPage() {
               {user.role}
             </span>
           </div>
-          
+
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid #f3f4f6' }}>
             <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>Organization</span>
             <span style={{ fontSize: '0.875rem', color: '#111827', fontFamily: 'monospace' }}>{user.organization_id}</span>
           </div>
-          
+
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0' }}>
             <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>Member Since</span>
             <span style={{ fontSize: '0.875rem', color: '#111827' }}>{new Date(user.created_at).toLocaleDateString()}</span>

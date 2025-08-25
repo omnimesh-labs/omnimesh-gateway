@@ -9,30 +9,30 @@ import (
 
 // VirtualServerSpec defines a virtual MCP server configuration
 type VirtualServerSpec struct {
+	CreatedAt   time.Time `json:"createdAt" db:"created_at"`
+	UpdatedAt   time.Time `json:"updatedAt" db:"updated_at"`
 	ID          string    `json:"id" db:"id"`
 	Name        string    `json:"name" db:"name"`
 	Description string    `json:"description" db:"description"`
 	AdapterType string    `json:"adapterType" db:"adapter_type"`
 	Tools       []ToolDef `json:"tools" db:"tools"`
-	CreatedAt   time.Time `json:"createdAt" db:"created_at"`
-	UpdatedAt   time.Time `json:"updatedAt" db:"updated_at"`
 }
 
 // ToolDef defines a tool that can be called through MCP
 type ToolDef struct {
-	Name        string                 `json:"name"`
-	Description string                 `json:"description"`
 	InputSchema map[string]interface{} `json:"inputSchema"`
 	REST        *RESTSpec              `json:"REST,omitempty"`
+	Name        string                 `json:"name"`
+	Description string                 `json:"description"`
 }
 
 // RESTSpec defines how to make REST API calls for a tool
 type RESTSpec struct {
-	Method      string            `json:"method"`
-	URLTemplate string            `json:"URLTemplate"`
 	Headers     map[string]string `json:"headers,omitempty"`
 	Auth        *AuthSpec         `json:"auth,omitempty"`
 	BodyMap     map[string]string `json:"bodyMap,omitempty"`
+	Method      string            `json:"method"`
+	URLTemplate string            `json:"URLTemplate"`
 	TimeoutSec  int               `json:"timeoutSec,omitempty"`
 }
 
@@ -57,23 +57,23 @@ type Adapter interface {
 
 // Virtual MCP JSON-RPC request/response structures
 type VirtualMCPRequest struct {
-	JSONRPC string      `json:"jsonrpc"`
 	ID      interface{} `json:"id"`
-	Method  string      `json:"method"`
 	Params  interface{} `json:"params"`
+	JSONRPC string      `json:"jsonrpc"`
+	Method  string      `json:"method"`
 }
 
 type VirtualMCPResponse struct {
-	JSONRPC string           `json:"jsonrpc"`
 	ID      interface{}      `json:"id"`
 	Result  interface{}      `json:"result,omitempty"`
 	Error   *VirtualMCPError `json:"error,omitempty"`
+	JSONRPC string           `json:"jsonrpc"`
 }
 
 type VirtualMCPError struct {
-	Code    int         `json:"code"`
-	Message string      `json:"message"`
 	Data    interface{} `json:"data,omitempty"`
+	Message string      `json:"message"`
+	Code    int         `json:"code"`
 }
 
 // MCP method parameters and results
@@ -109,9 +109,9 @@ type ListToolsResult struct {
 }
 
 type Tool struct {
+	InputSchema map[string]interface{} `json:"inputSchema"`
 	Name        string                 `json:"name"`
 	Description string                 `json:"description"`
-	InputSchema map[string]interface{} `json:"inputSchema"`
 }
 
 type CallToolParams struct {
@@ -163,15 +163,15 @@ var ErrorMessages = map[int]string{
 
 // Database model for virtual servers
 type VirtualServer struct {
-	ID             uuid.UUID              `db:"id" json:"id"`
-	OrganizationID uuid.UUID              `db:"organization_id" json:"organization_id"`
+	CreatedAt      time.Time              `db:"created_at" json:"created_at"`
+	UpdatedAt      time.Time              `db:"updated_at" json:"updated_at"`
+	Metadata       map[string]interface{} `db:"metadata" json:"metadata,omitempty"`
 	Name           string                 `db:"name" json:"name"`
 	Description    string                 `db:"description" json:"description"`
 	AdapterType    string                 `db:"adapter_type" json:"adapter_type"`
-	Tools          json.RawMessage        `db:"tools" json:"-"` // Raw JSON in DB
-	ToolsData      []ToolDef              `db:"-" json:"tools"` // Parsed tools for Go
+	Tools          json.RawMessage        `db:"tools" json:"-"`
+	ToolsData      []ToolDef              `db:"-" json:"tools"`
+	ID             uuid.UUID              `db:"id" json:"id"`
+	OrganizationID uuid.UUID              `db:"organization_id" json:"organization_id"`
 	IsActive       bool                   `db:"is_active" json:"is_active"`
-	Metadata       map[string]interface{} `db:"metadata" json:"metadata,omitempty"`
-	CreatedAt      time.Time              `db:"created_at" json:"created_at"`
-	UpdatedAt      time.Time              `db:"updated_at" json:"updated_at"`
 }

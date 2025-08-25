@@ -77,7 +77,7 @@ export function ProtectedRoute({ children, fallback, requireRole }: ProtectedRou
                         Access Denied
                     </h2>
                     <p>
-                        You need {requireRole} role or higher to access this resource. 
+                        You need {requireRole} role or higher to access this resource.
                         Your current role: {user.role}
                     </p>
                 </div>

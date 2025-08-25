@@ -11,24 +11,22 @@ import (
 
 // MCPPrompt represents the mcp_prompts table
 type MCPPrompt struct {
-	ID             uuid.UUID              `db:"id" json:"id"`
-	OrganizationID uuid.UUID              `db:"organization_id" json:"organization_id"`
-	Name           string                 `db:"name" json:"name"`
-	Description    sql.NullString         `db:"description" json:"-"`
-	PromptTemplate string                 `db:"prompt_template" json:"prompt_template"`
-	Parameters     []interface{}          `db:"parameters" json:"parameters,omitempty"`
-	Category       string                 `db:"category" json:"category"` // prompt_category_enum
-	UsageCount     int64                  `db:"usage_count" json:"usage_count"`
-	IsActive       bool                   `db:"is_active" json:"is_active"`
-	Metadata       map[string]interface{} `db:"metadata" json:"metadata,omitempty"`
-	Tags           pq.StringArray         `db:"tags" json:"tags,omitempty"`
-	CreatedAt      time.Time              `db:"created_at" json:"created_at"`
-	UpdatedAt      time.Time              `db:"updated_at" json:"updated_at"`
-	CreatedBy      uuid.NullUUID          `db:"created_by" json:"-"`
-	
-	// JSON-friendly fields
-	DescriptionString *string    `db:"-" json:"description,omitempty"`
-	CreatedByUUID     *uuid.UUID `db:"-" json:"created_by,omitempty"`
+	UpdatedAt         time.Time              `db:"updated_at" json:"updated_at"`
+	CreatedAt         time.Time              `db:"created_at" json:"created_at"`
+	Metadata          map[string]interface{} `db:"metadata" json:"metadata,omitempty"`
+	CreatedByUUID     *uuid.UUID             `db:"-" json:"created_by,omitempty"`
+	DescriptionString *string                `db:"-" json:"description,omitempty"`
+	PromptTemplate    string                 `db:"prompt_template" json:"prompt_template"`
+	Category          string                 `db:"category" json:"category"`
+	Name              string                 `db:"name" json:"name"`
+	Parameters        []interface{}          `db:"parameters" json:"parameters,omitempty"`
+	Tags              pq.StringArray         `db:"tags" json:"tags,omitempty"`
+	Description       sql.NullString         `db:"description" json:"-"`
+	UsageCount        int64                  `db:"usage_count" json:"usage_count"`
+	CreatedBy         uuid.NullUUID          `db:"created_by" json:"-"`
+	ID                uuid.UUID              `db:"id" json:"id"`
+	OrganizationID    uuid.UUID              `db:"organization_id" json:"organization_id"`
+	IsActive          bool                   `db:"is_active" json:"is_active"`
 }
 
 // MCPPromptModel handles MCP prompt database operations
@@ -45,7 +43,7 @@ func NewMCPPromptModel(db Database) *MCPPromptModel {
 func (m *MCPPromptModel) Create(prompt *MCPPrompt) error {
 	query := `
 		INSERT INTO mcp_prompts (
-			id, organization_id, name, description, prompt_template, parameters, 
+			id, organization_id, name, description, prompt_template, parameters,
 			category, usage_count, is_active, metadata, tags, created_by
 		) VALUES (
 			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
@@ -87,7 +85,7 @@ func (m *MCPPromptModel) Create(prompt *MCPPrompt) error {
 func (m *MCPPromptModel) GetByID(id uuid.UUID) (*MCPPrompt, error) {
 	query := `
 		SELECT id, organization_id, name, description, prompt_template, parameters,
-			   category, usage_count, is_active, metadata, tags, 
+			   category, usage_count, is_active, metadata, tags,
 			   created_at, updated_at, created_by
 		FROM mcp_prompts
 		WHERE id = $1
@@ -134,7 +132,7 @@ func (m *MCPPromptModel) GetByID(id uuid.UUID) (*MCPPrompt, error) {
 func (m *MCPPromptModel) GetByName(orgID uuid.UUID, name string) (*MCPPrompt, error) {
 	query := `
 		SELECT id, organization_id, name, description, prompt_template, parameters,
-			   category, usage_count, is_active, metadata, tags, 
+			   category, usage_count, is_active, metadata, tags,
 			   created_at, updated_at, created_by
 		FROM mcp_prompts
 		WHERE organization_id = $1 AND name = $2 AND is_active = true
@@ -181,7 +179,7 @@ func (m *MCPPromptModel) GetByName(orgID uuid.UUID, name string) (*MCPPrompt, er
 func (m *MCPPromptModel) ListByOrganization(orgID uuid.UUID, activeOnly bool) ([]*MCPPrompt, error) {
 	query := `
 		SELECT id, organization_id, name, description, prompt_template, parameters,
-			   category, usage_count, is_active, metadata, tags, 
+			   category, usage_count, is_active, metadata, tags,
 			   created_at, updated_at, created_by
 		FROM mcp_prompts
 		WHERE organization_id = $1
@@ -246,7 +244,7 @@ func (m *MCPPromptModel) ListByOrganization(orgID uuid.UUID, activeOnly bool) ([
 func (m *MCPPromptModel) ListByCategory(orgID uuid.UUID, category string, activeOnly bool) ([]*MCPPrompt, error) {
 	query := `
 		SELECT id, organization_id, name, description, prompt_template, parameters,
-			   category, usage_count, is_active, metadata, tags, 
+			   category, usage_count, is_active, metadata, tags,
 			   created_at, updated_at, created_by
 		FROM mcp_prompts
 		WHERE organization_id = $1 AND category = $2
@@ -311,7 +309,7 @@ func (m *MCPPromptModel) ListByCategory(orgID uuid.UUID, category string, active
 func (m *MCPPromptModel) GetPopularPrompts(orgID uuid.UUID, limit int) ([]*MCPPrompt, error) {
 	query := `
 		SELECT id, organization_id, name, description, prompt_template, parameters,
-			   category, usage_count, is_active, metadata, tags, 
+			   category, usage_count, is_active, metadata, tags,
 			   created_at, updated_at, created_by
 		FROM mcp_prompts
 		WHERE organization_id = $1 AND is_active = true
@@ -421,13 +419,13 @@ func (m *MCPPromptModel) Delete(id uuid.UUID) error {
 func (m *MCPPromptModel) SearchPrompts(orgID uuid.UUID, searchTerm string, limit int, offset int) ([]*MCPPrompt, error) {
 	query := `
 		SELECT id, organization_id, name, description, prompt_template, parameters,
-			   category, usage_count, is_active, metadata, tags, 
+			   category, usage_count, is_active, metadata, tags,
 			   created_at, updated_at, created_by
 		FROM mcp_prompts
 		WHERE organization_id = $1 AND is_active = true
 		AND (
-			name ILIKE $2 OR 
-			description ILIKE $2 OR 
+			name ILIKE $2 OR
+			description ILIKE $2 OR
 			prompt_template ILIKE $2 OR
 			$3 = ANY(tags)
 		)

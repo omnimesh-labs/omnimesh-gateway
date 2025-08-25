@@ -103,17 +103,17 @@ fi
 # Function to start test server
 start_test_server() {
     log_info "Starting test server..."
-    
+
     # Check if server is already running
     if curl -s http://localhost:8080/health > /dev/null 2>&1; then
         log_warning "Server is already running on port 8080"
         return 0
     fi
-    
+
     # Start server in background
     go run ../../cmd/api/main.go > /dev/null 2>&1 &
     SERVER_PID=$!
-    
+
     # Wait for server to be ready
     log_info "Waiting for server to start..."
     for i in {1..30}; do
@@ -123,7 +123,7 @@ start_test_server() {
         fi
         sleep 1
     done
-    
+
     log_error "Failed to start test server"
     return 1
 }
@@ -144,7 +144,7 @@ trap stop_test_server EXIT
 # Start server if needed
 if [ "$START_SERVER" = "true" ]; then
     start_test_server || exit 1
-    
+
     # Give server a moment to fully initialize
     sleep 2
 fi
@@ -156,13 +156,13 @@ echo "----------------------------------------"
 if go test $TEST_FLAGS $TEST_PATHS; then
     echo "----------------------------------------"
     log_success "All tests passed!"
-    
+
     # Show coverage report if enabled
     if [ "$COVERAGE" = "true" ] && [ -f "coverage.out" ]; then
         echo ""
         log_info "Coverage report:"
         go tool cover -func=coverage.out | tail -1
-        
+
         # Generate HTML coverage report
         go tool cover -html=coverage.out -o coverage.html
         log_info "HTML coverage report generated: coverage.html"

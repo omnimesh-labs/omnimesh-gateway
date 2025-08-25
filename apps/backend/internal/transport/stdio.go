@@ -18,21 +18,21 @@ import (
 
 // STDIOTransport implements STDIO transport for command-line MCP servers
 type STDIOTransport struct {
-	*BaseTransport
-	cmd          *exec.Cmd
-	stdin        io.WriteCloser
 	stdout       io.ReadCloser
 	stderr       io.ReadCloser
-	messageQueue chan *types.MCPMessage
+	stdin        io.WriteCloser
 	responseMap  map[string]chan *types.MCPMessage
-	config       map[string]interface{}
-	mu           sync.RWMutex
-	done         chan struct{}
-	timeout      time.Duration
-	command      string
-	args         []string
-	env          []string
-	workingDir   string
+	cmd          *exec.Cmd
+	messageQueue chan *types.MCPMessage
+	*BaseTransport
+	config     map[string]interface{}
+	done       chan struct{}
+	command    string
+	workingDir string
+	args       []string
+	env        []string
+	timeout    time.Duration
+	mu         sync.RWMutex
 }
 
 // NewSTDIOTransport creates a new STDIO transport instance

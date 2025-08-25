@@ -13,7 +13,7 @@ func TestHelloWorldHandler(t *testing.T) {
 	r := gin.New()
 	r.GET("/", s.HelloWorldHandler)
 	// Create a test HTTP request
-	req, err := http.NewRequest("GET", "/", nil)
+	req, err := http.NewRequest("GET", "/", http.NoBody)
 	if err != nil {
 		t.Fatal(err)
 	}

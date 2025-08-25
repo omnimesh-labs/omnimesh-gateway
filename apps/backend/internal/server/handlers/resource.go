@@ -64,7 +64,7 @@ func (h *ResourceHandler) ListResources(c *gin.Context) {
 				offset = parsed
 			}
 		}
-		
+
 		resources, err = h.resourceModel.SearchResources(orgUUID, searchTerm, limit, offset)
 	} else if resourceType != "" {
 		resources, err = h.resourceModel.ListByType(orgUUID, resourceType, activeOnly)
@@ -99,7 +99,7 @@ func (h *ResourceHandler) CreateResource(c *gin.Context) {
 	}
 
 	userID, userExists := c.Get("user_id")
-	
+
 	var req types.CreateResourceRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, types.ErrorResponse{

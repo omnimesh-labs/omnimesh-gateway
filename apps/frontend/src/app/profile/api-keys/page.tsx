@@ -12,7 +12,7 @@ export default function ApiKeysPage() {
   const [showCreateKeyForm, setShowCreateKeyForm] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [createdKey, setCreatedKey] = useState<string | null>(null);
-  
+
   const [newKeyForm, setNewKeyForm] = useState({
     name: '',
     role: 'user' as 'admin' | 'user' | 'viewer',
@@ -41,14 +41,14 @@ export default function ApiKeysPage() {
     e.preventDefault();
     setIsLoading(true);
     setMessage(null);
-    
+
     try {
       const keyData: CreateApiKeyRequest = {
         name: newKeyForm.name,
         role: newKeyForm.role,
         expires_at: newKeyForm.expires_at || undefined,
       };
-      
+
       const response = await authApi.createApiKey(keyData);
       setCreatedKey(response.key);
       setMessage({ type: 'success', text: 'API key created successfully' });
@@ -216,7 +216,7 @@ export default function ApiKeysPage() {
                   required
                 />
               </div>
-              
+
               <div>
                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
                   Role *
@@ -239,7 +239,7 @@ export default function ApiKeysPage() {
                 </select>
               </div>
             </div>
-            
+
             <div style={{ marginBottom: '1rem' }}>
               <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
                 Expiration Date (Optional)
@@ -261,7 +261,7 @@ export default function ApiKeysPage() {
                 Leave blank for no expiration
               </p>
             </div>
-            
+
             <button
               type="submit"
               disabled={isLoading}
@@ -357,7 +357,7 @@ export default function ApiKeysPage() {
                       </span>
                     )}
                   </div>
-                  
+
                   <div style={{ fontSize: '0.75rem', color: '#6b7280', display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
                     <span>Created: {new Date(key.created_at).toLocaleDateString()}</span>
                     {key.expires_at && (
@@ -367,7 +367,7 @@ export default function ApiKeysPage() {
                       {key.last_used_at ? `Last used: ${new Date(key.last_used_at).toLocaleDateString()}` : 'Never used'}
                     </span>
                   </div>
-                  
+
                   <div style={{
                     fontSize: '0.75rem',
                     color: '#6b7280',
@@ -377,7 +377,7 @@ export default function ApiKeysPage() {
                     {key.key_hash.substring(0, 8)}...
                   </div>
                 </div>
-                
+
                 <button
                   onClick={() => handleDeleteApiKey(key.id, key.name)}
                   style={{

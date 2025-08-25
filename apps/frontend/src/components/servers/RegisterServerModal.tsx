@@ -54,7 +54,7 @@ export function RegisterServerModal({ onClose, onRegister, prefilledData }: Regi
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       setError('Server name is required');
       return;
@@ -191,7 +191,7 @@ export function RegisterServerModal({ onClose, onRegister, prefilledData }: Regi
               <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#111827', marginBottom: '1rem' }}>
                 Basic Information
               </h3>
-              
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
@@ -300,7 +300,7 @@ export function RegisterServerModal({ onClose, onRegister, prefilledData }: Regi
                 <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#111827', marginBottom: '1rem' }}>
                   Command Configuration
                 </h3>
-                
+
                 <div style={{ marginBottom: '1rem' }}>
                   <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
                     Command *
@@ -382,7 +382,7 @@ export function RegisterServerModal({ onClose, onRegister, prefilledData }: Regi
                 <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#111827', marginBottom: '1rem' }}>
                   Network Configuration
                 </h3>
-                
+
                 <div style={{ marginBottom: '1rem' }}>
                   <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
                     URL *
@@ -437,7 +437,7 @@ export function RegisterServerModal({ onClose, onRegister, prefilledData }: Regi
               <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#111827', marginBottom: '1rem' }}>
                 Advanced Settings
               </h3>
-              
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>

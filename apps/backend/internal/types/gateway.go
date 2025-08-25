@@ -4,88 +4,81 @@ import "time"
 
 // MCPServer represents an MCP server registration
 type MCPServer struct {
-	ID             string            `json:"id" db:"id"`
-	OrganizationID string            `json:"organization_id" db:"organization_id"`
-	Name           string            `json:"name" db:"name"`
-	Description    string            `json:"description" db:"description"`
-	URL            string            `json:"url" db:"url"`
-	Protocol       string            `json:"protocol" db:"protocol"` // "http", "websocket", "sse", "stdio"
-	Version        string            `json:"version" db:"version"`
-	Status         string            `json:"status" db:"status"` // "active", "inactive", "unhealthy"
-	Metadata       map[string]string `json:"metadata" db:"metadata"`
-	HealthCheckURL string            `json:"health_check_url" db:"health_check_url"`
-	Timeout        time.Duration     `json:"timeout" db:"timeout"`
-	MaxRetries     int               `json:"max_retries" db:"max_retries"`
-	IsActive       bool              `json:"is_active" db:"is_active"`
-	CreatedAt      time.Time         `json:"created_at" db:"created_at"`
 	UpdatedAt      time.Time         `json:"updated_at" db:"updated_at"`
-
-	// For stdio/command-based servers
-	Command     string   `json:"command,omitempty" db:"command"`
-	Args        []string `json:"args,omitempty" db:"args"`
-	Environment []string `json:"environment,omitempty" db:"environment"`
-	WorkingDir  string   `json:"working_dir,omitempty" db:"working_dir"`
+	CreatedAt      time.Time         `json:"created_at" db:"created_at"`
+	Metadata       map[string]string `json:"metadata" db:"metadata"`
+	URL            string            `json:"url" db:"url"`
+	Name           string            `json:"name" db:"name"`
+	Protocol       string            `json:"protocol" db:"protocol"`
+	Version        string            `json:"version" db:"version"`
+	Status         string            `json:"status" db:"status"`
+	Description    string            `json:"description" db:"description"`
+	HealthCheckURL string            `json:"health_check_url" db:"health_check_url"`
+	WorkingDir     string            `json:"working_dir,omitempty" db:"working_dir"`
+	Command        string            `json:"command,omitempty" db:"command"`
+	OrganizationID string            `json:"organization_id" db:"organization_id"`
+	ID             string            `json:"id" db:"id"`
+	Args           []string          `json:"args,omitempty" db:"args"`
+	Environment    []string          `json:"environment,omitempty" db:"environment"`
+	MaxRetries     int               `json:"max_retries" db:"max_retries"`
+	Timeout        time.Duration     `json:"timeout" db:"timeout"`
+	IsActive       bool              `json:"is_active" db:"is_active"`
 }
 
 // HealthCheck represents a health check result
 type HealthCheck struct {
+	CheckedAt time.Time `json:"checked_at" db:"checked_at"`
 	ID        string    `json:"id" db:"id"`
 	ServerID  string    `json:"server_id" db:"server_id"`
-	Status    string    `json:"status" db:"status"` // "healthy", "unhealthy", "timeout"
+	Status    string    `json:"status" db:"status"`
 	Response  string    `json:"response" db:"response"`
-	Latency   int64     `json:"latency" db:"latency"` // in milliseconds
 	Error     string    `json:"error,omitempty" db:"error"`
-	CheckedAt time.Time `json:"checked_at" db:"checked_at"`
+	Latency   int64     `json:"latency" db:"latency"`
 }
 
 // ServerStats represents basic server statistics
 type ServerStats struct {
+	LastRequest     time.Time `json:"last_request"`
 	ServerID        string    `json:"server_id"`
 	TotalRequests   int64     `json:"total_requests"`
 	SuccessRequests int64     `json:"success_requests"`
 	ErrorRequests   int64     `json:"error_requests"`
 	AvgLatency      float64   `json:"avg_latency"`
-	LastRequest     time.Time `json:"last_request"`
 }
-
 
 // CreateMCPServerRequest represents an MCP server registration request
 type CreateMCPServerRequest struct {
-	Name           string            `json:"name" binding:"required,min=2"`
-	Description    string            `json:"description"`
-	URL            string            `json:"url" binding:"omitempty,url"` // Optional for stdio servers
-	Protocol       string            `json:"protocol" binding:"required"`
-	Version        string            `json:"version"`
 	Metadata       map[string]string `json:"metadata"`
 	HealthCheckURL string            `json:"health_check_url" binding:"omitempty,url"`
+	URL            string            `json:"url" binding:"omitempty,url"`
+	Protocol       string            `json:"protocol" binding:"required"`
+	Version        string            `json:"version"`
+	Description    string            `json:"description"`
+	Name           string            `json:"name" binding:"required,min=2"`
+	Command        string            `json:"command,omitempty"`
+	WorkingDir     string            `json:"working_dir,omitempty"`
+	Args           []string          `json:"args,omitempty"`
+	Environment    []string          `json:"environment,omitempty"`
 	Timeout        time.Duration     `json:"timeout"`
 	MaxRetries     int               `json:"max_retries"`
-
-	// For stdio/command-based servers
-	Command     string   `json:"command,omitempty"`     // e.g., "npx"
-	Args        []string `json:"args,omitempty"`        // e.g., ["-y", "@executeautomation/playwright-mcp-server"]
-	Environment []string `json:"environment,omitempty"` // e.g., ["VAR=value"]
-	WorkingDir  string   `json:"working_dir,omitempty"` // Working directory for the command
 }
 
 // UpdateMCPServerRequest represents an MCP server update request
 type UpdateMCPServerRequest struct {
-	Name           string            `json:"name,omitempty" binding:"omitempty,min=2"`
-	Description    string            `json:"description,omitempty"`
-	URL            string            `json:"url,omitempty" binding:"omitempty,url"`
-	Protocol       string            `json:"protocol,omitempty"`
-	Version        string            `json:"version,omitempty"`
 	Metadata       map[string]string `json:"metadata,omitempty"`
+	IsActive       *bool             `json:"is_active,omitempty"`
+	Protocol       string            `json:"protocol,omitempty"`
+	Name           string            `json:"name,omitempty" binding:"omitempty,min=2"`
+	Version        string            `json:"version,omitempty"`
+	URL            string            `json:"url,omitempty" binding:"omitempty,url"`
 	HealthCheckURL string            `json:"health_check_url,omitempty" binding:"omitempty,url"`
+	Description    string            `json:"description,omitempty"`
+	Command        string            `json:"command,omitempty"`
+	WorkingDir     string            `json:"working_dir,omitempty"`
+	Args           []string          `json:"args,omitempty"`
+	Environment    []string          `json:"environment,omitempty"`
 	Timeout        time.Duration     `json:"timeout,omitempty"`
 	MaxRetries     int               `json:"max_retries,omitempty"`
-	IsActive       *bool             `json:"is_active,omitempty"`
-
-	// For stdio/command-based servers
-	Command     string   `json:"command,omitempty"`
-	Args        []string `json:"args,omitempty"`
-	Environment []string `json:"environment,omitempty"`
-	WorkingDir  string   `json:"working_dir,omitempty"`
 }
 
 // ServerStatus constants
@@ -113,28 +106,26 @@ const (
 	HealthStatusError     = "error"
 )
 
-
-
 // MCPProcess represents a running MCP server process
 type MCPProcess struct {
-	PID       int        `json:"pid"`
-	Command   string     `json:"command"`
-	Args      []string   `json:"args"`
-	Status    string     `json:"status"` // "starting", "running", "stopped", "error"
 	StartedAt time.Time  `json:"started_at"`
 	EndedAt   *time.Time `json:"ended_at,omitempty"`
 	ExitCode  *int       `json:"exit_code,omitempty"`
+	Command   string     `json:"command"`
+	Status    string     `json:"status"`
 	Error     string     `json:"error,omitempty"`
+	Args      []string   `json:"args"`
+	PID       int        `json:"pid"`
 }
 
 // MCPConfig represents MCP configuration
 type MCPConfig struct {
+	LogLevel              string        `json:"log_level"`
 	MaxConcurrentSessions int           `json:"max_concurrent_sessions"`
 	SessionTimeout        time.Duration `json:"session_timeout"`
 	ProcessTimeout        time.Duration `json:"process_timeout"`
 	BufferSize            int           `json:"buffer_size"`
 	EnableLogging         bool          `json:"enable_logging"`
-	LogLevel              string        `json:"log_level"`
 }
 
 // MCP session status constants
@@ -155,17 +146,18 @@ const (
 
 // FilteringMetrics represents filtering system metrics
 type FilteringMetrics struct {
-	TotalRequests      int64                  `json:"total_requests"`
-	TotalBlocked       int64                  `json:"total_blocked"`
-	TotalModified      int64                  `json:"total_modified"`
-	FilterStats        map[string]*FilterStat `json:"filter_stats"`
-	ViolationsByType   map[string]int64       `json:"violations_by_type"`
-	ProcessingTime     time.Duration          `json:"processing_time"`
-	LastReset          time.Time              `json:"last_reset"`
+	LastReset        time.Time              `json:"last_reset"`
+	FilterStats      map[string]*FilterStat `json:"filter_stats"`
+	ViolationsByType map[string]int64       `json:"violations_by_type"`
+	TotalRequests    int64                  `json:"total_requests"`
+	TotalBlocked     int64                  `json:"total_blocked"`
+	TotalModified    int64                  `json:"total_modified"`
+	ProcessingTime   time.Duration          `json:"processing_time"`
 }
 
 // FilterStat represents statistics for a specific filter
 type FilterStat struct {
+	LastActive        time.Time     `json:"last_active"`
 	Name              string        `json:"name"`
 	Type              string        `json:"type"`
 	RequestsProcessed int64         `json:"requests_processed"`
@@ -173,45 +165,44 @@ type FilterStat struct {
 	Blocks            int64         `json:"blocks"`
 	Modifications     int64         `json:"modifications"`
 	AverageLatency    time.Duration `json:"average_latency"`
-	LastActive        time.Time     `json:"last_active"`
 	Errors            int64         `json:"errors"`
 }
 
 // Resource represents a globally available MCP resource
 type Resource struct {
-	ID                string                 `json:"id" db:"id"`
-	OrganizationID    string                 `json:"organization_id" db:"organization_id"`
-	Name              string                 `json:"name" db:"name"`
-	Description       string                 `json:"description,omitempty" db:"description"`
-	ResourceType      string                 `json:"resource_type" db:"resource_type"` // "file", "url", "database", "api", "memory", "custom"
-	URI               string                 `json:"uri" db:"uri"`
-	MimeType          string                 `json:"mime_type,omitempty" db:"mime_type"`
-	SizeBytes         *int64                 `json:"size_bytes,omitempty" db:"size_bytes"`
-	AccessPermissions map[string]interface{} `json:"access_permissions,omitempty" db:"access_permissions"`
-	IsActive          bool                   `json:"is_active" db:"is_active"`
-	Metadata          map[string]interface{} `json:"metadata,omitempty" db:"metadata"`
-	Tags              []string               `json:"tags,omitempty" db:"tags"`
-	CreatedAt         time.Time              `json:"created_at" db:"created_at"`
 	UpdatedAt         time.Time              `json:"updated_at" db:"updated_at"`
+	CreatedAt         time.Time              `json:"created_at" db:"created_at"`
+	SizeBytes         *int64                 `json:"size_bytes,omitempty" db:"size_bytes"`
 	CreatedBy         *string                `json:"created_by,omitempty" db:"created_by"`
+	Metadata          map[string]interface{} `json:"metadata,omitempty" db:"metadata"`
+	AccessPermissions map[string]interface{} `json:"access_permissions,omitempty" db:"access_permissions"`
+	MimeType          string                 `json:"mime_type,omitempty" db:"mime_type"`
+	ID                string                 `json:"id" db:"id"`
+	URI               string                 `json:"uri" db:"uri"`
+	ResourceType      string                 `json:"resource_type" db:"resource_type"`
+	Description       string                 `json:"description,omitempty" db:"description"`
+	Name              string                 `json:"name" db:"name"`
+	OrganizationID    string                 `json:"organization_id" db:"organization_id"`
+	Tags              []string               `json:"tags,omitempty" db:"tags"`
+	IsActive          bool                   `json:"is_active" db:"is_active"`
 }
 
 // Prompt represents a globally available MCP prompt
 type Prompt struct {
-	ID             string                 `json:"id" db:"id"`
-	OrganizationID string                 `json:"organization_id" db:"organization_id"`
-	Name           string                 `json:"name" db:"name"`
+	UpdatedAt      time.Time              `json:"updated_at" db:"updated_at"`
+	CreatedAt      time.Time              `json:"created_at" db:"created_at"`
+	Metadata       map[string]interface{} `json:"metadata,omitempty" db:"metadata"`
+	CreatedBy      *string                `json:"created_by,omitempty" db:"created_by"`
 	Description    string                 `json:"description,omitempty" db:"description"`
+	Category       string                 `json:"category" db:"category"`
 	PromptTemplate string                 `json:"prompt_template" db:"prompt_template"`
+	ID             string                 `json:"id" db:"id"`
+	Name           string                 `json:"name" db:"name"`
+	OrganizationID string                 `json:"organization_id" db:"organization_id"`
 	Parameters     []interface{}          `json:"parameters,omitempty" db:"parameters"`
-	Category       string                 `json:"category" db:"category"` // "general", "coding", "analysis", "creative", "educational", "business", "custom"
+	Tags           []string               `json:"tags,omitempty" db:"tags"`
 	UsageCount     int64                  `json:"usage_count" db:"usage_count"`
 	IsActive       bool                   `json:"is_active" db:"is_active"`
-	Metadata       map[string]interface{} `json:"metadata,omitempty" db:"metadata"`
-	Tags           []string               `json:"tags,omitempty" db:"tags"`
-	CreatedAt      time.Time              `json:"created_at" db:"created_at"`
-	UpdatedAt      time.Time              `json:"updated_at" db:"updated_at"`
-	CreatedBy      *string                `json:"created_by,omitempty" db:"created_by"`
 }
 
 // CreateResourceRequest represents a resource creation request
@@ -287,67 +278,67 @@ const (
 
 // GlobalTool represents a globally available MCP tool
 type GlobalTool struct {
-	ID                 string                 `json:"id" db:"id"`
-	OrganizationID     string                 `json:"organization_id" db:"organization_id"`
-	Name               string                 `json:"name" db:"name"`
-	Description        string                 `json:"description,omitempty" db:"description"`
-	FunctionName       string                 `json:"function_name" db:"function_name"`
-	Schema             map[string]interface{} `json:"schema,omitempty" db:"schema"`
-	Category           string                 `json:"category" db:"category"` // "general", "data", "file", "web", "system", "ai", "dev", "custom"
-	ImplementationType string                 `json:"implementation_type" db:"implementation_type"`
-	EndpointURL        string                 `json:"endpoint_url,omitempty" db:"endpoint_url"`
-	TimeoutSeconds     int                    `json:"timeout_seconds" db:"timeout_seconds"`
-	MaxRetries         int                    `json:"max_retries" db:"max_retries"`
-	UsageCount         int64                  `json:"usage_count" db:"usage_count"`
-	AccessPermissions  map[string]interface{} `json:"access_permissions,omitempty" db:"access_permissions"`
-	IsActive           bool                   `json:"is_active" db:"is_active"`
-	IsPublic           bool                   `json:"is_public" db:"is_public"`
-	Metadata           map[string]interface{} `json:"metadata,omitempty" db:"metadata"`
-	Tags               []string               `json:"tags,omitempty" db:"tags"`
-	Examples           []interface{}          `json:"examples,omitempty" db:"examples"`
-	Documentation      string                 `json:"documentation,omitempty" db:"documentation"`
 	CreatedAt          time.Time              `json:"created_at" db:"created_at"`
 	UpdatedAt          time.Time              `json:"updated_at" db:"updated_at"`
+	Metadata           map[string]interface{} `json:"metadata,omitempty" db:"metadata"`
+	AccessPermissions  map[string]interface{} `json:"access_permissions,omitempty" db:"access_permissions"`
 	CreatedBy          *string                `json:"created_by,omitempty" db:"created_by"`
+	Schema             map[string]interface{} `json:"schema,omitempty" db:"schema"`
+	ID                 string                 `json:"id" db:"id"`
+	EndpointURL        string                 `json:"endpoint_url,omitempty" db:"endpoint_url"`
+	FunctionName       string                 `json:"function_name" db:"function_name"`
+	ImplementationType string                 `json:"implementation_type" db:"implementation_type"`
+	OrganizationID     string                 `json:"organization_id" db:"organization_id"`
+	Category           string                 `json:"category" db:"category"`
+	Name               string                 `json:"name" db:"name"`
+	Documentation      string                 `json:"documentation,omitempty" db:"documentation"`
+	Description        string                 `json:"description,omitempty" db:"description"`
+	Examples           []interface{}          `json:"examples,omitempty" db:"examples"`
+	Tags               []string               `json:"tags,omitempty" db:"tags"`
+	MaxRetries         int                    `json:"max_retries" db:"max_retries"`
+	UsageCount         int64                  `json:"usage_count" db:"usage_count"`
+	TimeoutSeconds     int                    `json:"timeout_seconds" db:"timeout_seconds"`
+	IsPublic           bool                   `json:"is_public" db:"is_public"`
+	IsActive           bool                   `json:"is_active" db:"is_active"`
 }
 
 // CreateGlobalToolRequest represents a tool creation request
 type CreateGlobalToolRequest struct {
-	Name               string                 `json:"name" binding:"required,min=2"`
-	Description        string                 `json:"description"`
-	FunctionName       string                 `json:"function_name" binding:"required,min=2"`
+	AccessPermissions  map[string]interface{} `json:"access_permissions"`
 	Schema             map[string]interface{} `json:"schema" binding:"required"`
+	Metadata           map[string]interface{} `json:"metadata"`
+	FunctionName       string                 `json:"function_name" binding:"required,min=2"`
 	Category           string                 `json:"category" binding:"required"`
 	ImplementationType string                 `json:"implementation_type"`
+	Description        string                 `json:"description"`
+	Documentation      string                 `json:"documentation"`
 	EndpointURL        string                 `json:"endpoint_url"`
-	TimeoutSeconds     int                    `json:"timeout_seconds"`
-	MaxRetries         int                    `json:"max_retries"`
-	AccessPermissions  map[string]interface{} `json:"access_permissions"`
-	IsPublic           bool                   `json:"is_public"`
-	Metadata           map[string]interface{} `json:"metadata"`
+	Name               string                 `json:"name" binding:"required,min=2"`
 	Tags               []string               `json:"tags"`
 	Examples           []interface{}          `json:"examples"`
-	Documentation      string                 `json:"documentation"`
+	TimeoutSeconds     int                    `json:"timeout_seconds"`
+	MaxRetries         int                    `json:"max_retries"`
+	IsPublic           bool                   `json:"is_public"`
 }
 
 // UpdateGlobalToolRequest represents a tool update request
 type UpdateGlobalToolRequest struct {
-	Name               string                 `json:"name,omitempty" binding:"omitempty,min=2"`
-	Description        string                 `json:"description,omitempty"`
-	FunctionName       string                 `json:"function_name,omitempty" binding:"omitempty,min=2"`
+	Metadata           map[string]interface{} `json:"metadata,omitempty"`
+	IsActive           *bool                  `json:"is_active,omitempty"`
+	IsPublic           *bool                  `json:"is_public,omitempty"`
 	Schema             map[string]interface{} `json:"schema,omitempty"`
-	Category           string                 `json:"category,omitempty"`
-	ImplementationType string                 `json:"implementation_type,omitempty"`
-	EndpointURL        string                 `json:"endpoint_url,omitempty"`
 	TimeoutSeconds     *int                   `json:"timeout_seconds,omitempty"`
 	MaxRetries         *int                   `json:"max_retries,omitempty"`
 	AccessPermissions  map[string]interface{} `json:"access_permissions,omitempty"`
-	IsActive           *bool                  `json:"is_active,omitempty"`
-	IsPublic           *bool                  `json:"is_public,omitempty"`
-	Metadata           map[string]interface{} `json:"metadata,omitempty"`
+	Description        string                 `json:"description,omitempty"`
+	ImplementationType string                 `json:"implementation_type,omitempty"`
+	Category           string                 `json:"category,omitempty"`
+	EndpointURL        string                 `json:"endpoint_url,omitempty"`
+	FunctionName       string                 `json:"function_name,omitempty" binding:"omitempty,min=2"`
+	Name               string                 `json:"name,omitempty" binding:"omitempty,min=2"`
+	Documentation      string                 `json:"documentation,omitempty"`
 	Tags               []string               `json:"tags,omitempty"`
 	Examples           []interface{}          `json:"examples,omitempty"`
-	Documentation      string                 `json:"documentation,omitempty"`
 }
 
 // Tool category constants
@@ -369,4 +360,3 @@ const (
 	ToolImplementationWebhook  = "webhook"
 	ToolImplementationScript   = "script"
 )
-

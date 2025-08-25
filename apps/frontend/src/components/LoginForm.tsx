@@ -66,8 +66,8 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <div>
-                        <label 
-                            htmlFor="email" 
+                        <label
+                            htmlFor="email"
                             style={{
                                 display: 'block',
                                 fontSize: '0.875rem',
@@ -99,8 +99,8 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                     </div>
 
                     <div>
-                        <label 
-                            htmlFor="password" 
+                        <label
+                            htmlFor="password"
                             style={{
                                 display: 'block',
                                 fontSize: '0.875rem',

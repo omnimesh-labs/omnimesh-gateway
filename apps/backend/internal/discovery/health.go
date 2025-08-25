@@ -14,9 +14,9 @@ type HealthChecker struct {
 	registry *Registry
 	config   *Config
 	client   *http.Client
-	running  bool
 	stopCh   chan struct{}
 	wg       sync.WaitGroup
+	running  bool
 }
 
 // NewHealthChecker creates a new health checker
@@ -115,7 +115,7 @@ func (h *HealthChecker) performHealthCheck(server *types.MCPServer) (*types.Heal
 		healthCheckURL = server.URL + "/health"
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "GET", healthCheckURL, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", healthCheckURL, http.NoBody)
 	if err != nil {
 		healthCheck.Status = types.HealthStatusError
 		healthCheck.Error = err.Error()

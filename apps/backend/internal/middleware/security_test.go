@@ -13,9 +13,9 @@ func TestSecurityHeaders(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	tests := []struct {
-		name            string
 		config          *SecurityConfig
 		expectedHeaders map[string]string
+		name            string
 	}{
 		{
 			name:   "Default security headers",
@@ -72,7 +72,7 @@ func TestSecurityHeaders(t *testing.T) {
 			})
 
 			// Create a test request
-			req, _ := http.NewRequest("GET", "/test", nil)
+			req, _ := http.NewRequest("GET", "/test", http.NoBody)
 			w := httptest.NewRecorder()
 
 			// Perform the request
@@ -102,7 +102,7 @@ func TestSecurityHeadersHTTPS(t *testing.T) {
 	})
 
 	t.Run("HSTS header not set for HTTP", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", "/test", nil)
+		req, _ := http.NewRequest("GET", "/test", http.NoBody)
 		w := httptest.NewRecorder()
 
 		r.ServeHTTP(w, req)
@@ -129,7 +129,7 @@ func TestSecurityHeadersWithEmptyConfig(t *testing.T) {
 		c.JSON(http.StatusOK, gin.H{"message": "test"})
 	})
 
-	req, _ := http.NewRequest("GET", "/test", nil)
+	req, _ := http.NewRequest("GET", "/test", http.NoBody)
 	w := httptest.NewRecorder()
 
 	r.ServeHTTP(w, req)
@@ -148,7 +148,7 @@ func TestDefaultSecurityHeaders(t *testing.T) {
 		c.JSON(http.StatusOK, gin.H{"message": "test"})
 	})
 
-	req, _ := http.NewRequest("GET", "/test", nil)
+	req, _ := http.NewRequest("GET", "/test", http.NoBody)
 	w := httptest.NewRecorder()
 
 	r.ServeHTTP(w, req)

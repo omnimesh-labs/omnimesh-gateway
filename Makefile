@@ -10,8 +10,8 @@ all: build test
 
 build:
 	@echo "Building..."
-	
-	
+
+
 	@go build -o main apps/backend/cmd/api/main.go
 
 run:
@@ -101,6 +101,27 @@ clean:
 	@rm -f main api apps/backend/api
 	@rm -f logs/*.log
 
+# Nuclear option - stops all containers, removes images, volumes, cache, etc.
+armageddon:
+	@echo "Initiating armageddon..."
+	@docker stop $$(docker ps -q) 2>/dev/null || true
+	@docker rm $$(docker ps -aq) 2>/dev/null || true
+	@docker rmi $$(docker images -q) -f 2>/dev/null || true
+	@docker volume rm $$(docker volume ls -q) 2>/dev/null || true
+	@docker network rm $$(docker network ls -q --filter type=custom) 2>/dev/null || true
+	@docker system prune -a --volumes -f 2>/dev/null || true
+	@if docker compose down --volumes --remove-orphans 2>/dev/null; then \
+		true; \
+	else \
+		docker-compose down --volumes --remove-orphans 2>/dev/null || true; \
+	fi
+	@rm -rf tmp/ bin/ dist/
+	@rm -f main api apps/backend/api logs/*.log
+	@go clean -modcache 2>/dev/null || true
+	@go clean -testcache 2>/dev/null || true
+	@go clean -cache 2>/dev/null || true
+	@echo "Boom! 💥"
+
 # Live Reload
 watch:
 	@if command -v air > /dev/null; then \
@@ -179,4 +200,4 @@ security:
 	@echo "Running security checks..."
 	@gosec ./...
 
-.PHONY: all build run test clean watch docker-run docker-down itest migrate migrate-down migrate-status migrate-create test-transport test-integration test-unit test-rpc test-sse test-websocket test-mcp test-stdio test-coverage test-verbose test-all-transports setup setup-admin setup-org setup-dummy setup-reset setup-precommit precommit-all lint lint-fix security
+.PHONY: all build run test clean armageddon watch docker-run docker-down itest migrate migrate-down migrate-status migrate-create test-transport test-integration test-unit test-rpc test-sse test-websocket test-mcp test-stdio test-coverage test-verbose test-all-transports setup setup-admin setup-org setup-dummy setup-reset setup-precommit precommit-all lint lint-fix security

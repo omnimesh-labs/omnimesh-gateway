@@ -76,18 +76,18 @@ type BackendCapabilities struct {
 type QueryRequest struct {
 	StartTime  *time.Time             `json:"start_time,omitempty"`
 	EndTime    *time.Time             `json:"end_time,omitempty"`
-	Level      LogLevel               `json:"level,omitempty"`
-	Logger     string                 `json:"logger,omitempty"`
+	Filters    map[string]interface{} `json:"filters,omitempty"`
+	RequestID  string                 `json:"request_id,omitempty"`
 	EntityType string                 `json:"entity_type,omitempty"`
 	EntityID   string                 `json:"entity_id,omitempty"`
-	RequestID  string                 `json:"request_id,omitempty"`
+	Logger     string                 `json:"logger,omitempty"`
 	UserID     string                 `json:"user_id,omitempty"`
 	OrgID      string                 `json:"org_id,omitempty"`
-	Message    string                 `json:"message,omitempty"` // Text search
+	Message    string                 `json:"message,omitempty"`
+	OrderBy    string                 `json:"order_by,omitempty"`
+	Level      LogLevel               `json:"level,omitempty"`
 	Limit      int                    `json:"limit,omitempty"`
 	Offset     int                    `json:"offset,omitempty"`
-	OrderBy    string                 `json:"order_by,omitempty"`
-	Filters    map[string]interface{} `json:"filters,omitempty"`
 }
 
 // LogSubscriber receives log events in real-time
@@ -134,32 +134,32 @@ type PluginRegistry interface {
 
 // PluginInfo contains metadata about a plugin
 type PluginInfo struct {
+	ConfigSchema map[string]interface{} `json:"config_schema,omitempty"`
 	Name         string                 `json:"name"`
 	Description  string                 `json:"description"`
 	Version      string                 `json:"version"`
 	Author       string                 `json:"author"`
-	ConfigSchema map[string]interface{} `json:"config_schema,omitempty"`
 	Capabilities BackendCapabilities    `json:"capabilities"`
 }
 
 // LoggingConfig represents the logging service configuration
 type LoggingConfig struct {
+	Config        map[string]interface{} `json:"config" yaml:"config"`
+	Retention     *RetentionConfig       `json:"retention,omitempty" yaml:"retention,omitempty"`
 	Level         LogLevel               `json:"level" yaml:"level"`
 	Environment   string                 `json:"environment" yaml:"environment"`
 	Backend       string                 `json:"backend" yaml:"backend"`
-	Config        map[string]interface{} `json:"config" yaml:"config"`
 	BufferSize    int                    `json:"buffer_size" yaml:"buffer_size"`
 	BatchSize     int                    `json:"batch_size" yaml:"batch_size"`
 	FlushInterval time.Duration          `json:"flush_interval" yaml:"flush_interval"`
 	Async         bool                   `json:"async" yaml:"async"`
-	Retention     *RetentionConfig       `json:"retention,omitempty" yaml:"retention,omitempty"`
 }
 
 // RetentionConfig defines log retention policies
 type RetentionConfig struct {
+	Policy    string `json:"policy" yaml:"policy"`
 	Days      int    `json:"days" yaml:"days"`
 	KeepCount int    `json:"keep_count" yaml:"keep_count"`
-	Policy    string `json:"policy" yaml:"policy"` // "time", "count", "size"
 }
 
 // LogService defines the main logging service interface

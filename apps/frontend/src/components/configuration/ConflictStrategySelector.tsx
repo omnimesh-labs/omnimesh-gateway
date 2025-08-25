@@ -47,7 +47,7 @@ export function ConflictStrategySelector({
       }}>
         Conflict Strategy
       </label>
-      
+
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -69,7 +69,7 @@ export function ConflictStrategySelector({
           </option>
         ))}
       </select>
-      
+
       {selectedStrategy && (
         <p style={{
           fontSize: '0.75rem',

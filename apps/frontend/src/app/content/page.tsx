@@ -11,12 +11,12 @@ import { PromptTable } from '@/components/content/prompts/PromptTable';
 import { PromptModal } from '@/components/content/prompts/PromptModal';
 import { ToolTable } from '@/components/content/tools/ToolTable';
 import { ToolModal } from '@/components/content/tools/ToolModal';
-import { 
-  resourceApi, 
-  promptApi, 
-  toolApi, 
-  type Resource, 
-  type Prompt, 
+import {
+  resourceApi,
+  promptApi,
+  toolApi,
+  type Resource,
+  type Prompt,
   type Tool,
   type CreateResourceRequest,
   type UpdateResourceRequest,
@@ -27,14 +27,14 @@ import {
 } from '@/lib/api';
 
 // Resource Tab Component
-const ResourceTab = ({ 
-  resources, 
-  onRefresh, 
+const ResourceTab = ({
+  resources,
+  onRefresh,
   onShowToast,
-  onShowCreateModal 
-}: { 
-  resources: Resource[]; 
-  onRefresh: () => void; 
+  onShowCreateModal
+}: {
+  resources: Resource[];
+  onRefresh: () => void;
   onShowToast: (message: string, type: 'success' | 'error') => void;
   onShowCreateModal: () => void;
 }) => {
@@ -99,14 +99,14 @@ const ResourceTab = ({
         onDelete={handleDelete}
         onView={handleView}
       />
-      
+
       <ResourceModal
         resource={selectedResource || undefined}
         isOpen={showModal}
         onClose={handleCloseModal}
         onSave={handleSave}
       />
-      
+
       {viewingResource && (
         <ResourceCard
           resource={viewingResource}
@@ -124,14 +124,14 @@ const ResourceTab = ({
 };
 
 // Prompt Tab Component
-const PromptTab = ({ 
-  prompts, 
-  onRefresh, 
+const PromptTab = ({
+  prompts,
+  onRefresh,
   onShowToast,
-  onShowCreateModal 
-}: { 
-  prompts: Prompt[]; 
-  onRefresh: () => void; 
+  onShowCreateModal
+}: {
+  prompts: Prompt[];
+  onRefresh: () => void;
   onShowToast: (message: string, type: 'success' | 'error') => void;
   onShowCreateModal: () => void;
 }) => {
@@ -196,14 +196,14 @@ const PromptTab = ({
         onDelete={handleDelete}
         onView={handleView}
       />
-      
+
       <PromptModal
         prompt={selectedPrompt || undefined}
         isOpen={showModal}
         onClose={handleCloseModal}
         onSave={handleSave}
       />
-      
+
       {viewingPrompt && (
         <div style={{
           position: 'fixed',
@@ -313,14 +313,14 @@ const PromptTab = ({
 };
 
 // Tool Tab Component
-const ToolTab = ({ 
-  tools, 
-  onRefresh, 
+const ToolTab = ({
+  tools,
+  onRefresh,
   onShowToast,
-  onShowCreateModal 
-}: { 
-  tools: Tool[]; 
-  onRefresh: () => void; 
+  onShowCreateModal
+}: {
+  tools: Tool[];
+  onRefresh: () => void;
   onShowToast: (message: string, type: 'success' | 'error') => void;
   onShowCreateModal: () => void;
 }) => {
@@ -385,14 +385,14 @@ const ToolTab = ({
         onDelete={handleDelete}
         onView={handleView}
       />
-      
+
       <ToolModal
         tool={selectedTool || undefined}
         isOpen={showModal}
         onClose={handleCloseModal}
         onSave={handleSave}
       />
-      
+
       {viewingTool && (
         <div style={{
           position: 'fixed',
@@ -535,7 +535,7 @@ export default function ContentPage() {
         promptApi.listPrompts({ limit: 50 }),
         toolApi.listTools({ limit: 50 })
       ]);
-      
+
       setResources(resourcesResponse.data);
       setPrompts(promptsResponse.data);
       setTools(toolsResponse.data);
@@ -711,25 +711,25 @@ export default function ContentPage() {
           minHeight: '400px'
         }}>
           {activeTab === 'resources' && (
-            <ResourceTab 
-              resources={resources} 
-              onRefresh={handleRefresh} 
+            <ResourceTab
+              resources={resources}
+              onRefresh={handleRefresh}
               onShowToast={handleShowToast}
               onShowCreateModal={() => setShowCreateResourceModal(true)}
             />
           )}
           {activeTab === 'prompts' && (
-            <PromptTab 
-              prompts={prompts} 
-              onRefresh={handleRefresh} 
+            <PromptTab
+              prompts={prompts}
+              onRefresh={handleRefresh}
               onShowToast={handleShowToast}
               onShowCreateModal={() => setShowCreatePromptModal(true)}
             />
           )}
           {activeTab === 'tools' && (
-            <ToolTab 
-              tools={tools} 
-              onRefresh={handleRefresh} 
+            <ToolTab
+              tools={tools}
+              onRefresh={handleRefresh}
               onShowToast={handleShowToast}
               onShowCreateModal={() => setShowCreateToolModal(true)}
             />

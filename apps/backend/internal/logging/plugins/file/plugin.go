@@ -5,33 +5,34 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"mcp-gateway/apps/backend/internal/logging"
 	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
+
+	"mcp-gateway/apps/backend/internal/logging"
 )
 
 // FileStorageBackend implements types.StorageBackend for file storage
 type FileStorageBackend struct {
-	mu          sync.RWMutex
 	config      *FileConfig
 	currentFile *os.File
 	currentSize int64
+	mu          sync.RWMutex
 	initialized bool
 }
 
 // FileConfig holds configuration for file storage
 type FileConfig struct {
 	Path         string `json:"path" yaml:"path"`
+	Permissions  string `json:"permissions" yaml:"permissions"`
+	SyncInterval string `json:"sync_interval" yaml:"sync_interval"`
 	MaxSize      int64  `json:"max_size" yaml:"max_size"`
 	MaxFiles     int    `json:"max_files" yaml:"max_files"`
-	Rotate       bool   `json:"rotate" yaml:"rotate"`
-	Permissions  string `json:"permissions" yaml:"permissions"`
 	BufferSize   int    `json:"buffer_size" yaml:"buffer_size"`
-	SyncInterval string `json:"sync_interval" yaml:"sync_interval"`
+	Rotate       bool   `json:"rotate" yaml:"rotate"`
 }
 
 // DefaultFileConfig returns default configuration for file storage

@@ -28,18 +28,18 @@ func NewHTTPClient(baseURL string) *HTTPClient {
 
 // JSONRequest represents a JSON request
 type JSONRequest struct {
-	Method  string
-	Path    string
 	Body    interface{}
 	Headers map[string]string
+	Method  string
+	Path    string
 }
 
 // JSONResponse represents a JSON response
 type JSONResponse struct {
-	StatusCode int
 	Body       map[string]interface{}
 	Headers    http.Header
 	Raw        []byte
+	StatusCode int
 }
 
 // DoJSON performs a JSON request and returns a JSON response
@@ -167,9 +167,9 @@ type JSONRPCResponse struct {
 
 // JSONRPCError represents a JSON-RPC error
 type JSONRPCError struct {
-	Code    int         `json:"code"`
-	Message string      `json:"message"`
 	Data    interface{} `json:"data,omitempty"`
+	Message string      `json:"message"`
+	Code    int         `json:"code"`
 }
 
 // DoJSONRPC performs a JSON-RPC request

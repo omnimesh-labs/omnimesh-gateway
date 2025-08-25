@@ -12,7 +12,7 @@ interface EntityTypeSelectorProps {
 const ENTITY_TYPE_LABELS: Record<string, string> = {
   servers: 'Servers',
   virtual_servers: 'Virtual Servers',
-  tools: 'Tools', 
+  tools: 'Tools',
   prompts: 'Prompts',
   resources: 'Resources',
   policies: 'Policies',
@@ -44,7 +44,7 @@ export function EntityTypeSelector({
     const newSelection = selectedTypes.includes(type)
       ? selectedTypes.filter(t => t !== type)
       : [...selectedTypes, type];
-    
+
     onChange(newSelection);
     setSelectAll(newSelection.length === entityTypes.length);
   };
@@ -60,7 +60,7 @@ export function EntityTypeSelector({
       }}>
         {label}
       </label>
-      
+
       <div style={{
         border: '1px solid #d1d5db',
         borderRadius: '6px',
@@ -86,7 +86,7 @@ export function EntityTypeSelector({
             </span>
           </label>
         </div>
-        
+
         <div style={{
           borderTop: '1px solid #e5e7eb',
           paddingTop: '0.5rem',

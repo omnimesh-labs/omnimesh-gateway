@@ -24,17 +24,17 @@ func NewAuditLogger(db *sql.DB) *AuditLogger {
 
 // AuditEvent represents an authentication audit event
 type AuditEvent struct {
+	OldValues      map[string]interface{}
+	NewValues      map[string]interface{}
+	Metadata       map[string]interface{}
 	OrganizationID string
 	Action         string
 	ResourceType   string
 	ResourceID     string
 	ActorID        string
-	ActorIP        net.IP
-	OldValues      map[string]interface{}
-	NewValues      map[string]interface{}
-	Metadata       map[string]interface{}
-	Success        bool
 	ErrorMessage   string
+	ActorIP        net.IP
+	Success        bool
 }
 
 // Authentication audit actions
@@ -234,11 +234,11 @@ func NewLoginAttemptTracker(db *sql.DB) *LoginAttemptTracker {
 
 // LoginAttempt represents a login attempt record
 type LoginAttempt struct {
+	CreatedAt time.Time
 	ID        string
 	Email     string
 	ClientIP  net.IP
 	Success   bool
-	CreatedAt time.Time
 }
 
 // RecordLoginAttempt records a login attempt (success or failure)
@@ -252,14 +252,14 @@ func (t *LoginAttemptTracker) RecordLoginAttempt(email string, clientIP net.IP, 
 
 	query := `
 		INSERT INTO audit_logs (
-			organization_id, action, resource_type, actor_id, actor_ip, 
+			organization_id, action, resource_type, actor_id, actor_ip,
 			metadata, created_at
 		) VALUES ($1, $2, $3, $4, $5, $6, NOW())
 	`
 
 	metadata := map[string]interface{}{
-		"success":  success,
-		"email":    email,
+		"success":   success,
+		"email":     email,
 		"client_ip": clientIP.String(),
 	}
 

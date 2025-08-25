@@ -11,27 +11,25 @@ import (
 
 // MCPResource represents the mcp_resources table
 type MCPResource struct {
-	ID                 uuid.UUID              `db:"id" json:"id"`
-	OrganizationID     uuid.UUID              `db:"organization_id" json:"organization_id"`
-	Name               string                 `db:"name" json:"name"`
-	Description        sql.NullString         `db:"description" json:"-"`
-	ResourceType       string                 `db:"resource_type" json:"resource_type"` // resource_type_enum
-	URI                string                 `db:"uri" json:"uri"`
-	MimeType           sql.NullString         `db:"mime_type" json:"-"`
-	SizeBytes          sql.NullInt64          `db:"size_bytes" json:"-"`
-	AccessPermissions  map[string]interface{} `db:"access_permissions" json:"access_permissions,omitempty"`
-	IsActive           bool                   `db:"is_active" json:"is_active"`
-	Metadata           map[string]interface{} `db:"metadata" json:"metadata,omitempty"`
-	Tags               pq.StringArray         `db:"tags" json:"tags,omitempty"`
-	CreatedAt          time.Time              `db:"created_at" json:"created_at"`
-	UpdatedAt          time.Time              `db:"updated_at" json:"updated_at"`
-	CreatedBy          uuid.NullUUID          `db:"created_by" json:"-"`
-	
-	// JSON-friendly fields
-	DescriptionString *string    `db:"-" json:"description,omitempty"`
-	MimeTypeString    *string    `db:"-" json:"mime_type,omitempty"`
-	SizeBytesInt64    *int64     `db:"-" json:"size_bytes,omitempty"`
-	CreatedByUUID     *uuid.UUID `db:"-" json:"created_by,omitempty"`
+	CreatedAt         time.Time              `db:"created_at" json:"created_at"`
+	UpdatedAt         time.Time              `db:"updated_at" json:"updated_at"`
+	AccessPermissions map[string]interface{} `db:"access_permissions" json:"access_permissions,omitempty"`
+	CreatedByUUID     *uuid.UUID             `db:"-" json:"created_by,omitempty"`
+	SizeBytesInt64    *int64                 `db:"-" json:"size_bytes,omitempty"`
+	MimeTypeString    *string                `db:"-" json:"mime_type,omitempty"`
+	DescriptionString *string                `db:"-" json:"description,omitempty"`
+	Metadata          map[string]interface{} `db:"metadata" json:"metadata,omitempty"`
+	Name              string                 `db:"name" json:"name"`
+	ResourceType      string                 `db:"resource_type" json:"resource_type"`
+	URI               string                 `db:"uri" json:"uri"`
+	Tags              pq.StringArray         `db:"tags" json:"tags,omitempty"`
+	Description       sql.NullString         `db:"description" json:"-"`
+	MimeType          sql.NullString         `db:"mime_type" json:"-"`
+	SizeBytes         sql.NullInt64          `db:"size_bytes" json:"-"`
+	CreatedBy         uuid.NullUUID          `db:"created_by" json:"-"`
+	OrganizationID    uuid.UUID              `db:"organization_id" json:"organization_id"`
+	ID                uuid.UUID              `db:"id" json:"id"`
+	IsActive          bool                   `db:"is_active" json:"is_active"`
 }
 
 // MCPResourceModel handles MCP resource database operations
@@ -48,7 +46,7 @@ func NewMCPResourceModel(db Database) *MCPResourceModel {
 func (m *MCPResourceModel) Create(resource *MCPResource) error {
 	query := `
 		INSERT INTO mcp_resources (
-			id, organization_id, name, description, resource_type, uri, mime_type, 
+			id, organization_id, name, description, resource_type, uri, mime_type,
 			size_bytes, access_permissions, is_active, metadata, tags, created_by
 		) VALUES (
 			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
@@ -91,7 +89,7 @@ func (m *MCPResourceModel) Create(resource *MCPResource) error {
 func (m *MCPResourceModel) GetByID(id uuid.UUID) (*MCPResource, error) {
 	query := `
 		SELECT id, organization_id, name, description, resource_type, uri, mime_type,
-			   size_bytes, access_permissions, is_active, metadata, tags, 
+			   size_bytes, access_permissions, is_active, metadata, tags,
 			   created_at, updated_at, created_by
 		FROM mcp_resources
 		WHERE id = $1
@@ -138,7 +136,7 @@ func (m *MCPResourceModel) GetByID(id uuid.UUID) (*MCPResource, error) {
 func (m *MCPResourceModel) GetByName(orgID uuid.UUID, name string) (*MCPResource, error) {
 	query := `
 		SELECT id, organization_id, name, description, resource_type, uri, mime_type,
-			   size_bytes, access_permissions, is_active, metadata, tags, 
+			   size_bytes, access_permissions, is_active, metadata, tags,
 			   created_at, updated_at, created_by
 		FROM mcp_resources
 		WHERE organization_id = $1 AND name = $2 AND is_active = true
@@ -185,7 +183,7 @@ func (m *MCPResourceModel) GetByName(orgID uuid.UUID, name string) (*MCPResource
 func (m *MCPResourceModel) ListByOrganization(orgID uuid.UUID, activeOnly bool) ([]*MCPResource, error) {
 	query := `
 		SELECT id, organization_id, name, description, resource_type, uri, mime_type,
-			   size_bytes, access_permissions, is_active, metadata, tags, 
+			   size_bytes, access_permissions, is_active, metadata, tags,
 			   created_at, updated_at, created_by
 		FROM mcp_resources
 		WHERE organization_id = $1
@@ -250,7 +248,7 @@ func (m *MCPResourceModel) ListByOrganization(orgID uuid.UUID, activeOnly bool) 
 func (m *MCPResourceModel) ListByType(orgID uuid.UUID, resourceType string, activeOnly bool) ([]*MCPResource, error) {
 	query := `
 		SELECT id, organization_id, name, description, resource_type, uri, mime_type,
-			   size_bytes, access_permissions, is_active, metadata, tags, 
+			   size_bytes, access_permissions, is_active, metadata, tags,
 			   created_at, updated_at, created_by
 		FROM mcp_resources
 		WHERE organization_id = $1 AND resource_type = $2
@@ -358,13 +356,13 @@ func (m *MCPResourceModel) Delete(id uuid.UUID) error {
 func (m *MCPResourceModel) SearchResources(orgID uuid.UUID, searchTerm string, limit int, offset int) ([]*MCPResource, error) {
 	query := `
 		SELECT id, organization_id, name, description, resource_type, uri, mime_type,
-			   size_bytes, access_permissions, is_active, metadata, tags, 
+			   size_bytes, access_permissions, is_active, metadata, tags,
 			   created_at, updated_at, created_by
 		FROM mcp_resources
 		WHERE organization_id = $1 AND is_active = true
 		AND (
-			name ILIKE $2 OR 
-			description ILIKE $2 OR 
+			name ILIKE $2 OR
+			description ILIKE $2 OR
 			$3 = ANY(tags)
 		)
 		ORDER BY created_at DESC

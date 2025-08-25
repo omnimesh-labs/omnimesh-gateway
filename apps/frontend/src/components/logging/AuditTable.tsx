@@ -128,66 +128,66 @@ export function AuditTable({ auditLogs, loading, onRefresh }: AuditTableProps) {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead style={{ background: '#f9fafb' }}>
             <tr>
-              <th style={{ 
-                textAlign: 'left', 
-                padding: '0.75rem 1rem', 
-                fontSize: '0.75rem', 
-                fontWeight: '500', 
+              <th style={{
+                textAlign: 'left',
+                padding: '0.75rem 1rem',
+                fontSize: '0.75rem',
+                fontWeight: '500',
                 color: '#6b7280',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em'
               }}>
                 Timestamp
               </th>
-              <th style={{ 
-                textAlign: 'left', 
-                padding: '0.75rem 1rem', 
-                fontSize: '0.75rem', 
-                fontWeight: '500', 
+              <th style={{
+                textAlign: 'left',
+                padding: '0.75rem 1rem',
+                fontSize: '0.75rem',
+                fontWeight: '500',
                 color: '#6b7280',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em'
               }}>
                 Action
               </th>
-              <th style={{ 
-                textAlign: 'left', 
-                padding: '0.75rem 1rem', 
-                fontSize: '0.75rem', 
-                fontWeight: '500', 
+              <th style={{
+                textAlign: 'left',
+                padding: '0.75rem 1rem',
+                fontSize: '0.75rem',
+                fontWeight: '500',
                 color: '#6b7280',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em'
               }}>
                 Resource
               </th>
-              <th style={{ 
-                textAlign: 'left', 
-                padding: '0.75rem 1rem', 
-                fontSize: '0.75rem', 
-                fontWeight: '500', 
+              <th style={{
+                textAlign: 'left',
+                padding: '0.75rem 1rem',
+                fontSize: '0.75rem',
+                fontWeight: '500',
                 color: '#6b7280',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em'
               }}>
                 Actor
               </th>
-              <th style={{ 
-                textAlign: 'left', 
-                padding: '0.75rem 1rem', 
-                fontSize: '0.75rem', 
-                fontWeight: '500', 
+              <th style={{
+                textAlign: 'left',
+                padding: '0.75rem 1rem',
+                fontSize: '0.75rem',
+                fontWeight: '500',
                 color: '#6b7280',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em'
               }}>
                 IP Address
               </th>
-              <th style={{ 
-                textAlign: 'right', 
-                padding: '0.75rem 1rem', 
-                fontSize: '0.75rem', 
-                fontWeight: '500', 
+              <th style={{
+                textAlign: 'right',
+                padding: '0.75rem 1rem',
+                fontSize: '0.75rem',
+                fontWeight: '500',
                 color: '#6b7280',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em'
@@ -199,8 +199,8 @@ export function AuditTable({ auditLogs, loading, onRefresh }: AuditTableProps) {
           <tbody>
             {auditLogs && auditLogs.map((audit, index) => (
               <React.Fragment key={audit.id}>
-                <tr 
-                  style={{ 
+                <tr
+                  style={{
                     borderTop: index > 0 ? '1px solid #f3f4f6' : 'none'
                   }}
                 >

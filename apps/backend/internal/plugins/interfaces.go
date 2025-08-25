@@ -22,7 +22,6 @@ type (
 	PluginRegistry      = shared.PluginRegistry
 	PluginManager       = shared.PluginManager
 	PluginService       = shared.PluginService
-
 )
 
 // Re-export constants
@@ -56,4 +55,3 @@ const (
 	PluginModeDisabled   = shared.PluginModeDisabled
 	PluginModeAuditOnly  = shared.PluginModeAuditOnly
 )
-

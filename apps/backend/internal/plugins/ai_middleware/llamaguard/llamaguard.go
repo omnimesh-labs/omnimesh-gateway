@@ -83,7 +83,7 @@ type LlamaGuardViolation struct {
 // Default LlamaGuard categories
 var DefaultCategories = []string{
 	"S1: Violent Crimes",
-	"S2: Non-Violent Crimes", 
+	"S2: Non-Violent Crimes",
 	"S3: Sex Crimes",
 	"S4: Child Exploitation",
 	"S5: Defamation",
@@ -100,7 +100,7 @@ var DefaultCategories = []string{
 // NewLlamaGuardPlugin creates a new LlamaGuard plugin instance
 func NewLlamaGuardPlugin(name string, config map[string]interface{}) (*LlamaGuardPlugin, error) {
 	basePlugin := shared.NewBasePlugin(shared.PluginTypeLlamaGuard, name, 5) // Higher priority for safety
-	
+
 	// Set capabilities for AI middleware
 	basePlugin.SetCapabilities(shared.PluginCapabilities{
 		SupportsInbound:       true,
@@ -170,7 +170,7 @@ func (p *LlamaGuardPlugin) Apply(ctx context.Context, pluginCtx *shared.PluginCo
 	if len(violations) > 0 {
 		highestConfidence := 0.0
 		var primaryViolation LlamaGuardViolation
-		
+
 		for _, violation := range violations {
 			if violation.Confidence > highestConfidence {
 				highestConfidence = violation.Confidence
@@ -222,8 +222,8 @@ func (p *LlamaGuardPlugin) Apply(ctx context.Context, pluginCtx *shared.PluginCo
 			Category:   violation.Category,
 			Metadata: map[string]interface{}{
 				"llamaguard_reason": violation.Reason,
-				"model":            p.config.Model,
-				"api_endpoint":     p.config.APIEndpoint,
+				"model":             p.config.Model,
+				"api_endpoint":      p.config.APIEndpoint,
 			},
 		}
 	}
@@ -274,7 +274,7 @@ func (p *LlamaGuardPlugin) Configure(config map[string]interface{}) error {
 func (p *LlamaGuardPlugin) checkContent(ctx context.Context, content string, pluginCtx *shared.PluginContext) ([]LlamaGuardViolation, error) {
 	// Prepare the prompt for LlamaGuard
 	prompt := p.buildPrompt(content)
-	
+
 	// Prepare the API request
 	request := LlamaGuardRequest{
 		Model: p.config.Model,
@@ -290,20 +290,20 @@ func (p *LlamaGuardPlugin) checkContent(ctx context.Context, content string, plu
 		Metadata: map[string]interface{}{
 			"request_id":      pluginCtx.RequestID,
 			"organization_id": pluginCtx.OrganizationID,
-			"user_id":        pluginCtx.UserID,
+			"user_id":         pluginCtx.UserID,
 		},
 	}
 
 	// Make API call with retries
 	var response *LlamaGuardResponse
 	var err error
-	
+
 	for attempt := 0; attempt < p.config.MaxRetries; attempt++ {
 		response, err = p.callAPI(ctx, request)
 		if err == nil {
 			break
 		}
-		
+
 		if attempt < p.config.MaxRetries-1 {
 			// Exponential backoff
 			backoff := time.Duration(1<<attempt) * time.Second
@@ -327,7 +327,7 @@ func (p *LlamaGuardPlugin) buildPrompt(content string) string {
 
 	// Default LlamaGuard prompt format
 	categories := strings.Join(p.config.Categories, "\n")
-	
+
 	return fmt.Sprintf(`Task: Check if there is unsafe content in 'User' messages in conversations according to our safety policy with the below categories.
 
 <BEGIN UNSAFE CONTENT CATEGORIES>
@@ -399,14 +399,14 @@ func (p *LlamaGuardPlugin) parseResponse(response *LlamaGuardResponse) ([]LlamaG
 
 	content := response.Choices[0].Message.Content
 	lines := strings.Split(strings.TrimSpace(content), "\n")
-	
+
 	if len(lines) == 0 {
 		return nil, fmt.Errorf("empty response from LlamaGuard")
 	}
 
 	// Parse first line for safety assessment
 	firstLine := strings.ToLower(strings.TrimSpace(lines[0]))
-	
+
 	if strings.Contains(firstLine, "safe") && !strings.Contains(firstLine, "unsafe") {
 		// Content is safe
 		return []LlamaGuardViolation{}, nil
@@ -414,11 +414,11 @@ func (p *LlamaGuardPlugin) parseResponse(response *LlamaGuardResponse) ([]LlamaG
 
 	// Content is unsafe, parse violations
 	var violations []LlamaGuardViolation
-	
+
 	// Extract category from response
 	category := "Unknown"
 	reason := content
-	
+
 	// Look for category indicators in the response
 	for _, cat := range p.config.Categories {
 		if strings.Contains(strings.ToUpper(content), strings.ToUpper(cat)) {
@@ -426,13 +426,13 @@ func (p *LlamaGuardPlugin) parseResponse(response *LlamaGuardResponse) ([]LlamaG
 			break
 		}
 	}
-	
+
 	// Calculate confidence based on response certainty
 	confidence := 0.9 // Default high confidence for explicit "unsafe" responses
 	if strings.Contains(strings.ToLower(content), "potentially") || strings.Contains(strings.ToLower(content), "might") {
 		confidence = 0.7
 	}
-	
+
 	// Determine severity based on category
 	severity := "medium"
 	if strings.Contains(strings.ToUpper(category), "VIOLENCE") || strings.Contains(strings.ToUpper(category), "HARM") {
@@ -531,59 +531,59 @@ func (f *LlamaGuardPluginFactory) GetDefaultConfig() map[string]interface{} {
 // GetConfigSchema returns the JSON schema for configuration validation
 func (f *LlamaGuardPluginFactory) GetConfigSchema() map[string]interface{} {
 	return map[string]interface{}{
-		"type": "object",
+		"type":     "object",
 		"required": []string{"api_key", "api_endpoint"},
 		"properties": map[string]interface{}{
 			"api_key": map[string]interface{}{
-				"type": "string",
+				"type":        "string",
 				"description": "API key for LlamaGuard service",
 			},
 			"api_endpoint": map[string]interface{}{
-				"type": "string", 
+				"type":        "string",
 				"description": "LlamaGuard API endpoint URL",
 			},
 			"model": map[string]interface{}{
-				"type": "string",
+				"type":        "string",
 				"description": "LlamaGuard model to use",
 			},
 			"categories": map[string]interface{}{
-				"type": "array",
-				"items": map[string]interface{}{"type": "string"},
+				"type":        "array",
+				"items":       map[string]interface{}{"type": "string"},
 				"description": "Safety categories to check",
 			},
 			"action": map[string]interface{}{
-				"type": "string",
-				"enum": []string{"block", "warn", "audit", "allow"},
+				"type":        "string",
+				"enum":        []string{"block", "warn", "audit", "allow"},
 				"description": "Action to take when violations are found",
 			},
 			"threshold": map[string]interface{}{
-				"type": "number",
-				"minimum": 0.0,
-				"maximum": 1.0,
+				"type":        "number",
+				"minimum":     0.0,
+				"maximum":     1.0,
 				"description": "Confidence threshold for triggering actions",
 			},
 			"timeout_seconds": map[string]interface{}{
-				"type": "integer",
-				"minimum": 1,
-				"maximum": 300,
+				"type":        "integer",
+				"minimum":     1,
+				"maximum":     300,
 				"description": "API request timeout in seconds",
 			},
 			"max_retries": map[string]interface{}{
-				"type": "integer",
-				"minimum": 0,
-				"maximum": 10,
+				"type":        "integer",
+				"minimum":     0,
+				"maximum":     10,
 				"description": "Maximum number of API retries",
 			},
 			"log_violations": map[string]interface{}{
-				"type": "boolean",
+				"type":        "boolean",
 				"description": "Whether to log violations to audit trail",
 			},
 			"custom_prompt": map[string]interface{}{
-				"type": "string",
+				"type":        "string",
 				"description": "Custom prompt template (use {CONTENT} for content placeholder)",
 			},
 			"enable_streaming": map[string]interface{}{
-				"type": "boolean",
+				"type":        "boolean",
 				"description": "Enable streaming responses from LlamaGuard",
 			},
 		},

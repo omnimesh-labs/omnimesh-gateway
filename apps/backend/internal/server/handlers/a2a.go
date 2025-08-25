@@ -38,7 +38,7 @@ func safeErrorResponse(c *gin.Context, status int, publicMessage string, actualE
 
 	// Return sanitized error response
 	c.JSON(status, types.ErrorResponse{
-		Error: types.NewError(errorCode, publicMessage, status),
+		Error:   types.NewError(errorCode, publicMessage, status),
 		Success: false,
 	})
 }
@@ -47,11 +47,11 @@ func safeErrorResponse(c *gin.Context, status int, publicMessage string, actualE
 func safeBadRequestResponse(c *gin.Context, publicMessage string, actualError error, logPrefix string) {
 	if actualError != nil {
 		log.Printf("[%s] %s: %v", logPrefix, publicMessage, actualError)
-		
+
 		// For validation errors, we can be slightly more permissive
-		if strings.Contains(actualError.Error(), "required") || 
-		   strings.Contains(actualError.Error(), "invalid") ||
-		   strings.Contains(actualError.Error(), "format") {
+		if strings.Contains(actualError.Error(), "required") ||
+			strings.Contains(actualError.Error(), "invalid") ||
+			strings.Contains(actualError.Error(), "format") {
 			publicMessage = actualError.Error() // Safe validation messages
 		}
 	}
@@ -124,23 +124,23 @@ func (h *A2AHandler) ListAgents(c *gin.Context) {
 	agentSpecs := make([]*types.A2AAgentSpec, 0)
 	for _, agent := range agents {
 		spec := &types.A2AAgentSpec{
-			ID:               agent.ID.String(),
-			Name:             agent.Name,
-			Description:      agent.Description,
-			EndpointURL:      agent.EndpointURL,
-			AgentType:        agent.AgentType,
-			ProtocolVersion:  agent.ProtocolVersion,
-			Capabilities:     agent.CapabilitiesData,
-			Config:           agent.ConfigData,
-			AuthType:         agent.AuthType,
-			Tags:             agent.Tags,
-			Metadata:         agent.MetadataData,
-			IsActive:         agent.IsActive,
-			LastHealthCheck:  agent.LastHealthCheck,
-			HealthStatus:     agent.HealthStatus,
-			HealthError:      agent.HealthError,
-			CreatedAt:        agent.CreatedAt,
-			UpdatedAt:        agent.UpdatedAt,
+			ID:              agent.ID.String(),
+			Name:            agent.Name,
+			Description:     agent.Description,
+			EndpointURL:     agent.EndpointURL,
+			AgentType:       agent.AgentType,
+			ProtocolVersion: agent.ProtocolVersion,
+			Capabilities:    agent.CapabilitiesData,
+			Config:          agent.ConfigData,
+			AuthType:        agent.AuthType,
+			Tags:            agent.Tags,
+			Metadata:        agent.MetadataData,
+			IsActive:        agent.IsActive,
+			LastHealthCheck: agent.LastHealthCheck,
+			HealthStatus:    agent.HealthStatus,
+			HealthError:     agent.HealthError,
+			CreatedAt:       agent.CreatedAt,
+			UpdatedAt:       agent.UpdatedAt,
 		}
 		agentSpecs = append(agentSpecs, spec)
 	}
@@ -204,21 +204,21 @@ func (h *A2AHandler) RegisterAgent(c *gin.Context) {
 
 	// Convert to spec for response (hide auth value)
 	responseSpec := &types.A2AAgentSpec{
-		ID:               agent.ID.String(),
-		Name:             agent.Name,
-		Description:      agent.Description,
-		EndpointURL:      agent.EndpointURL,
-		AgentType:        agent.AgentType,
-		ProtocolVersion:  agent.ProtocolVersion,
-		Capabilities:     agent.CapabilitiesData,
-		Config:           agent.ConfigData,
-		AuthType:         agent.AuthType,
-		Tags:             agent.Tags,
-		Metadata:         agent.MetadataData,
-		IsActive:         agent.IsActive,
-		HealthStatus:     agent.HealthStatus,
-		CreatedAt:        agent.CreatedAt,
-		UpdatedAt:        agent.UpdatedAt,
+		ID:              agent.ID.String(),
+		Name:            agent.Name,
+		Description:     agent.Description,
+		EndpointURL:     agent.EndpointURL,
+		AgentType:       agent.AgentType,
+		ProtocolVersion: agent.ProtocolVersion,
+		Capabilities:    agent.CapabilitiesData,
+		Config:          agent.ConfigData,
+		AuthType:        agent.AuthType,
+		Tags:            agent.Tags,
+		Metadata:        agent.MetadataData,
+		IsActive:        agent.IsActive,
+		HealthStatus:    agent.HealthStatus,
+		CreatedAt:       agent.CreatedAt,
+		UpdatedAt:       agent.UpdatedAt,
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
@@ -250,23 +250,23 @@ func (h *A2AHandler) GetAgent(c *gin.Context) {
 
 	// Convert to spec (hide auth value)
 	spec := &types.A2AAgentSpec{
-		ID:               agent.ID.String(),
-		Name:             agent.Name,
-		Description:      agent.Description,
-		EndpointURL:      agent.EndpointURL,
-		AgentType:        agent.AgentType,
-		ProtocolVersion:  agent.ProtocolVersion,
-		Capabilities:     agent.CapabilitiesData,
-		Config:           agent.ConfigData,
-		AuthType:         agent.AuthType,
-		Tags:             agent.Tags,
-		Metadata:         agent.MetadataData,
-		IsActive:         agent.IsActive,
-		LastHealthCheck:  agent.LastHealthCheck,
-		HealthStatus:     agent.HealthStatus,
-		HealthError:      agent.HealthError,
-		CreatedAt:        agent.CreatedAt,
-		UpdatedAt:        agent.UpdatedAt,
+		ID:              agent.ID.String(),
+		Name:            agent.Name,
+		Description:     agent.Description,
+		EndpointURL:     agent.EndpointURL,
+		AgentType:       agent.AgentType,
+		ProtocolVersion: agent.ProtocolVersion,
+		Capabilities:    agent.CapabilitiesData,
+		Config:          agent.ConfigData,
+		AuthType:        agent.AuthType,
+		Tags:            agent.Tags,
+		Metadata:        agent.MetadataData,
+		IsActive:        agent.IsActive,
+		LastHealthCheck: agent.LastHealthCheck,
+		HealthStatus:    agent.HealthStatus,
+		HealthError:     agent.HealthError,
+		CreatedAt:       agent.CreatedAt,
+		UpdatedAt:       agent.UpdatedAt,
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -308,23 +308,23 @@ func (h *A2AHandler) UpdateAgent(c *gin.Context) {
 
 	// Convert to spec for response (hide auth value)
 	responseSpec := &types.A2AAgentSpec{
-		ID:               updatedAgent.ID.String(),
-		Name:             updatedAgent.Name,
-		Description:      updatedAgent.Description,
-		EndpointURL:      updatedAgent.EndpointURL,
-		AgentType:        updatedAgent.AgentType,
-		ProtocolVersion:  updatedAgent.ProtocolVersion,
-		Capabilities:     updatedAgent.CapabilitiesData,
-		Config:           updatedAgent.ConfigData,
-		AuthType:         updatedAgent.AuthType,
-		Tags:             updatedAgent.Tags,
-		Metadata:         updatedAgent.MetadataData,
-		IsActive:         updatedAgent.IsActive,
-		LastHealthCheck:  updatedAgent.LastHealthCheck,
-		HealthStatus:     updatedAgent.HealthStatus,
-		HealthError:      updatedAgent.HealthError,
-		CreatedAt:        updatedAgent.CreatedAt,
-		UpdatedAt:        updatedAgent.UpdatedAt,
+		ID:              updatedAgent.ID.String(),
+		Name:            updatedAgent.Name,
+		Description:     updatedAgent.Description,
+		EndpointURL:     updatedAgent.EndpointURL,
+		AgentType:       updatedAgent.AgentType,
+		ProtocolVersion: updatedAgent.ProtocolVersion,
+		Capabilities:    updatedAgent.CapabilitiesData,
+		Config:          updatedAgent.ConfigData,
+		AuthType:        updatedAgent.AuthType,
+		Tags:            updatedAgent.Tags,
+		Metadata:        updatedAgent.MetadataData,
+		IsActive:        updatedAgent.IsActive,
+		LastHealthCheck: updatedAgent.LastHealthCheck,
+		HealthStatus:    updatedAgent.HealthStatus,
+		HealthError:     updatedAgent.HealthError,
+		CreatedAt:       updatedAgent.CreatedAt,
+		UpdatedAt:       updatedAgent.UpdatedAt,
 	}
 
 	c.JSON(http.StatusOK, gin.H{

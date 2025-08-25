@@ -18,15 +18,15 @@ import (
 type WebSocketTransport struct {
 	*BaseTransport
 	conn         *websocket.Conn
-	upgrader     websocket.Upgrader
 	messageQueue chan *types.WebSocketMessage
 	responseMap  map[string]chan *types.MCPMessage
 	config       map[string]interface{}
-	mu           sync.RWMutex
 	done         chan struct{}
 	pingTicker   *time.Ticker
+	upgrader     websocket.Upgrader
 	timeout      time.Duration
 	bufferSize   int
+	mu           sync.RWMutex
 }
 
 // NewWebSocketTransport creates a new WebSocket transport instance
@@ -388,7 +388,7 @@ func (w *WebSocketTransport) handleNotification(mcpMessage *types.MCPMessage) {
 		w.onToolsListChanged()
 	case "notifications/resources/list_changed":
 		// Resource list changed notification
-		w.onResourcesListChanged() 
+		w.onResourcesListChanged()
 	case "notifications/prompts/list_changed":
 		// Prompts list changed notification
 		w.onPromptsListChanged()
@@ -466,7 +466,7 @@ func (w *WebSocketTransport) handleRawBinaryData(data []byte) {
 		},
 		Timestamp: time.Now(),
 	}
-	
+
 	// Store or forward the event as needed
 	_ = event // Placeholder for now
 }

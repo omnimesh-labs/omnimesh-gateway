@@ -344,10 +344,10 @@ func (c *Client) prepareCustomRequest(agent *types.A2AAgent, request *types.A2AC
 	customReq := &types.A2ARequest{
 		InteractionType: types.InteractionTypeChat,
 		Parameters: map[string]interface{}{
-			"messages":     request.Messages,
-			"max_tokens":   request.MaxTokens,
-			"temperature":  request.Temperature,
-			"tools":        request.Tools,
+			"messages":    request.Messages,
+			"max_tokens":  request.MaxTokens,
+			"temperature": request.Temperature,
+			"tools":       request.Tools,
 		},
 		ProtocolVersion: agent.ProtocolVersion,
 		AgentID:         agent.ID.String(),
@@ -410,12 +410,12 @@ func (c *Client) parseOpenAIResponse(data []byte) (*types.A2AChatResponse, error
 // parseAnthropicResponse parses an Anthropic API response
 func (c *Client) parseAnthropicResponse(data []byte) (*types.A2AChatResponse, error) {
 	var anthropicResp struct {
-		Content []struct {
+		StopReason string `json:"stop_reason"`
+		Content    []struct {
 			Type string `json:"type"`
 			Text string `json:"text"`
 		} `json:"content"`
-		StopReason string `json:"stop_reason"`
-		Usage      struct {
+		Usage struct {
 			InputTokens  int `json:"input_tokens"`
 			OutputTokens int `json:"output_tokens"`
 		} `json:"usage"`

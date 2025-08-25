@@ -14,42 +14,42 @@ import (
 
 // ConfigImport represents the config_imports table
 type ConfigImport struct {
-	ID               uuid.UUID                  `db:"id" json:"id"`
-	OrganizationID   uuid.UUID                  `db:"organization_id" json:"organization_id"`
-	Filename         string                     `db:"filename" json:"filename"`
-	EntityTypes      pq.StringArray             `db:"entity_types" json:"entity_types"`
-	Status           types.ImportStatus         `db:"status" json:"status"`
-	ConflictStrategy types.ConflictStrategy     `db:"conflict_strategy" json:"conflict_strategy"`
-	DryRun           bool                       `db:"dry_run" json:"dry_run"`
-	Summary          map[string]interface{}     `db:"summary" json:"summary"`
-	ErrorCount       int                        `db:"error_count" json:"error_count"`
-	WarningCount     int                        `db:"warning_count" json:"warning_count"`
-	Duration         *time.Duration             `db:"duration" json:"duration,omitempty"`
-	ImportedBy       uuid.UUID                  `db:"imported_by" json:"imported_by"`
-	ImportedByName   sql.NullString             `db:"imported_by_name" json:"imported_by_name,omitempty"`
-	ImportedByEmail  sql.NullString             `db:"imported_by_email" json:"imported_by_email,omitempty"`
-	Metadata         map[string]interface{}     `db:"metadata" json:"metadata"`
-	DetailsFilePath  sql.NullString             `db:"details_file_path" json:"details_file_path,omitempty"`
-	CreatedAt        time.Time                  `db:"created_at" json:"created_at"`
-	CompletedAt      *time.Time                 `db:"completed_at" json:"completed_at,omitempty"`
+	CreatedAt        time.Time              `db:"created_at" json:"created_at"`
+	Duration         *time.Duration         `db:"duration" json:"duration,omitempty"`
+	CompletedAt      *time.Time             `db:"completed_at" json:"completed_at,omitempty"`
+	Metadata         map[string]interface{} `db:"metadata" json:"metadata"`
+	Summary          map[string]interface{} `db:"summary" json:"summary"`
+	Filename         string                 `db:"filename" json:"filename"`
+	Status           types.ImportStatus     `db:"status" json:"status"`
+	ConflictStrategy types.ConflictStrategy `db:"conflict_strategy" json:"conflict_strategy"`
+	ImportedByName   sql.NullString         `db:"imported_by_name" json:"imported_by_name,omitempty"`
+	ImportedByEmail  sql.NullString         `db:"imported_by_email" json:"imported_by_email,omitempty"`
+	DetailsFilePath  sql.NullString         `db:"details_file_path" json:"details_file_path,omitempty"`
+	EntityTypes      pq.StringArray         `db:"entity_types" json:"entity_types"`
+	WarningCount     int                    `db:"warning_count" json:"warning_count"`
+	ErrorCount       int                    `db:"error_count" json:"error_count"`
+	ImportedBy       uuid.UUID              `db:"imported_by" json:"imported_by"`
+	ID               uuid.UUID              `db:"id" json:"id"`
+	OrganizationID   uuid.UUID              `db:"organization_id" json:"organization_id"`
+	DryRun           bool                   `db:"dry_run" json:"dry_run"`
 }
 
 // ConfigExport represents the config_exports table
 type ConfigExport struct {
-	ID               uuid.UUID                  `db:"id" json:"id"`
-	OrganizationID   uuid.UUID                  `db:"organization_id" json:"organization_id"`
-	EntityTypes      pq.StringArray             `db:"entity_types" json:"entity_types"`
-	Filters          map[string]interface{}     `db:"filters" json:"filters"`
-	TotalEntities    int                        `db:"total_entities" json:"total_entities"`
-	FileSizeBytes    *int64                     `db:"file_size_bytes" json:"file_size_bytes,omitempty"`
-	Filename         sql.NullString             `db:"filename" json:"filename,omitempty"`
-	FilePath         sql.NullString             `db:"file_path" json:"file_path,omitempty"`
-	ExpiresAt        *time.Time                 `db:"expires_at" json:"expires_at,omitempty"`
-	ExportedBy       uuid.UUID                  `db:"exported_by" json:"exported_by"`
-	ExportedByName   sql.NullString             `db:"exported_by_name" json:"exported_by_name,omitempty"`
-	ExportedByEmail  sql.NullString             `db:"exported_by_email" json:"exported_by_email,omitempty"`
-	Metadata         map[string]interface{}     `db:"metadata" json:"metadata"`
-	CreatedAt        time.Time                  `db:"created_at" json:"created_at"`
+	CreatedAt       time.Time              `db:"created_at" json:"created_at"`
+	FileSizeBytes   *int64                 `db:"file_size_bytes" json:"file_size_bytes,omitempty"`
+	Metadata        map[string]interface{} `db:"metadata" json:"metadata"`
+	Filters         map[string]interface{} `db:"filters" json:"filters"`
+	ExpiresAt       *time.Time             `db:"expires_at" json:"expires_at,omitempty"`
+	Filename        sql.NullString         `db:"filename" json:"filename,omitempty"`
+	FilePath        sql.NullString         `db:"file_path" json:"file_path,omitempty"`
+	ExportedByName  sql.NullString         `db:"exported_by_name" json:"exported_by_name,omitempty"`
+	ExportedByEmail sql.NullString         `db:"exported_by_email" json:"exported_by_email,omitempty"`
+	EntityTypes     pq.StringArray         `db:"entity_types" json:"entity_types"`
+	TotalEntities   int                    `db:"total_entities" json:"total_entities"`
+	ID              uuid.UUID              `db:"id" json:"id"`
+	ExportedBy      uuid.UUID              `db:"exported_by" json:"exported_by"`
+	OrganizationID  uuid.UUID              `db:"organization_id" json:"organization_id"`
 }
 
 // ConfigImportModel handles config import database operations
@@ -176,7 +176,7 @@ func (m *ConfigImportModel) ListByOrganization(orgID uuid.UUID, query *types.Imp
 	`
 
 	countQuery := `SELECT COUNT(*) FROM config_imports WHERE organization_id = $1`
-	
+
 	var conditions []string
 	var args []interface{}
 	argCount := 1
@@ -289,7 +289,7 @@ func NewConfigExportModel(db Database) *ConfigExportModel {
 func (m *ConfigExportModel) Create(exportRecord *ConfigExport) error {
 	query := `
 		INSERT INTO config_exports (
-			id, organization_id, entity_types, filters, total_entities, 
+			id, organization_id, entity_types, filters, total_entities,
 			file_size_bytes, filename, file_path, expires_at, exported_by,
 			exported_by_name, exported_by_email, metadata
 		) VALUES (

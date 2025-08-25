@@ -146,7 +146,7 @@ func TestTokenRefreshWithRotation(t *testing.T) {
 func TestLoginAttemptTracking(t *testing.T) {
 	// Test the logic without database
 	// In a real implementation, this would test against database records
-	
+
 	// Mock rate limiting logic
 	maxAttempts := 5
 	attempts := 0

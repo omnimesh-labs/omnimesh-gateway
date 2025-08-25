@@ -3,10 +3,11 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
-	"mcp-gateway/apps/backend/internal/database/models"
-	"mcp-gateway/apps/backend/internal/plugins"
 	"net/http"
 	"strconv"
+
+	"mcp-gateway/apps/backend/internal/database/models"
+	"mcp-gateway/apps/backend/internal/plugins"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -129,7 +130,7 @@ func (h *FiltersHandler) ListFilters(c *gin.Context) {
 	// Build query with optional filters
 	query := `
 		SELECT id, organization_id, name, description, type, enabled, priority, config, created_at, updated_at, created_by
-		FROM content_filters 
+		FROM content_filters
 		WHERE organization_id = $1
 	`
 	args := []interface{}{orgID.(string)}
@@ -208,7 +209,7 @@ func (h *FiltersHandler) GetFilter(c *gin.Context) {
 
 	query := `
 		SELECT id, organization_id, name, description, type, enabled, priority, config, created_at, updated_at, created_by
-		FROM content_filters 
+		FROM content_filters
 		WHERE id = $1 AND organization_id = $2
 	`
 
@@ -463,18 +464,18 @@ func (h *FiltersHandler) GetFilterMetrics(c *gin.Context) {
 
 // Request/Response types
 type CreateFilterRequest struct {
+	Config      map[string]interface{} `json:"config" binding:"required"`
 	Name        string                 `json:"name" binding:"required,min=2"`
 	Description string                 `json:"description"`
 	Type        string                 `json:"type" binding:"required"`
-	Enabled     bool                   `json:"enabled"`
 	Priority    int                    `json:"priority" binding:"min=1,max=1000"`
-	Config      map[string]interface{} `json:"config" binding:"required"`
+	Enabled     bool                   `json:"enabled"`
 }
 
 type UpdateFilterRequest struct {
+	Config      map[string]interface{} `json:"config,omitempty"`
+	Enabled     *bool                  `json:"enabled,omitempty"`
 	Name        string                 `json:"name,omitempty" binding:"omitempty,min=2"`
 	Description string                 `json:"description,omitempty"`
 	Priority    int                    `json:"priority,omitempty" binding:"omitempty,min=1,max=1000"`
-	Config      map[string]interface{} `json:"config,omitempty"`
-	Enabled     *bool                  `json:"enabled,omitempty"`
 }

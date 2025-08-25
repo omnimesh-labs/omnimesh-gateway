@@ -9,13 +9,13 @@ body:
     attributes:
       value: |
         ⚠️ **IMPORTANT SECURITY NOTICE** ⚠️
-        
+
         **For sensitive security vulnerabilities, please DO NOT use this public issue template.**
-        
+
         Instead, please report security vulnerabilities privately via email to: **team@wraithscan.com**
-        
+
         See our [Security Policy](https://github.com/yourusername/mcp-gateway/blob/main/SECURITY.md) for detailed reporting instructions.
-        
+
         This template should only be used for:
         - General security improvements
         - Security-related feature requests
@@ -57,7 +57,7 @@ body:
       description: Describe the security issue, improvement, or question
       placeholder: |
         Please provide a clear description of the security-related issue or improvement you're suggesting.
-        
+
         For enhancements, explain:
         - What security aspect needs improvement
         - Why this would make the system more secure

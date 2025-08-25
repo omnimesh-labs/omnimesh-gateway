@@ -18,11 +18,11 @@ type PIIFilter struct {
 
 // PIIPattern represents a compiled PII detection pattern
 type PIIPattern struct {
-	Name        string
 	Pattern     *regexp.Regexp
-	Enabled     bool
+	Name        string
 	Severity    string
 	Description string
+	Enabled     bool
 }
 
 // PIIConfig holds the configuration for the PII filter
@@ -30,17 +30,17 @@ type PIIConfig struct {
 	Patterns        map[string]bool `json:"patterns"`
 	MaskingStrategy string          `json:"masking_strategy"`
 	Action          string          `json:"action"`
-	LogViolations   bool            `json:"log_violations"`
 	CustomPatterns  []CustomPattern `json:"custom_patterns"`
+	LogViolations   bool            `json:"log_violations"`
 }
 
 // CustomPattern allows users to define custom PII patterns
 type CustomPattern struct {
 	Name        string `json:"name"`
 	Pattern     string `json:"pattern"`
-	Enabled     bool   `json:"enabled"`
 	Severity    string `json:"severity"`
 	Description string `json:"description"`
+	Enabled     bool   `json:"enabled"`
 }
 
 // MaskingStrategy defines how PII should be masked

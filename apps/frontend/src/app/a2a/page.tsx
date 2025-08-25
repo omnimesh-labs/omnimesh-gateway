@@ -36,7 +36,7 @@ export default function A2APage() {
         a2aApi.listAgents(),
         a2aApi.getStats()
       ]);
-      
+
       setAgents(agentsData);
       setStats(statsData);
 
@@ -130,7 +130,7 @@ export default function A2APage() {
 
   const filteredAgents = agents.filter(agent => {
     if (!showInactive && !agent.is_active) return false;
-    
+
     if (tagFilter) {
       const filterTags = tagFilter.split(',').map(t => t.trim().toLowerCase()).filter(t => t);
       if (filterTags.length > 0) {
@@ -138,7 +138,7 @@ export default function A2APage() {
         if (!filterTags.some(filterTag => agentTags.includes(filterTag))) return false;
       }
     }
-    
+
     return true;
   });
 
@@ -156,10 +156,10 @@ export default function A2APage() {
 
   if (loading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
         height: '200px',
         color: '#6b7280'
       }}>
@@ -182,27 +182,27 @@ export default function A2APage() {
       <div style={{ marginBottom: '2rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
           <div>
-            <h1 style={{ 
-              fontSize: '2rem', 
-              fontWeight: 'bold', 
+            <h1 style={{
+              fontSize: '2rem',
+              fontWeight: 'bold',
               color: '#111827',
               margin: '0 0 0.5rem 0'
             }}>
               A2A Agents Catalog
             </h1>
-            <p style={{ 
-              fontSize: '0.875rem', 
+            <p style={{
+              fontSize: '0.875rem',
               color: '#6b7280',
               margin: 0
             }}>
               Manage Agent-to-Agent compatible agents that can be integrated as tools
             </p>
           </div>
-          
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <label style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
               gap: '0.5rem',
               fontSize: '0.875rem',
               fontWeight: '500',
@@ -221,16 +221,16 @@ export default function A2APage() {
 
         {/* Stats */}
         {stats && (
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
             gap: '1rem',
             marginBottom: '2rem'
           }}>
-            <div style={{ 
-              background: 'white', 
-              padding: '1rem', 
-              borderRadius: '0.5rem', 
+            <div style={{
+              background: 'white',
+              padding: '1rem',
+              borderRadius: '0.5rem',
               border: '1px solid #e5e7eb'
             }}>
               <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#111827' }}>
@@ -240,10 +240,10 @@ export default function A2APage() {
                 Total Agents
               </div>
             </div>
-            <div style={{ 
-              background: 'white', 
-              padding: '1rem', 
-              borderRadius: '0.5rem', 
+            <div style={{
+              background: 'white',
+              padding: '1rem',
+              borderRadius: '0.5rem',
               border: '1px solid #e5e7eb'
             }}>
               <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10b981' }}>
@@ -253,10 +253,10 @@ export default function A2APage() {
                 Active Agents
               </div>
             </div>
-            <div style={{ 
-              background: 'white', 
-              padding: '1rem', 
-              borderRadius: '0.5rem', 
+            <div style={{
+              background: 'white',
+              padding: '1rem',
+              borderRadius: '0.5rem',
               border: '1px solid #e5e7eb'
             }}>
               <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#3b82f6' }}>
@@ -266,10 +266,10 @@ export default function A2APage() {
                 Agent Types
               </div>
             </div>
-            <div style={{ 
-              background: 'white', 
-              padding: '1rem', 
-              borderRadius: '0.5rem', 
+            <div style={{
+              background: 'white',
+              padding: '1rem',
+              borderRadius: '0.5rem',
               border: '1px solid #e5e7eb'
             }}>
               <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10b981' }}>
@@ -293,10 +293,10 @@ export default function A2APage() {
       }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
           <div style={{ flex: '1', minWidth: '250px' }}>
-            <label style={{ 
-              display: 'block', 
-              fontSize: '0.875rem', 
-              fontWeight: '500', 
+            <label style={{
+              display: 'block',
+              fontSize: '0.875rem',
+              fontWeight: '500',
               color: '#374151',
               marginBottom: '0.25rem'
             }}>
@@ -413,8 +413,8 @@ export default function A2APage() {
       {(showForm || editingAgent) && (
         <A2AAgentForm
           agent={editingAgent}
-          onSubmit={editingAgent ? 
-            (data: A2AAgentSpec) => handleUpdateAgent(editingAgent.id, data) : 
+          onSubmit={editingAgent ?
+            (data: A2AAgentSpec) => handleUpdateAgent(editingAgent.id, data) :
             handleCreateAgent
           }
           onCancel={() => {

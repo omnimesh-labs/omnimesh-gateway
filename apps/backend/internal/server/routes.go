@@ -3,8 +3,10 @@ package server
 import (
 	"context"
 	"log"
+	"net/http"
 	"os"
 	"time"
+
 	"mcp-gateway/apps/backend/internal/a2a"
 	"mcp-gateway/apps/backend/internal/auth"
 	"mcp-gateway/apps/backend/internal/database/models"
@@ -16,7 +18,6 @@ import (
 	"mcp-gateway/apps/backend/internal/transport"
 	"mcp-gateway/apps/backend/internal/types"
 	"mcp-gateway/apps/backend/internal/virtual"
-	"net/http"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -326,7 +327,6 @@ func (s *Server) RegisterRoutes() http.Handler {
 			gateway.GET("/tools/function/:function_name",
 				authMiddleware.RequireResourceAccess("tool", "read"),
 				toolHandler.GetToolByFunction)
-
 		}
 
 		// A2A (Agent-to-Agent) management routes (protected)
@@ -477,7 +477,6 @@ func (s *Server) RegisterRoutes() http.Handler {
 					loggingMiddleware.AuditLogger("delete", "policy"),
 					policyHandler.DeletePolicy)
 			}
-
 		}
 	}
 

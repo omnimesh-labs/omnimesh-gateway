@@ -90,17 +90,17 @@ export default function ConfigurationPage() {
   const handleExport = useCallback(async (options: ExportOptions) => {
     setIsExporting(true);
     setExportProgress(0);
-    
+
     try {
       // Simulate export progress
       for (let i = 0; i <= 100; i += 10) {
         setExportProgress(i);
         await new Promise(resolve => setTimeout(resolve, 200));
       }
-      
+
       // TODO: Replace with actual API call
       console.log('Exporting configuration:', options);
-      
+
       // Create and download a mock export file
       const exportData = {
         metadata: {
@@ -123,7 +123,7 @@ export default function ConfigurationPage() {
         policies: [],
         rateLimits: []
       };
-      
+
       const blob = new Blob([JSON.stringify(exportData, null, 2)], {
         type: 'application/json'
       });
@@ -135,7 +135,7 @@ export default function ConfigurationPage() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      
+
       showToast('Configuration exported successfully', 'success');
     } catch (error) {
       console.error('Export failed:', error);
@@ -148,14 +148,14 @@ export default function ConfigurationPage() {
 
   const handleValidate = useCallback(async (file: File): Promise<ValidationResult> => {
     setIsValidating(true);
-    
+
     try {
       // Simulate validation
       await new Promise(resolve => setTimeout(resolve, 1500));
-      
+
       // TODO: Replace with actual API call
       console.log('Validating import file:', file.name);
-      
+
       // Mock validation result
       const result: ValidationResult = {
         valid: true,
@@ -174,7 +174,7 @@ export default function ConfigurationPage() {
         },
         conflicts: []
       };
-      
+
       return result;
     } catch (error) {
       console.error('Validation failed:', error);
@@ -187,7 +187,7 @@ export default function ConfigurationPage() {
   const handleImport = useCallback(async (file: File, options: ImportOptions) => {
     setIsImporting(true);
     setShowImportProgress(true);
-    
+
     const newProgress: ImportProgress = {
       status: 'running',
       total: 10, // Mock total
@@ -199,12 +199,12 @@ export default function ConfigurationPage() {
       currentItem: 'Starting import...'
     };
     setImportProgress(newProgress);
-    
+
     try {
       // Simulate import progress
       for (let i = 1; i <= 10; i++) {
         await new Promise(resolve => setTimeout(resolve, 500));
-        
+
         setImportProgress(prev => ({
           ...prev,
           processed: i,
@@ -214,19 +214,19 @@ export default function ConfigurationPage() {
           currentItem: `Processing item ${i} of 10`
         }));
       }
-      
+
       // Final status
       setImportProgress(prev => ({
         ...prev,
         status: 'completed',
         currentItem: undefined
       }));
-      
+
       // TODO: Replace with actual API call
       console.log('Importing configuration:', file.name, options);
-      
+
       showToast(
-        options.dryRun 
+        options.dryRun
           ? 'Import validation completed successfully'
           : 'Configuration imported successfully',
         'success'
@@ -319,7 +319,7 @@ export default function ConfigurationPage() {
               isImporting={isImporting}
               isValidating={isValidating}
             />
-            
+
             <ImportProgressTracker
               progress={importProgress}
               visible={showImportProgress}

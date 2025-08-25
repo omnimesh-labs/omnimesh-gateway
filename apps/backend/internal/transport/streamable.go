@@ -21,35 +21,35 @@ import (
 type StreamableHTTPTransport struct {
 	*BaseTransport
 	client     *http.Client
-	baseURL    string
-	stateful   bool
-	streamMode string // "json" or "sse"
-	eventStore []*types.TransportEvent
 	config     map[string]interface{}
-	mu         sync.RWMutex
+	baseURL    string
+	streamMode string
+	eventStore []*types.TransportEvent
 	timeout    time.Duration
+	mu         sync.RWMutex
+	stateful   bool
 }
 
 // StreamableRequest represents a streamable HTTP request
 type StreamableRequest struct {
-	Method    string                 `json:"method"`
-	Headers   map[string]string      `json:"headers,omitempty"`
 	Body      interface{}            `json:"body,omitempty"`
-	Stateful  bool                   `json:"stateful"`
-	SessionID string                 `json:"session_id,omitempty"`
-	Mode      string                 `json:"mode"` // "json", "sse"
+	Headers   map[string]string      `json:"headers,omitempty"`
 	Metadata  map[string]interface{} `json:"metadata,omitempty"`
+	Method    string                 `json:"method"`
+	SessionID string                 `json:"session_id,omitempty"`
+	Mode      string                 `json:"mode"`
+	Stateful  bool                   `json:"stateful"`
 }
 
 // StreamableResponse represents a streamable HTTP response
 type StreamableResponse struct {
-	Status    int                     `json:"status"`
-	Headers   map[string]string       `json:"headers,omitempty"`
 	Body      interface{}             `json:"body,omitempty"`
-	Events    []*types.TransportEvent `json:"events,omitempty"`
+	Headers   map[string]string       `json:"headers,omitempty"`
+	Metadata  map[string]interface{}  `json:"metadata,omitempty"`
 	SessionID string                  `json:"session_id,omitempty"`
 	Mode      string                  `json:"mode"`
-	Metadata  map[string]interface{}  `json:"metadata,omitempty"`
+	Events    []*types.TransportEvent `json:"events,omitempty"`
+	Status    int                     `json:"status"`
 }
 
 // NewStreamableHTTPTransport creates a new Streamable HTTP transport instance
@@ -674,7 +674,7 @@ func (s *StreamableHTTPTransport) shouldRetry(err error) bool {
 	// Check for network errors, timeouts, etc.
 	// Don't retry on client errors (4xx), but do retry on server errors (5xx)
 	errStr := err.Error()
-	
+
 	// Retry on connection errors
 	if strings.Contains(errStr, "connection refused") ||
 		strings.Contains(errStr, "timeout") ||
@@ -713,11 +713,11 @@ func (s *StreamableHTTPTransport) FilterEvents(events []*types.TransportEvent, f
 
 // EventFilter defines criteria for filtering events
 type EventFilter struct {
-	EventTypes []string
 	Since      *time.Time
 	Until      *time.Time
-	SessionID  string
 	DataFilter func(map[string]interface{}) bool
+	SessionID  string
+	EventTypes []string
 }
 
 // Matches checks if an event matches the filter criteria
@@ -783,10 +783,10 @@ func (s *StreamableHTTPTransport) GetEventStats() map[string]interface{} {
 
 	if len(s.eventStore) == 0 {
 		return map[string]interface{}{
-			"total_events":  0,
-			"event_types":   map[string]int{},
-			"oldest_event":  nil,
-			"newest_event":  nil,
+			"total_events": 0,
+			"event_types":  map[string]int{},
+			"oldest_event": nil,
+			"newest_event": nil,
 		}
 	}
 

@@ -70,12 +70,7 @@ func TimeoutWithConfig(config *TimeoutConfig) gin.HandlerFunc {
 
 // TimeoutConfig holds timeout middleware configuration
 type TimeoutConfig struct {
-	// Timeout duration
-	Timeout time.Duration
-
-	// TimeoutHandler handles timeout responses
 	TimeoutHandler func(c *gin.Context)
-
-	// PanicHandler handles panics in timeout goroutine
-	PanicHandler func(c *gin.Context, err interface{})
+	PanicHandler   func(c *gin.Context, err interface{})
+	Timeout        time.Duration
 }

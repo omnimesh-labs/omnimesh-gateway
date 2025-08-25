@@ -3,16 +3,17 @@ package aws
 import (
 	"context"
 	"fmt"
-	"mcp-gateway/apps/backend/internal/logging"
 	"sync"
 	"time"
+
+	"mcp-gateway/apps/backend/internal/logging"
 )
 
 // AWSStorageBackend implements logging.StorageBackend for AWS services
 type AWSStorageBackend struct {
-	mu          sync.RWMutex
-	config      *AWSConfig
 	service     AWSService
+	config      *AWSConfig
+	mu          sync.RWMutex
 	initialized bool
 }
 

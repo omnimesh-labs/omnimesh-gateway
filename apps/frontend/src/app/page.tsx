@@ -15,17 +15,17 @@ export default function HomePage() {
         </p>
       </header>
 
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
         gap: '1.5rem',
         marginBottom: '3rem'
       }}>
-        <div style={{ 
-          background: 'white', 
-          borderRadius: '8px', 
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)', 
-          padding: '1.5rem' 
+        <div style={{
+          background: 'white',
+          borderRadius: '8px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          padding: '1.5rem'
         }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#333', marginBottom: '0.75rem' }}>
             Server Management
@@ -35,11 +35,11 @@ export default function HomePage() {
           </p>
           <a
             href="/servers"
-            style={{ 
-              background: '#3b82f6', 
-              color: 'white', 
-              padding: '0.5rem 1rem', 
-              borderRadius: '6px', 
+            style={{
+              background: '#3b82f6',
+              color: 'white',
+              padding: '0.5rem 1rem',
+              borderRadius: '6px',
               border: 'none',
               fontSize: '0.875rem',
               textDecoration: 'none',
@@ -54,11 +54,11 @@ export default function HomePage() {
           </a>
         </div>
 
-        <div style={{ 
-          background: 'white', 
-          borderRadius: '8px', 
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)', 
-          padding: '1.5rem' 
+        <div style={{
+          background: 'white',
+          borderRadius: '8px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          padding: '1.5rem'
         }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#333', marginBottom: '0.75rem' }}>
             A2A Agents
@@ -68,11 +68,11 @@ export default function HomePage() {
           </p>
           <a
             href="/a2a"
-            style={{ 
-              background: '#f59e0b', 
-              color: 'white', 
-              padding: '0.5rem 1rem', 
-              borderRadius: '6px', 
+            style={{
+              background: '#f59e0b',
+              color: 'white',
+              padding: '0.5rem 1rem',
+              borderRadius: '6px',
               border: 'none',
               fontSize: '0.875rem',
               textDecoration: 'none',
@@ -87,11 +87,11 @@ export default function HomePage() {
           </a>
         </div>
 
-        <div style={{ 
-          background: 'white', 
-          borderRadius: '8px', 
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)', 
-          padding: '1.5rem' 
+        <div style={{
+          background: 'white',
+          borderRadius: '8px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          padding: '1.5rem'
         }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#333', marginBottom: '0.75rem' }}>
             Content Management
@@ -101,11 +101,11 @@ export default function HomePage() {
           </p>
           <a
             href="/content"
-            style={{ 
-              background: '#06b6d4', 
-              color: 'white', 
-              padding: '0.5rem 1rem', 
-              borderRadius: '6px', 
+            style={{
+              background: '#06b6d4',
+              color: 'white',
+              padding: '0.5rem 1rem',
+              borderRadius: '6px',
               border: 'none',
               fontSize: '0.875rem',
               textDecoration: 'none',
@@ -120,11 +120,11 @@ export default function HomePage() {
           </a>
         </div>
 
-        <div style={{ 
-          background: 'white', 
-          borderRadius: '8px', 
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)', 
-          padding: '1.5rem' 
+        <div style={{
+          background: 'white',
+          borderRadius: '8px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          padding: '1.5rem'
         }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#333', marginBottom: '0.75rem' }}>
             Configuration
@@ -134,11 +134,11 @@ export default function HomePage() {
           </p>
           <a
             href="/configuration"
-            style={{ 
-              background: '#dc2626', 
-              color: 'white', 
-              padding: '0.5rem 1rem', 
-              borderRadius: '6px', 
+            style={{
+              background: '#dc2626',
+              color: 'white',
+              padding: '0.5rem 1rem',
+              borderRadius: '6px',
               border: 'none',
               fontSize: '0.875rem',
               textDecoration: 'none',
@@ -153,11 +153,11 @@ export default function HomePage() {
           </a>
         </div>
 
-        <div style={{ 
-          background: 'white', 
-          borderRadius: '8px', 
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)', 
-          padding: '1.5rem' 
+        <div style={{
+          background: 'white',
+          borderRadius: '8px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          padding: '1.5rem'
         }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#333', marginBottom: '0.75rem' }}>
             Logging & Audit
@@ -167,11 +167,11 @@ export default function HomePage() {
           </p>
           <a
             href="/logs"
-            style={{ 
-              background: '#8b5cf6', 
-              color: 'white', 
-              padding: '0.5rem 1rem', 
-              borderRadius: '6px', 
+            style={{
+              background: '#8b5cf6',
+              color: 'white',
+              padding: '0.5rem 1rem',
+              borderRadius: '6px',
               border: 'none',
               fontSize: '0.875rem',
               textDecoration: 'none',
@@ -186,11 +186,11 @@ export default function HomePage() {
           </a>
         </div>
 
-        <div style={{ 
-          background: 'white', 
-          borderRadius: '8px', 
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)', 
-          padding: '1.5rem' 
+        <div style={{
+          background: 'white',
+          borderRadius: '8px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          padding: '1.5rem'
         }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#333', marginBottom: '0.75rem' }}>
             Analytics
@@ -198,11 +198,11 @@ export default function HomePage() {
           <p style={{ color: '#666', marginBottom: '1rem' }}>
             View usage statistics and performance metrics
           </p>
-          <button style={{ 
-            background: '#f59e0b', 
-            color: 'white', 
-            padding: '0.5rem 1rem', 
-            borderRadius: '6px', 
+          <button style={{
+            background: '#f59e0b',
+            color: 'white',
+            padding: '0.5rem 1rem',
+            borderRadius: '6px',
             border: 'none',
             fontSize: '0.875rem'
           }}>
@@ -210,11 +210,11 @@ export default function HomePage() {
           </button>
         </div>
 
-        <div style={{ 
-          background: 'white', 
-          borderRadius: '8px', 
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)', 
-          padding: '1.5rem' 
+        <div style={{
+          background: 'white',
+          borderRadius: '8px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          padding: '1.5rem'
         }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#333', marginBottom: '0.75rem' }}>
             Policy Management
@@ -224,11 +224,11 @@ export default function HomePage() {
           </p>
           <a
             href="/policies"
-            style={{ 
-              background: '#10b981', 
-              color: 'white', 
-              padding: '0.5rem 1rem', 
-              borderRadius: '6px', 
+            style={{
+              background: '#10b981',
+              color: 'white',
+              padding: '0.5rem 1rem',
+              borderRadius: '6px',
               border: 'none',
               fontSize: '0.875rem',
               textDecoration: 'none',
@@ -244,11 +244,11 @@ export default function HomePage() {
         </div>
       </div>
 
-      <section style={{ 
-        background: 'white', 
-        borderRadius: '8px', 
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)', 
-        padding: '2rem' 
+      <section style={{
+        background: 'white',
+        borderRadius: '8px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        padding: '2rem'
       }}>
         <h2 style={{ fontSize: '1.5rem', fontWeight: '600', color: '#333', marginBottom: '1rem' }}>
           Quick Start

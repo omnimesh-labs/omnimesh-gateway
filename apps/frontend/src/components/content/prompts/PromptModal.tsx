@@ -102,7 +102,7 @@ export function PromptModal({ prompt, isOpen, onClose, onSave }: PromptModalProp
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -116,7 +116,7 @@ export function PromptModal({ prompt, isOpen, onClose, onSave }: PromptModalProp
         parameters: formData.parameters.trim() ? JSON.parse(formData.parameters) : undefined,
         category: formData.category,
         metadata: formData.metadata.trim() ? JSON.parse(formData.metadata) : undefined,
-        tags: formData.tags.trim() 
+        tags: formData.tags.trim()
           ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
           : undefined
       };
@@ -139,7 +139,7 @@ export function PromptModal({ prompt, isOpen, onClose, onSave }: PromptModalProp
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       style={{
         position: 'fixed',
         top: 0,
@@ -168,17 +168,17 @@ export function PromptModal({ prompt, isOpen, onClose, onSave }: PromptModalProp
           padding: '1.5rem',
           borderBottom: '1px solid #e5e7eb'
         }}>
-          <h2 style={{ 
-            margin: 0, 
-            fontSize: '1.25rem', 
-            fontWeight: '600', 
-            color: '#111827' 
+          <h2 style={{
+            margin: 0,
+            fontSize: '1.25rem',
+            fontWeight: '600',
+            color: '#111827'
           }}>
             {prompt ? 'Edit Prompt' : 'Create Prompt'}
           </h2>
         </div>
 
-        <div style={{ 
+        <div style={{
           padding: '1.5rem',
           maxHeight: 'calc(90vh - 140px)',
           overflowY: 'auto'

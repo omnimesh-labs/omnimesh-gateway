@@ -20,13 +20,13 @@ type TokenCleanupService struct {
 type CleanupConfig struct {
 	// How often to run cleanup (default: 1 hour)
 	CleanupInterval time.Duration
-	
+
 	// How old audit logs should be before cleanup (default: 30 days)
 	AuditLogRetentionPeriod time.Duration
-	
+
 	// How old login attempt logs should be before cleanup (default: 7 days)
 	LoginAttemptRetentionPeriod time.Duration
-	
+
 	// Maximum number of records to delete in each cleanup batch (default: 1000)
 	BatchSize int
 }
@@ -121,7 +121,7 @@ func (c *TokenCleanupService) runCleanup(ctx context.Context) {
 // cleanupAuditLogs removes old audit logs based on retention policy
 func (c *TokenCleanupService) cleanupAuditLogs(ctx context.Context) error {
 	cutoffTime := time.Now().Add(-c.config.AuditLogRetentionPeriod)
-	
+
 	// Count records to be deleted
 	countQuery := `SELECT COUNT(*) FROM audit_logs WHERE created_at < $1`
 	var count int
@@ -138,11 +138,11 @@ func (c *TokenCleanupService) cleanupAuditLogs(ctx context.Context) error {
 
 	// Delete in batches to avoid long-running transactions
 	deleteQuery := `
-		DELETE FROM audit_logs 
+		DELETE FROM audit_logs
 		WHERE id IN (
-			SELECT id FROM audit_logs 
-			WHERE created_at < $1 
-			ORDER BY created_at 
+			SELECT id FROM audit_logs
+			WHERE created_at < $1
+			ORDER BY created_at
 			LIMIT $2
 		)
 	`
@@ -176,19 +176,19 @@ func (c *TokenCleanupService) cleanupAuditLogs(ctx context.Context) error {
 // cleanupLoginAttempts removes old login attempt logs
 func (c *TokenCleanupService) cleanupLoginAttempts(ctx context.Context) error {
 	cutoffTime := time.Now().Add(-c.config.LoginAttemptRetentionPeriod)
-	
+
 	// Clean up old login attempt records from audit logs
 	countQuery := `
-		SELECT COUNT(*) FROM audit_logs 
+		SELECT COUNT(*) FROM audit_logs
 		WHERE action IN ($1, $2) AND created_at < $3
 	`
-	
+
 	var count int
 	err := c.db.QueryRowContext(
-		ctx, 
-		countQuery, 
-		ActionUserLogin, 
-		ActionUserLoginFailed, 
+		ctx,
+		countQuery,
+		ActionUserLogin,
+		ActionUserLoginFailed,
 		cutoffTime,
 	).Scan(&count)
 	if err != nil {
@@ -203,11 +203,11 @@ func (c *TokenCleanupService) cleanupLoginAttempts(ctx context.Context) error {
 
 	// Delete in batches
 	deleteQuery := `
-		DELETE FROM audit_logs 
+		DELETE FROM audit_logs
 		WHERE id IN (
-			SELECT id FROM audit_logs 
-			WHERE action IN ($1, $2) AND created_at < $3 
-			ORDER BY created_at 
+			SELECT id FROM audit_logs
+			WHERE action IN ($1, $2) AND created_at < $3
+			ORDER BY created_at
 			LIMIT $4
 		)
 	`
@@ -215,11 +215,11 @@ func (c *TokenCleanupService) cleanupLoginAttempts(ctx context.Context) error {
 	totalDeleted := 0
 	for totalDeleted < count {
 		result, err := c.db.ExecContext(
-			ctx, 
-			deleteQuery, 
-			ActionUserLogin, 
-			ActionUserLoginFailed, 
-			cutoffTime, 
+			ctx,
+			deleteQuery,
+			ActionUserLogin,
+			ActionUserLoginFailed,
+			cutoffTime,
 			c.config.BatchSize,
 		)
 		if err != nil {
@@ -264,9 +264,9 @@ func (c *TokenCleanupService) GetCleanupStats(ctx context.Context) (*CleanupStat
 
 	// Count login attempts
 	err = c.db.QueryRowContext(
-		ctx, 
-		"SELECT COUNT(*) FROM audit_logs WHERE action IN ($1, $2)", 
-		ActionUserLogin, 
+		ctx,
+		"SELECT COUNT(*) FROM audit_logs WHERE action IN ($1, $2)",
+		ActionUserLogin,
 		ActionUserLoginFailed,
 	).Scan(&stats.TotalLoginAttempts)
 	if err != nil {
@@ -276,9 +276,9 @@ func (c *TokenCleanupService) GetCleanupStats(ctx context.Context) (*CleanupStat
 	// Count old login attempts
 	loginCutoffTime := time.Now().Add(-c.config.LoginAttemptRetentionPeriod)
 	err = c.db.QueryRowContext(
-		ctx, 
-		"SELECT COUNT(*) FROM audit_logs WHERE action IN ($1, $2) AND created_at < $3", 
-		ActionUserLogin, 
+		ctx,
+		"SELECT COUNT(*) FROM audit_logs WHERE action IN ($1, $2) AND created_at < $3",
+		ActionUserLogin,
 		ActionUserLoginFailed,
 		loginCutoffTime,
 	).Scan(&stats.OldLoginAttempts)

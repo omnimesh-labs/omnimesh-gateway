@@ -59,7 +59,7 @@ export function ConfigurationImportPanel({
 
   const handleValidate = async () => {
     if (!selectedFile) return;
-    
+
     try {
       const result = await onValidate(selectedFile);
       setValidation(result);
@@ -95,7 +95,7 @@ export function ConfigurationImportPanel({
 
   return (
     <div style={{
-      backgroundColor: '#ffffff', 
+      backgroundColor: '#ffffff',
       border: '1px solid #e5e7eb',
       borderRadius: '8px',
       padding: '1.5rem'
@@ -124,12 +124,12 @@ export function ConfigurationImportPanel({
           }}>
             Import File
           </label>
-          
+
           <FileDropZone
             onFileSelect={handleFileSelect}
             disabled={isImporting || isValidating}
           />
-          
+
           {selectedFile && (
             <div style={{
               marginTop: '0.5rem',
@@ -169,7 +169,7 @@ export function ConfigurationImportPanel({
             }}>
               Options
             </label>
-            
+
             <div style={{ marginBottom: '0.75rem' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <input
@@ -248,7 +248,7 @@ export function ConfigurationImportPanel({
           >
             🔍 {isValidating ? 'Validating...' : 'Validate Import'}
           </button>
-          
+
           <button
             onClick={handleImport}
             disabled={!canImport}

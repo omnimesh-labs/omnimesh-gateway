@@ -20,11 +20,11 @@ import (
 
 // pluginService implements PluginService interface
 type pluginService struct {
-	db          *sql.DB
 	manager     shared.PluginManager
 	registry    shared.PluginRegistry
+	db          *sql.DB
+	orgPlugins  map[string][]Plugin
 	mu          sync.RWMutex
-	orgPlugins  map[string][]Plugin // Cache of organization plugins
 	initialized bool
 }
 
@@ -95,7 +95,7 @@ func (s *pluginService) GetRegistry() PluginRegistry {
 func (s *pluginService) LoadPluginsFromDatabase(ctx context.Context, organizationID string) error {
 	query := `
 		SELECT id, organization_id, name, description, type, enabled, priority, config, created_at, updated_at, created_by
-		FROM content_filters 
+		FROM content_filters
 		WHERE organization_id = $1 AND enabled = true
 		ORDER BY priority ASC, created_at ASC
 	`
@@ -167,8 +167,8 @@ func (s *pluginService) SavePluginToDatabase(ctx context.Context, organizationID
 	query := `
 		INSERT INTO content_filters (id, organization_id, name, description, type, enabled, priority, config, created_by, created_at, updated_at)
 		VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
-		ON CONFLICT (organization_id, name) 
-		DO UPDATE SET 
+		ON CONFLICT (organization_id, name)
+		DO UPDATE SET
 			description = EXCLUDED.description,
 			type = EXCLUDED.type,
 			enabled = EXCLUDED.enabled,
@@ -411,7 +411,7 @@ func (s *pluginService) GetViolations(ctx context.Context, organizationID string
 		SELECT id, organization_id, filter_id, request_id, session_id, server_id,
 			   violation_type, action_taken, content_snippet, pattern_matched, severity,
 			   user_id, remote_ip, user_agent, direction, metadata, created_at
-		FROM filter_violations 
+		FROM filter_violations
 		WHERE organization_id = $1
 		ORDER BY created_at DESC
 		LIMIT $2 OFFSET $3

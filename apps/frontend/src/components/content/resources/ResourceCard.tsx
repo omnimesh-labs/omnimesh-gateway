@@ -43,7 +43,7 @@ export function ResourceCard({ resource, isOpen, onClose, onEdit }: ResourceCard
   };
 
   return (
-    <div 
+    <div
       style={{
         position: 'fixed',
         top: 0,
@@ -86,11 +86,11 @@ export function ResourceCard({ resource, isOpen, onClose, onEdit }: ResourceCard
                 flexShrink: 0
               }}
             />
-            <h2 style={{ 
-              margin: 0, 
-              fontSize: '1.25rem', 
-              fontWeight: '600', 
-              color: '#111827' 
+            <h2 style={{
+              margin: 0,
+              fontSize: '1.25rem',
+              fontWeight: '600',
+              color: '#111827'
             }}>
               {resource.name}
             </h2>
@@ -155,7 +155,7 @@ export function ResourceCard({ resource, isOpen, onClose, onEdit }: ResourceCard
         </div>
 
         {/* Content */}
-        <div style={{ 
+        <div style={{
           padding: '1.5rem',
           maxHeight: 'calc(90vh - 140px)',
           overflowY: 'auto'
@@ -180,10 +180,10 @@ export function ResourceCard({ resource, isOpen, onClose, onEdit }: ResourceCard
                 ID: {resource.id}
               </div>
             </div>
-            
+
             {resource.description && (
-              <p style={{ 
-                color: '#374151', 
+              <p style={{
+                color: '#374151',
                 fontSize: '0.875rem',
                 lineHeight: '1.5',
                 margin: '0 0 1rem 0'
@@ -194,15 +194,15 @@ export function ResourceCard({ resource, isOpen, onClose, onEdit }: ResourceCard
           </div>
 
           {/* Resource Details */}
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
             gap: '1.5rem',
             marginBottom: '2rem'
           }}>
             {/* URI */}
             <div>
-              <h4 style={{ 
+              <h4 style={{
                 margin: '0 0 0.5rem 0',
                 fontSize: '0.875rem',
                 fontWeight: '600',
@@ -227,7 +227,7 @@ export function ResourceCard({ resource, isOpen, onClose, onEdit }: ResourceCard
             {/* MIME Type */}
             {resource.mime_type && (
               <div>
-                <h4 style={{ 
+                <h4 style={{
                   margin: '0 0 0.5rem 0',
                   fontSize: '0.875rem',
                   fontWeight: '600',
@@ -248,7 +248,7 @@ export function ResourceCard({ resource, isOpen, onClose, onEdit }: ResourceCard
             {/* Size */}
             {resource.size_bytes && (
               <div>
-                <h4 style={{ 
+                <h4 style={{
                   margin: '0 0 0.5rem 0',
                   fontSize: '0.875rem',
                   fontWeight: '600',
@@ -270,7 +270,7 @@ export function ResourceCard({ resource, isOpen, onClose, onEdit }: ResourceCard
           {/* Tags */}
           {resource.tags && resource.tags.length > 0 && (
             <div style={{ marginBottom: '2rem' }}>
-              <h4 style={{ 
+              <h4 style={{
                 margin: '0 0 0.5rem 0',
                 fontSize: '0.875rem',
                 fontWeight: '600',
@@ -301,7 +301,7 @@ export function ResourceCard({ resource, isOpen, onClose, onEdit }: ResourceCard
           {/* Metadata */}
           {resource.metadata && Object.keys(resource.metadata).length > 0 && (
             <div style={{ marginBottom: '2rem' }}>
-              <h4 style={{ 
+              <h4 style={{
                 margin: '0 0 0.5rem 0',
                 fontSize: '0.875rem',
                 fontWeight: '600',
@@ -328,7 +328,7 @@ export function ResourceCard({ resource, isOpen, onClose, onEdit }: ResourceCard
           {/* Access Permissions */}
           {resource.access_permissions && Object.keys(resource.access_permissions).length > 0 && (
             <div style={{ marginBottom: '2rem' }}>
-              <h4 style={{ 
+              <h4 style={{
                 margin: '0 0 0.5rem 0',
                 fontSize: '0.875rem',
                 fontWeight: '600',
@@ -353,9 +353,9 @@ export function ResourceCard({ resource, isOpen, onClose, onEdit }: ResourceCard
           )}
 
           {/* Timestamps */}
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
             gap: '1rem',
             padding: '1rem',
             backgroundColor: '#f9fafb',
@@ -363,7 +363,7 @@ export function ResourceCard({ resource, isOpen, onClose, onEdit }: ResourceCard
             border: '1px solid #e5e7eb'
           }}>
             <div>
-              <h4 style={{ 
+              <h4 style={{
                 margin: '0 0 0.25rem 0',
                 fontSize: '0.75rem',
                 fontWeight: '600',
@@ -382,7 +382,7 @@ export function ResourceCard({ resource, isOpen, onClose, onEdit }: ResourceCard
               </p>
             </div>
             <div>
-              <h4 style={{ 
+              <h4 style={{
                 margin: '0 0 0.25rem 0',
                 fontSize: '0.75rem',
                 fontWeight: '600',
@@ -402,7 +402,7 @@ export function ResourceCard({ resource, isOpen, onClose, onEdit }: ResourceCard
             </div>
             {resource.created_by && (
               <div>
-                <h4 style={{ 
+                <h4 style={{
                   margin: '0 0 0.25rem 0',
                   fontSize: '0.75rem',
                   fontWeight: '600',

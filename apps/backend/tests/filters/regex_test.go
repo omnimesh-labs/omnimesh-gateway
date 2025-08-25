@@ -414,8 +414,8 @@ func TestRegexFilterFactory_ValidateConfig(t *testing.T) {
 	factory := &regex.RegexFilterFactory{}
 
 	tests := []struct {
-		name        string
 		config      map[string]interface{}
+		name        string
 		expectError bool
 	}{
 		{
@@ -500,7 +500,7 @@ func TestRegexFilterFactory_GetDefaultConfig(t *testing.T) {
 
 func TestRegexFilter_GetCapabilities(t *testing.T) {
 	config := map[string]interface{}{
-		"rules": []interface{}{},
+		"rules":  []interface{}{},
 		"action": "allow",
 	}
 

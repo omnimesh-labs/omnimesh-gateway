@@ -13,17 +13,17 @@ import (
 
 // JWTManager handles JWT token operations
 type JWTManager struct {
+	cache              TokenCache
 	secret             []byte
 	accessTokenExpiry  time.Duration
 	refreshTokenExpiry time.Duration
-	cache              TokenCache
 }
 
 // NewJWTManager creates a new JWT manager
 func NewJWTManager(secret string, accessExpiry, refreshExpiry time.Duration) *JWTManager {
 	// Use memory cache as fallback
 	cache := NewMemoryTokenCache()
-	
+
 	return &JWTManager{
 		secret:             []byte(secret),
 		accessTokenExpiry:  accessExpiry,

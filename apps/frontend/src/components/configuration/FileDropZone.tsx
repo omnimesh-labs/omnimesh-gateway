@@ -23,7 +23,7 @@ export function FileDropZone({
     if (maxSize && file.size > maxSize) {
       return `File size must be less than ${(maxSize / 1024 / 1024).toFixed(1)}MB`;
     }
-    
+
     if (acceptedTypes.length > 0) {
       const isValidType = acceptedTypes.some(type => {
         if (type.startsWith('.')) {
@@ -31,12 +31,12 @@ export function FileDropZone({
         }
         return file.type === type;
       });
-      
+
       if (!isValidType) {
         return `File must be one of: ${acceptedTypes.join(', ')}`;
       }
     }
-    
+
     return null;
   };
 
@@ -46,7 +46,7 @@ export function FileDropZone({
       setError(validationError);
       return;
     }
-    
+
     setError(null);
     onFileSelect(file);
   };
@@ -65,9 +65,9 @@ export function FileDropZone({
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragOver(false);
-    
+
     if (disabled) return;
-    
+
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
       handleFile(files[0]);
@@ -138,7 +138,7 @@ export function FileDropZone({
               strokeLinejoin="round"
             />
           </svg>
-          
+
           <div>
             <div style={{
               fontSize: '0.875rem',
@@ -153,7 +153,7 @@ export function FileDropZone({
               </span>
               {!disabled && ' or drag and drop'}
             </div>
-            
+
             <p style={{
               fontSize: '0.75rem',
               color: '#6b7280',
@@ -161,7 +161,7 @@ export function FileDropZone({
             }}>
               JSON export files only
             </p>
-            
+
             {maxSize && (
               <p style={{
                 fontSize: '0.75rem',
@@ -173,7 +173,7 @@ export function FileDropZone({
             )}
           </div>
         </div>
-        
+
         <input
           ref={fileInputRef}
           type="file"
@@ -183,7 +183,7 @@ export function FileDropZone({
           style={{ display: 'none' }}
         />
       </div>
-      
+
       {error && (
         <div style={{
           marginTop: '0.5rem',

@@ -100,9 +100,9 @@ export function A2AAgentForm({ agent, onSubmit, onCancel }: A2AAgentFormProps) {
       }}>
         <div style={{ padding: '1.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <h2 style={{ 
-              fontSize: '1.5rem', 
-              fontWeight: 'bold', 
+            <h2 style={{
+              fontSize: '1.5rem',
+              fontWeight: 'bold',
               color: '#111827',
               margin: 0
             }}>
@@ -141,10 +141,10 @@ export function A2AAgentForm({ agent, onSubmit, onCancel }: A2AAgentFormProps) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
               {/* Agent Name */}
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  fontSize: '0.875rem', 
-                  fontWeight: '500', 
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
                   color: '#374151',
                   marginBottom: '0.25rem'
                 }}>
@@ -177,10 +177,10 @@ export function A2AAgentForm({ agent, onSubmit, onCancel }: A2AAgentFormProps) {
 
               {/* Endpoint URL */}
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  fontSize: '0.875rem', 
-                  fontWeight: '500', 
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
                   color: '#374151',
                   marginBottom: '0.25rem'
                 }}>
@@ -215,10 +215,10 @@ export function A2AAgentForm({ agent, onSubmit, onCancel }: A2AAgentFormProps) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
               {/* Agent Type */}
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  fontSize: '0.875rem', 
-                  fontWeight: '500', 
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
                   color: '#374151',
                   marginBottom: '0.25rem'
                 }}>
@@ -254,10 +254,10 @@ export function A2AAgentForm({ agent, onSubmit, onCancel }: A2AAgentFormProps) {
 
               {/* Authentication Type */}
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  fontSize: '0.875rem', 
-                  fontWeight: '500', 
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
                   color: '#374151',
                   marginBottom: '0.25rem'
                 }}>
@@ -294,10 +294,10 @@ export function A2AAgentForm({ agent, onSubmit, onCancel }: A2AAgentFormProps) {
 
             {/* Description */}
             <div style={{ marginBottom: '1rem' }}>
-              <label style={{ 
-                display: 'block', 
-                fontSize: '0.875rem', 
-                fontWeight: '500', 
+              <label style={{
+                display: 'block',
+                fontSize: '0.875rem',
+                fontWeight: '500',
                 color: '#374151',
                 marginBottom: '0.25rem'
               }}>
@@ -331,10 +331,10 @@ export function A2AAgentForm({ agent, onSubmit, onCancel }: A2AAgentFormProps) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
               {/* Authentication Value */}
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  fontSize: '0.875rem', 
-                  fontWeight: '500', 
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
                   color: '#374151',
                   marginBottom: '0.25rem'
                 }}>
@@ -376,10 +376,10 @@ export function A2AAgentForm({ agent, onSubmit, onCancel }: A2AAgentFormProps) {
 
               {/* Protocol Version */}
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  fontSize: '0.875rem', 
-                  fontWeight: '500', 
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
                   color: '#374151',
                   marginBottom: '0.25rem'
                 }}>
@@ -412,10 +412,10 @@ export function A2AAgentForm({ agent, onSubmit, onCancel }: A2AAgentFormProps) {
 
             {/* Tags */}
             <div style={{ marginBottom: '1rem' }}>
-              <label style={{ 
-                display: 'block', 
-                fontSize: '0.875rem', 
-                fontWeight: '500', 
+              <label style={{
+                display: 'block',
+                fontSize: '0.875rem',
+                fontWeight: '500',
                 color: '#374151',
                 marginBottom: '0.25rem'
               }}>
@@ -447,9 +447,9 @@ export function A2AAgentForm({ agent, onSubmit, onCancel }: A2AAgentFormProps) {
 
             {/* Active Status */}
             <div style={{ marginBottom: '2rem' }}>
-              <label style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
                 gap: '0.5rem',
                 fontSize: '0.875rem',
                 fontWeight: '500',

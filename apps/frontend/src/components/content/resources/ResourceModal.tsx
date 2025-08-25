@@ -97,7 +97,7 @@ export function ResourceModal({ resource, isOpen, onClose, onSave }: ResourceMod
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -112,7 +112,7 @@ export function ResourceModal({ resource, isOpen, onClose, onSave }: ResourceMod
         mime_type: formData.mime_type.trim() || undefined,
         size_bytes: formData.size_bytes ? Number(formData.size_bytes) : undefined,
         metadata: formData.metadata.trim() ? JSON.parse(formData.metadata) : undefined,
-        tags: formData.tags.trim() 
+        tags: formData.tags.trim()
           ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
           : undefined
       };
@@ -135,7 +135,7 @@ export function ResourceModal({ resource, isOpen, onClose, onSave }: ResourceMod
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       style={{
         position: 'fixed',
         top: 0,
@@ -164,17 +164,17 @@ export function ResourceModal({ resource, isOpen, onClose, onSave }: ResourceMod
           padding: '1.5rem',
           borderBottom: '1px solid #e5e7eb'
         }}>
-          <h2 style={{ 
-            margin: 0, 
-            fontSize: '1.25rem', 
-            fontWeight: '600', 
-            color: '#111827' 
+          <h2 style={{
+            margin: 0,
+            fontSize: '1.25rem',
+            fontWeight: '600',
+            color: '#111827'
           }}>
             {resource ? 'Edit Resource' : 'Create Resource'}
           </h2>
         </div>
 
-        <div style={{ 
+        <div style={{
           padding: '1.5rem',
           maxHeight: 'calc(90vh - 140px)',
           overflowY: 'auto'

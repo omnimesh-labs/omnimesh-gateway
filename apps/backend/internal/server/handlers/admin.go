@@ -255,35 +255,35 @@ func (h *AdminHandler) GetAuditLogs(c *gin.Context) {
 	// Parse query parameters
 	limit := 100
 	offset := 0
-	
+
 	if l := c.Query("limit"); l != "" {
 		if parsed, err := strconv.Atoi(l); err == nil {
 			limit = parsed
 		}
 	}
-	
+
 	if o := c.Query("offset"); o != "" {
 		if parsed, err := strconv.Atoi(o); err == nil {
 			offset = parsed
 		}
 	}
-	
+
 	resourceType := c.Query("resource_type")
 	action := c.Query("action")
 	actorID := c.Query("actor_id")
-	
+
 	// TODO: Set organization ID from context
 	// orgID, _ := c.Get("organization_id")
-	
+
 	// TODO: Implement audit log retrieval logic
 	// For now, return empty result with proper structure
 	auditLogs := []gin.H{}
-	
+
 	// Filter logic would be implemented here
 	_ = resourceType
 	_ = action
 	_ = actorID
-	
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"data":    auditLogs,
@@ -533,20 +533,20 @@ func (h *AdminHandler) ValidateImport(c *gin.Context) {
 func (h *AdminHandler) GetImportHistory(c *gin.Context) {
 	// Parse query parameters
 	query := &types.ImportHistoryQuery{}
-	
+
 	if status := c.Query("status"); status != "" {
 		query.Status = types.ImportStatus(status)
 	}
-	
+
 	query.EntityType = c.Query("entity_type")
 	query.ImportedBy = c.Query("imported_by")
-	
+
 	if startDate := c.Query("start_date"); startDate != "" {
 		if t, err := time.Parse(time.RFC3339, startDate); err == nil {
 			query.StartDate = &t
 		}
 	}
-	
+
 	if endDate := c.Query("end_date"); endDate != "" {
 		if t, err := time.Parse(time.RFC3339, endDate); err == nil {
 			query.EndDate = &t

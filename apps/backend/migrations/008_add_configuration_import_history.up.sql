@@ -4,54 +4,54 @@
 -- Create import status enum
 CREATE TYPE import_status_enum AS ENUM ('pending', 'running', 'completed', 'failed', 'partial', 'validating');
 
--- Create conflict strategy enum  
+-- Create conflict strategy enum
 CREATE TYPE conflict_strategy_enum AS ENUM ('update', 'skip', 'rename', 'fail');
 
 -- Configuration Import History - Track all import operations
 CREATE TABLE config_imports (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    
+
     -- Import metadata
     filename VARCHAR(255) NOT NULL,
     entity_types TEXT[] NOT NULL DEFAULT '{}',
     status import_status_enum DEFAULT 'pending',
     conflict_strategy conflict_strategy_enum DEFAULT 'update',
     dry_run BOOLEAN DEFAULT false,
-    
+
     -- Import results and statistics
     summary JSONB NOT NULL DEFAULT '{
         "total_items": 0,
-        "processed_items": 0, 
+        "processed_items": 0,
         "created_items": 0,
         "updated_items": 0,
         "skipped_items": 0,
         "failed_items": 0,
         "entity_counts": {}
     }',
-    
+
     -- Error and warning counts for quick filtering
     error_count INTEGER DEFAULT 0,
     warning_count INTEGER DEFAULT 0,
-    
+
     -- Performance tracking
     duration INTERVAL,
-    
+
     -- Audit information
     imported_by UUID NOT NULL REFERENCES users(id),
     imported_by_name VARCHAR(255), -- Denormalized for performance
     imported_by_email VARCHAR(255), -- Denormalized for performance
-    
+
     -- Additional metadata and context
     metadata JSONB DEFAULT '{}',
-    
+
     -- Detailed results (stored separately for performance)
     details_file_path VARCHAR(500), -- Path to detailed results file
-    
+
     -- Timestamps
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     completed_at TIMESTAMP WITH TIME ZONE,
-    
+
     -- Constraints
     CONSTRAINT valid_filename CHECK (LENGTH(filename) > 0),
     CONSTRAINT valid_entity_types CHECK (array_length(entity_types, 1) > 0),
@@ -61,8 +61,8 @@ CREATE TABLE config_imports (
 );
 
 -- Add updated_at trigger (reuse existing function)
-CREATE TRIGGER config_imports_updated_at 
-    BEFORE UPDATE ON config_imports 
+CREATE TRIGGER config_imports_updated_at
+    BEFORE UPDATE ON config_imports
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- Performance indexes for config_imports
@@ -78,38 +78,38 @@ CREATE INDEX idx_config_imports_errors ON config_imports(error_count) WHERE erro
 CREATE INDEX idx_config_imports_warnings ON config_imports(warning_count) WHERE warning_count > 0;
 
 -- Add index for filtering by completion status and date range
-CREATE INDEX idx_config_imports_completed_status ON config_imports(completed_at DESC, status) 
+CREATE INDEX idx_config_imports_completed_status ON config_imports(completed_at DESC, status)
     WHERE completed_at IS NOT NULL;
 
 -- Configuration Export History - Track export operations (optional, for audit)
 CREATE TABLE config_exports (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    
+
     -- Export metadata
     entity_types TEXT[] NOT NULL DEFAULT '{}',
     filters JSONB DEFAULT '{}',
-    
+
     -- Export statistics
     total_entities INTEGER DEFAULT 0,
     file_size_bytes BIGINT,
-    
+
     -- Export file information
     filename VARCHAR(255),
     file_path VARCHAR(500), -- Path to exported file
     expires_at TIMESTAMP WITH TIME ZONE, -- When export file expires
-    
+
     -- Audit information
     exported_by UUID NOT NULL REFERENCES users(id),
     exported_by_name VARCHAR(255), -- Denormalized for performance
     exported_by_email VARCHAR(255), -- Denormalized for performance
-    
+
     -- Additional context
     metadata JSONB DEFAULT '{}',
-    
+
     -- Timestamps
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     -- Constraints
     CONSTRAINT valid_export_entity_types CHECK (array_length(entity_types, 1) > 0),
     CONSTRAINT valid_total_entities CHECK (total_entities >= 0),

@@ -96,7 +96,7 @@ export function ProfileDropdown() {
         }}>
           {user.email?.charAt(0).toUpperCase()}
         </div>
-        
+
         {/* User Info */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', minWidth: 0 }}>
           <span style={{

@@ -115,10 +115,10 @@ export default function PoliciesPage() {
                 }}>
                     <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                         <div>
-                            <label style={{ 
-                                display: 'block', 
-                                fontSize: '12px', 
-                                fontWeight: '500', 
+                            <label style={{
+                                display: 'block',
+                                fontSize: '12px',
+                                fontWeight: '500',
                                 color: '#374151',
                                 marginBottom: '4px',
                                 textTransform: 'uppercase',
@@ -148,10 +148,10 @@ export default function PoliciesPage() {
                         </div>
 
                         <div>
-                            <label style={{ 
-                                display: 'block', 
-                                fontSize: '12px', 
-                                fontWeight: '500', 
+                            <label style={{
+                                display: 'block',
+                                fontSize: '12px',
+                                fontWeight: '500',
                                 color: '#374151',
                                 marginBottom: '4px',
                                 textTransform: 'uppercase',
@@ -161,8 +161,8 @@ export default function PoliciesPage() {
                             </label>
                             <select
                                 value={filters.is_active === undefined ? '' : filters.is_active.toString()}
-                                onChange={(e) => setFilters(prev => ({ 
-                                    ...prev, 
+                                onChange={(e) => setFilters(prev => ({
+                                    ...prev,
                                     is_active: e.target.value === '' ? undefined : e.target.value === 'true'
                                 }))}
                                 style={{
@@ -251,15 +251,15 @@ export default function PoliciesPage() {
                 ) : (
                     <>
                         {/* Policies Count */}
-                        <div style={{ 
+                        <div style={{
                             marginBottom: '16px',
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
                         }}>
                             <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                                {policies.length === 0 
-                                    ? 'No policies found' 
+                                {policies.length === 0
+                                    ? 'No policies found'
                                     : `${policies.length} ${policies.length === 1 ? 'policy' : 'policies'} found`
                                 }
                             </div>

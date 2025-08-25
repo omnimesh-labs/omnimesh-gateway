@@ -56,8 +56,8 @@ func TestConcurrentTransportRequests(t *testing.T) {
 		results := make([]error, numRequests)
 
 		requests := []struct {
-			name string
 			fn   func() error
+			name string
 		}{
 			{
 				name: "RPC Ping",
@@ -234,8 +234,8 @@ func TestTransportResponseTimes(t *testing.T) {
 	client := helpers.NewHTTPClient(server.BaseURL)
 
 	transports := []struct {
-		name string
 		fn   func() error
+		name string
 	}{
 		{
 			name: "JSON-RPC",

@@ -6,38 +6,17 @@ import (
 
 // SecurityConfig holds security headers configuration
 type SecurityConfig struct {
-	// Content Security Policy
-	ContentSecurityPolicy string
-
-	// X-Frame-Options header
-	XFrameOptions string
-
-	// X-Content-Type-Options header
-	XContentTypeOptions string
-
-	// Referrer-Policy header
-	ReferrerPolicy string
-
-	// Permissions-Policy header
-	PermissionsPolicy string
-
-	// Strict-Transport-Security header (HSTS)
-	StrictTransportSecurity string
-
-	// X-XSS-Protection header
-	XXSSProtection string
-
-	// Cross-Origin-Embedder-Policy header
+	CustomHeaders             map[string]string
+	ContentSecurityPolicy     string
+	XFrameOptions             string
+	XContentTypeOptions       string
+	ReferrerPolicy            string
+	PermissionsPolicy         string
+	StrictTransportSecurity   string
+	XXSSProtection            string
 	CrossOriginEmbedderPolicy string
-
-	// Cross-Origin-Opener-Policy header
-	CrossOriginOpenerPolicy string
-
-	// Cross-Origin-Resource-Policy header
+	CrossOriginOpenerPolicy   string
 	CrossOriginResourcePolicy string
-
-	// Custom headers
-	CustomHeaders map[string]string
 }
 
 // DefaultSecurityConfig returns default security headers configuration

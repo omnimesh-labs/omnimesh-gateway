@@ -15,16 +15,16 @@ import (
 
 // IPRateLimitConfig holds the configuration for IP rate limiting
 type IPRateLimitConfig struct {
-	Enabled        bool          `yaml:"enabled"`
-	RequestsPerMin int           `yaml:"requests_per_minute"`
-	BurstSize      int           `yaml:"burst_size"`
-	RedisEnabled   bool          `yaml:"redis_enabled"`
-	RedisAddr      string        `yaml:"redis_addr"`
-	RedisPassword  string        `yaml:"redis_password"`
-	RedisDB        int           `yaml:"redis_db"`
-	TrustedProxies []string      `yaml:"trusted_proxies"`
-	SkipPaths      []string      `yaml:"skip_paths"`
-	CustomHeaders  []string      `yaml:"custom_headers"` // Custom headers to extract IP from
+	RedisAddr      string   `yaml:"redis_addr"`
+	RedisPassword  string   `yaml:"redis_password"`
+	TrustedProxies []string `yaml:"trusted_proxies"`
+	SkipPaths      []string `yaml:"skip_paths"`
+	CustomHeaders  []string `yaml:"custom_headers"`
+	RequestsPerMin int      `yaml:"requests_per_minute"`
+	BurstSize      int      `yaml:"burst_size"`
+	RedisDB        int      `yaml:"redis_db"`
+	Enabled        bool     `yaml:"enabled"`
+	RedisEnabled   bool     `yaml:"redis_enabled"`
 }
 
 // DefaultIPRateLimitConfig returns default configuration

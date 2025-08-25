@@ -22,10 +22,10 @@ func TestMCPToolModel_Create(t *testing.T) {
 	defer mockDB.db.Close()
 
 	model := models.NewMCPToolModel(mockDB)
-	
+
 	orgID := uuid.New()
 	userID := uuid.New()
-	
+
 	schema := map[string]interface{}{
 		"type": "object",
 		"properties": map[string]interface{}{
@@ -36,14 +36,14 @@ func TestMCPToolModel_Create(t *testing.T) {
 		},
 		"required": []string{"message"},
 	}
-	
+
 	examples := []interface{}{
 		map[string]interface{}{
 			"input":  map[string]interface{}{"message": "hello"},
 			"output": map[string]interface{}{"result": "hello"},
 		},
 	}
-	
+
 	tool := &models.MCPTool{
 		OrganizationID:     orgID,
 		Name:               "Test Tool",
@@ -68,16 +68,16 @@ func TestMCPToolModel_Create(t *testing.T) {
 	// Expect the INSERT query
 	mock.ExpectExec(`INSERT INTO mcp_tools`).
 		WithArgs(sqlmock.AnyArg(), orgID, "Test Tool", "Test tool description", "test_function",
-			sqlmock.AnyArg(), types.ToolCategoryGeneral, types.ToolImplementationInternal, 
-			sqlmock.AnyArg(), 30, 3, int64(0), sqlmock.AnyArg(), true, false, 
-			sqlmock.AnyArg(), pq.StringArray{"test", "function"}, sqlmock.AnyArg(), 
+			sqlmock.AnyArg(), types.ToolCategoryGeneral, types.ToolImplementationInternal,
+			sqlmock.AnyArg(), 30, 3, int64(0), sqlmock.AnyArg(), true, false,
+			sqlmock.AnyArg(), pq.StringArray{"test", "function"}, sqlmock.AnyArg(),
 			"Test documentation", userID).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	err := model.Create(tool)
 	assert.NoError(t, err)
 	assert.NotEqual(t, uuid.Nil, tool.ID)
-	
+
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
@@ -86,23 +86,23 @@ func TestMCPToolModel_GetByID(t *testing.T) {
 	defer mockDB.db.Close()
 
 	model := models.NewMCPToolModel(mockDB)
-	
+
 	toolID := uuid.New()
 	orgID := uuid.New()
 	userID := uuid.New()
-	
+
 	schema := map[string]interface{}{"type": "object"}
 	schemaJSON, _ := json.Marshal(schema)
-	
+
 	metadata := map[string]interface{}{"version": "1.0"}
 	metadataJSON, _ := json.Marshal(metadata)
-	
+
 	accessPermissions := map[string]interface{}{"execute": []interface{}{"*"}}
 	accessJSON, _ := json.Marshal(accessPermissions)
-	
+
 	examples := []interface{}{map[string]interface{}{"test": true}}
 	examplesJSON, _ := json.Marshal(examples)
-	
+
 	// Expect the SELECT query
 	mock.ExpectQuery(`SELECT (.+) FROM mcp_tools WHERE id = \$1`).
 		WithArgs(toolID).
@@ -122,7 +122,7 @@ func TestMCPToolModel_GetByID(t *testing.T) {
 	tool, err := model.GetByID(toolID)
 	require.NoError(t, err)
 	require.NotNil(t, tool)
-	
+
 	assert.Equal(t, toolID, tool.ID)
 	assert.Equal(t, orgID, tool.OrganizationID)
 	assert.Equal(t, "Test Tool", tool.Name)
@@ -140,7 +140,7 @@ func TestMCPToolModel_GetByID(t *testing.T) {
 	assert.Equal(t, accessPermissions, tool.AccessPermissions)
 	assert.Equal(t, examples, tool.Examples)
 	assert.Equal(t, []string{"test", "function"}, []string(tool.Tags))
-	
+
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
@@ -149,13 +149,13 @@ func TestMCPToolModel_GetByFunctionName(t *testing.T) {
 	defer mockDB.db.Close()
 
 	model := models.NewMCPToolModel(mockDB)
-	
+
 	toolID := uuid.New()
 	orgID := uuid.New()
-	
+
 	schema := map[string]interface{}{"type": "object"}
 	schemaJSON, _ := json.Marshal(schema)
-	
+
 	// Expect the SELECT query with function name
 	mock.ExpectQuery(`SELECT (.+) FROM mcp_tools WHERE organization_id = \$1 AND function_name = \$2 AND is_active = true`).
 		WithArgs(orgID, "echo_function").
@@ -175,12 +175,12 @@ func TestMCPToolModel_GetByFunctionName(t *testing.T) {
 	tool, err := model.GetByFunctionName(orgID, "echo_function")
 	require.NoError(t, err)
 	require.NotNil(t, tool)
-	
+
 	assert.Equal(t, toolID, tool.ID)
 	assert.Equal(t, "Echo Tool", tool.Name)
 	assert.Equal(t, "echo_function", tool.FunctionName)
 	assert.Equal(t, int64(10), tool.UsageCount)
-	
+
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
@@ -189,14 +189,14 @@ func TestMCPToolModel_ListByOrganization(t *testing.T) {
 	defer mockDB.db.Close()
 
 	model := models.NewMCPToolModel(mockDB)
-	
+
 	orgID := uuid.New()
 	toolID1 := uuid.New()
 	toolID2 := uuid.New()
-	
+
 	schema := map[string]interface{}{"type": "object"}
 	schemaJSON, _ := json.Marshal(schema)
-	
+
 	// Expect the SELECT query (ordered by usage_count DESC)
 	mock.ExpectQuery(`SELECT (.+) FROM mcp_tools WHERE organization_id = \$1 AND is_active = true ORDER BY usage_count DESC, created_at DESC`).
 		WithArgs(orgID).
@@ -222,19 +222,19 @@ func TestMCPToolModel_ListByOrganization(t *testing.T) {
 	tools, err := model.ListByOrganization(orgID, true)
 	require.NoError(t, err)
 	require.Len(t, tools, 2)
-	
+
 	// Should be ordered by usage count (descending)
 	assert.Equal(t, toolID1, tools[0].ID)
 	assert.Equal(t, "Popular Tool", tools[0].Name)
 	assert.Equal(t, int64(15), tools[0].UsageCount)
 	assert.Equal(t, types.ToolCategoryData, tools[0].Category)
-	
+
 	assert.Equal(t, toolID2, tools[1].ID)
 	assert.Equal(t, "New Tool", tools[1].Name)
 	assert.Equal(t, int64(3), tools[1].UsageCount)
 	assert.Equal(t, types.ToolImplementationExternal, tools[1].ImplementationType)
 	assert.True(t, tools[1].IsPublic)
-	
+
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
@@ -243,13 +243,13 @@ func TestMCPToolModel_ListByCategory(t *testing.T) {
 	defer mockDB.db.Close()
 
 	model := models.NewMCPToolModel(mockDB)
-	
+
 	orgID := uuid.New()
 	toolID := uuid.New()
-	
+
 	schema := map[string]interface{}{"type": "object"}
 	schemaJSON, _ := json.Marshal(schema)
-	
+
 	// Expect the SELECT query with category filter
 	mock.ExpectQuery(`SELECT (.+) FROM mcp_tools WHERE organization_id = \$1 AND category = \$2 AND is_active = true ORDER BY usage_count DESC, created_at DESC`).
 		WithArgs(orgID, types.ToolCategoryDev).
@@ -269,14 +269,14 @@ func TestMCPToolModel_ListByCategory(t *testing.T) {
 	tools, err := model.ListByCategory(orgID, types.ToolCategoryDev, true)
 	require.NoError(t, err)
 	require.Len(t, tools, 1)
-	
+
 	assert.Equal(t, toolID, tools[0].ID)
 	assert.Equal(t, "Dev Tool", tools[0].Name)
 	assert.Equal(t, types.ToolCategoryDev, tools[0].Category)
 	assert.Equal(t, types.ToolImplementationScript, tools[0].ImplementationType)
 	assert.Equal(t, int64(25), tools[0].UsageCount)
 	assert.Equal(t, 45, tools[0].TimeoutSeconds)
-	
+
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
@@ -285,13 +285,13 @@ func TestMCPToolModel_ListPublicTools(t *testing.T) {
 	defer mockDB.db.Close()
 
 	model := models.NewMCPToolModel(mockDB)
-	
+
 	toolID := uuid.New()
 	orgID := uuid.New()
-	
+
 	schema := map[string]interface{}{"type": "object"}
 	schemaJSON, _ := json.Marshal(schema)
-	
+
 	// Expect the SELECT query for public tools
 	mock.ExpectQuery(`SELECT (.+) FROM mcp_tools WHERE is_public = true AND is_active = true ORDER BY usage_count DESC, created_at DESC LIMIT \$1 OFFSET \$2`).
 		WithArgs(50, 0).
@@ -311,12 +311,12 @@ func TestMCPToolModel_ListPublicTools(t *testing.T) {
 	tools, err := model.ListPublicTools(50, 0)
 	require.NoError(t, err)
 	require.Len(t, tools, 1)
-	
+
 	assert.Equal(t, toolID, tools[0].ID)
 	assert.Equal(t, "Public Tool", tools[0].Name)
 	assert.True(t, tools[0].IsPublic)
 	assert.Equal(t, int64(100), tools[0].UsageCount)
-	
+
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
@@ -325,7 +325,7 @@ func TestMCPToolModel_IncrementUsageCount(t *testing.T) {
 	defer mockDB.db.Close()
 
 	model := models.NewMCPToolModel(mockDB)
-	
+
 	toolID := uuid.New()
 
 	// Expect the UPDATE query to increment usage count
@@ -335,7 +335,7 @@ func TestMCPToolModel_IncrementUsageCount(t *testing.T) {
 
 	err := model.IncrementUsageCount(toolID)
 	assert.NoError(t, err)
-	
+
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
@@ -344,10 +344,10 @@ func TestMCPToolModel_Update(t *testing.T) {
 	defer mockDB.db.Close()
 
 	model := models.NewMCPToolModel(mockDB)
-	
+
 	toolID := uuid.New()
 	orgID := uuid.New()
-	
+
 	schema := map[string]interface{}{
 		"type": "object",
 		"properties": map[string]interface{}{
@@ -356,7 +356,7 @@ func TestMCPToolModel_Update(t *testing.T) {
 			},
 		},
 	}
-	
+
 	tool := &models.MCPTool{
 		ID:                 toolID,
 		OrganizationID:     orgID,
@@ -386,7 +386,7 @@ func TestMCPToolModel_Update(t *testing.T) {
 
 	err := model.Update(tool)
 	assert.NoError(t, err)
-	
+
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
@@ -395,7 +395,7 @@ func TestMCPToolModel_Delete(t *testing.T) {
 	defer mockDB.db.Close()
 
 	model := models.NewMCPToolModel(mockDB)
-	
+
 	toolID := uuid.New()
 
 	// Expect the UPDATE query (soft delete)
@@ -405,7 +405,7 @@ func TestMCPToolModel_Delete(t *testing.T) {
 
 	err := model.Delete(toolID)
 	assert.NoError(t, err)
-	
+
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
@@ -414,13 +414,13 @@ func TestMCPToolModel_SearchTools(t *testing.T) {
 	defer mockDB.db.Close()
 
 	model := models.NewMCPToolModel(mockDB)
-	
+
 	orgID := uuid.New()
 	toolID := uuid.New()
-	
+
 	schema := map[string]interface{}{"type": "object"}
 	schemaJSON, _ := json.Marshal(schema)
-	
+
 	// Expect the search query
 	mock.ExpectQuery(`SELECT (.+) FROM mcp_tools WHERE organization_id = \$1 AND is_active = true AND \((.+)\) ORDER BY usage_count DESC, created_at DESC LIMIT \$4 OFFSET \$5`).
 		WithArgs(orgID, "%search%", "search", 10, 0).
@@ -440,11 +440,11 @@ func TestMCPToolModel_SearchTools(t *testing.T) {
 	tools, err := model.SearchTools(orgID, "search", 10, 0)
 	require.NoError(t, err)
 	require.Len(t, tools, 1)
-	
+
 	assert.Equal(t, toolID, tools[0].ID)
 	assert.Equal(t, "Search Tool", tools[0].Name)
 	assert.Equal(t, "search_func", tools[0].FunctionName)
 	assert.Contains(t, []string(tools[0].Tags), "search")
-	
+
 	assert.NoError(t, mock.ExpectationsWereMet())
 }

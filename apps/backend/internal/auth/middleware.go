@@ -308,7 +308,7 @@ func (m *Middleware) RequireOrganizationAccess() gin.HandlerFunc {
 
 		// Get organization ID from request (path parameter, query, or body)
 		requestOrgID := m.extractOrganizationID(c)
-		
+
 		// System admins can access any organization
 		userRole, _ := c.Get("role")
 		if m.rbac.IsSystemAdmin(userRole.(string)) {
@@ -386,17 +386,17 @@ func (m *Middleware) extractOrganizationID(c *gin.Context) string {
 	if orgID := c.Param("organization_id"); orgID != "" {
 		return orgID
 	}
-	
+
 	// Try query parameter
 	if orgID := c.Query("organization_id"); orgID != "" {
 		return orgID
 	}
-	
+
 	// Try header
 	if orgID := c.GetHeader("X-Organization-ID"); orgID != "" {
 		return orgID
 	}
-	
+
 	// Could also parse from request body if needed
 	return ""
 }

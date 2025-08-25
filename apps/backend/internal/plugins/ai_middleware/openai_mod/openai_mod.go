@@ -21,16 +21,15 @@ type OpenAIModerationPlugin struct {
 
 // OpenAIModerationConfig holds the configuration for the OpenAI Moderation plugin
 type OpenAIModerationConfig struct {
-	APIEndpoint    string  `json:"api_endpoint"`
-	APIKey         string  `json:"api_key"`
-	Model          string  `json:"model"`
-	Action         string  `json:"action"`
-	TimeoutSeconds int     `json:"timeout_seconds"`
-	MaxRetries     int     `json:"max_retries"`
-	LogViolations  bool    `json:"log_violations"`
-	Threshold      float64 `json:"threshold"`
-	// Category thresholds for fine-grained control
 	CategoryThresholds map[string]float64 `json:"category_thresholds"`
+	APIEndpoint        string             `json:"api_endpoint"`
+	APIKey             string             `json:"api_key"`
+	Model              string             `json:"model"`
+	Action             string             `json:"action"`
+	TimeoutSeconds     int                `json:"timeout_seconds"`
+	MaxRetries         int                `json:"max_retries"`
+	Threshold          float64            `json:"threshold"`
+	LogViolations      bool               `json:"log_violations"`
 }
 
 // OpenAIModerationRequest represents a request to OpenAI Moderation API
@@ -41,15 +40,15 @@ type OpenAIModerationRequest struct {
 
 // OpenAIModerationResponse represents a response from OpenAI Moderation API
 type OpenAIModerationResponse struct {
-	ID      string                    `json:"id"`
-	Model   string                    `json:"model"`
-	Results []OpenAIModerationResult  `json:"results"`
+	ID      string                   `json:"id"`
+	Model   string                   `json:"model"`
+	Results []OpenAIModerationResult `json:"results"`
 }
 
 // OpenAIModerationResult represents a single moderation result
 type OpenAIModerationResult struct {
-	Categories     ModerationCategories     `json:"categories"`
 	CategoryScores ModerationCategoryScores `json:"category_scores"`
+	Categories     ModerationCategories     `json:"categories"`
 	Flagged        bool                     `json:"flagged"`
 }
 
@@ -86,15 +85,15 @@ type ModerationCategoryScores struct {
 // OpenAIModerationViolation represents a specific violation found by OpenAI Moderation
 type OpenAIModerationViolation struct {
 	Category   string  `json:"category"`
+	Severity   string  `json:"severity"`
 	Confidence float64 `json:"confidence"`
 	Flagged    bool    `json:"flagged"`
-	Severity   string  `json:"severity"`
 }
 
 // NewOpenAIModerationPlugin creates a new OpenAI Moderation plugin instance
 func NewOpenAIModerationPlugin(name string, config map[string]interface{}) (*OpenAIModerationPlugin, error) {
 	basePlugin := shared.NewBasePlugin(shared.PluginTypeOpenAIMod, name, 5) // Higher priority for safety
-	
+
 	// Set capabilities for AI middleware
 	basePlugin.SetCapabilities(shared.PluginCapabilities{
 		SupportsInbound:       true,
@@ -164,7 +163,7 @@ func (p *OpenAIModerationPlugin) Apply(ctx context.Context, pluginCtx *shared.Pl
 	if len(violations) > 0 {
 		highestConfidence := 0.0
 		var primaryViolation OpenAIModerationViolation
-		
+
 		for _, violation := range violations {
 			if violation.Confidence > highestConfidence {
 				highestConfidence = violation.Confidence
@@ -240,14 +239,14 @@ func (p *OpenAIModerationPlugin) Apply(ctx context.Context, pluginCtx *shared.Pl
 func (p *OpenAIModerationPlugin) Configure(config map[string]interface{}) error {
 	// Parse configuration with defaults
 	moderationConfig := &OpenAIModerationConfig{
-		APIEndpoint:    shared.GetConfigValue(config, "api_endpoint", "https://api.openai.com/v1/moderations"),
-		APIKey:         shared.GetConfigValue(config, "api_key", ""),
-		Model:          shared.GetConfigValue(config, "model", "text-moderation-latest"),
-		Action:         shared.GetConfigValue(config, "action", "block"),
-		TimeoutSeconds: shared.GetConfigValue(config, "timeout_seconds", 30),
-		MaxRetries:     shared.GetConfigValue(config, "max_retries", 3),
-		LogViolations:  shared.GetConfigValue(config, "log_violations", true),
-		Threshold:      shared.GetConfigValue(config, "threshold", 0.5),
+		APIEndpoint:        shared.GetConfigValue(config, "api_endpoint", "https://api.openai.com/v1/moderations"),
+		APIKey:             shared.GetConfigValue(config, "api_key", ""),
+		Model:              shared.GetConfigValue(config, "model", "text-moderation-latest"),
+		Action:             shared.GetConfigValue(config, "action", "block"),
+		TimeoutSeconds:     shared.GetConfigValue(config, "timeout_seconds", 30),
+		MaxRetries:         shared.GetConfigValue(config, "max_retries", 3),
+		LogViolations:      shared.GetConfigValue(config, "log_violations", true),
+		Threshold:          shared.GetConfigValue(config, "threshold", 0.5),
 		CategoryThresholds: make(map[string]float64),
 	}
 
@@ -285,13 +284,13 @@ func (p *OpenAIModerationPlugin) checkContent(ctx context.Context, content strin
 	// Make API call with retries
 	var response *OpenAIModerationResponse
 	var err error
-	
+
 	for attempt := 0; attempt < p.config.MaxRetries; attempt++ {
 		response, err = p.callAPI(ctx, request)
 		if err == nil {
 			break
 		}
-		
+
 		if attempt < p.config.MaxRetries-1 {
 			// Exponential backoff
 			backoff := time.Duration(1<<attempt) * time.Second
@@ -364,7 +363,7 @@ func (p *OpenAIModerationPlugin) parseResponse(response *OpenAIModerationRespons
 	var violations []OpenAIModerationViolation
 
 	// Check each category
-	categories := map[string]struct{
+	categories := map[string]struct {
 		flagged bool
 		score   float64
 	}{
@@ -487,13 +486,13 @@ func (f *OpenAIModerationPluginFactory) ValidateConfig(config map[string]interfa
 // GetDefaultConfig returns the default configuration for OpenAI Moderation plugins
 func (f *OpenAIModerationPluginFactory) GetDefaultConfig() map[string]interface{} {
 	return map[string]interface{}{
-		"api_endpoint":     "https://api.openai.com/v1/moderations",
-		"model":            "text-moderation-latest",
-		"action":           "block",
-		"threshold":        0.5,
-		"timeout_seconds":  30,
-		"max_retries":      3,
-		"log_violations":   true,
+		"api_endpoint":    "https://api.openai.com/v1/moderations",
+		"model":           "text-moderation-latest",
+		"action":          "block",
+		"threshold":       0.5,
+		"timeout_seconds": 30,
+		"max_retries":     3,
+		"log_violations":  true,
 		"category_thresholds": map[string]float64{
 			"sexual/minors":          0.1, // Very low threshold for CSAM
 			"self-harm/intent":       0.3, // Lower threshold for self-harm
@@ -506,55 +505,55 @@ func (f *OpenAIModerationPluginFactory) GetDefaultConfig() map[string]interface{
 // GetConfigSchema returns the JSON schema for configuration validation
 func (f *OpenAIModerationPluginFactory) GetConfigSchema() map[string]interface{} {
 	return map[string]interface{}{
-		"type": "object",
+		"type":     "object",
 		"required": []string{"api_key"},
 		"properties": map[string]interface{}{
 			"api_key": map[string]interface{}{
-				"type": "string",
+				"type":        "string",
 				"description": "OpenAI API key",
 			},
 			"api_endpoint": map[string]interface{}{
-				"type": "string",
+				"type":        "string",
 				"description": "OpenAI Moderation API endpoint URL",
 			},
 			"model": map[string]interface{}{
-				"type": "string",
+				"type":        "string",
 				"description": "OpenAI moderation model to use",
 			},
 			"action": map[string]interface{}{
-				"type": "string",
-				"enum": []string{"block", "warn", "audit", "allow"},
+				"type":        "string",
+				"enum":        []string{"block", "warn", "audit", "allow"},
 				"description": "Action to take when violations are found",
 			},
 			"threshold": map[string]interface{}{
-				"type": "number",
-				"minimum": 0.0,
-				"maximum": 1.0,
+				"type":        "number",
+				"minimum":     0.0,
+				"maximum":     1.0,
 				"description": "Default confidence threshold for triggering actions",
 			},
 			"category_thresholds": map[string]interface{}{
-				"type": "object",
+				"type":        "object",
 				"description": "Per-category confidence thresholds",
 				"additionalProperties": map[string]interface{}{
-					"type": "number",
+					"type":    "number",
 					"minimum": 0.0,
 					"maximum": 1.0,
 				},
 			},
 			"timeout_seconds": map[string]interface{}{
-				"type": "integer",
-				"minimum": 1,
-				"maximum": 300,
+				"type":        "integer",
+				"minimum":     1,
+				"maximum":     300,
 				"description": "API request timeout in seconds",
 			},
 			"max_retries": map[string]interface{}{
-				"type": "integer",
-				"minimum": 0,
-				"maximum": 10,
+				"type":        "integer",
+				"minimum":     0,
+				"maximum":     10,
 				"description": "Maximum number of API retries",
 			},
 			"log_violations": map[string]interface{}{
-				"type": "boolean",
+				"type":        "boolean",
 				"description": "Whether to log violations to audit trail",
 			},
 		},

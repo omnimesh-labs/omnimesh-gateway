@@ -10,9 +10,9 @@ import (
 // Registry manages the server registry
 type Registry struct {
 	db      *sql.DB
-	mu      sync.RWMutex
 	servers map[string]*types.MCPServer
 	stats   map[string]*types.ServerStats
+	mu      sync.RWMutex
 }
 
 // NewRegistry creates a new server registry

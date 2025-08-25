@@ -324,8 +324,8 @@ func TestPIIFilterFactory_ValidateConfig(t *testing.T) {
 	factory := &pii.PIIFilterFactory{}
 
 	tests := []struct {
-		name        string
 		config      map[string]interface{}
+		name        string
 		expectError bool
 	}{
 		{
@@ -408,8 +408,8 @@ func TestPIIFilter_GetStats(t *testing.T) {
 
 // Helper function
 func contains(s, substr string) bool {
-	return len(s) >= len(substr) && s[0:len(substr)] == substr || 
-	       len(s) > len(substr) && s[len(s)-len(substr):] == substr ||
-	       len(s) > len(substr) && s[1:len(s)-1] != substr && 
-	       s != substr && (s[0:2] == substr[0:2] || s[len(s)-2:] == substr[len(substr)-2:])
+	return len(s) >= len(substr) && s[0:len(substr)] == substr ||
+		len(s) > len(substr) && s[len(s)-len(substr):] == substr ||
+		len(s) > len(substr) && s[1:len(s)-1] != substr &&
+			s != substr && (s[0:2] == substr[0:2] || s[len(s)-2:] == substr[len(substr)-2:])
 }

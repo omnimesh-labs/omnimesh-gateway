@@ -54,19 +54,19 @@ func main() {
 	} else {
 		// Try both possible locations
 		candidates := []string{
-			"configs/development.yaml",                    // When running from apps/backend/
-			"apps/backend/configs/development.yaml",      // When running from repo root
+			"configs/development.yaml",              // When running from apps/backend/
+			"apps/backend/configs/development.yaml", // When running from repo root
 		}
-		
+
 		for _, candidate := range candidates {
 			if _, err := os.Stat(candidate); err == nil {
 				finalConfigPath = candidate
 				break
 			}
 		}
-		
+
 		if finalConfigPath == "" {
-			log.Fatal("Could not find development.yaml config file. Tried: " + 
+			log.Fatal("Could not find development.yaml config file. Tried: " +
 				filepath.Join(candidates[0]) + ", " + filepath.Join(candidates[1]))
 		}
 	}

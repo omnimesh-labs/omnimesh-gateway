@@ -164,7 +164,9 @@ async def main():
                 status = (
                     "✅"
                     if result["failed"] == 0
-                    else "❌" if result["passed"] == 0 else "⚠️"
+                    else "❌"
+                    if result["passed"] == 0
+                    else "⚠️"
                 )
                 print(
                     f"{status} {result['name']}: {result['passed']} passed, {result['failed']} failed"

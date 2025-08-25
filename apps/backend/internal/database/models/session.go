@@ -10,24 +10,24 @@ import (
 
 // MCPSession represents the mcp_sessions table from the ERD
 type MCPSession struct {
-	ID              uuid.UUID              `db:"id" json:"id"`
-	OrganizationID  uuid.UUID              `db:"organization_id" json:"organization_id"`
-	ServerID        uuid.UUID              `db:"server_id" json:"server_id"`
-	Status          string                 `db:"status" json:"status"`     // session_status_enum
-	Protocol        string                 `db:"protocol" json:"protocol"` // protocol_enum
-	ClientID        sql.NullString         `db:"client_id" json:"client_id,omitempty"`
-	ConnectionID    sql.NullString         `db:"connection_id" json:"connection_id,omitempty"`
-	ProcessPID      sql.NullInt32          `db:"process_pid" json:"process_pid,omitempty"`
-	ProcessStatus   sql.NullString         `db:"process_status" json:"process_status,omitempty"` // proc_status_enum
-	ProcessExitCode sql.NullInt32          `db:"process_exit_code" json:"process_exit_code,omitempty"`
-	ProcessError    sql.NullString         `db:"process_error" json:"process_error,omitempty"`
 	StartedAt       time.Time              `db:"started_at" json:"started_at"`
-	LastActivity    time.Time              `db:"last_activity" json:"last_activity"`
-	EndedAt         sql.NullTime           `db:"ended_at" json:"ended_at,omitempty"`
-	Metadata        map[string]interface{} `db:"metadata" json:"metadata,omitempty"`
-	UserID          string                 `db:"user_id" json:"user_id"`
-	CreatedAt       time.Time              `db:"created_at" json:"created_at"`
 	UpdatedAt       time.Time              `db:"updated_at" json:"updated_at"`
+	CreatedAt       time.Time              `db:"created_at" json:"created_at"`
+	LastActivity    time.Time              `db:"last_activity" json:"last_activity"`
+	Metadata        map[string]interface{} `db:"metadata" json:"metadata,omitempty"`
+	EndedAt         sql.NullTime           `db:"ended_at" json:"ended_at,omitempty"`
+	Protocol        string                 `db:"protocol" json:"protocol"`
+	Status          string                 `db:"status" json:"status"`
+	UserID          string                 `db:"user_id" json:"user_id"`
+	ProcessStatus   sql.NullString         `db:"process_status" json:"process_status,omitempty"`
+	ProcessError    sql.NullString         `db:"process_error" json:"process_error,omitempty"`
+	ConnectionID    sql.NullString         `db:"connection_id" json:"connection_id,omitempty"`
+	ClientID        sql.NullString         `db:"client_id" json:"client_id,omitempty"`
+	ProcessPID      sql.NullInt32          `db:"process_pid" json:"process_pid,omitempty"`
+	ProcessExitCode sql.NullInt32          `db:"process_exit_code" json:"process_exit_code,omitempty"`
+	ID              uuid.UUID              `db:"id" json:"id"`
+	ServerID        uuid.UUID              `db:"server_id" json:"server_id"`
+	OrganizationID  uuid.UUID              `db:"organization_id" json:"organization_id"`
 }
 
 // MCPSessionModel handles MCP session database operations
@@ -259,7 +259,7 @@ func (m *MCPSessionModel) ListByOrganization(orgID uuid.UUID, activeOnly bool) (
 func (m *MCPSessionModel) Update(session *MCPSession) error {
 	query := `
 		UPDATE mcp_sessions
-		SET status = $2, process_pid = $3, process_status = $4, 
+		SET status = $2, process_pid = $3, process_status = $4,
 			process_exit_code = $5, process_error = $6, last_activity = $7,
 			ended_at = $8, metadata = $9
 		WHERE id = $1
@@ -292,8 +292,8 @@ func (m *MCPSessionModel) UpdateActivity(id uuid.UUID) error {
 // EndSession marks a session as closed
 func (m *MCPSessionModel) EndSession(id uuid.UUID, exitCode *int32, processError *string) error {
 	query := `
-		UPDATE mcp_sessions 
-		SET status = 'closed', ended_at = NOW(), 
+		UPDATE mcp_sessions
+		SET status = 'closed', ended_at = NOW(),
 			process_exit_code = $2, process_error = $3
 		WHERE id = $1
 	`

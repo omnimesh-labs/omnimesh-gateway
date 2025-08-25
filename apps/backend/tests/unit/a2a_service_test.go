@@ -48,12 +48,12 @@ func (m *mockA2AAgentModel) GetByName(orgID uuid.UUID, name string) (*types.A2AA
 
 func (m *mockA2AAgentModel) List(orgID uuid.UUID, filters map[string]interface{}) ([]*types.A2AAgent, error) {
 	var result []*types.A2AAgent
-	
+
 	for _, agent := range m.agents {
 		if agent.OrganizationID != orgID {
 			continue
 		}
-		
+
 		// Apply filters
 		match := true
 		if agentType, ok := filters["agent_type"].(string); ok && agentType != "" {
@@ -66,12 +66,12 @@ func (m *mockA2AAgentModel) List(orgID uuid.UUID, filters map[string]interface{}
 				match = false
 			}
 		}
-		
+
 		if match {
 			result = append(result, agent)
 		}
 	}
-	
+
 	return result, nil
 }
 

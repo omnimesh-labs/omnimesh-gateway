@@ -17,8 +17,8 @@ type RegexFilter struct {
 
 // RegexConfig holds the configuration for the Regex filter
 type RegexConfig struct {
-	Rules         []Rule `json:"rules"`
 	Action        string `json:"action"`
+	Rules         []Rule `json:"rules"`
 	LogViolations bool   `json:"log_violations"`
 	LogMatches    bool   `json:"log_matches"`
 }
@@ -28,23 +28,23 @@ type Rule struct {
 	Name        string `json:"name"`
 	Pattern     string `json:"pattern"`
 	Replacement string `json:"replacement"`
-	Enabled     bool   `json:"enabled"`
 	Severity    string `json:"severity"`
 	Category    string `json:"category"`
 	Description string `json:"description"`
-	Action      string `json:"action"` // "replace", "block", "warn", "audit"
+	Action      string `json:"action"`
+	Enabled     bool   `json:"enabled"`
 }
 
 // RegexRule represents a compiled regex rule
 type RegexRule struct {
-	Name        string
 	Pattern     *regexp.Regexp
+	Name        string
 	Replacement string
-	Enabled     bool
 	Severity    string
 	Category    string
 	Description string
 	Action      string
+	Enabled     bool
 }
 
 // NewRegexFilter creates a new Regex filter instance

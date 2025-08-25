@@ -76,9 +76,9 @@ export function PolicyTable({ policies, onRefresh, onEdit }: PolicyTableProps) {
     }
 
     return (
-        <div style={{ 
-            backgroundColor: '#ffffff', 
-            border: '1px solid #e5e7eb', 
+        <div style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
             borderRadius: '8px',
             overflow: 'hidden',
         }}>
@@ -86,66 +86,66 @@ export function PolicyTable({ policies, onRefresh, onEdit }: PolicyTableProps) {
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                         <tr style={{ backgroundColor: '#f9fafb' }}>
-                            <th style={{ 
-                                padding: '12px 16px', 
-                                textAlign: 'left', 
-                                fontSize: '12px', 
-                                fontWeight: '500', 
+                            <th style={{
+                                padding: '12px 16px',
+                                textAlign: 'left',
+                                fontSize: '12px',
+                                fontWeight: '500',
                                 color: '#374151',
                                 textTransform: 'uppercase',
                                 letterSpacing: '0.05em',
                             }}>
                                 Name
                             </th>
-                            <th style={{ 
-                                padding: '12px 16px', 
-                                textAlign: 'left', 
-                                fontSize: '12px', 
-                                fontWeight: '500', 
+                            <th style={{
+                                padding: '12px 16px',
+                                textAlign: 'left',
+                                fontSize: '12px',
+                                fontWeight: '500',
                                 color: '#374151',
                                 textTransform: 'uppercase',
                                 letterSpacing: '0.05em',
                             }}>
                                 Type
                             </th>
-                            <th style={{ 
-                                padding: '12px 16px', 
-                                textAlign: 'center', 
-                                fontSize: '12px', 
-                                fontWeight: '500', 
+                            <th style={{
+                                padding: '12px 16px',
+                                textAlign: 'center',
+                                fontSize: '12px',
+                                fontWeight: '500',
                                 color: '#374151',
                                 textTransform: 'uppercase',
                                 letterSpacing: '0.05em',
                             }}>
                                 Priority
                             </th>
-                            <th style={{ 
-                                padding: '12px 16px', 
-                                textAlign: 'center', 
-                                fontSize: '12px', 
-                                fontWeight: '500', 
+                            <th style={{
+                                padding: '12px 16px',
+                                textAlign: 'center',
+                                fontSize: '12px',
+                                fontWeight: '500',
                                 color: '#374151',
                                 textTransform: 'uppercase',
                                 letterSpacing: '0.05em',
                             }}>
                                 Status
                             </th>
-                            <th style={{ 
-                                padding: '12px 16px', 
-                                textAlign: 'left', 
-                                fontSize: '12px', 
-                                fontWeight: '500', 
+                            <th style={{
+                                padding: '12px 16px',
+                                textAlign: 'left',
+                                fontSize: '12px',
+                                fontWeight: '500',
                                 color: '#374151',
                                 textTransform: 'uppercase',
                                 letterSpacing: '0.05em',
                             }}>
                                 Created
                             </th>
-                            <th style={{ 
-                                padding: '12px 16px', 
-                                textAlign: 'center', 
-                                fontSize: '12px', 
-                                fontWeight: '500', 
+                            <th style={{
+                                padding: '12px 16px',
+                                textAlign: 'center',
+                                fontSize: '12px',
+                                fontWeight: '500',
                                 color: '#374151',
                                 textTransform: 'uppercase',
                                 letterSpacing: '0.05em',
@@ -173,8 +173,8 @@ export function PolicyTable({ policies, onRefresh, onEdit }: PolicyTableProps) {
                                     </span>
                                 </td>
                                 <td style={{ padding: '16px', textAlign: 'center' }}>
-                                    <span style={{ 
-                                        fontSize: '14px', 
+                                    <span style={{
+                                        fontSize: '14px',
                                         fontWeight: '500',
                                         color: '#111827',
                                     }}>

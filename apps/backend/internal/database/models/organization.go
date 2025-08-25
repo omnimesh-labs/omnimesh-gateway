@@ -8,16 +8,16 @@ import (
 
 // Organization represents the organizations table from the ERD
 type Organization struct {
-	ID               uuid.UUID `db:"id" json:"id"`
-	Name             string    `db:"name" json:"name"`
-	Slug             string    `db:"slug" json:"slug"`
 	CreatedAt        time.Time `db:"created_at" json:"created_at"`
 	UpdatedAt        time.Time `db:"updated_at" json:"updated_at"`
-	IsActive         bool      `db:"is_active" json:"is_active"`
+	Name             string    `db:"name" json:"name"`
+	Slug             string    `db:"slug" json:"slug"`
 	PlanType         string    `db:"plan_type" json:"plan_type"`
 	MaxServers       int       `db:"max_servers" json:"max_servers"`
 	MaxSessions      int       `db:"max_sessions" json:"max_sessions"`
 	LogRetentionDays int       `db:"log_retention_days" json:"log_retention_days"`
+	ID               uuid.UUID `db:"id" json:"id"`
+	IsActive         bool      `db:"is_active" json:"is_active"`
 }
 
 // OrganizationModel handles organization database operations
@@ -50,7 +50,7 @@ func (m *OrganizationModel) Create(org *Organization) error {
 // GetByID retrieves an organization by ID
 func (m *OrganizationModel) GetByID(id uuid.UUID) (*Organization, error) {
 	query := `
-		SELECT id, name, slug, created_at, updated_at, is_active, 
+		SELECT id, name, slug, created_at, updated_at, is_active,
 			   plan_type, max_servers, max_sessions, log_retention_days
 		FROM organizations
 		WHERE id = $1
@@ -72,7 +72,7 @@ func (m *OrganizationModel) GetByID(id uuid.UUID) (*Organization, error) {
 // GetBySlug retrieves an organization by slug
 func (m *OrganizationModel) GetBySlug(slug string) (*Organization, error) {
 	query := `
-		SELECT id, name, slug, created_at, updated_at, is_active, 
+		SELECT id, name, slug, created_at, updated_at, is_active,
 			   plan_type, max_servers, max_sessions, log_retention_days
 		FROM organizations
 		WHERE slug = $1
@@ -115,7 +115,7 @@ func (m *OrganizationModel) Update(org *Organization) error {
 // List lists all organizations
 func (m *OrganizationModel) List(limit, offset int) ([]*Organization, error) {
 	query := `
-		SELECT id, name, slug, created_at, updated_at, is_active, 
+		SELECT id, name, slug, created_at, updated_at, is_active,
 			   plan_type, max_servers, max_sessions, log_retention_days
 		FROM organizations
 		ORDER BY created_at DESC

@@ -26,8 +26,8 @@ func NewA2AAgentModel(db Database) *A2AAgentModel {
 func (m *A2AAgentModel) Create(agent *types.A2AAgent) error {
 	query := `
 		INSERT INTO a2a_agents (
-			id, organization_id, name, description, endpoint_url, agent_type, 
-			protocol_version, capabilities, config, auth_type, auth_value, 
+			id, organization_id, name, description, endpoint_url, agent_type,
+			protocol_version, capabilities, config, auth_type, auth_value,
 			is_active, tags, metadata, health_status
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 		RETURNING created_at, updated_at`
@@ -73,9 +73,9 @@ func (m *A2AAgentModel) Create(agent *types.A2AAgent) error {
 // GetByID retrieves an A2A agent by ID
 func (m *A2AAgentModel) GetByID(id uuid.UUID) (*types.A2AAgent, error) {
 	query := `
-		SELECT id, organization_id, name, description, endpoint_url, agent_type, 
-		       protocol_version, capabilities, config, auth_type, auth_value, 
-		       is_active, tags, metadata, last_health_check, health_status, 
+		SELECT id, organization_id, name, description, endpoint_url, agent_type,
+		       protocol_version, capabilities, config, auth_type, auth_value,
+		       is_active, tags, metadata, last_health_check, health_status,
 		       health_error, created_at, updated_at
 		FROM a2a_agents
 		WHERE id = $1`
@@ -143,9 +143,9 @@ func (m *A2AAgentModel) GetByID(id uuid.UUID) (*types.A2AAgent, error) {
 // GetByName retrieves an A2A agent by organization ID and name
 func (m *A2AAgentModel) GetByName(orgID uuid.UUID, name string) (*types.A2AAgent, error) {
 	query := `
-		SELECT id, organization_id, name, description, endpoint_url, agent_type, 
-		       protocol_version, capabilities, config, auth_type, auth_value, 
-		       is_active, tags, metadata, last_health_check, health_status, 
+		SELECT id, organization_id, name, description, endpoint_url, agent_type,
+		       protocol_version, capabilities, config, auth_type, auth_value,
+		       is_active, tags, metadata, last_health_check, health_status,
 		       health_error, created_at, updated_at
 		FROM a2a_agents
 		WHERE organization_id = $1 AND name = $2`
@@ -213,9 +213,9 @@ func (m *A2AAgentModel) GetByName(orgID uuid.UUID, name string) (*types.A2AAgent
 // List retrieves all A2A agents for an organization with optional filtering
 func (m *A2AAgentModel) List(orgID uuid.UUID, filters map[string]interface{}) ([]*types.A2AAgent, error) {
 	query := `
-		SELECT id, organization_id, name, description, endpoint_url, agent_type, 
-		       protocol_version, capabilities, config, auth_type, auth_value, 
-		       is_active, tags, metadata, last_health_check, health_status, 
+		SELECT id, organization_id, name, description, endpoint_url, agent_type,
+		       protocol_version, capabilities, config, auth_type, auth_value,
+		       is_active, tags, metadata, last_health_check, health_status,
 		       health_error, created_at, updated_at
 		FROM a2a_agents
 		WHERE organization_id = $1`
@@ -323,8 +323,8 @@ func (m *A2AAgentModel) List(orgID uuid.UUID, filters map[string]interface{}) ([
 func (m *A2AAgentModel) Update(agent *types.A2AAgent) error {
 	query := `
 		UPDATE a2a_agents
-		SET name = $2, description = $3, endpoint_url = $4, agent_type = $5, 
-		    protocol_version = $6, capabilities = $7, config = $8, auth_type = $9, 
+		SET name = $2, description = $3, endpoint_url = $4, agent_type = $5,
+		    protocol_version = $6, capabilities = $7, config = $8, auth_type = $9,
 		    auth_value = $10, is_active = $11, tags = $12, metadata = $13
 		WHERE id = $1
 		RETURNING updated_at`

@@ -14,9 +14,9 @@ type Manager struct {
 	config         *types.TransportConfig
 	sessionManager *SessionManager
 	transports     map[types.TransportType]types.Transport
-	connections    map[string]types.Transport // sessionID -> transport
-	mu             sync.RWMutex
+	connections    map[string]types.Transport
 	metrics        *TransportMetrics
+	mu             sync.RWMutex
 }
 
 // TransportMetrics holds metrics for transport operations

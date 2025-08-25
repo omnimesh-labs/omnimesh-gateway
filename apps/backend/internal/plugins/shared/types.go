@@ -19,12 +19,12 @@ const (
 	PluginTypeResource PluginType = "resource"
 	PluginTypeDeny     PluginType = "deny"
 	PluginTypeRegex    PluginType = "regex"
-	
+
 	// AI Middleware plugins
-	PluginTypeLlamaGuard   PluginType = "llamaguard"
-	PluginTypeOpenAIMod    PluginType = "openai_moderation"
-	PluginTypeCustomLLM    PluginType = "custom_llm"
-	
+	PluginTypeLlamaGuard PluginType = "llamaguard"
+	PluginTypeOpenAIMod  PluginType = "openai_moderation"
+	PluginTypeCustomLLM  PluginType = "custom_llm"
+
 	// Legacy aliases for backward compatibility
 	FilterTypePII      = PluginTypePII
 	FilterTypeResource = PluginTypeResource
@@ -43,7 +43,7 @@ const (
 	PluginActionWarn  PluginAction = "warn"
 	PluginActionAudit PluginAction = "audit"
 	PluginActionAllow PluginAction = "allow"
-	
+
 	// Legacy aliases for backward compatibility
 	FilterActionBlock = PluginActionBlock
 	FilterActionWarn  = PluginActionWarn
@@ -58,11 +58,11 @@ type PluginDirection string
 type FilterDirection = PluginDirection
 
 const (
-	PluginDirectionInbound   PluginDirection = "inbound"   // User -> MCP Server
-	PluginDirectionOutbound  PluginDirection = "outbound"  // MCP Server -> User
-	PluginDirectionPreTool   PluginDirection = "pre_tool"  // Before tool execution
-	PluginDirectionPostTool  PluginDirection = "post_tool" // After tool execution
-	
+	PluginDirectionInbound  PluginDirection = "inbound"   // User -> MCP Server
+	PluginDirectionOutbound PluginDirection = "outbound"  // MCP Server -> User
+	PluginDirectionPreTool  PluginDirection = "pre_tool"  // Before tool execution
+	PluginDirectionPostTool PluginDirection = "post_tool" // After tool execution
+
 	// Legacy aliases for backward compatibility
 	FilterDirectionInbound  = PluginDirectionInbound
 	FilterDirectionOutbound = PluginDirectionOutbound
@@ -70,15 +70,15 @@ const (
 
 // PluginResult represents the result of applying a plugin
 type PluginResult struct {
-	Blocked     bool                   `json:"blocked"`
-	Modified    bool                   `json:"modified"`
+	ProcessedAt time.Time              `json:"processed_at"`
+	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 	Action      PluginAction           `json:"action"`
 	Reason      string                 `json:"reason,omitempty"`
-	Violations  []PluginViolation      `json:"violations,omitempty"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
-	ProcessedAt time.Time              `json:"processed_at"`
 	PluginName  string                 `json:"plugin_name,omitempty"`
 	PluginType  PluginType             `json:"plugin_type,omitempty"`
+	Violations  []PluginViolation      `json:"violations,omitempty"`
+	Blocked     bool                   `json:"blocked"`
+	Modified    bool                   `json:"modified"`
 }
 
 // Legacy alias for backward compatibility
@@ -86,15 +86,15 @@ type FilterResult = PluginResult
 
 // PluginViolation represents a specific violation found by a plugin
 type PluginViolation struct {
+	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 	Type        string                 `json:"type"`
 	Pattern     string                 `json:"pattern,omitempty"`
 	Match       string                 `json:"match,omitempty"`
-	Position    int                    `json:"position,omitempty"`
 	Severity    string                 `json:"severity,omitempty"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 	Replacement string                 `json:"replacement,omitempty"`
-	Confidence  float64                `json:"confidence,omitempty"`  // AI confidence score
-	Category    string                 `json:"category,omitempty"`    // AI violation category
+	Category    string                 `json:"category,omitempty"`
+	Position    int                    `json:"position,omitempty"`
+	Confidence  float64                `json:"confidence,omitempty"`
 }
 
 // Legacy alias for backward compatibility
@@ -112,11 +112,11 @@ type PluginContext struct {
 	ContentType    string                 `json:"content_type"`
 	Metadata       map[string]interface{} `json:"metadata,omitempty"`
 	Timestamp      time.Time              `json:"timestamp"`
-	
+
 	// Enhanced context for AI middleware
-	ExecutionMode  string                 `json:"execution_mode,omitempty"`  // enforcing, permissive, disabled
-	ToolName       string                 `json:"tool_name,omitempty"`       // Current tool being executed
-	VirtualServer  string                 `json:"virtual_server,omitempty"`  // Virtual server ID
+	ExecutionMode string `json:"execution_mode,omitempty"` // enforcing, permissive, disabled
+	ToolName      string `json:"tool_name,omitempty"`      // Current tool being executed
+	VirtualServer string `json:"virtual_server,omitempty"` // Virtual server ID
 }
 
 // Legacy alias for backward compatibility
@@ -124,15 +124,13 @@ type FilterContext = PluginContext
 
 // PluginContent represents content to be processed by plugins
 type PluginContent struct {
-	Raw     string                 `json:"raw"`
-	Parsed  interface{}            `json:"parsed,omitempty"`
-	Headers map[string]string      `json:"headers,omitempty"`
-	Params  map[string]interface{} `json:"params,omitempty"`
-	
-	// Enhanced content for AI processing
-	Tokens     []string               `json:"tokens,omitempty"`      // Tokenized content for AI
-	Embeddings []float64              `json:"embeddings,omitempty"` // Content embeddings
-	Language   string                 `json:"language,omitempty"`   // Detected language
+	Parsed     interface{}            `json:"parsed,omitempty"`
+	Headers    map[string]string      `json:"headers,omitempty"`
+	Params     map[string]interface{} `json:"params,omitempty"`
+	Raw        string                 `json:"raw"`
+	Language   string                 `json:"language,omitempty"`
+	Tokens     []string               `json:"tokens,omitempty"`
+	Embeddings []float64              `json:"embeddings,omitempty"`
 }
 
 // Legacy alias for backward compatibility
@@ -140,21 +138,19 @@ type FilterContent = PluginContent
 
 // PluginCapabilities describes what features a plugin supports
 type PluginCapabilities struct {
-	SupportsInbound       bool     `json:"supports_inbound"`
-	SupportsOutbound      bool     `json:"supports_outbound"`
-	SupportsPreTool       bool     `json:"supports_pre_tool"`
+	SupportedContentTypes []string `json:"supported_content_types"`
+	SupportedLanguages    []string `json:"supported_languages,omitempty"`
 	SupportsPostTool      bool     `json:"supports_post_tool"`
+	SupportsInbound       bool     `json:"supports_inbound"`
 	SupportsModification  bool     `json:"supports_modification"`
 	SupportsBlocking      bool     `json:"supports_blocking"`
-	SupportedContentTypes []string `json:"supported_content_types"`
+	SupportsPreTool       bool     `json:"supports_pre_tool"`
 	SupportsRealtime      bool     `json:"supports_realtime"`
 	SupportsBatch         bool     `json:"supports_batch"`
-	
-	// AI-specific capabilities
 	RequiresExternalAPI   bool     `json:"requires_external_api"`
 	SupportsStreaming     bool     `json:"supports_streaming"`
 	SupportsTokenization  bool     `json:"supports_tokenization"`
-	SupportedLanguages    []string `json:"supported_languages,omitempty"`
+	SupportsOutbound      bool     `json:"supports_outbound"`
 }
 
 // Legacy alias for backward compatibility
@@ -163,8 +159,8 @@ type FilterCapabilities = PluginCapabilities
 // Helper functions for plugin types
 func (p PluginType) IsValid() bool {
 	switch p {
-	case PluginTypePII, PluginTypeResource, PluginTypeDeny, PluginTypeRegex, 
-	     PluginTypeLlamaGuard, PluginTypeOpenAIMod, PluginTypeCustomLLM:
+	case PluginTypePII, PluginTypeResource, PluginTypeDeny, PluginTypeRegex,
+		PluginTypeLlamaGuard, PluginTypeOpenAIMod, PluginTypeCustomLLM:
 		return true
 	default:
 		return false
@@ -202,8 +198,8 @@ func (a PluginAction) String() string {
 // Helper functions for plugin directions
 func (d PluginDirection) IsValid() bool {
 	switch d {
-	case PluginDirectionInbound, PluginDirectionOutbound, 
-	     PluginDirectionPreTool, PluginDirectionPostTool:
+	case PluginDirectionInbound, PluginDirectionOutbound,
+		PluginDirectionPreTool, PluginDirectionPostTool:
 		return true
 	default:
 		return false
@@ -291,7 +287,7 @@ type PluginExecutionMode string
 
 const (
 	PluginModeEnforcing  PluginExecutionMode = "enforcing"  // Block on violations
-	PluginModePermissive PluginExecutionMode = "permissive" // Log but allow violations  
+	PluginModePermissive PluginExecutionMode = "permissive" // Log but allow violations
 	PluginModeDisabled   PluginExecutionMode = "disabled"   // Plugin is disabled
 	PluginModeAuditOnly  PluginExecutionMode = "audit_only" // Only log for audit
 )
@@ -345,7 +341,7 @@ type PluginService interface {
 	// GetMetrics returns plugin metrics
 	GetMetrics() (*types.FilteringMetrics, error)
 
-	// GetViolations retrieves plugin violations with optional filtering  
+	// GetViolations retrieves plugin violations with optional filtering
 	GetViolations(ctx context.Context, organizationID string, limit, offset int) ([]interface{}, error)
 }
 
@@ -372,17 +368,17 @@ type PluginRegistry interface {
 
 // PluginInfo contains metadata about a plugin type
 type PluginInfo struct {
-	Type             PluginType           `json:"type"`
-	Name             string               `json:"name"`
-	Description      string               `json:"description"`
-	Version          string               `json:"version"`
-	Author           string               `json:"author"`
-	ConfigSchema     map[string]any       `json:"config_schema,omitempty"`
-	Capabilities     PluginCapabilities   `json:"capabilities"`
-	DefaultConfig    map[string]any       `json:"default_config,omitempty"`
-	SupportedModes   []string             `json:"supported_modes,omitempty"`
-	RequiresAPI      bool                 `json:"requires_api,omitempty"`
-	Category         string               `json:"category,omitempty"` // "ai", "content", "security", etc.
+	ConfigSchema   map[string]any     `json:"config_schema,omitempty"`
+	DefaultConfig  map[string]any     `json:"default_config,omitempty"`
+	Type           PluginType         `json:"type"`
+	Name           string             `json:"name"`
+	Description    string             `json:"description"`
+	Version        string             `json:"version"`
+	Author         string             `json:"author"`
+	Category       string             `json:"category,omitempty"`
+	SupportedModes []string           `json:"supported_modes,omitempty"`
+	Capabilities   PluginCapabilities `json:"capabilities"`
+	RequiresAPI    bool               `json:"requires_api,omitempty"`
 }
 
 // PluginManager orchestrates multiple plugins with enhanced lifecycle support
@@ -423,6 +419,7 @@ type PluginManager interface {
 	// GetStats returns plugin statistics
 	GetStats() (*types.FilteringMetrics, error)
 }
+
 func (m PluginExecutionMode) IsValid() bool {
 	switch m {
 	case PluginModeEnforcing, PluginModePermissive, PluginModeDisabled, PluginModeAuditOnly:
@@ -441,7 +438,7 @@ type PluginScope string
 
 const (
 	PluginScopeGlobal        PluginScope = "global"         // Apply to all requests
-	PluginScopeUser          PluginScope = "user"           // Per-user configuration  
+	PluginScopeUser          PluginScope = "user"           // Per-user configuration
 	PluginScopeVirtualServer PluginScope = "virtual_server" // Per virtual server
 	PluginScopeTool          PluginScope = "tool"           // Per tool
 	PluginScopeTenant        PluginScope = "tenant"         // Per tenant/organization

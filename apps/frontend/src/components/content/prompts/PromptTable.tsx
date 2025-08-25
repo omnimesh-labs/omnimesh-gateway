@@ -80,10 +80,10 @@ export function PromptTable({ prompts, onEdit, onDelete, onView, loading = false
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: '2px solid #e5e7eb' }}>
-              <th style={{ 
-                padding: '0.75rem', 
-                textAlign: 'left', 
-                fontWeight: '600', 
+              <th style={{
+                padding: '0.75rem',
+                textAlign: 'left',
+                fontWeight: '600',
                 color: '#374151',
                 fontSize: '0.875rem',
                 textTransform: 'uppercase',
@@ -91,10 +91,10 @@ export function PromptTable({ prompts, onEdit, onDelete, onView, loading = false
               }}>
                 Name & Category
               </th>
-              <th style={{ 
-                padding: '0.75rem', 
-                textAlign: 'left', 
-                fontWeight: '600', 
+              <th style={{
+                padding: '0.75rem',
+                textAlign: 'left',
+                fontWeight: '600',
                 color: '#374151',
                 fontSize: '0.875rem',
                 textTransform: 'uppercase',
@@ -102,10 +102,10 @@ export function PromptTable({ prompts, onEdit, onDelete, onView, loading = false
               }}>
                 Template Preview
               </th>
-              <th style={{ 
-                padding: '0.75rem', 
-                textAlign: 'left', 
-                fontWeight: '600', 
+              <th style={{
+                padding: '0.75rem',
+                textAlign: 'left',
+                fontWeight: '600',
                 color: '#374151',
                 fontSize: '0.875rem',
                 textTransform: 'uppercase',
@@ -113,10 +113,10 @@ export function PromptTable({ prompts, onEdit, onDelete, onView, loading = false
               }}>
                 Usage & Status
               </th>
-              <th style={{ 
-                padding: '0.75rem', 
-                textAlign: 'left', 
-                fontWeight: '600', 
+              <th style={{
+                padding: '0.75rem',
+                textAlign: 'left',
+                fontWeight: '600',
                 color: '#374151',
                 fontSize: '0.875rem',
                 textTransform: 'uppercase',
@@ -124,10 +124,10 @@ export function PromptTable({ prompts, onEdit, onDelete, onView, loading = false
               }}>
                 Updated
               </th>
-              <th style={{ 
-                padding: '0.75rem', 
-                textAlign: 'right', 
-                fontWeight: '600', 
+              <th style={{
+                padding: '0.75rem',
+                textAlign: 'right',
+                fontWeight: '600',
                 color: '#374151',
                 fontSize: '0.875rem',
                 textTransform: 'uppercase',
@@ -139,9 +139,9 @@ export function PromptTable({ prompts, onEdit, onDelete, onView, loading = false
           </thead>
           <tbody>
             {prompts.map((prompt) => (
-              <tr 
-                key={prompt.id} 
-                style={{ 
+              <tr
+                key={prompt.id}
+                style={{
                   borderBottom: '1px solid #f3f4f6',
                   backgroundColor: 'white',
                   transition: 'background-color 0.2s'
@@ -161,8 +161,8 @@ export function PromptTable({ prompts, onEdit, onDelete, onView, loading = false
                       }}
                     />
                     <div>
-                      <div style={{ 
-                        fontWeight: '600', 
+                      <div style={{
+                        fontWeight: '600',
                         color: '#111827',
                         marginBottom: '0.25rem',
                         fontSize: '0.875rem'
@@ -185,11 +185,11 @@ export function PromptTable({ prompts, onEdit, onDelete, onView, loading = false
                     </div>
                   </div>
                 </td>
-                
+
                 <td style={{ padding: '1rem 0.75rem' }}>
                   <div style={{ fontSize: '0.875rem' }}>
-                    <div style={{ 
-                      color: '#374151', 
+                    <div style={{
+                      color: '#374151',
                       marginBottom: '0.25rem',
                       fontFamily: 'monospace',
                       backgroundColor: '#f9fafb',
@@ -230,11 +230,11 @@ export function PromptTable({ prompts, onEdit, onDelete, onView, loading = false
                     )}
                   </div>
                 </td>
-                
+
                 <td style={{ padding: '1rem 0.75rem' }}>
                   <div style={{ fontSize: '0.875rem' }}>
-                    <div style={{ 
-                      color: '#374151', 
+                    <div style={{
+                      color: '#374151',
                       marginBottom: '0.5rem',
                       fontWeight: '500'
                     }}>
@@ -255,11 +255,11 @@ export function PromptTable({ prompts, onEdit, onDelete, onView, loading = false
                     </div>
                   </div>
                 </td>
-                
+
                 <td style={{ padding: '1rem 0.75rem', fontSize: '0.875rem', color: '#6b7280' }}>
                   {formatDate(prompt.updated_at)}
                 </td>
-                
+
                 <td style={{ padding: '1rem 0.75rem', textAlign: 'right' }}>
                   <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                     <button

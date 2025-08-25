@@ -25,9 +25,9 @@ type SetupManager struct {
 
 // SetupFunction represents a setup function that can be executed
 type SetupFunction struct {
+	Execute     func(*SetupManager) error
 	Name        string
 	Description string
-	Execute     func(*SetupManager) error
 }
 
 // Available setup functions
@@ -138,8 +138,8 @@ func (s *SetupManager) checkMigrations() error {
 		var exists bool
 		query := `
 			SELECT EXISTS (
-				SELECT FROM information_schema.tables 
-				WHERE table_schema = 'public' 
+				SELECT FROM information_schema.tables
+				WHERE table_schema = 'public'
 				AND table_name = $1
 			)
 		`
@@ -640,7 +640,7 @@ func (s *SetupManager) resetDatabase() error {
 	confirmation := strings.TrimSpace(scanner.Text())
 
 	if confirmation != "yes" {
-		fmt.Println("❌ Database reset cancelled")
+		fmt.Println("❌ Database reset canceled")
 		return nil
 	}
 

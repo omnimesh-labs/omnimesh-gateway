@@ -9,11 +9,11 @@ import (
 
 // BaseTransport provides common functionality for all transport implementations
 type BaseTransport struct {
+	metadata      map[string]interface{}
 	transportType types.TransportType
 	sessionID     string
-	connected     bool
-	metadata      map[string]interface{}
 	mu            sync.RWMutex
+	connected     bool
 }
 
 // NewBaseTransport creates a new base transport instance

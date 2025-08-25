@@ -15,10 +15,10 @@ func TestIPRateLimitWithMemory(t *testing.T) {
 
 	tests := []struct {
 		name           string
+		description    string
 		requestsPerMin int
 		numRequests    int
 		expectedStatus int
-		description    string
 	}{
 		{
 			name:           "under_limit",
@@ -46,7 +46,7 @@ func TestIPRateLimitWithMemory(t *testing.T) {
 
 			var lastStatus int
 			for i := 0; i < tt.numRequests; i++ {
-				req, _ := http.NewRequest("GET", "/test", nil)
+				req, _ := http.NewRequest("GET", "/test", http.NoBody)
 				req.RemoteAddr = "127.0.0.1:12345" // Consistent IP
 				w := httptest.NewRecorder()
 				router.ServeHTTP(w, req)
@@ -86,19 +86,19 @@ func TestIPRateLimitSkipPaths(t *testing.T) {
 
 	// Health endpoint should never be rate limited
 	for i := 0; i < 10; i++ {
-		req, _ := http.NewRequest("GET", "/health", nil)
+		req, _ := http.NewRequest("GET", "/health", http.NoBody)
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 		assert.Equal(t, http.StatusOK, w.Code, "Health endpoint should not be rate limited")
 	}
 
 	// API endpoint should be rate limited after 1 request
-	req1, _ := http.NewRequest("GET", "/api/test", nil)
+	req1, _ := http.NewRequest("GET", "/api/test", http.NoBody)
 	w1 := httptest.NewRecorder()
 	router.ServeHTTP(w1, req1)
 	assert.Equal(t, http.StatusOK, w1.Code, "First API request should succeed")
 
-	req2, _ := http.NewRequest("GET", "/api/test", nil)
+	req2, _ := http.NewRequest("GET", "/api/test", http.NoBody)
 	w2 := httptest.NewRecorder()
 	router.ServeHTTP(w2, req2)
 	assert.Equal(t, http.StatusTooManyRequests, w2.Code, "Second API request should be rate limited")
@@ -149,7 +149,7 @@ func TestGetClientIP(t *testing.T) {
 				c.JSON(http.StatusOK, gin.H{"ip": ip})
 			})
 
-			req, _ := http.NewRequest("GET", "/test", nil)
+			req, _ := http.NewRequest("GET", "/test", http.NoBody)
 			req.RemoteAddr = tt.remoteAddr
 
 			for key, value := range tt.headers {
@@ -215,7 +215,7 @@ func BenchmarkIPRateLimit(b *testing.B) {
 		c.JSON(http.StatusOK, gin.H{"message": "success"})
 	})
 
-	req, _ := http.NewRequest("GET", "/test", nil)
+	req, _ := http.NewRequest("GET", "/test", http.NoBody)
 
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {

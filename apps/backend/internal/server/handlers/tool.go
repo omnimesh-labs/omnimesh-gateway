@@ -74,7 +74,7 @@ func (h *ToolHandler) ListTools(c *gin.Context) {
 				offset = parsed
 			}
 		}
-		
+
 		tools, err = h.toolModel.SearchTools(orgUUID, searchTerm, limit, offset)
 	} else if category != "" {
 		tools, err = h.toolModel.ListByCategory(orgUUID, category, activeOnly)
@@ -117,7 +117,7 @@ func (h *ToolHandler) CreateTool(c *gin.Context) {
 	}
 
 	userID, userExists := c.Get("user_id")
-	
+
 	var req types.CreateGlobalToolRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, types.ErrorResponse{

@@ -81,10 +81,10 @@ export function ResourceTable({ resources, onEdit, onDelete, onView, loading = f
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: '2px solid #e5e7eb' }}>
-              <th style={{ 
-                padding: '0.75rem', 
-                textAlign: 'left', 
-                fontWeight: '600', 
+              <th style={{
+                padding: '0.75rem',
+                textAlign: 'left',
+                fontWeight: '600',
                 color: '#374151',
                 fontSize: '0.875rem',
                 textTransform: 'uppercase',
@@ -92,10 +92,10 @@ export function ResourceTable({ resources, onEdit, onDelete, onView, loading = f
               }}>
                 Name & Type
               </th>
-              <th style={{ 
-                padding: '0.75rem', 
-                textAlign: 'left', 
-                fontWeight: '600', 
+              <th style={{
+                padding: '0.75rem',
+                textAlign: 'left',
+                fontWeight: '600',
                 color: '#374151',
                 fontSize: '0.875rem',
                 textTransform: 'uppercase',
@@ -103,10 +103,10 @@ export function ResourceTable({ resources, onEdit, onDelete, onView, loading = f
               }}>
                 Details
               </th>
-              <th style={{ 
-                padding: '0.75rem', 
-                textAlign: 'left', 
-                fontWeight: '600', 
+              <th style={{
+                padding: '0.75rem',
+                textAlign: 'left',
+                fontWeight: '600',
                 color: '#374151',
                 fontSize: '0.875rem',
                 textTransform: 'uppercase',
@@ -114,10 +114,10 @@ export function ResourceTable({ resources, onEdit, onDelete, onView, loading = f
               }}>
                 Status
               </th>
-              <th style={{ 
-                padding: '0.75rem', 
-                textAlign: 'left', 
-                fontWeight: '600', 
+              <th style={{
+                padding: '0.75rem',
+                textAlign: 'left',
+                fontWeight: '600',
                 color: '#374151',
                 fontSize: '0.875rem',
                 textTransform: 'uppercase',
@@ -125,10 +125,10 @@ export function ResourceTable({ resources, onEdit, onDelete, onView, loading = f
               }}>
                 Updated
               </th>
-              <th style={{ 
-                padding: '0.75rem', 
-                textAlign: 'right', 
-                fontWeight: '600', 
+              <th style={{
+                padding: '0.75rem',
+                textAlign: 'right',
+                fontWeight: '600',
                 color: '#374151',
                 fontSize: '0.875rem',
                 textTransform: 'uppercase',
@@ -140,9 +140,9 @@ export function ResourceTable({ resources, onEdit, onDelete, onView, loading = f
           </thead>
           <tbody>
             {resources.map((resource) => (
-              <tr 
-                key={resource.id} 
-                style={{ 
+              <tr
+                key={resource.id}
+                style={{
                   borderBottom: '1px solid #f3f4f6',
                   backgroundColor: 'white',
                   transition: 'background-color 0.2s'
@@ -162,8 +162,8 @@ export function ResourceTable({ resources, onEdit, onDelete, onView, loading = f
                       }}
                     />
                     <div>
-                      <div style={{ 
-                        fontWeight: '600', 
+                      <div style={{
+                        fontWeight: '600',
                         color: '#111827',
                         marginBottom: '0.25rem',
                         fontSize: '0.875rem'
@@ -186,7 +186,7 @@ export function ResourceTable({ resources, onEdit, onDelete, onView, loading = f
                     </div>
                   </div>
                 </td>
-                
+
                 <td style={{ padding: '1rem 0.75rem' }}>
                   <div style={{ fontSize: '0.875rem' }}>
                     <div style={{ color: '#374151', marginBottom: '0.25rem' }}>
@@ -222,7 +222,7 @@ export function ResourceTable({ resources, onEdit, onDelete, onView, loading = f
                     )}
                   </div>
                 </td>
-                
+
                 <td style={{ padding: '1rem 0.75rem' }}>
                   <div
                     style={{
@@ -238,11 +238,11 @@ export function ResourceTable({ resources, onEdit, onDelete, onView, loading = f
                     {resource.is_active ? 'Active' : 'Inactive'}
                   </div>
                 </td>
-                
+
                 <td style={{ padding: '1rem 0.75rem', fontSize: '0.875rem', color: '#6b7280' }}>
                   {formatDate(resource.updated_at)}
                 </td>
-                
+
                 <td style={{ padding: '1rem 0.75rem', textAlign: 'right' }}>
                   <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                     <button

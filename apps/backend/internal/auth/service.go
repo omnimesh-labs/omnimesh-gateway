@@ -25,10 +25,10 @@ type Service struct {
 // Config holds authentication service configuration
 type Config struct {
 	JWTSecret          string
+	Cache              CacheConfig
 	AccessTokenExpiry  time.Duration
 	RefreshTokenExpiry time.Duration
 	BCryptCost         int
-	Cache              CacheConfig
 }
 
 // NewService creates a new authentication service
@@ -39,7 +39,7 @@ func NewService(db *sql.DB, config *Config) *Service {
 		// Fallback to memory cache if Redis fails
 		cache = NewMemoryTokenCache()
 	}
-	
+
 	jwtManager := NewJWTManagerWithCache(config.JWTSecret, config.AccessTokenExpiry, config.RefreshTokenExpiry, cache)
 	auditLogger := NewAuditLogger(db)
 	attemptTracker := NewLoginAttemptTracker(db)
@@ -70,8 +70,8 @@ func (s *Service) GetAttemptTracker() *LoginAttemptTracker {
 
 // LoginContext contains additional context for login attempts
 type LoginContext struct {
-	ClientIP  net.IP
 	UserAgent string
+	ClientIP  net.IP
 }
 
 // Login authenticates a user with email and password
@@ -210,8 +210,8 @@ func (s *Service) LoginWithContext(email, password string, ctx *LoginContext) (*
 type RefreshTokenResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token,omitempty"`
-	ExpiresIn    int64  `json:"expires_in"`
 	TokenType    string `json:"token_type"`
+	ExpiresIn    int64  `json:"expires_in"`
 }
 
 // RefreshToken generates new access token from refresh token
@@ -234,7 +234,7 @@ func (s *Service) RefreshTokenWithContext(refreshToken string, ctx *LoginContext
 	if err != nil {
 		// Log failed token refresh attempt
 		s.auditLogger.LogTokenRefresh(
-			"unknown", // userID not available due to invalid token
+			"unknown",                              // userID not available due to invalid token
 			"00000000-0000-0000-0000-000000000000", // default org
 			ctx.ClientIP,
 			false,
@@ -615,15 +615,15 @@ func (s *Service) UpdateUser(userID string, req *types.UpdateUserRequest) (*type
 	}
 
 	// Add updated_at and user ID
-	setClauses = append(setClauses, fmt.Sprintf("updated_at = NOW()"))
+	setClauses = append(setClauses, "updated_at = NOW()")
 	args = append(args, userID)
 
 	query := fmt.Sprintf(`
-		UPDATE users 
+		UPDATE users
 		SET %s
 		WHERE id = $%d AND is_active = true
 		RETURNING id, email, name, password_hash, organization_id, role, is_active, created_at, updated_at
-	`, 
+	`,
 		strings.Join(setClauses, ", "),
 		argIndex,
 	)

@@ -15,18 +15,18 @@ type MCPMessage struct {
 
 // MCPError represents an MCP protocol error
 type MCPError struct {
-	Code    int         `json:"code"`
-	Message string      `json:"message"`
 	Data    interface{} `json:"data,omitempty"`
+	Message string      `json:"message"`
+	Code    int         `json:"code"`
 }
 
 // MCPCapability represents server capabilities
 type MCPCapability struct {
+	Schema      map[string]interface{} `json:"schema,omitempty"`
 	Name        string                 `json:"name"`
 	Version     string                 `json:"version"`
 	Description string                 `json:"description"`
 	Methods     []string               `json:"methods"`
-	Schema      map[string]interface{} `json:"schema,omitempty"`
 }
 
 // MCPTool represents an MCP tool
@@ -39,19 +39,19 @@ type MCPTool struct {
 
 // MCPToolExample represents an example usage of an MCP tool
 type MCPToolExample struct {
+	Output      interface{}            `json:"output"`
+	Input       map[string]interface{} `json:"input"`
 	Name        string                 `json:"name"`
 	Description string                 `json:"description"`
-	Input       map[string]interface{} `json:"input"`
-	Output      interface{}            `json:"output"`
 }
 
 // MCPResource represents an MCP resource
 type MCPResource struct {
+	Metadata    map[string]string `json:"metadata,omitempty"`
 	URI         string            `json:"uri"`
 	Name        string            `json:"name"`
 	Description string            `json:"description"`
 	MimeType    string            `json:"mime_type"`
-	Metadata    map[string]string `json:"metadata,omitempty"`
 }
 
 // MCPPrompt represents an MCP prompt template
@@ -67,8 +67,8 @@ type MCPPrompt struct {
 type MCPPromptArgument struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
-	Required    bool   `json:"required"`
 	Type        string `json:"type"`
+	Required    bool   `json:"required"`
 }
 
 // MCPPromptExample represents an example prompt usage
@@ -92,34 +92,34 @@ type MCPServerInfo struct {
 
 // MCPSession represents an active MCP session
 type MCPSession struct {
-	ID             string                 `json:"id" db:"id"`
-	UserID         string                 `json:"user_id" db:"user_id"`
-	OrganizationID string                 `json:"organization_id" db:"organization_id"`
-	ServerID       string                 `json:"server_id" db:"server_id"`
-	Status         string                 `json:"status" db:"status"` // "active", "inactive", "error"
 	StartedAt      time.Time              `json:"started_at" db:"started_at"`
 	LastActivity   time.Time              `json:"last_activity" db:"last_activity"`
 	EndedAt        *time.Time             `json:"ended_at,omitempty" db:"ended_at"`
 	Metadata       map[string]interface{} `json:"metadata" db:"metadata"`
+	ID             string                 `json:"id" db:"id"`
+	UserID         string                 `json:"user_id" db:"user_id"`
+	OrganizationID string                 `json:"organization_id" db:"organization_id"`
+	ServerID       string                 `json:"server_id" db:"server_id"`
+	Status         string                 `json:"status" db:"status"`
 }
 
 // MCPRequest represents an MCP request
 type MCPRequest struct {
+	Timestamp time.Time              `json:"timestamp" db:"timestamp"`
+	Params    map[string]interface{} `json:"params" db:"params"`
 	ID        string                 `json:"id" db:"id"`
 	SessionID string                 `json:"session_id" db:"session_id"`
 	Method    string                 `json:"method" db:"method"`
-	Params    map[string]interface{} `json:"params" db:"params"`
-	Timestamp time.Time              `json:"timestamp" db:"timestamp"`
 }
 
 // MCPResponse represents an MCP response
 type MCPResponse struct {
-	ID        string                 `json:"id" db:"id"`
-	RequestID string                 `json:"request_id" db:"request_id"`
+	Timestamp time.Time              `json:"timestamp" db:"timestamp"`
 	Result    map[string]interface{} `json:"result,omitempty" db:"result"`
 	Error     *MCPError              `json:"error,omitempty" db:"error"`
+	ID        string                 `json:"id" db:"id"`
+	RequestID string                 `json:"request_id" db:"request_id"`
 	Latency   time.Duration          `json:"latency" db:"latency"`
-	Timestamp time.Time              `json:"timestamp" db:"timestamp"`
 }
 
 // MCP message types
@@ -171,9 +171,9 @@ const (
 
 // LoggingMetrics represents logging service metrics
 type LoggingMetrics struct {
-	BufferSize      int    `json:"buffer_size"`
-	SubscriberCount int    `json:"subscriber_count"`
 	CurrentLevel    string `json:"current_level"`
 	BackendType     string `json:"backend_type"`
+	BufferSize      int    `json:"buffer_size"`
+	SubscriberCount int    `json:"subscriber_count"`
 	AsyncMode       bool   `json:"async_mode"`
 }

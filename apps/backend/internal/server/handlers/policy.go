@@ -3,9 +3,10 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
-	"mcp-gateway/apps/backend/internal/types"
 	"net/http"
 	"strconv"
+
+	"mcp-gateway/apps/backend/internal/types"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -73,7 +74,7 @@ func (h *PolicyHandler) CreatePolicy(c *gin.Context) {
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
 	`
 
-	_, err = h.db.Exec(query, policy.ID, policy.OrganizationID, policy.Name, policy.Description, 
+	_, err = h.db.Exec(query, policy.ID, policy.OrganizationID, policy.Name, policy.Description,
 		policy.Type, policy.Priority, conditionsJSON, actionsJSON, policy.IsActive, userID.(string))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create policy", "details": err.Error()})
@@ -111,7 +112,7 @@ func (h *PolicyHandler) ListPolicies(c *gin.Context) {
 	// Build query with optional filters
 	query := `
 		SELECT id, organization_id, name, description, type, priority, conditions, actions, is_active, created_at, updated_at
-		FROM policies 
+		FROM policies
 		WHERE organization_id = $1
 	`
 	args := []interface{}{orgID.(string)}
@@ -188,7 +189,7 @@ func (h *PolicyHandler) GetPolicy(c *gin.Context) {
 
 	query := `
 		SELECT id, organization_id, name, description, type, priority, conditions, actions, is_active, created_at, updated_at
-		FROM policies 
+		FROM policies
 		WHERE id = $1 AND organization_id = $2
 	`
 

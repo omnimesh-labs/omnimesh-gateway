@@ -13,15 +13,15 @@ import (
 
 // Service implements LogService interface with plugin-based storage
 type Service struct {
-	mu          sync.RWMutex
-	config      *LoggingConfig
 	backend     StorageBackend
+	config      *LoggingConfig
 	subscribers map[string]LogSubscriber
+	stopCh      chan struct{}
 	level       LogLevel
 	buffer      []*LogEntry
-	bufferMu    sync.Mutex
-	stopCh      chan struct{}
 	wg          sync.WaitGroup
+	mu          sync.RWMutex
+	bufferMu    sync.Mutex
 }
 
 // NewService creates a new logging service with plugin-based storage
@@ -399,4 +399,3 @@ func (s *Service) LogMetric(ctx context.Context, metric *types.Metric) error {
 		OrgID:     metric.OrganizationID,
 	})
 }
-

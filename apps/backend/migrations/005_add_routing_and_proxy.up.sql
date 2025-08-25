@@ -22,12 +22,12 @@ CREATE TABLE content_filters (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     created_by UUID REFERENCES users(id) ON DELETE SET NULL,
-    
+
     UNIQUE(organization_id, name)
 );
 
-CREATE TRIGGER content_filters_updated_at 
-    BEFORE UPDATE ON content_filters 
+CREATE TRIGGER content_filters_updated_at
+    BEFORE UPDATE ON content_filters
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- Filter Violations - Track filter violations for audit and reporting
@@ -38,23 +38,23 @@ CREATE TABLE filter_violations (
     request_id VARCHAR(255) NOT NULL,
     session_id UUID REFERENCES mcp_sessions(id) ON DELETE SET NULL,
     server_id UUID REFERENCES mcp_servers(id) ON DELETE SET NULL,
-    
+
     -- Violation details
     violation_type VARCHAR(100) NOT NULL,
     action_taken filter_action_enum NOT NULL,
     content_snippet TEXT, -- Partial content that triggered the violation (limited length for privacy)
     pattern_matched VARCHAR(500),
     severity VARCHAR(20) DEFAULT 'medium' CHECK (severity IN ('low', 'medium', 'high', 'critical')),
-    
+
     -- Context
     user_id VARCHAR(255) DEFAULT 'default-user',
     remote_ip INET,
     user_agent TEXT,
     direction VARCHAR(20) CHECK (direction IN ('inbound', 'outbound')),
-    
+
     -- Metadata
     metadata JSONB DEFAULT '{}',
-    
+
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -64,34 +64,34 @@ CREATE TABLE proxy_routes (
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    
+
     -- Route matching
     path_pattern VARCHAR(500) NOT NULL, -- e.g., "/api/v1/servers/{server_id}/*"
     method_pattern VARCHAR(20) DEFAULT '*', -- HTTP method or * for all
     host_pattern VARCHAR(255) DEFAULT '*', -- Host header pattern
-    
+
     -- Target configuration
     target_type VARCHAR(50) NOT NULL DEFAULT 'mcp_server' CHECK (target_type IN ('mcp_server', 'http_backend', 'virtual_server')),
     target_config JSONB NOT NULL DEFAULT '{}',
-    
+
     -- Route behavior
     enabled BOOLEAN DEFAULT true,
     priority INTEGER DEFAULT 100 CHECK (priority >= 1 AND priority <= 1000),
     timeout_seconds INTEGER DEFAULT 30 CHECK (timeout_seconds > 0),
     max_retries INTEGER DEFAULT 3 CHECK (max_retries >= 0),
-    
+
     -- Load balancing (for multiple targets)
     load_balancer_type VARCHAR(50) DEFAULT 'round_robin' CHECK (load_balancer_type IN ('round_robin', 'least_conn', 'weighted', 'random')),
     health_check_enabled BOOLEAN DEFAULT true,
-    
+
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     UNIQUE(organization_id, name)
 );
 
-CREATE TRIGGER proxy_routes_updated_at 
-    BEFORE UPDATE ON proxy_routes 
+CREATE TRIGGER proxy_routes_updated_at
+    BEFORE UPDATE ON proxy_routes
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- Request Routing Log - Track routing decisions for debugging and analytics
@@ -99,30 +99,30 @@ CREATE TABLE request_routing_log (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     request_id VARCHAR(255) NOT NULL,
-    
+
     -- Request details
     method VARCHAR(20) NOT NULL,
     path VARCHAR(500) NOT NULL,
     host VARCHAR(255),
     user_agent TEXT,
     remote_ip INET,
-    
+
     -- Routing decision
     matched_route_id UUID REFERENCES proxy_routes(id) ON DELETE SET NULL,
     target_server_id UUID REFERENCES mcp_servers(id) ON DELETE SET NULL,
     routing_decision VARCHAR(100) NOT NULL, -- 'routed', 'blocked', 'no_match', 'error'
-    
+
     -- Performance
     route_resolution_time_ms INTEGER,
     total_request_time_ms INTEGER,
-    
+
     -- Status
     status_code INTEGER,
     error_message TEXT,
-    
+
     -- Metadata
     metadata JSONB DEFAULT '{}',
-    
+
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -155,7 +155,7 @@ CREATE INDEX idx_request_routing_log_cleanup ON request_routing_log(created_at);
 
 -- Insert default content filters for the default organization
 INSERT INTO content_filters (organization_id, name, description, type, enabled, priority, config)
-VALUES 
+VALUES
     (
         '00000000-0000-0000-0000-000000000000',
         'default-pii-filter',

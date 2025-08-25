@@ -310,7 +310,7 @@ async function apiRequest<T>(
                     try {
                         isRefreshing = true;
                         console.log('401 detected, attempting token refresh...');
-                        
+
                         // Try to refresh the token
                         const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
                             method: 'POST',
@@ -324,7 +324,7 @@ async function apiRequest<T>(
 
                         if (refreshResponse.ok) {
                             const refreshData = await refreshResponse.json();
-                            
+
                             // Update tokens in localStorage synchronously
                             if (typeof window !== 'undefined') {
                                 localStorage.setItem('access_token', refreshData.data.access_token);
@@ -332,7 +332,7 @@ async function apiRequest<T>(
                             }
 
                             console.log('Token refreshed successfully, retrying original request...');
-                            
+
                             // Retry the original request with the new token
                             return apiRequest(endpoint, options, false);
                         } else {
@@ -771,7 +771,7 @@ export interface UsePromptRequest {
     parameters?: Record<string, any>;
 }
 
-// Tool Types  
+// Tool Types
 export interface Tool {
     id: string;
     organization_id: string;

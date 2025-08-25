@@ -15,7 +15,7 @@ export function HealthCheck() {
         mode: 'cors',
         credentials: 'include',
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setStatus('healthy');
@@ -87,7 +87,7 @@ export function HealthCheck() {
             Backend Status: {status.charAt(0).toUpperCase() + status.slice(1)}
           </span>
         </div>
-        
+
         <button
           onClick={checkHealth}
           disabled={status === 'checking'}
@@ -116,7 +116,7 @@ export function HealthCheck() {
           {status === 'checking' ? 'Checking...' : 'Refresh'}
         </button>
       </div>
-      
+
       {message && (
         <div style={{
           fontSize: '0.75rem',

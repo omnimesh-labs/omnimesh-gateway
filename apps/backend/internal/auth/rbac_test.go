@@ -74,7 +74,7 @@ func TestRBAC_SystemAdminPermissions(t *testing.T) {
 	}
 
 	for _, perm := range expectedPermissions {
-		assert.True(t, rbac.HasPermission(types.RoleSystemAdmin, perm), 
+		assert.True(t, rbac.HasPermission(types.RoleSystemAdmin, perm),
 			"System admin should have permission: %s", perm)
 	}
 

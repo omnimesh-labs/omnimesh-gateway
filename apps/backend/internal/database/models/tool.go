@@ -11,34 +11,32 @@ import (
 
 // MCPTool represents the mcp_tools table
 type MCPTool struct {
-	ID                   uuid.UUID              `db:"id" json:"id"`
-	OrganizationID       uuid.UUID              `db:"organization_id" json:"organization_id"`
-	Name                 string                 `db:"name" json:"name"`
-	Description          sql.NullString         `db:"description" json:"-"`
-	FunctionName         string                 `db:"function_name" json:"function_name"`
-	Schema               map[string]interface{} `db:"schema" json:"schema,omitempty"`
-	Category             string                 `db:"category" json:"category"` // tool_category_enum
-	ImplementationType   string                 `db:"implementation_type" json:"implementation_type"`
-	EndpointURL          sql.NullString         `db:"endpoint_url" json:"-"`
-	TimeoutSeconds       int                    `db:"timeout_seconds" json:"timeout_seconds"`
-	MaxRetries           int                    `db:"max_retries" json:"max_retries"`
-	UsageCount           int64                  `db:"usage_count" json:"usage_count"`
-	AccessPermissions    map[string]interface{} `db:"access_permissions" json:"access_permissions,omitempty"`
-	IsActive             bool                   `db:"is_active" json:"is_active"`
-	IsPublic             bool                   `db:"is_public" json:"is_public"`
-	Metadata             map[string]interface{} `db:"metadata" json:"metadata,omitempty"`
-	Tags                 pq.StringArray         `db:"tags" json:"tags,omitempty"`
-	Examples             []interface{}          `db:"examples" json:"examples,omitempty"`
-	Documentation        sql.NullString         `db:"documentation" json:"-"`
-	CreatedAt            time.Time              `db:"created_at" json:"created_at"`
-	UpdatedAt            time.Time              `db:"updated_at" json:"updated_at"`
-	CreatedBy            uuid.NullUUID          `db:"created_by" json:"-"`
-	
-	// JSON-friendly fields
-	DescriptionString   *string    `db:"-" json:"description,omitempty"`
-	EndpointURLString   *string    `db:"-" json:"endpoint_url,omitempty"`
-	DocumentationString *string    `db:"-" json:"documentation,omitempty"`
-	CreatedByUUID       *uuid.UUID `db:"-" json:"created_by,omitempty"`
+	UpdatedAt           time.Time              `db:"updated_at" json:"updated_at"`
+	CreatedAt           time.Time              `db:"created_at" json:"created_at"`
+	AccessPermissions   map[string]interface{} `db:"access_permissions" json:"access_permissions,omitempty"`
+	CreatedByUUID       *uuid.UUID             `db:"-" json:"created_by,omitempty"`
+	DocumentationString *string                `db:"-" json:"documentation,omitempty"`
+	EndpointURLString   *string                `db:"-" json:"endpoint_url,omitempty"`
+	DescriptionString   *string                `db:"-" json:"description,omitempty"`
+	Schema              map[string]interface{} `db:"schema" json:"schema,omitempty"`
+	Metadata            map[string]interface{} `db:"metadata" json:"metadata,omitempty"`
+	Category            string                 `db:"category" json:"category"`
+	ImplementationType  string                 `db:"implementation_type" json:"implementation_type"`
+	Name                string                 `db:"name" json:"name"`
+	FunctionName        string                 `db:"function_name" json:"function_name"`
+	Documentation       sql.NullString         `db:"documentation" json:"-"`
+	EndpointURL         sql.NullString         `db:"endpoint_url" json:"-"`
+	Tags                pq.StringArray         `db:"tags" json:"tags,omitempty"`
+	Examples            []interface{}          `db:"examples" json:"examples,omitempty"`
+	Description         sql.NullString         `db:"description" json:"-"`
+	MaxRetries          int                    `db:"max_retries" json:"max_retries"`
+	TimeoutSeconds      int                    `db:"timeout_seconds" json:"timeout_seconds"`
+	UsageCount          int64                  `db:"usage_count" json:"usage_count"`
+	CreatedBy           uuid.NullUUID          `db:"created_by" json:"-"`
+	ID                  uuid.UUID              `db:"id" json:"id"`
+	OrganizationID      uuid.UUID              `db:"organization_id" json:"organization_id"`
+	IsPublic            bool                   `db:"is_public" json:"is_public"`
+	IsActive            bool                   `db:"is_active" json:"is_active"`
 }
 
 // MCPToolModel handles MCP tool database operations
@@ -57,7 +55,7 @@ func (m *MCPToolModel) Create(tool *MCPTool) error {
 		INSERT INTO mcp_tools (
 			id, organization_id, name, description, function_name, schema, category,
 			implementation_type, endpoint_url, timeout_seconds, max_retries, usage_count,
-			access_permissions, is_active, is_public, metadata, tags, examples, 
+			access_permissions, is_active, is_public, metadata, tags, examples,
 			documentation, created_by
 		) VALUES (
 			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
@@ -463,7 +461,7 @@ func (m *MCPToolModel) Update(tool *MCPTool) error {
 		UPDATE mcp_tools
 		SET name = $2, description = $3, function_name = $4, schema = $5, category = $6,
 			implementation_type = $7, endpoint_url = $8, timeout_seconds = $9, max_retries = $10,
-			access_permissions = $11, is_public = $12, metadata = $13, tags = $14, 
+			access_permissions = $11, is_public = $12, metadata = $13, tags = $14,
 			examples = $15, documentation = $16
 		WHERE id = $1
 	`
@@ -537,7 +535,7 @@ func (m *MCPToolModel) SearchTools(orgID uuid.UUID, searchTerm string, limit int
 		FROM mcp_tools
 		WHERE organization_id = $1 AND is_active = true
 		AND (
-			name ILIKE $2 OR 
+			name ILIKE $2 OR
 			description ILIKE $2 OR
 			function_name ILIKE $2 OR
 			documentation ILIKE $2 OR

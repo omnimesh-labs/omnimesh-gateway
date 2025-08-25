@@ -40,15 +40,15 @@ func (h *HealthHandler) HealthDetailed(c *gin.Context) {
 
 	checks := map[string]interface{}{
 		"database": map[string]interface{}{
-			"status": "healthy",
+			"status":  "healthy",
 			"latency": "< 1ms",
 		},
 		"cache": map[string]interface{}{
-			"status": "healthy",
+			"status":   "healthy",
 			"hit_rate": "95%",
 		},
 		"discovery": map[string]interface{}{
-			"status": "healthy",
+			"status":  "healthy",
 			"servers": 0, // TODO: Get actual count
 		},
 	}
@@ -70,7 +70,7 @@ func (h *HealthHandler) Ready(c *gin.Context) {
 	// - External dependencies available
 
 	c.JSON(http.StatusOK, gin.H{
-		"status": "ready",
+		"status":    "ready",
 		"timestamp": time.Now(),
 	})
 }
@@ -79,7 +79,7 @@ func (h *HealthHandler) Ready(c *gin.Context) {
 func (h *HealthHandler) Live(c *gin.Context) {
 	// Simple liveness check
 	c.JSON(http.StatusOK, gin.H{
-		"status": "alive",
+		"status":    "alive",
 		"timestamp": time.Now(),
 	})
 }

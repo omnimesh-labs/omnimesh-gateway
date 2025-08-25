@@ -223,7 +223,7 @@ func TestResourceFilter_ApplyWildcardDomain(t *testing.T) {
 		t.Errorf("Expected content not to be blocked with wildcard subdomain match")
 	}
 
-	// Test exact domain match  
+	// Test exact domain match
 	content2 := shared.CreatePluginContent("Visit https://example.com/data", nil, nil, nil)
 	result2, _, err2 := filter.Apply(ctx, filterCtx, content2)
 	if err2 != nil {
@@ -337,7 +337,7 @@ func TestResourceFilter_ApplyContentSizeExceeded(t *testing.T) {
 
 	ctx := context.Background()
 	filterCtx := shared.CreatePluginContext("req-1", "org-1", "user-1", "", "", shared.PluginDirectionInbound, "text/plain")
-	
+
 	// Create content larger than the limit
 	largeContent := make([]byte, 150)
 	for i := range largeContent {
@@ -565,8 +565,8 @@ func TestResourceFilterFactory_ValidateConfig(t *testing.T) {
 	factory := &resource.ResourceFilterFactory{}
 
 	tests := []struct {
-		name        string
 		config      map[string]interface{}
+		name        string
 		expectError bool
 	}{
 		{

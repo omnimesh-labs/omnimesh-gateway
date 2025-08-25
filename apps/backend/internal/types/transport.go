@@ -61,11 +61,11 @@ type TransportSession struct {
 
 // TransportEvent represents an event in a transport session
 type TransportEvent struct {
+	Timestamp time.Time              `json:"timestamp"`
+	Data      map[string]interface{} `json:"data"`
 	ID        string                 `json:"id"`
 	SessionID string                 `json:"session_id"`
-	Type      string                 `json:"type"` // "message", "connect", "disconnect", "error"
-	Data      map[string]interface{} `json:"data"`
-	Timestamp time.Time              `json:"timestamp"`
+	Type      string                 `json:"type"`
 }
 
 // TransportConfig represents configuration for transport layer
@@ -86,85 +86,85 @@ type TransportConfig struct {
 
 // TransportRequest represents a request through any transport
 type TransportRequest struct {
+	Timestamp  time.Time              `json:"timestamp"`
+	Body       interface{}            `json:"body,omitempty"`
+	Headers    map[string]string      `json:"headers,omitempty"`
+	Parameters map[string]interface{} `json:"parameters,omitempty"`
 	ID         string                 `json:"id"`
 	SessionID  string                 `json:"session_id,omitempty"`
 	Transport  TransportType          `json:"transport"`
 	Method     string                 `json:"method"`
 	Path       string                 `json:"path"`
-	Headers    map[string]string      `json:"headers,omitempty"`
-	Body       interface{}            `json:"body,omitempty"`
-	Parameters map[string]interface{} `json:"parameters,omitempty"`
-	Timestamp  time.Time              `json:"timestamp"`
 }
 
 // TransportResponse represents a response through any transport
 type TransportResponse struct {
+	Timestamp time.Time         `json:"timestamp"`
+	Body      interface{}       `json:"body,omitempty"`
+	Headers   map[string]string `json:"headers,omitempty"`
+	Error     *MCPError         `json:"error,omitempty"`
 	ID        string            `json:"id"`
 	RequestID string            `json:"request_id"`
 	SessionID string            `json:"session_id,omitempty"`
 	Transport TransportType     `json:"transport"`
 	Status    int               `json:"status"`
-	Headers   map[string]string `json:"headers,omitempty"`
-	Body      interface{}       `json:"body,omitempty"`
-	Error     *MCPError         `json:"error,omitempty"`
-	Timestamp time.Time         `json:"timestamp"`
 	Latency   time.Duration     `json:"latency"`
 }
 
 // WebSocketMessage represents a WebSocket message
 type WebSocketMessage struct {
-	Type      string      `json:"type"` // "text", "binary", "ping", "pong", "close"
-	Data      interface{} `json:"data"`
 	Timestamp time.Time   `json:"timestamp"`
+	Data      interface{} `json:"data"`
+	Type      string      `json:"type"`
 }
 
 // SSEEvent represents a Server-Sent Event
 type SSEEvent struct {
+	Timestamp time.Time   `json:"timestamp"`
+	Data      interface{} `json:"data"`
 	ID        string      `json:"id,omitempty"`
 	Event     string      `json:"event,omitempty"`
-	Data      interface{} `json:"data"`
 	Retry     int         `json:"retry,omitempty"`
-	Timestamp time.Time   `json:"timestamp"`
 }
 
 // StreamableHTTPRequest represents a request for Streamable HTTP transport
 type StreamableHTTPRequest struct {
+	Body       interface{}            `json:"body,omitempty"`
+	Headers    map[string]string      `json:"headers,omitempty"`
+	Metadata   map[string]interface{} `json:"metadata,omitempty"`
 	Method     string                 `json:"method"`
 	Path       string                 `json:"path"`
-	Headers    map[string]string      `json:"headers,omitempty"`
-	Body       interface{}            `json:"body,omitempty"`
-	Stateful   bool                   `json:"stateful"`
 	SessionID  string                 `json:"session_id,omitempty"`
-	StreamMode string                 `json:"stream_mode"` // "json", "sse"
-	Metadata   map[string]interface{} `json:"metadata,omitempty"`
+	StreamMode string                 `json:"stream_mode"`
+	Stateful   bool                   `json:"stateful"`
 }
 
 // STDIOCommand represents a command for STDIO transport
 type STDIOCommand struct {
-	Command string            `json:"command"`
-	Args    []string          `json:"args"`
 	Env     map[string]string `json:"env,omitempty"`
+	Command string            `json:"command"`
 	Dir     string            `json:"dir,omitempty"`
+	Args    []string          `json:"args"`
 	Timeout time.Duration     `json:"timeout,omitempty"`
 }
 
 // PathRewriteRule represents a path rewriting rule
 type PathRewriteRule struct {
-	Pattern     string            `json:"pattern"`
-	Replacement string            `json:"replacement"`
 	Headers     map[string]string `json:"headers,omitempty"`
 	Context     map[string]string `json:"context,omitempty"`
+	Pattern     string            `json:"pattern"`
+	Replacement string            `json:"replacement"`
 }
 
 // TransportContext holds context information for transport operations
 type TransportContext struct {
 	Request        *http.Request
+	Metadata       map[string]interface{}
 	SessionID      string
 	UserID         string
 	OrganizationID string
 	ServerID       string
 	Transport      TransportType
-	Metadata       map[string]interface{}
 }
 
 // Transport session status constants

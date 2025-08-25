@@ -46,10 +46,10 @@ func (p *PolicyManager) LoadPoliciesFromConfig(configPath string) ([]types.Polic
 
 // PolicyTemplate represents a policy template
 type PolicyTemplate struct {
+	Template    map[string]interface{} `yaml:"template"`
 	Name        string                 `yaml:"name"`
 	Description string                 `yaml:"description"`
 	Category    string                 `yaml:"category"`
-	Template    map[string]interface{} `yaml:"template"`
 }
 
 // GetPolicyTemplates returns available policy templates

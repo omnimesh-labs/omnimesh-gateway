@@ -21,8 +21,8 @@ type Service struct {
 	config   *Config
 	registry *Registry
 	health   *HealthChecker
+	stopCh   map[uuid.UUID]chan struct{}
 	mu       sync.RWMutex
-	stopCh   map[uuid.UUID]chan struct{} // For stopping health checks
 }
 
 // Models contains all database models used by the discovery service
@@ -33,11 +33,11 @@ type Models struct {
 
 // Config holds discovery service configuration
 type Config struct {
-	Enabled          bool
 	HealthInterval   time.Duration
 	FailureThreshold int
 	RecoveryTimeout  time.Duration
-	SingleTenant     bool // If true, use a default organization for single-tenant mode
+	Enabled          bool
+	SingleTenant     bool
 }
 
 // Default organization UUID for single-tenant mode (matches migration)

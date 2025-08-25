@@ -16,10 +16,10 @@ import (
 )
 
 type Server struct {
-	port    int
-	cfg     *config.Config
 	db      database.Service
 	logging logging.LogService
+	cfg     *config.Config
+	port    int
 }
 
 func NewServer(cfg *config.Config) *http.Server {

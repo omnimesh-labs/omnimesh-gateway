@@ -42,7 +42,7 @@ func (m *mockDB) Begin() (*sql.Tx, error) {
 func setupMockDB(t *testing.T) (*mockDB, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	
+
 	return &mockDB{db: db, mock: mock}, mock
 }
 
@@ -51,10 +51,10 @@ func TestMCPResourceModel_Create(t *testing.T) {
 	defer mockDB.db.Close()
 
 	model := models.NewMCPResourceModel(mockDB)
-	
+
 	orgID := uuid.New()
 	userID := uuid.New()
-	
+
 	resource := &models.MCPResource{
 		OrganizationID: orgID,
 		Name:           "Test Resource",
@@ -72,14 +72,14 @@ func TestMCPResourceModel_Create(t *testing.T) {
 	// Expect the INSERT query
 	mock.ExpectExec(`INSERT INTO mcp_resources`).
 		WithArgs(sqlmock.AnyArg(), orgID, "Test Resource", "Test description", types.ResourceTypeFile,
-			"/path/to/resource.txt", "text/plain", int64(1024), sqlmock.AnyArg(), true, 
+			"/path/to/resource.txt", "text/plain", int64(1024), sqlmock.AnyArg(), true,
 			sqlmock.AnyArg(), pq.StringArray{"test", "file"}, userID).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	err := model.Create(resource)
 	assert.NoError(t, err)
 	assert.NotEqual(t, uuid.Nil, resource.ID)
-	
+
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
@@ -88,17 +88,17 @@ func TestMCPResourceModel_GetByID(t *testing.T) {
 	defer mockDB.db.Close()
 
 	model := models.NewMCPResourceModel(mockDB)
-	
+
 	resourceID := uuid.New()
 	orgID := uuid.New()
 	userID := uuid.New()
-	
+
 	metadata := map[string]interface{}{"version": "1.0"}
 	metadataJSON, _ := json.Marshal(metadata)
-	
+
 	accessPermissions := map[string]interface{}{"read": []interface{}{"*"}}
 	accessJSON, _ := json.Marshal(accessPermissions)
-	
+
 	// Expect the SELECT query
 	mock.ExpectQuery(`SELECT (.+) FROM mcp_resources WHERE id = \$1`).
 		WithArgs(resourceID).
@@ -115,7 +115,7 @@ func TestMCPResourceModel_GetByID(t *testing.T) {
 	resource, err := model.GetByID(resourceID)
 	require.NoError(t, err)
 	require.NotNil(t, resource)
-	
+
 	assert.Equal(t, resourceID, resource.ID)
 	assert.Equal(t, orgID, resource.OrganizationID)
 	assert.Equal(t, "Test Resource", resource.Name)
@@ -128,7 +128,7 @@ func TestMCPResourceModel_GetByID(t *testing.T) {
 	assert.Equal(t, metadata, resource.Metadata)
 	assert.Equal(t, accessPermissions, resource.AccessPermissions)
 	assert.Equal(t, []string{"test", "file"}, []string(resource.Tags))
-	
+
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
@@ -137,14 +137,14 @@ func TestMCPResourceModel_ListByOrganization(t *testing.T) {
 	defer mockDB.db.Close()
 
 	model := models.NewMCPResourceModel(mockDB)
-	
+
 	orgID := uuid.New()
 	resourceID1 := uuid.New()
 	resourceID2 := uuid.New()
-	
+
 	metadata := map[string]interface{}{"version": "1.0"}
 	metadataJSON, _ := json.Marshal(metadata)
-	
+
 	// Expect the SELECT query
 	mock.ExpectQuery(`SELECT (.+) FROM mcp_resources WHERE organization_id = \$1 AND is_active = true ORDER BY created_at DESC`).
 		WithArgs(orgID).
@@ -165,15 +165,15 @@ func TestMCPResourceModel_ListByOrganization(t *testing.T) {
 	resources, err := model.ListByOrganization(orgID, true)
 	require.NoError(t, err)
 	require.Len(t, resources, 2)
-	
+
 	assert.Equal(t, resourceID1, resources[0].ID)
 	assert.Equal(t, "Resource 1", resources[0].Name)
 	assert.Equal(t, types.ResourceTypeFile, resources[0].ResourceType)
-	
+
 	assert.Equal(t, resourceID2, resources[1].ID)
 	assert.Equal(t, "Resource 2", resources[1].Name)
 	assert.Equal(t, types.ResourceTypeURL, resources[1].ResourceType)
-	
+
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
@@ -182,10 +182,10 @@ func TestMCPResourceModel_Update(t *testing.T) {
 	defer mockDB.db.Close()
 
 	model := models.NewMCPResourceModel(mockDB)
-	
+
 	resourceID := uuid.New()
 	orgID := uuid.New()
-	
+
 	resource := &models.MCPResource{
 		ID:             resourceID,
 		OrganizationID: orgID,
@@ -206,7 +206,7 @@ func TestMCPResourceModel_Update(t *testing.T) {
 
 	err := model.Update(resource)
 	assert.NoError(t, err)
-	
+
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
@@ -215,7 +215,7 @@ func TestMCPResourceModel_Delete(t *testing.T) {
 	defer mockDB.db.Close()
 
 	model := models.NewMCPResourceModel(mockDB)
-	
+
 	resourceID := uuid.New()
 
 	// Expect the UPDATE query (soft delete)
@@ -225,6 +225,6 @@ func TestMCPResourceModel_Delete(t *testing.T) {
 
 	err := model.Delete(resourceID)
 	assert.NoError(t, err)
-	
+
 	assert.NoError(t, mock.ExpectationsWereMet())
 }

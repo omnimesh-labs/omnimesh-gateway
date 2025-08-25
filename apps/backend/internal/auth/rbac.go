@@ -39,66 +39,66 @@ func (r *RBAC) defineRolePermissions() {
 		types.PermissionWrite,
 		types.PermissionDelete,
 		types.PermissionAdmin,
-		
+
 		// API access
 		types.PermissionAPIAccess,
 		types.PermissionAPIKeyManage,
-		
+
 		// User management
 		types.PermissionUserRead,
 		types.PermissionUserWrite,
 		types.PermissionUserDelete,
 		types.PermissionUserManage,
-		
+
 		// Server management
 		types.PermissionServerRead,
 		types.PermissionServerWrite,
 		types.PermissionServerDelete,
 		types.PermissionServerManage,
-		
+
 		// Session management
 		types.PermissionSessionRead,
 		types.PermissionSessionWrite,
 		types.PermissionSessionDelete,
 		types.PermissionSessionManage,
-		
+
 		// Virtual server management
 		types.PermissionVirtualServerRead,
 		types.PermissionVirtualServerWrite,
 		types.PermissionVirtualServerDelete,
 		types.PermissionVirtualServerManage,
-		
+
 		// Resource management
 		types.PermissionResourceRead,
 		types.PermissionResourceWrite,
 		types.PermissionResourceDelete,
 		types.PermissionResourceManage,
-		
+
 		// Prompt management
 		types.PermissionPromptRead,
 		types.PermissionPromptWrite,
 		types.PermissionPromptDelete,
 		types.PermissionPromptManage,
-		
+
 		// Tool management
 		types.PermissionToolRead,
 		types.PermissionToolWrite,
 		types.PermissionToolDelete,
 		types.PermissionToolManage,
 		types.PermissionToolExecute,
-		
+
 		// Audit and logging
 		types.PermissionAuditRead,
 		types.PermissionLogsRead,
 		types.PermissionMetricsRead,
 		types.PermissionSystemManage,
-		
+
 		// Organization management
 		types.PermissionOrgRead,
 		types.PermissionOrgWrite,
 		types.PermissionOrgDelete,
 		types.PermissionOrgManage,
-		
+
 		// A2A Agent management
 		types.PermissionA2AAgentRead,
 		types.PermissionA2AAgentWrite,
@@ -113,63 +113,63 @@ func (r *RBAC) defineRolePermissions() {
 		types.PermissionRead,
 		types.PermissionWrite,
 		types.PermissionDelete,
-		
+
 		// API access
 		types.PermissionAPIAccess,
 		types.PermissionAPIKeyManage,
-		
+
 		// User management (within organization)
 		types.PermissionUserRead,
 		types.PermissionUserWrite,
 		types.PermissionUserDelete,
 		types.PermissionUserManage,
-		
+
 		// Server management
 		types.PermissionServerRead,
 		types.PermissionServerWrite,
 		types.PermissionServerDelete,
 		types.PermissionServerManage,
-		
+
 		// Session management
 		types.PermissionSessionRead,
 		types.PermissionSessionWrite,
 		types.PermissionSessionDelete,
 		types.PermissionSessionManage,
-		
+
 		// Virtual server management
 		types.PermissionVirtualServerRead,
 		types.PermissionVirtualServerWrite,
 		types.PermissionVirtualServerDelete,
 		types.PermissionVirtualServerManage,
-		
+
 		// Resource management
 		types.PermissionResourceRead,
 		types.PermissionResourceWrite,
 		types.PermissionResourceDelete,
 		types.PermissionResourceManage,
-		
+
 		// Prompt management
 		types.PermissionPromptRead,
 		types.PermissionPromptWrite,
 		types.PermissionPromptDelete,
 		types.PermissionPromptManage,
-		
+
 		// Tool management
 		types.PermissionToolRead,
 		types.PermissionToolWrite,
 		types.PermissionToolDelete,
 		types.PermissionToolManage,
 		types.PermissionToolExecute,
-		
+
 		// Audit and logging (read-only)
 		types.PermissionAuditRead,
 		types.PermissionLogsRead,
 		types.PermissionMetricsRead,
-		
+
 		// Organization (read and update, but not delete)
 		types.PermissionOrgRead,
 		types.PermissionOrgWrite,
-		
+
 		// A2A Agent management
 		types.PermissionA2AAgentRead,
 		types.PermissionA2AAgentWrite,
@@ -183,42 +183,42 @@ func (r *RBAC) defineRolePermissions() {
 		// Basic read/write permissions
 		types.PermissionRead,
 		types.PermissionWrite,
-		
+
 		// API access
 		types.PermissionAPIAccess,
-		
+
 		// Server management (read and create, limited delete)
 		types.PermissionServerRead,
 		types.PermissionServerWrite,
-		
+
 		// Session management (own sessions)
 		types.PermissionSessionRead,
 		types.PermissionSessionWrite,
 		types.PermissionSessionDelete,
-		
+
 		// Virtual server management (own virtual servers)
 		types.PermissionVirtualServerRead,
 		types.PermissionVirtualServerWrite,
-		
+
 		// Resource management (limited - no delete)
 		types.PermissionResourceRead,
 		types.PermissionResourceWrite,
-		
+
 		// Prompt management (limited - no delete)
 		types.PermissionPromptRead,
 		types.PermissionPromptWrite,
-		
+
 		// Tool management (limited - no delete but can execute)
 		types.PermissionToolRead,
 		types.PermissionToolWrite,
 		types.PermissionToolExecute,
-		
+
 		// Basic metrics (own data)
 		types.PermissionMetricsRead,
-		
+
 		// Organization read-only
 		types.PermissionOrgRead,
-		
+
 		// A2A Agent management (limited - no delete)
 		types.PermissionA2AAgentRead,
 		types.PermissionA2AAgentWrite,
@@ -229,34 +229,34 @@ func (r *RBAC) defineRolePermissions() {
 	r.rolePermissions[types.RoleViewer] = []string{
 		// Basic read permission
 		types.PermissionRead,
-		
+
 		// API access (read-only)
 		types.PermissionAPIAccess,
-		
+
 		// Server read-only
 		types.PermissionServerRead,
-		
+
 		// Session read-only
 		types.PermissionSessionRead,
-		
+
 		// Virtual server read-only
 		types.PermissionVirtualServerRead,
-		
+
 		// Resource read-only
 		types.PermissionResourceRead,
-		
+
 		// Prompt read-only
 		types.PermissionPromptRead,
-		
+
 		// Tool read-only
 		types.PermissionToolRead,
-		
+
 		// Basic metrics (read-only)
 		types.PermissionMetricsRead,
-		
+
 		// Organization read-only
 		types.PermissionOrgRead,
-		
+
 		// A2A Agent read-only
 		types.PermissionA2AAgentRead,
 	}
@@ -265,32 +265,32 @@ func (r *RBAC) defineRolePermissions() {
 	r.rolePermissions[types.RoleAPIUser] = []string{
 		// Basic read permission
 		types.PermissionRead,
-		
+
 		// API access
 		types.PermissionAPIAccess,
-		
+
 		// Server read-only
 		types.PermissionServerRead,
-		
+
 		// Session read-only
 		types.PermissionSessionRead,
-		
+
 		// Virtual server read-only
 		types.PermissionVirtualServerRead,
-		
+
 		// Resource read-only
 		types.PermissionResourceRead,
-		
+
 		// Prompt read-only
 		types.PermissionPromptRead,
-		
+
 		// Tool read-only (and execute for API users)
 		types.PermissionToolRead,
 		types.PermissionToolExecute,
-		
+
 		// Organization read-only
 		types.PermissionOrgRead,
-		
+
 		// A2A Agent read and execute for API users
 		types.PermissionA2AAgentRead,
 		types.PermissionA2AAgentExecute,
@@ -345,7 +345,7 @@ func (r *RBAC) GetRolePermissions(role string) []string {
 	if !exists {
 		return []string{}
 	}
-	
+
 	// Return a copy to prevent modification
 	result := make([]string, len(permissions))
 	copy(result, permissions)
@@ -415,14 +415,14 @@ func (r *RBAC) CanElevateToRole(currentRole, targetRole string) bool {
 	if r.IsSystemAdmin(currentRole) {
 		return true
 	}
-	
+
 	// Admins can elevate to user, viewer, or api_user, but not to admin or system_admin
 	if r.IsAdmin(currentRole) {
-		return targetRole == types.RoleUser || 
-			   targetRole == types.RoleViewer || 
-			   targetRole == types.RoleAPIUser
+		return targetRole == types.RoleUser ||
+			targetRole == types.RoleViewer ||
+			targetRole == types.RoleAPIUser
 	}
-	
+
 	// Regular users cannot elevate anyone
 	return false
 }

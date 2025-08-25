@@ -215,7 +215,7 @@ export function ImportProgressTracker({ progress, visible }: ImportProgressTrack
           color: progress.status === 'failed' ? '#dc2626' : '#166534',
           textAlign: 'center'
         }}>
-          {progress.status === 'failed' 
+          {progress.status === 'failed'
             ? '❌ Import failed with errors'
             : progress.failed > 0
             ? '⚠️ Import completed with some failures'

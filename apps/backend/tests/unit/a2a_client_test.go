@@ -188,13 +188,13 @@ func TestA2AClient_Chat_CustomAgent(t *testing.T) {
 
 	// Create agent
 	agent := &types.A2AAgent{
-		ID:               uuid.New(),
-		Name:             "Custom Test Agent",
-		EndpointURL:      server.URL,
-		AgentType:        types.AgentTypeCustom,
-		AuthType:         types.AuthTypeBearer,
-		AuthValue:        "custom-token",
-		ProtocolVersion:  "1.0",
+		ID:              uuid.New(),
+		Name:            "Custom Test Agent",
+		EndpointURL:     server.URL,
+		AgentType:       types.AgentTypeCustom,
+		AuthType:        types.AuthTypeBearer,
+		AuthValue:       "custom-token",
+		ProtocolVersion: "1.0",
 		CapabilitiesData: map[string]interface{}{
 			types.CapabilityChat: true,
 		},
@@ -329,11 +329,11 @@ func TestA2AClient_HealthCheck_Failure(t *testing.T) {
 
 func TestA2AClient_AuthenticationTypes(t *testing.T) {
 	tests := []struct {
+		expectedAuth func(*http.Request) bool
 		name         string
 		agentType    types.AgentType
 		authType     types.AuthType
 		authValue    string
-		expectedAuth func(*http.Request) bool
 	}{
 		{
 			name:      "OpenAI Bearer Token",

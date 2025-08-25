@@ -23,10 +23,10 @@ var (
 // TestServer represents a test server instance
 type TestServer struct {
 	Server   *http.Server
-	Address  string
-	Port     int
-	BaseURL  string
 	shutdown chan struct{}
+	Address  string
+	BaseURL  string
+	Port     int
 }
 
 // NewTestServer creates a new test server instance

@@ -9,7 +9,7 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'api-keys'>('profile');
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-  
+
   // Profile form state
   const [profileForm, setProfileForm] = useState({
     email: '',
@@ -61,7 +61,7 @@ export default function ProfilePage() {
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (profileForm.new_password && profileForm.new_password !== profileForm.confirm_password) {
       setMessage({ type: 'error', text: 'New passwords do not match' });
       return;
@@ -69,14 +69,14 @@ export default function ProfilePage() {
 
     setIsLoading(true);
     setMessage(null);
-    
+
     try {
       const updates: UpdateProfileRequest = {};
-      
+
       if (profileForm.email !== user?.email) {
         updates.email = profileForm.email;
       }
-      
+
       if (profileForm.new_password) {
         updates.current_password = profileForm.current_password;
         updates.new_password = profileForm.new_password;
@@ -105,14 +105,14 @@ export default function ProfilePage() {
     e.preventDefault();
     setIsLoading(true);
     setMessage(null);
-    
+
     try {
       const keyData: CreateApiKeyRequest = {
         name: newKeyForm.name,
         role: newKeyForm.role,
         expires_at: newKeyForm.expires_at || undefined,
       };
-      
+
       const response = await authApi.createApiKey(keyData);
       setCreatedKey(response.key);
       setMessage({ type: 'success', text: 'API key created successfully' });
@@ -252,7 +252,7 @@ export default function ProfilePage() {
           <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#111827' }}>
             Account Information
           </h3>
-          
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
@@ -270,7 +270,7 @@ export default function ProfilePage() {
                 {user.id}
               </div>
             </div>
-            
+
             <div>
               <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
                 Role
@@ -317,7 +317,7 @@ export default function ProfilePage() {
                 {user.organization_id}
               </div>
             </div>
-            
+
             <div>
               <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
                 Account Created
@@ -343,7 +343,7 @@ export default function ProfilePage() {
           <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#111827' }}>
             Security Settings
           </h3>
-          
+
           <form onSubmit={handleProfileUpdate}>
             <div style={{ marginBottom: '1.5rem' }}>
               <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
@@ -363,7 +363,7 @@ export default function ProfilePage() {
                 required
               />
             </div>
-            
+
             <div style={{ marginBottom: '1.5rem' }}>
               <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
                 Current Password
@@ -382,7 +382,7 @@ export default function ProfilePage() {
                 placeholder="Enter current password to make changes"
               />
             </div>
-            
+
             <div style={{ marginBottom: '1.5rem' }}>
               <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
                 New Password
@@ -401,7 +401,7 @@ export default function ProfilePage() {
                 placeholder="Leave blank to keep current password"
               />
             </div>
-            
+
             <div style={{ marginBottom: '1.5rem' }}>
               <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
                 Confirm New Password
@@ -420,7 +420,7 @@ export default function ProfilePage() {
                 placeholder="Confirm new password"
               />
             </div>
-            
+
             <button
               type="submit"
               disabled={isLoading}
@@ -496,7 +496,7 @@ export default function ProfilePage() {
                       required
                     />
                   </div>
-                  
+
                   <div>
                     <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
                       Role
@@ -517,7 +517,7 @@ export default function ProfilePage() {
                       <option value="admin">Admin</option>
                     </select>
                   </div>
-                  
+
                   <div>
                     <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
                       Expires At (Optional)
@@ -536,7 +536,7 @@ export default function ProfilePage() {
                     />
                   </div>
                 </div>
-                
+
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button
                     type="submit"
@@ -555,7 +555,7 @@ export default function ProfilePage() {
                   >
                     {isLoading ? 'Creating...' : 'Create Key'}
                   </button>
-                  
+
                   <button
                     type="button"
                     onClick={() => setShowCreateKeyForm(false)}
@@ -636,7 +636,7 @@ export default function ProfilePage() {
                       {key.last_used_at ? `• Last used: ${new Date(key.last_used_at).toLocaleDateString()}` : '• Never used'}
                     </div>
                   </div>
-                  
+
                   <button
                     onClick={() => handleDeleteApiKey(key.id)}
                     style={{

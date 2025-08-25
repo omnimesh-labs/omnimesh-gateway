@@ -69,7 +69,7 @@ func TestMiddleware_RequireAuth_Success(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest("GET", "/test", nil)
+	c.Request = httptest.NewRequest("GET", "/test", http.NoBody)
 	c.Request.Header.Set("Authorization", "Bearer "+token)
 
 	// Create a test handler to verify context is set
@@ -114,7 +114,7 @@ func TestMiddleware_RequireAuth_MissingToken(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest("GET", "/test", nil)
+	c.Request = httptest.NewRequest("GET", "/test", http.NoBody)
 
 	middleware.RequireAuth()(c)
 
@@ -128,7 +128,7 @@ func TestMiddleware_RequireAuth_InvalidToken(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest("GET", "/test", nil)
+	c.Request = httptest.NewRequest("GET", "/test", http.NoBody)
 	c.Request.Header.Set("Authorization", "Bearer invalid.jwt.token")
 
 	middleware.RequireAuth()(c)
@@ -148,7 +148,7 @@ func TestMiddleware_RequireAuth_RefreshTokenRejected(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest("GET", "/test", nil)
+	c.Request = httptest.NewRequest("GET", "/test", http.NoBody)
 	c.Request.Header.Set("Authorization", "Bearer "+token)
 
 	middleware.RequireAuth()(c)
@@ -170,7 +170,7 @@ func TestMiddleware_RequireAuth_InactiveUser(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest("GET", "/test", nil)
+	c.Request = httptest.NewRequest("GET", "/test", http.NoBody)
 	c.Request.Header.Set("Authorization", "Bearer "+token)
 
 	middleware.RequireAuth()(c)
@@ -188,7 +188,7 @@ func TestMiddleware_RequireRole_Success(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest("GET", "/test", nil)
+	c.Request = httptest.NewRequest("GET", "/test", http.NoBody)
 
 	// Set user context (normally done by RequireAuth)
 	c.Set("role", user.Role)
@@ -215,7 +215,7 @@ func TestMiddleware_RequireRole_InsufficientPermissions(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest("GET", "/test", nil)
+	c.Request = httptest.NewRequest("GET", "/test", http.NoBody)
 
 	// Set user context with insufficient role
 	c.Set("role", types.RoleViewer)
@@ -241,7 +241,7 @@ func TestMiddleware_RequireAPIKey_Success(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest("GET", "/test", nil)
+	c.Request = httptest.NewRequest("GET", "/test", http.NoBody)
 	c.Request.Header.Set("X-API-Key", "test-api-key")
 
 	handlerCalled := false
@@ -277,7 +277,7 @@ func TestMiddleware_OptionalAuth_WithValidToken(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest("GET", "/test", nil)
+	c.Request = httptest.NewRequest("GET", "/test", http.NoBody)
 	c.Request.Header.Set("Authorization", "Bearer "+token)
 
 	handlerCalled := false
@@ -307,7 +307,7 @@ func TestMiddleware_OptionalAuth_WithoutToken(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest("GET", "/test", nil)
+	c.Request = httptest.NewRequest("GET", "/test", http.NoBody)
 
 	handlerCalled := false
 	testHandler := func(c *gin.Context) {
@@ -333,7 +333,7 @@ func TestMiddleware_ExtractToken_ValidBearer(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	c, _ := gin.CreateTestContext(httptest.NewRecorder())
-	c.Request = httptest.NewRequest("GET", "/test", nil)
+	c.Request = httptest.NewRequest("GET", "/test", http.NoBody)
 	c.Request.Header.Set("Authorization", "Bearer test.jwt.token")
 
 	token := middleware.extractToken(c)
@@ -345,7 +345,7 @@ func TestMiddleware_ExtractToken_InvalidFormat(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	c, _ := gin.CreateTestContext(httptest.NewRecorder())
-	c.Request = httptest.NewRequest("GET", "/test", nil)
+	c.Request = httptest.NewRequest("GET", "/test", http.NoBody)
 	c.Request.Header.Set("Authorization", "Basic dGVzdDp0ZXN0")
 
 	token := middleware.extractToken(c)
@@ -377,7 +377,7 @@ func TestMiddleware_RequirePermission_Success(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest("GET", "/test", nil)
+	c.Request = httptest.NewRequest("GET", "/test", http.NoBody)
 
 	// Set user context with admin role
 	c.Set("role", types.RoleAdmin)
@@ -405,7 +405,7 @@ func TestMiddleware_RequirePermission_Forbidden(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest("GET", "/test", nil)
+	c.Request = httptest.NewRequest("GET", "/test", http.NoBody)
 
 	// Set user context with viewer role
 	c.Set("role", types.RoleViewer)
@@ -423,7 +423,7 @@ func TestMiddleware_RequireResourceAccess_Success(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest("GET", "/test", nil)
+	c.Request = httptest.NewRequest("GET", "/test", http.NoBody)
 
 	// Set user context with user role
 	c.Set("role", types.RoleUser)
@@ -451,7 +451,7 @@ func TestMiddleware_RequireResourceAccess_Forbidden(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest("DELETE", "/test", nil)
+	c.Request = httptest.NewRequest("DELETE", "/test", http.NoBody)
 
 	// Set user context with user role
 	c.Set("role", types.RoleUser)
@@ -469,7 +469,7 @@ func TestMiddleware_RequireSystemAdmin_Success(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest("GET", "/test", nil)
+	c.Request = httptest.NewRequest("GET", "/test", http.NoBody)
 
 	// Set user context with system admin role
 	c.Set("role", types.RoleSystemAdmin)
@@ -496,7 +496,7 @@ func TestMiddleware_RequireSystemAdmin_Forbidden(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest("GET", "/test", nil)
+	c.Request = httptest.NewRequest("GET", "/test", http.NoBody)
 
 	// Set user context with regular admin role (not system admin)
 	c.Set("role", types.RoleAdmin)
@@ -513,7 +513,7 @@ func TestMiddleware_RequireOrganizationAccess_Success(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest("GET", "/test?organization_id=org123", nil)
+	c.Request = httptest.NewRequest("GET", "/test?organization_id=org123", http.NoBody)
 
 	// Set user context with matching organization
 	c.Set("organization_id", "org123")
@@ -541,7 +541,7 @@ func TestMiddleware_RequireOrganizationAccess_SystemAdminBypass(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest("GET", "/test?organization_id=org456", nil)
+	c.Request = httptest.NewRequest("GET", "/test?organization_id=org456", http.NoBody)
 
 	// Set user context with different organization but system admin role
 	c.Set("organization_id", "org123")
@@ -570,7 +570,7 @@ func TestMiddleware_RequireOrganizationAccess_Forbidden(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest("GET", "/test?organization_id=org456", nil)
+	c.Request = httptest.NewRequest("GET", "/test?organization_id=org456", http.NoBody)
 
 	// Set user context with different organization
 	c.Set("organization_id", "org123")
@@ -588,7 +588,7 @@ func TestMiddleware_RequireAnyPermission_Success(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest("GET", "/test", nil)
+	c.Request = httptest.NewRequest("GET", "/test", http.NoBody)
 
 	// Set user context with user role
 	c.Set("role", types.RoleUser)
@@ -617,7 +617,7 @@ func TestMiddleware_RequireAnyPermission_Forbidden(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest("GET", "/test", nil)
+	c.Request = httptest.NewRequest("GET", "/test", http.NoBody)
 
 	// Set user context with viewer role
 	c.Set("role", types.RoleViewer)

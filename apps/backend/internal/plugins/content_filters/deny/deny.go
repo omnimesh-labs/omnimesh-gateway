@@ -19,14 +19,14 @@ type DenyFilter struct {
 
 // DenyConfig holds the configuration for the Deny filter
 type DenyConfig struct {
+	Action          string       `json:"action"`
 	BlockedWords    []string     `json:"blocked_words"`
 	BlockedPhrases  []string     `json:"blocked_phrases"`
 	BlockedPatterns []string     `json:"blocked_patterns"`
+	CustomRules     []CustomRule `json:"custom_rules"`
 	CaseSensitive   bool         `json:"case_sensitive"`
 	WholeWordsOnly  bool         `json:"whole_words_only"`
-	Action          string       `json:"action"`
 	LogViolations   bool         `json:"log_violations"`
-	CustomRules     []CustomRule `json:"custom_rules"`
 }
 
 // BlockedWord represents a blocked word with metadata
@@ -41,10 +41,10 @@ type BlockedWord struct {
 type CustomRule struct {
 	Name        string `json:"name"`
 	Pattern     string `json:"pattern"`
-	Enabled     bool   `json:"enabled"`
 	Severity    string `json:"severity"`
 	Category    string `json:"category"`
 	Description string `json:"description"`
+	Enabled     bool   `json:"enabled"`
 }
 
 // NewDenyFilter creates a new Deny filter instance

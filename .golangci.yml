@@ -3,12 +3,6 @@ run:
   issues-exit-code: 1
   tests: true
   build-tags: []
-  skip-dirs:
-    - vendor
-    - apps/frontend/node_modules
-    - scripts/venv
-  skip-files:
-    - ".*\\.pb\\.go$"
 
 output:
   formats:
@@ -20,33 +14,30 @@ linters-settings:
   errcheck:
     check-type-assertions: true
     check-blank: true
-  
+
   govet:
-    check-shadowing: true
     enable-all: true
-  
+
+
   gocyclo:
     min-complexity: 15
-  
-  maligned:
-    suggest-new: true
-  
+
   dupl:
     threshold: 100
-  
+
   goconst:
     min-len: 3
     min-occurrences: 2
-  
+
   misspell:
     locale: US
-  
+
   lll:
     line-length: 120
-  
+
   goimports:
     local-prefixes: mcp-gateway
-  
+
   gocritic:
     enabled-tags:
       - performance
@@ -54,8 +45,7 @@ linters-settings:
       - experimental
     disabled-checks:
       - wrapperFunc
-      - commentFormat
-  
+
   gosec:
     excludes:
       - G304 # Potential file inclusion via variable - we need this for config files
@@ -68,12 +58,11 @@ linters-settings:
 linters:
   enable:
     - bodyclose
-    - deadcode
+    - copyloopvar
     - depguard
     - dogsled
     - dupl
     - errcheck
-    - exportloopref
     - exhaustive
     - funlen
     - gochecknoinits
@@ -82,7 +71,7 @@ linters:
     - gocyclo
     - gofmt
     - goimports
-    - gomnd
+    - mnd
     - goprintffuncname
     - gosec
     - gosimple
@@ -94,26 +83,28 @@ linters:
     - noctx
     - nolintlint
     - rowserrcheck
+    - predeclared
     - staticcheck
-    - structcheck
     - stylecheck
     - typecheck
     - unconvert
     - unparam
     - unused
-    - varcheck
     - whitespace
-  
-  disable:
-    - maligned # deprecated
-    - interfacer # deprecated
-    - scopelint # deprecated
+
+  disable: []
 
 issues:
+  exclude-files:
+    - ".*\\.pb\\.go$"
+  exclude-dirs:
+    - vendor
+    - apps/frontend/node_modules
+    - scripts/venv
   exclude-rules:
     - path: _test\.go
       linters:
-        - gomnd
+        - mnd
         - funlen
         - gocyclo
     - path: apps/backend/cmd/
@@ -125,7 +116,7 @@ issues:
     - text: "should not use dot imports"
       linters:
         - stylecheck
-  
+
   max-issues-per-linter: 0
   max-same-issues: 0
   new: false

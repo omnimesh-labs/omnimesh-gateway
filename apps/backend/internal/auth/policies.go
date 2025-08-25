@@ -57,9 +57,9 @@ type RequestContext struct {
 
 // PolicyCondition represents a single policy condition
 type PolicyCondition struct {
+	Value    interface{} `json:"value"`
 	Field    string      `json:"field"`
 	Operator string      `json:"operator"`
-	Value    interface{} `json:"value"`
 }
 
 // evaluateCondition evaluates a single policy condition

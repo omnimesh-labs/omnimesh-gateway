@@ -17,30 +17,30 @@ import (
 
 // Service handles configuration export/import operations
 type Service struct {
-	db               models.Database
-	mcpServerModel   *models.MCPServerModel
+	db                 models.Database
+	mcpServerModel     *models.MCPServerModel
 	virtualServerModel *models.VirtualServerModel
-	toolModel        *models.MCPToolModel
-	promptModel      *models.MCPPromptModel
-	resourceModel    *models.MCPResourceModel
+	toolModel          *models.MCPToolModel
+	promptModel        *models.MCPPromptModel
+	resourceModel      *models.MCPResourceModel
 }
 
 // NewService creates a new configuration service
 func NewService(db models.Database) *Service {
 	return &Service{
-		db:               db,
-		mcpServerModel:   models.NewMCPServerModel(db),
+		db:                 db,
+		mcpServerModel:     models.NewMCPServerModel(db),
 		virtualServerModel: models.NewVirtualServerModel(db),
-		toolModel:        models.NewMCPToolModel(db),
-		promptModel:      models.NewMCPPromptModel(db),
-		resourceModel:    models.NewMCPResourceModel(db),
+		toolModel:          models.NewMCPToolModel(db),
+		promptModel:        models.NewMCPPromptModel(db),
+		resourceModel:      models.NewMCPResourceModel(db),
 	}
 }
 
 // ExportConfiguration exports configuration entities based on the request
 func (s *Service) ExportConfiguration(ctx context.Context, orgID uuid.UUID, userID uuid.UUID, req *types.ExportRequest) (*types.ConfigurationExport, error) {
 	exportID := "export-" + time.Now().Format("20060102-150405")
-	
+
 	export := &types.ConfigurationExport{
 		Metadata: types.ExportMetadata{
 			ExportID:      exportID,
@@ -247,16 +247,16 @@ func (s *Service) ValidateImport(ctx context.Context, orgID uuid.UUID, req *type
 // GetImportHistory retrieves import history with pagination
 func (s *Service) GetImportHistory(ctx context.Context, orgID uuid.UUID, query *types.ImportHistoryQuery) ([]types.ImportHistory, int, error) {
 	baseQuery := `
-		SELECT ci.id, ci.organization_id, ci.filename, ci.entity_types, ci.status, 
-			   ci.conflict_strategy, ci.dry_run, ci.summary, ci.error_count, 
-			   ci.warning_count, ci.duration, ci.imported_by_name as imported_by, 
+		SELECT ci.id, ci.organization_id, ci.filename, ci.entity_types, ci.status,
+			   ci.conflict_strategy, ci.dry_run, ci.summary, ci.error_count,
+			   ci.warning_count, ci.duration, ci.imported_by_name as imported_by,
 			   ci.metadata, ci.created_at, ci.completed_at
 		FROM config_imports ci
 		WHERE ci.organization_id = $1
 	`
 
 	countQuery := `SELECT COUNT(*) FROM config_imports WHERE organization_id = $1`
-	
+
 	var conditions []string
 	var args []interface{}
 	argCount := 1
@@ -466,7 +466,7 @@ func (s *Service) importEntityType(ctx context.Context, tx *sql.Tx, orgID uuid.U
 				}
 			}
 		}
-	// Add other entity types as needed
+		// Add other entity types as needed
 	}
 
 	result.Summary.EntityCounts[entityType] = entityCount
@@ -612,7 +612,7 @@ func (s *Service) validateVirtualServers(_ context.Context, _ uuid.UUID, _ []any
 func (s *Service) recordExportOperation(_ context.Context, orgID uuid.UUID, userID uuid.UUID, export *types.ConfigurationExport) error {
 	query := `
 		INSERT INTO config_exports (
-			organization_id, entity_types, filters, total_entities, 
+			organization_id, entity_types, filters, total_entities,
 			filename, exported_by, metadata
 		) VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
@@ -637,7 +637,7 @@ func (s *Service) createImportHistory(_ context.Context, tx *sql.Tx, orgID uuid.
 	id := uuid.New()
 	query := `
 		INSERT INTO config_imports (
-			id, organization_id, filename, entity_types, status, 
+			id, organization_id, filename, entity_types, status,
 			conflict_strategy, dry_run, imported_by, metadata
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	`
@@ -659,8 +659,8 @@ func (s *Service) createImportHistory(_ context.Context, tx *sql.Tx, orgID uuid.
 
 func (s *Service) updateImportHistory(_ context.Context, importHistoryID uuid.UUID, result *types.ImportResult) error {
 	query := `
-		UPDATE config_imports 
-		SET status = $2, summary = $3, error_count = $4, warning_count = $5, 
+		UPDATE config_imports
+		SET status = $2, summary = $3, error_count = $4, warning_count = $5,
 			duration = $6, completed_at = $7
 		WHERE id = $1
 	`
@@ -700,7 +700,7 @@ func (s *Service) hasAnyTag(entityTags []string, filterTags []string) bool {
 	if len(filterTags) == 0 {
 		return true
 	}
-	
+
 	for _, filterTag := range filterTags {
 		if slices.Contains(entityTags, filterTag) {
 			return true

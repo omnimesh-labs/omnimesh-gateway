@@ -12,13 +12,13 @@ import (
 type TokenCache interface {
 	// Set adds a token to the blacklist with expiration
 	Set(ctx context.Context, token string, expiration time.Duration) error
-	
+
 	// IsBlacklisted checks if a token is blacklisted
 	IsBlacklisted(ctx context.Context, token string) (bool, error)
-	
+
 	// Cleanup removes expired tokens (for memory cache)
 	Cleanup(ctx context.Context) error
-	
+
 	// Close closes the cache connection
 	Close() error
 }
@@ -40,7 +40,7 @@ func NewRedisTokenCache(addr, password string, db int) (*RedisTokenCache, error)
 	// Test connection
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	
+
 	if err := client.Ping(ctx).Err(); err != nil {
 		return nil, err
 	}
@@ -61,15 +61,15 @@ func (r *RedisTokenCache) Set(ctx context.Context, token string, expiration time
 func (r *RedisTokenCache) IsBlacklisted(ctx context.Context, token string) (bool, error) {
 	key := r.prefix + token
 	result := r.client.Get(ctx, key)
-	
+
 	if result.Err() == redis.Nil {
 		return false, nil // Key doesn't exist, not blacklisted
 	}
-	
+
 	if result.Err() != nil {
 		return false, result.Err()
 	}
-	
+
 	return true, nil // Key exists, token is blacklisted
 }
 
@@ -85,8 +85,8 @@ func (r *RedisTokenCache) Close() error {
 
 // MemoryTokenCache implements TokenCache using in-memory storage
 type MemoryTokenCache struct {
-	mu     sync.RWMutex
 	tokens map[string]time.Time
+	mu     sync.RWMutex
 }
 
 // NewMemoryTokenCache creates a new memory-backed token cache
@@ -100,10 +100,10 @@ func NewMemoryTokenCache() *MemoryTokenCache {
 func (m *MemoryTokenCache) Set(ctx context.Context, token string, expiration time.Duration) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	expiryTime := time.Now().Add(expiration)
 	m.tokens[token] = expiryTime
-	
+
 	return nil
 }
 
@@ -111,12 +111,12 @@ func (m *MemoryTokenCache) Set(ctx context.Context, token string, expiration tim
 func (m *MemoryTokenCache) IsBlacklisted(ctx context.Context, token string) (bool, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	
+
 	expiryTime, exists := m.tokens[token]
 	if !exists {
 		return false, nil
 	}
-	
+
 	// Check if token has expired
 	if time.Now().After(expiryTime) {
 		// Clean up expired token (we can do this safely since we have a lock)
@@ -127,7 +127,7 @@ func (m *MemoryTokenCache) IsBlacklisted(ctx context.Context, token string) (boo
 		m.mu.RLock()
 		return false, nil
 	}
-	
+
 	return true, nil
 }
 
@@ -135,14 +135,14 @@ func (m *MemoryTokenCache) IsBlacklisted(ctx context.Context, token string) (boo
 func (m *MemoryTokenCache) Cleanup(ctx context.Context) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	now := time.Now()
 	for token, expiryTime := range m.tokens {
 		if now.After(expiryTime) {
 			delete(m.tokens, token)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -153,10 +153,10 @@ func (m *MemoryTokenCache) Close() error {
 
 // CacheConfig holds cache configuration
 type CacheConfig struct {
-	UseRedis      bool   `yaml:"use_redis"`
 	RedisAddr     string `yaml:"redis_addr"`
 	RedisPassword string `yaml:"redis_password"`
 	RedisDB       int    `yaml:"redis_db"`
+	UseRedis      bool   `yaml:"use_redis"`
 }
 
 // NewTokenCache creates a new token cache based on configuration
@@ -164,6 +164,6 @@ func NewTokenCache(config CacheConfig) (TokenCache, error) {
 	if config.UseRedis {
 		return NewRedisTokenCache(config.RedisAddr, config.RedisPassword, config.RedisDB)
 	}
-	
+
 	return NewMemoryTokenCache(), nil
 }

@@ -17,10 +17,10 @@ import (
 type SessionManager struct {
 	sessions map[string]*types.TransportSession
 	events   map[string][]types.TransportEvent
-	mu       sync.RWMutex
 	config   *types.TransportConfig
 	cleanup  chan struct{}
 	done     chan struct{}
+	mu       sync.RWMutex
 }
 
 // NewSessionManager creates a new session manager

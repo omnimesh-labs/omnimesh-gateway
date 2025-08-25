@@ -11,27 +11,27 @@ import (
 
 // MCPServer represents the mcp_servers table from the ERD
 type MCPServer struct {
-	ID             uuid.UUID              `db:"id" json:"id"`
-	OrganizationID uuid.UUID              `db:"organization_id" json:"organization_id"`
+	UpdatedAt      time.Time              `db:"updated_at" json:"updated_at"`
+	CreatedAt      time.Time              `db:"created_at" json:"created_at"`
+	Metadata       map[string]interface{} `db:"metadata" json:"metadata,omitempty"`
+	Status         string                 `db:"status" json:"status"`
 	Name           string                 `db:"name" json:"name"`
-	Description    sql.NullString         `db:"description" json:"description,omitempty"`
-	Protocol       string                 `db:"protocol" json:"protocol"` // protocol_enum
-	URL            sql.NullString         `db:"url" json:"url,omitempty"`
-	Command        sql.NullString         `db:"command" json:"command,omitempty"`
-	Args           pq.StringArray         `db:"args" json:"args,omitempty"`
+	Protocol       string                 `db:"protocol" json:"protocol"`
+	Version        sql.NullString         `db:"version" json:"version,omitempty"`
+	Tags           pq.StringArray         `db:"tags" json:"tags,omitempty"`
 	Environment    pq.StringArray         `db:"environment" json:"environment,omitempty"`
 	WorkingDir     sql.NullString         `db:"working_dir" json:"working_dir,omitempty"`
-	Version        sql.NullString         `db:"version" json:"version,omitempty"`
+	Args           pq.StringArray         `db:"args" json:"args,omitempty"`
+	Command        sql.NullString         `db:"command" json:"command,omitempty"`
+	HealthCheckURL sql.NullString         `db:"health_check_url" json:"health_check_url,omitempty"`
+	Description    sql.NullString         `db:"description" json:"description,omitempty"`
+	URL            sql.NullString         `db:"url" json:"url,omitempty"`
 	Weight         int                    `db:"weight" json:"weight"`
 	TimeoutSeconds int                    `db:"timeout_seconds" json:"timeout_seconds"`
 	MaxRetries     int                    `db:"max_retries" json:"max_retries"`
-	Status         string                 `db:"status" json:"status"` // server_status_enum
-	HealthCheckURL sql.NullString         `db:"health_check_url" json:"health_check_url,omitempty"`
+	ID             uuid.UUID              `db:"id" json:"id"`
+	OrganizationID uuid.UUID              `db:"organization_id" json:"organization_id"`
 	IsActive       bool                   `db:"is_active" json:"is_active"`
-	Metadata       map[string]interface{} `db:"metadata" json:"metadata,omitempty"`
-	Tags           pq.StringArray         `db:"tags" json:"tags,omitempty"`
-	CreatedAt      time.Time              `db:"created_at" json:"created_at"`
-	UpdatedAt      time.Time              `db:"updated_at" json:"updated_at"`
 }
 
 // MCPServerModel handles MCP server database operations
@@ -48,7 +48,7 @@ func NewMCPServerModel(db Database) *MCPServerModel {
 func (m *MCPServerModel) Create(server *MCPServer) error {
 	query := `
 		INSERT INTO mcp_servers (
-			id, organization_id, name, description, protocol, url, command, args, 
+			id, organization_id, name, description, protocol, url, command, args,
 			environment, working_dir, version, weight, timeout_seconds, max_retries,
 			status, health_check_url, is_active, metadata, tags
 		) VALUES (
@@ -300,13 +300,13 @@ func (m *MCPServerModel) Delete(id uuid.UUID) error {
 
 // HealthCheck represents the health_checks table from the ERD
 type HealthCheck struct {
-	ID             uuid.UUID      `db:"id" json:"id"`
-	ServerID       uuid.UUID      `db:"server_id" json:"server_id"`
-	Status         string         `db:"status" json:"status"` // health_status_enum
-	ResponseTimeMS sql.NullInt32  `db:"response_time_ms" json:"response_time_ms,omitempty"`
+	CheckedAt      time.Time      `db:"checked_at" json:"checked_at"`
+	Status         string         `db:"status" json:"status"`
 	ResponseBody   sql.NullString `db:"response_body" json:"response_body,omitempty"`
 	ErrorMessage   sql.NullString `db:"error_message" json:"error_message,omitempty"`
-	CheckedAt      time.Time      `db:"checked_at" json:"checked_at"`
+	ResponseTimeMS sql.NullInt32  `db:"response_time_ms" json:"response_time_ms,omitempty"`
+	ID             uuid.UUID      `db:"id" json:"id"`
+	ServerID       uuid.UUID      `db:"server_id" json:"server_id"`
 }
 
 // HealthCheckModel handles health check database operations
