@@ -12,6 +12,7 @@ export function Navigation() {
   const navItems = [
     { href: '/', label: 'Dashboard' },
     { href: '/servers', label: 'Server Management' },
+    { href: '/a2a', label: 'A2A Agent Management' },
     { href: '/content', label: 'Content Management' },
     { href: '/policies', label: 'Policy Management' },
     { href: '/configuration', label: 'Configuration' },

@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -41,12 +43,38 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 
 func main() {
 	var (
-		configPath = flag.String("config", "apps/backend/configs/development.yaml", "Path to configuration file")
+		configPath = flag.String("config", "", "Path to configuration file")
 	)
 	flag.Parse()
 
+	// Determine config path
+	var finalConfigPath string
+	if *configPath != "" {
+		finalConfigPath = *configPath
+	} else {
+		// Try both possible locations
+		candidates := []string{
+			"configs/development.yaml",                    // When running from apps/backend/
+			"apps/backend/configs/development.yaml",      // When running from repo root
+		}
+		
+		for _, candidate := range candidates {
+			if _, err := os.Stat(candidate); err == nil {
+				finalConfigPath = candidate
+				break
+			}
+		}
+		
+		if finalConfigPath == "" {
+			log.Fatal("Could not find development.yaml config file. Tried: " + 
+				filepath.Join(candidates[0]) + ", " + filepath.Join(candidates[1]))
+		}
+	}
+
+	log.Printf("Loading config from: %s", finalConfigPath)
+
 	// Load configuration
-	cfg, err := config.Load(*configPath)
+	cfg, err := config.Load(finalConfigPath)
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}

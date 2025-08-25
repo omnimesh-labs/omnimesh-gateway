@@ -98,6 +98,13 @@ func (r *RBAC) defineRolePermissions() {
 		types.PermissionOrgWrite,
 		types.PermissionOrgDelete,
 		types.PermissionOrgManage,
+		
+		// A2A Agent management
+		types.PermissionA2AAgentRead,
+		types.PermissionA2AAgentWrite,
+		types.PermissionA2AAgentDelete,
+		types.PermissionA2AAgentManage,
+		types.PermissionA2AAgentExecute,
 	}
 
 	// Admin - Organization-level admin permissions
@@ -162,6 +169,13 @@ func (r *RBAC) defineRolePermissions() {
 		// Organization (read and update, but not delete)
 		types.PermissionOrgRead,
 		types.PermissionOrgWrite,
+		
+		// A2A Agent management
+		types.PermissionA2AAgentRead,
+		types.PermissionA2AAgentWrite,
+		types.PermissionA2AAgentDelete,
+		types.PermissionA2AAgentManage,
+		types.PermissionA2AAgentExecute,
 	}
 
 	// User - Regular user permissions
@@ -204,6 +218,11 @@ func (r *RBAC) defineRolePermissions() {
 		
 		// Organization read-only
 		types.PermissionOrgRead,
+		
+		// A2A Agent management (limited - no delete)
+		types.PermissionA2AAgentRead,
+		types.PermissionA2AAgentWrite,
+		types.PermissionA2AAgentExecute,
 	}
 
 	// Viewer - Read-only permissions
@@ -237,6 +256,9 @@ func (r *RBAC) defineRolePermissions() {
 		
 		// Organization read-only
 		types.PermissionOrgRead,
+		
+		// A2A Agent read-only
+		types.PermissionA2AAgentRead,
 	}
 
 	// API User - Similar to viewer but for API access
@@ -268,6 +290,10 @@ func (r *RBAC) defineRolePermissions() {
 		
 		// Organization read-only
 		types.PermissionOrgRead,
+		
+		// A2A Agent read and execute for API users
+		types.PermissionA2AAgentRead,
+		types.PermissionA2AAgentExecute,
 	}
 }
 

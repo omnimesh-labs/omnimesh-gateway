@@ -160,6 +160,27 @@ func TestRBAC_CanAccessResource(t *testing.T) {
 	assert.True(t, rbac.CanAccessResource(types.RoleAdmin, "user", "manage"))
 	assert.False(t, rbac.CanAccessResource(types.RoleUser, "user", "manage"))
 	assert.False(t, rbac.CanAccessResource(types.RoleViewer, "user", "manage"))
+
+	// Test A2A agent resource access
+	assert.True(t, rbac.CanAccessResource(types.RoleSystemAdmin, "a2a_agent", "read"))
+	assert.True(t, rbac.CanAccessResource(types.RoleSystemAdmin, "a2a_agent", "write"))
+	assert.True(t, rbac.CanAccessResource(types.RoleSystemAdmin, "a2a_agent", "delete"))
+	assert.True(t, rbac.CanAccessResource(types.RoleSystemAdmin, "a2a_agent", "execute"))
+
+	assert.True(t, rbac.CanAccessResource(types.RoleAdmin, "a2a_agent", "read"))
+	assert.True(t, rbac.CanAccessResource(types.RoleAdmin, "a2a_agent", "write"))
+	assert.True(t, rbac.CanAccessResource(types.RoleAdmin, "a2a_agent", "delete"))
+	assert.True(t, rbac.CanAccessResource(types.RoleAdmin, "a2a_agent", "execute"))
+
+	assert.True(t, rbac.CanAccessResource(types.RoleUser, "a2a_agent", "read"))
+	assert.True(t, rbac.CanAccessResource(types.RoleUser, "a2a_agent", "write"))
+	assert.False(t, rbac.CanAccessResource(types.RoleUser, "a2a_agent", "delete"))
+	assert.True(t, rbac.CanAccessResource(types.RoleUser, "a2a_agent", "execute"))
+
+	assert.True(t, rbac.CanAccessResource(types.RoleViewer, "a2a_agent", "read"))
+	assert.False(t, rbac.CanAccessResource(types.RoleViewer, "a2a_agent", "write"))
+	assert.False(t, rbac.CanAccessResource(types.RoleViewer, "a2a_agent", "delete"))
+	assert.False(t, rbac.CanAccessResource(types.RoleViewer, "a2a_agent", "execute"))
 }
 
 func TestRBAC_HasAnyPermission(t *testing.T) {

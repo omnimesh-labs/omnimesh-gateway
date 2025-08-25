@@ -61,6 +61,39 @@ export default function HomePage() {
           padding: '1.5rem' 
         }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#333', marginBottom: '0.75rem' }}>
+            A2A Agents
+          </h2>
+          <p style={{ color: '#666', marginBottom: '1rem' }}>
+            Manage AI Agent-to-Agent integrations for external services
+          </p>
+          <a
+            href="/a2a"
+            style={{ 
+              background: '#f59e0b', 
+              color: 'white', 
+              padding: '0.5rem 1rem', 
+              borderRadius: '6px', 
+              border: 'none',
+              fontSize: '0.875rem',
+              textDecoration: 'none',
+              display: 'inline-block',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = '#d97706'}
+            onMouseOut={(e) => e.currentTarget.style.background = '#f59e0b'}
+          >
+            Manage Agents
+          </a>
+        </div>
+
+        <div style={{ 
+          background: 'white', 
+          borderRadius: '8px', 
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)', 
+          padding: '1.5rem' 
+        }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#333', marginBottom: '0.75rem' }}>
             Content Management
           </h2>
           <p style={{ color: '#666', marginBottom: '1rem' }}>
@@ -225,6 +258,7 @@ export default function HomePage() {
         </p>
         <ul style={{ color: '#666', paddingLeft: '1.5rem' }}>
           <li style={{ marginBottom: '0.5rem' }}>Manage and monitor MCP server instances</li>
+          <li style={{ marginBottom: '0.5rem' }}>Set up A2A agents for integrating with external AI services</li>
           <li style={{ marginBottom: '0.5rem' }}>Create and manage tools, prompts, and resources</li>
           <li style={{ marginBottom: '0.5rem' }}>Export and import gateway configurations across environments</li>
           <li style={{ marginBottom: '0.5rem' }}>Configure authentication, rate limiting, and access policies</li>

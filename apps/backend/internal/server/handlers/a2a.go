@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"mcp-gateway/apps/backend/internal/a2a"
@@ -11,6 +13,58 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
+
+// safeErrorResponse logs the actual error and returns a sanitized error message
+func safeErrorResponse(c *gin.Context, status int, publicMessage string, actualError error, logPrefix string) {
+	// Log the actual error for debugging (never expose to client)
+	if actualError != nil {
+		log.Printf("[%s] %s: %v", logPrefix, publicMessage, actualError)
+	}
+
+	// Determine appropriate error code based on status
+	var errorCode string
+	switch status {
+	case http.StatusNotFound:
+		errorCode = types.ErrCodeNotFound
+	case http.StatusInternalServerError:
+		errorCode = types.ErrCodeInternalError
+	case http.StatusServiceUnavailable:
+		errorCode = types.ErrCodeServiceUnavailable
+	case http.StatusBadGateway:
+		errorCode = types.ErrCodeBadGateway
+	default:
+		errorCode = types.ErrCodeInternalError
+	}
+
+	// Return sanitized error response
+	c.JSON(status, types.ErrorResponse{
+		Error: types.NewError(errorCode, publicMessage, status),
+		Success: false,
+	})
+}
+
+// safeBadRequestResponse handles bad request errors with optional detail sanitization
+func safeBadRequestResponse(c *gin.Context, publicMessage string, actualError error, logPrefix string) {
+	if actualError != nil {
+		log.Printf("[%s] %s: %v", logPrefix, publicMessage, actualError)
+		
+		// For validation errors, we can be slightly more permissive
+		if strings.Contains(actualError.Error(), "required") || 
+		   strings.Contains(actualError.Error(), "invalid") ||
+		   strings.Contains(actualError.Error(), "format") {
+			publicMessage = actualError.Error() // Safe validation messages
+		}
+	}
+
+	c.JSON(http.StatusBadRequest, types.ErrorResponse{
+		Error: types.NewError(
+			types.ErrCodeInvalidInput,
+			publicMessage,
+			http.StatusBadRequest,
+		),
+		Success: false,
+	})
+}
 
 // A2AHandler handles A2A (Agent-to-Agent) HTTP endpoints
 type A2AHandler struct {
@@ -57,6 +111,8 @@ func (h *A2AHandler) ListAgents(c *gin.Context) {
 	// Get agents from service
 	agents, err := h.service.List(orgID, filters)
 	if err != nil {
+		// TEMPORARY: Show actual error for debugging
+		log.Printf("[A2A_DEBUG] List agents error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   "Failed to list agents: " + err.Error(),
@@ -65,7 +121,7 @@ func (h *A2AHandler) ListAgents(c *gin.Context) {
 	}
 
 	// Convert to specs (hiding sensitive auth data)
-	var agentSpecs []*types.A2AAgentSpec
+	agentSpecs := make([]*types.A2AAgentSpec, 0)
 	for _, agent := range agents {
 		spec := &types.A2AAgentSpec{
 			ID:               agent.ID.String(),
@@ -102,7 +158,7 @@ func (h *A2AHandler) RegisterAgent(c *gin.Context) {
 	if err := c.ShouldBindJSON(&spec); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "Invalid request format: " + err.Error(),
+			"error":   "Invalid request format",
 		})
 		return
 	}
@@ -141,7 +197,7 @@ func (h *A2AHandler) RegisterAgent(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"error":   "Failed to create agent: " + err.Error(),
+			"error":   "Failed to create agent",
 		})
 		return
 	}
@@ -187,7 +243,7 @@ func (h *A2AHandler) GetAgent(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"success": false,
-			"error":   "Agent not found: " + err.Error(),
+			"error":   "Agent not found",
 		})
 		return
 	}
@@ -235,7 +291,7 @@ func (h *A2AHandler) UpdateAgent(c *gin.Context) {
 	if err := c.ShouldBindJSON(&spec); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "Invalid request format: " + err.Error(),
+			"error":   "Invalid request format",
 		})
 		return
 	}
@@ -245,7 +301,7 @@ func (h *A2AHandler) UpdateAgent(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"error":   "Failed to update agent: " + err.Error(),
+			"error":   "Failed to update agent",
 		})
 		return
 	}
@@ -293,7 +349,7 @@ func (h *A2AHandler) DeleteAgent(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"error":   "Failed to delete agent: " + err.Error(),
+			"error":   "Failed to delete agent",
 		})
 		return
 	}
@@ -323,7 +379,7 @@ func (h *A2AHandler) ToggleAgent(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "Invalid request format: " + err.Error(),
+			"error":   "Invalid request format",
 		})
 		return
 	}
@@ -332,7 +388,7 @@ func (h *A2AHandler) ToggleAgent(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"error":   "Failed to toggle agent: " + err.Error(),
+			"error":   "Failed to toggle agent",
 		})
 		return
 	}
@@ -361,7 +417,7 @@ func (h *A2AHandler) InvokeAgent(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"success": false,
-			"error":   "Agent not found: " + err.Error(),
+			"error":   "Agent not found",
 		})
 		return
 	}
@@ -379,7 +435,7 @@ func (h *A2AHandler) InvokeAgent(c *gin.Context) {
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "Invalid request format: " + err.Error(),
+			"error":   "Invalid request format",
 		})
 		return
 	}
@@ -400,7 +456,7 @@ func (h *A2AHandler) InvokeAgent(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"error":   "Invocation failed: " + err.Error(),
+			"error":   "Invocation failed",
 		})
 		return
 	}
@@ -434,7 +490,7 @@ func (h *A2AHandler) ChatWithAgent(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"success": false,
-			"error":   "Agent not found: " + err.Error(),
+			"error":   "Agent not found",
 		})
 		return
 	}
@@ -461,7 +517,7 @@ func (h *A2AHandler) ChatWithAgent(c *gin.Context) {
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "Invalid request format: " + err.Error(),
+			"error":   "Invalid request format",
 		})
 		return
 	}
@@ -483,7 +539,7 @@ func (h *A2AHandler) ChatWithAgent(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"error":   "Chat request failed: " + err.Error(),
+			"error":   "Chat request failed",
 		})
 		return
 	}
@@ -516,7 +572,7 @@ func (h *A2AHandler) HealthCheckAgent(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"success": false,
-			"error":   "Agent not found: " + err.Error(),
+			"error":   "Agent not found",
 		})
 		return
 	}
@@ -526,7 +582,7 @@ func (h *A2AHandler) HealthCheckAgent(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"error":   "Health check failed: " + err.Error(),
+			"error":   "Health check failed",
 		})
 		return
 	}
@@ -550,6 +606,106 @@ func (h *A2AHandler) HealthCheckAgent(c *gin.Context) {
 	})
 }
 
+// TestAgent handles POST /a2a/{id}/test - Test agent with a simple request
+func (h *A2AHandler) TestAgent(c *gin.Context) {
+	agentIDStr := c.Param("id")
+	if agentIDStr == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Agent ID is required",
+		})
+		return
+	}
+
+	// Parse agent ID
+	agentID, err := uuid.Parse(agentIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid agent ID format",
+		})
+		return
+	}
+
+	// Get agent
+	agent, err := h.service.Get(agentID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"success": false,
+			"error":   "Agent not found",
+		})
+		return
+	}
+
+	if !agent.IsActive {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Agent is not active",
+		})
+		return
+	}
+
+	// Parse request body or use default test message
+	var testRequest struct {
+		Message string `json:"message"`
+	}
+	if err := c.ShouldBindJSON(&testRequest); err != nil {
+		// Use default test message if no body provided
+		testRequest.Message = "This is a test message. Please respond with 'Test successful'."
+	}
+
+	// Create a simple chat request for testing
+	chatRequest := &types.A2AChatRequest{
+		Messages: []types.A2AChatMessage{
+			{
+				Role:    "user",
+				Content: testRequest.Message,
+			},
+		},
+	}
+
+	// Record start time
+	startTime := time.Now()
+
+	// Make the test request via A2A client
+	response, err := h.client.Chat(agent, chatRequest)
+	responseTime := time.Since(startTime).Milliseconds()
+
+	if err != nil {
+		log.Printf("[A2A_TEST] Agent test failed: %v", err)
+		c.JSON(http.StatusOK, gin.H{
+			"success":       false,
+			"error":         "Agent test failed",
+			"response_time": responseTime,
+		})
+		return
+	}
+
+	// Return successful test result
+	result := gin.H{
+		"success":       true,
+		"response_time": responseTime,
+	}
+
+	if response.Message != nil {
+		result["content"] = response.Message.Content
+		result["finish_reason"] = response.FinishReason
+	}
+
+	if response.Usage != nil {
+		result["usage"] = gin.H{
+			"input_tokens":  response.Usage.InputTokens,
+			"output_tokens": response.Usage.OutputTokens,
+			"total_tokens":  response.Usage.TotalTokens,
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    result,
+	})
+}
+
 // GetAgentTools handles GET /a2a/{id}/tools - Get available tools for an agent
 func (h *A2AHandler) GetAgentTools(c *gin.Context) {
 	idParam := c.Param("id")
@@ -566,7 +722,7 @@ func (h *A2AHandler) GetAgentTools(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"success": false,
-			"error":   "Agent not found: " + err.Error(),
+			"error":   "Agent not found",
 		})
 		return
 	}
@@ -576,7 +732,7 @@ func (h *A2AHandler) GetAgentTools(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"error":   "Failed to list tools: " + err.Error(),
+			"error":   "Failed to list tools",
 		})
 		return
 	}
@@ -594,6 +750,8 @@ func (h *A2AHandler) GetAgentStats(c *gin.Context) {
 
 	stats, err := h.service.Stats(orgID)
 	if err != nil {
+		// TEMPORARY: Show actual error for debugging
+		log.Printf("[A2A_DEBUG] Get stats error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   "Failed to get stats: " + err.Error(),

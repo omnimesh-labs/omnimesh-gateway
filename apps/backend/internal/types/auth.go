@@ -212,6 +212,13 @@ const (
 	PermissionOrgWrite   = "org_write"
 	PermissionOrgDelete  = "org_delete"
 	PermissionOrgManage  = "org_manage"
+
+	// A2A Agent permissions
+	PermissionA2AAgentRead    = "a2a_agent_read"
+	PermissionA2AAgentWrite   = "a2a_agent_write"
+	PermissionA2AAgentDelete  = "a2a_agent_delete"
+	PermissionA2AAgentManage  = "a2a_agent_manage"
+	PermissionA2AAgentExecute = "a2a_agent_execute"
 )
 
 // PolicyType constants

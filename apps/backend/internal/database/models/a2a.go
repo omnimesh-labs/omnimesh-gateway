@@ -9,6 +9,7 @@ import (
 	"mcp-gateway/apps/backend/internal/types"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 // A2AAgentModel handles A2A agent database operations
@@ -63,7 +64,7 @@ func (m *A2AAgentModel) Create(agent *types.A2AAgent) error {
 		agent.AuthType,
 		agent.AuthValue,
 		agent.IsActive,
-		agent.Tags,
+		pq.StringArray(agent.Tags),
 		metadataJSON,
 		agent.HealthStatus,
 	).Scan(&agent.CreatedAt, &agent.UpdatedAt)
@@ -81,7 +82,7 @@ func (m *A2AAgentModel) GetByID(id uuid.UUID) (*types.A2AAgent, error) {
 
 	agent := &types.A2AAgent{}
 	var capabilitiesJSON, configJSON, metadataJSON json.RawMessage
-	var authValue sql.NullString
+	var authValue, healthError sql.NullString
 
 	err := m.db.QueryRow(query, id).Scan(
 		&agent.ID,
@@ -96,11 +97,11 @@ func (m *A2AAgentModel) GetByID(id uuid.UUID) (*types.A2AAgent, error) {
 		&agent.AuthType,
 		&authValue,
 		&agent.IsActive,
-		&agent.Tags,
+		(*pq.StringArray)(&agent.Tags),
 		&metadataJSON,
 		&agent.LastHealthCheck,
 		&agent.HealthStatus,
-		&agent.HealthError,
+		&healthError,
 		&agent.CreatedAt,
 		&agent.UpdatedAt,
 	)
@@ -118,6 +119,9 @@ func (m *A2AAgentModel) GetByID(id uuid.UUID) (*types.A2AAgent, error) {
 	agent.Metadata = metadataJSON
 	if authValue.Valid {
 		agent.AuthValue = authValue.String
+	}
+	if healthError.Valid {
+		agent.HealthError = healthError.String
 	}
 
 	// Unmarshal JSON data
@@ -148,7 +152,7 @@ func (m *A2AAgentModel) GetByName(orgID uuid.UUID, name string) (*types.A2AAgent
 
 	agent := &types.A2AAgent{}
 	var capabilitiesJSON, configJSON, metadataJSON json.RawMessage
-	var authValue sql.NullString
+	var authValue, healthError sql.NullString
 
 	err := m.db.QueryRow(query, orgID, name).Scan(
 		&agent.ID,
@@ -163,11 +167,11 @@ func (m *A2AAgentModel) GetByName(orgID uuid.UUID, name string) (*types.A2AAgent
 		&agent.AuthType,
 		&authValue,
 		&agent.IsActive,
-		&agent.Tags,
+		(*pq.StringArray)(&agent.Tags),
 		&metadataJSON,
 		&agent.LastHealthCheck,
 		&agent.HealthStatus,
-		&agent.HealthError,
+		&healthError,
 		&agent.CreatedAt,
 		&agent.UpdatedAt,
 	)
@@ -185,6 +189,9 @@ func (m *A2AAgentModel) GetByName(orgID uuid.UUID, name string) (*types.A2AAgent
 	agent.Metadata = metadataJSON
 	if authValue.Valid {
 		agent.AuthValue = authValue.String
+	}
+	if healthError.Valid {
+		agent.HealthError = healthError.String
 	}
 
 	// Unmarshal JSON data
@@ -237,7 +244,7 @@ func (m *A2AAgentModel) List(orgID uuid.UUID, filters map[string]interface{}) ([
 
 	if tags, ok := filters["tags"].([]string); ok && len(tags) > 0 {
 		query += fmt.Sprintf(" AND tags && $%d", argIndex)
-		args = append(args, tags)
+		args = append(args, pq.StringArray(tags))
 		argIndex++
 	}
 
@@ -254,7 +261,7 @@ func (m *A2AAgentModel) List(orgID uuid.UUID, filters map[string]interface{}) ([
 	for rows.Next() {
 		agent := &types.A2AAgent{}
 		var capabilitiesJSON, configJSON, metadataJSON json.RawMessage
-		var authValue sql.NullString
+		var authValue, healthError sql.NullString
 
 		err := rows.Scan(
 			&agent.ID,
@@ -269,11 +276,11 @@ func (m *A2AAgentModel) List(orgID uuid.UUID, filters map[string]interface{}) ([
 			&agent.AuthType,
 			&authValue,
 			&agent.IsActive,
-			&agent.Tags,
+			(*pq.StringArray)(&agent.Tags),
 			&metadataJSON,
 			&agent.LastHealthCheck,
 			&agent.HealthStatus,
-			&agent.HealthError,
+			&healthError,
 			&agent.CreatedAt,
 			&agent.UpdatedAt,
 		)
@@ -288,6 +295,9 @@ func (m *A2AAgentModel) List(orgID uuid.UUID, filters map[string]interface{}) ([
 		agent.Metadata = metadataJSON
 		if authValue.Valid {
 			agent.AuthValue = authValue.String
+		}
+		if healthError.Valid {
+			agent.HealthError = healthError.String
 		}
 
 		// Unmarshal JSON data
@@ -350,7 +360,7 @@ func (m *A2AAgentModel) Update(agent *types.A2AAgent) error {
 		agent.AuthType,
 		agent.AuthValue,
 		agent.IsActive,
-		agent.Tags,
+		pq.StringArray(agent.Tags),
 		metadataJSON,
 	).Scan(&agent.UpdatedAt)
 }

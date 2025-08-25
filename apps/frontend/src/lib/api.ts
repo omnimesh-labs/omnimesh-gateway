@@ -1339,3 +1339,169 @@ export const configApi = {
         URL.revokeObjectURL(url);
     }
 };
+
+// A2A Agent Management Types
+export interface A2AAgent {
+    id: string;
+    organization_id: string;
+    name: string;
+    description?: string;
+    endpoint_url: string;
+    agent_type: 'generic' | 'openai' | 'anthropic' | 'custom';
+    protocol_version: string;
+    capabilities: Record<string, any>;
+    config: Record<string, any>;
+    auth_type: 'none' | 'api_key' | 'bearer' | 'oauth';
+    auth_value?: string; // Never returned by API for security
+    is_active: boolean;
+    tags?: string[];
+    metadata?: Record<string, any>;
+    last_health_check?: string;
+    health_status: 'unknown' | 'healthy' | 'unhealthy';
+    health_error?: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface A2AAgentSpec {
+    name: string;
+    description?: string;
+    endpoint_url: string;
+    agent_type: 'generic' | 'openai' | 'anthropic' | 'custom';
+    protocol_version?: string;
+    capabilities?: Record<string, any>;
+    config?: Record<string, any>;
+    auth_type: 'none' | 'api_key' | 'bearer' | 'oauth';
+    auth_value?: string;
+    is_active?: boolean;
+    tags?: string[];
+    metadata?: Record<string, any>;
+}
+
+export interface A2AHealthCheck {
+    agent_id: string;
+    status: 'healthy' | 'unhealthy';
+    message: string;
+    response_time: number;
+    timestamp: string;
+}
+
+export interface A2AStats {
+    total: number;
+    active: number;
+    by_type: Record<string, number>;
+    by_health: Record<string, number>;
+}
+
+export interface A2ATestRequest {
+    message: string;
+    context?: string;
+    max_tokens?: number;
+}
+
+export interface A2ATestResponse {
+    success: boolean;
+    content?: string;
+    finish_reason?: string;
+    usage?: {
+        input_tokens?: number;
+        output_tokens?: number;
+        total_tokens?: number;
+    };
+    error?: string;
+    response_time: number;
+}
+
+// A2A Agent Management APIs
+export const a2aApi = {
+    // List all A2A agents with optional filtering
+    async listAgents(filters?: {
+        agent_type?: string;
+        is_active?: boolean;
+        health_status?: string;
+        tags?: string;
+    }): Promise<A2AAgent[]> {
+        const queryParams = new URLSearchParams();
+        if (filters) {
+            Object.entries(filters).forEach(([key, value]) => {
+                if (value !== undefined) {
+                    queryParams.append(key, value.toString());
+                }
+            });
+        }
+
+        const response = await apiRequest<ApiResponse<A2AAgent[]>>(
+            `/a2a${queryParams.toString() ? '?' + queryParams.toString() : ''}`
+        );
+        return response.data;
+    },
+
+    // Get specific A2A agent details
+    async getAgent(id: string): Promise<A2AAgent> {
+        const response = await apiRequest<ApiResponse<A2AAgent>>(`/a2a/${id}`);
+        return response.data;
+    },
+
+    // Create new A2A agent
+    async createAgent(agentData: A2AAgentSpec): Promise<A2AAgent> {
+        const response = await apiRequest<ApiResponse<A2AAgent>>('/a2a', {
+            method: 'POST',
+            body: JSON.stringify(agentData),
+        });
+        return response.data;
+    },
+
+    // Update existing A2A agent
+    async updateAgent(id: string, agentData: Partial<A2AAgentSpec>): Promise<A2AAgent> {
+        const response = await apiRequest<ApiResponse<A2AAgent>>(`/a2a/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(agentData),
+        });
+        return response.data;
+    },
+
+    // Delete A2A agent
+    async deleteAgent(id: string): Promise<void> {
+        await apiRequest<ApiResponse<any>>(`/a2a/${id}`, {
+            method: 'DELETE',
+        });
+    },
+
+    // Toggle A2A agent active status
+    async toggleAgent(id: string, active: boolean): Promise<A2AAgent> {
+        const response = await apiRequest<ApiResponse<A2AAgent>>(`/a2a/${id}/toggle`, {
+            method: 'POST',
+            body: JSON.stringify({ active }),
+        });
+        return response.data;
+    },
+
+    // Test A2A agent with a simple chat request
+    async testAgent(id: string, testData: A2ATestRequest): Promise<A2ATestResponse> {
+        const response = await apiRequest<ApiResponse<A2ATestResponse>>(`/a2a/${id}/test`, {
+            method: 'POST',
+            body: JSON.stringify(testData),
+        });
+        return response.data;
+    },
+
+    // Get A2A agent health check
+    async checkAgentHealth(id: string): Promise<A2AHealthCheck> {
+        const response = await apiRequest<ApiResponse<A2AHealthCheck>>(`/a2a/${id}/health`, {
+            method: 'POST',
+        });
+        return response.data;
+    },
+
+    // Get A2A statistics for the organization
+    async getStats(): Promise<A2AStats> {
+        const response = await apiRequest<ApiResponse<A2AStats>>('/a2a/stats');
+        return response.data;
+    },
+
+    // Get available agent types and their default configurations
+    async getAgentTypes(): Promise<Record<string, any>> {
+        const response = await apiRequest<ApiResponse<Record<string, any>>>('/a2a/types');
+        return response.data;
+    },
+};

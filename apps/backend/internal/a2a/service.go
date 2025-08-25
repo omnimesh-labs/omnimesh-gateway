@@ -187,6 +187,7 @@ func (s *Service) List(orgID uuid.UUID, filters map[string]interface{}) ([]*type
 	// Load from database
 	agents, err := s.agentModel.List(orgID, filters)
 	if err != nil {
+		fmt.Println("failed to list agents: %w", agents)
 		return nil, fmt.Errorf("failed to list agents: %w", err)
 	}
 
@@ -348,12 +349,12 @@ func (s *Service) RegisterTool(agentID, virtualServerID uuid.UUID, toolName stri
 	}
 
 	tool := &types.A2AAgentTool{
-		ID:               uuid.New(),
-		AgentID:          agentID,
-		VirtualServerID:  virtualServerID,
-		ToolName:         toolName,
-		ToolConfigData:   config,
-		IsActive:         true,
+		ID:              uuid.New(),
+		AgentID:         agentID,
+		VirtualServerID: virtualServerID,
+		ToolName:        toolName,
+		ToolConfigData:  config,
+		IsActive:        true,
 	}
 
 	return s.agentToolModel.Create(tool)

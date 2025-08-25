@@ -360,19 +360,25 @@ func (s *Server) RegisterRoutes() http.Handler {
 				authMiddleware.RequireResourceAccess("a2a_agent", "read"),
 				a2aHandler.HealthCheckAgent)
 
+			// Agent testing
+			a2aGroup.POST("/:id/test",
+				authMiddleware.RequireResourceAccess("a2a_agent", "execute"),
+				loggingMiddleware.AuditLogger("test", "a2a-agent"),
+				a2aHandler.TestAgent)
+
 			// Agent tools
 			a2aGroup.GET("/:id/tools",
 				authMiddleware.RequireResourceAccess("a2a_agent", "read"),
 				a2aHandler.GetAgentTools)
 
-			// Agent invocation by name
-			a2aGroup.POST("/:name/invoke",
+			// Agent invocation by ID
+			a2aGroup.POST("/:id/invoke",
 				authMiddleware.RequireResourceAccess("a2a_agent", "execute"),
 				loggingMiddleware.AuditLogger("invoke", "a2a-agent"),
 				a2aHandler.InvokeAgent)
 
-			// Agent chat by name
-			a2aGroup.POST("/:name/chat",
+			// Agent chat by ID
+			a2aGroup.POST("/:id/chat",
 				authMiddleware.RequireResourceAccess("a2a_agent", "execute"),
 				loggingMiddleware.AuditLogger("chat", "a2a-agent"),
 				a2aHandler.ChatWithAgent)
