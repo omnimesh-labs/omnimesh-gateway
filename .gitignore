@@ -29,6 +29,7 @@ main
 api
 bin/
 *templ.go
+migrate
 
 # OS X generated file
 .DS_Store
@@ -42,4 +43,3 @@ bin/
 *.log
 venv/
 todos/
-metamcp/

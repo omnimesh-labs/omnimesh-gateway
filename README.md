@@ -12,6 +12,39 @@ A production-ready API gateway for Model Context Protocol (MCP) servers, providi
 
 > **⚡ Enterprise-Ready**: Built for production with comprehensive security, monitoring, and scalability features.
 
+## 🚀 Quick Start
+
+Get the entire MCP Gateway stack running with a single command:
+
+```bash
+# Clone the repository
+git clone https://github.com/theognis1002/mcp-gateway.git
+cd mcp-gateway
+
+# Start everything (PostgreSQL, Redis, Backend, Frontend, Migrations)
+make dev
+```
+
+This will:
+- Start PostgreSQL and Redis databases
+- Run database migrations automatically
+- Start the backend API server on http://localhost:8080 with hot reload
+- Start the frontend dashboard on http://localhost:3000 with hot reload
+- Create an admin user: `admin@admin.com` / `qwerty123`
+
+### Available Commands
+
+```bash
+make help         # Show all available commands
+make dev          # Start in development mode with hot reload
+make stop         # Stop all services
+make clean        # Stop and remove all data
+make test         # Run tests in Docker
+make migrate      # Run database migrations
+make lint         # Run linters
+make logs         # View service logs
+```
+
 ## Features
 
 - **🔐 Authentication & Authorization** - JWT-based auth with API keys and role-based access control
@@ -132,112 +165,53 @@ curl -X POST http://localhost:8080/mcp/rpc \
 
 See [examples/virtual_servers_example.md](./examples/virtual_servers_example.md) for comprehensive usage examples and testing guide.
 
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- **Go 1.25+** - [Installation Guide](https://golang.org/doc/install)
-- **PostgreSQL 12+** - Database backend
-- **Redis (optional)** - For distributed rate limiting and caching
-- **Docker & Docker Compose** - For development environment
-
-### 1. Clone and Setup
-
-```bash
-# Clone the repository
-git clone https://github.com/theognis1002/mcp-gateway.git
-cd mcp-gateway
-
-# Copy environment configuration
-cp .env.example .env
-# Edit .env with your database credentials and JWT secret
-
-# Install pre-commit hooks (recommended)
-make setup-precommit
-```
-
-### 2. Start Development Environment
-
-```bash
-# Start PostgreSQL and Redis with Docker
-make docker-run
-
-# Run database migrations
-make migrate
-
-# Create admin user (email: admin@admin.com, password: qwerty123)
-make setup-admin
-```
-
-### 3. Run the Application
-
-```bash
-# Start the backend server
-make run
-
-# Or with live reload for development
-make watch
-```
-
-The API will be available at `http://localhost:8080`
-
-### 4. Frontend Dashboard (Optional)
-
-```bash
-cd apps/frontend
-bun install
-bun run dev
-```
-
-The dashboard will be available at `http://localhost:3000`
-
 ## 🛠️ Development
 
-### Make Commands
+### Docker-Based Development (Recommended)
 
-Run build make command with tests
-```bash
-make all
-```
+The entire stack runs in Docker containers with hot reload enabled for both backend and frontend:
 
-Build the application
 ```bash
-make build
-```
+# Start all services (PostgreSQL, Redis, Backend, Frontend)
+make dev
 
-Run the application
-```bash
-make run
-```
-Create DB container
-```bash
-make docker-run
-```
+# View logs
+make logs
 
-Shutdown DB Container
-```bash
-make docker-down
-```
+# Stop all services
+make stop
 
-DB Integrations Test:
-```bash
-make itest
-```
-
-Live reload the application:
-```bash
-make watch
-```
-
-Run the test suite:
-```bash
-make test
-```
-
-Clean up binary from the last build:
-```bash
+# Clean everything (removes all data)
 make clean
+```
+
+### Other Useful Commands
+
+```bash
+# Database operations
+make migrate          # Run database migrations
+make migrate-down     # Rollback migrations
+make migrate-status   # Show migration status
+make db-shell         # Open PostgreSQL shell
+
+# Testing
+make test             # Run all tests
+make test-transport   # Transport layer tests
+make test-integration # Integration tests
+make test-unit        # Unit tests
+
+# Development utilities
+make shell            # Open shell in backend container
+make bash             # Open bash in backend container
+make redis-cli        # Open Redis CLI
+
+# Build operations
+make build            # Build containers
+make rebuild          # Rebuild and restart containers
+
+# Setup
+make setup            # Initial project setup
+make setup-admin      # Create admin user
 ```
 
 ### Code Quality
@@ -245,15 +219,6 @@ make clean
 ```bash
 # Run linting
 make lint
-
-# Run linting with fixes
-make lint-fix
-
-# Run security checks
-make security
-
-# Run pre-commit on all files
-make precommit-all
 ```
 
 ## 🤝 Contributing
@@ -263,13 +228,14 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 ### Development Setup
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run tests (`make test`)
-5. Run linting (`make lint`)
-6. Commit your changes (`git commit -m 'Add amazing feature'`)
-7. Push to the branch (`git push origin feature/amazing-feature`)
-8. Open a Pull Request
+2. Clone your fork and enter the directory
+3. Run `make dev` to start the full stack
+4. Make your changes
+5. Run tests (`make test`)
+6. Run linting (`make lint`)
+7. Commit your changes (`git commit -m 'Add amazing feature'`)
+8. Push to the branch (`git push origin feature/amazing-feature`)
+9. Open a Pull Request
 
 ### Code of Conduct
 

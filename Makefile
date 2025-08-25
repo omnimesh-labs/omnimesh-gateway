@@ -1,204 +1,169 @@
-# Check if .env exists and include it
-ifeq (,$(wildcard ./.env))
-    $(error .env file not found. Please create one.)
-endif
+# MCP Gateway Makefile
+.PHONY: help dev stop clean test migrate lint setup shell bash migrate-down migrate-status setup-admin logs nuclear
 
-include .env
-export
+# Docker compose command
+DOCKER_COMPOSE = docker compose
+BACKEND = $(DOCKER_COMPOSE) run --rm backend
+GO = $(BACKEND) go
 
-all: build test
+# Default target - show help
+help:
+	@echo "MCP Gateway - Available Commands"
+	@echo ""
+	@echo "Quick Start:"
+	@echo "  make dev          - Start full stack with hot reload"
+	@echo "  make stop         - Stop all services"
+	@echo "  make clean        - Stop and remove all data"
+	@echo ""
+	@echo "Database:"
+	@echo "  make migrate      - Run database migrations"
+	@echo "  make migrate-down - Rollback migrations"
+	@echo "  make migrate-status - Show migration status"
+	@echo ""
+	@echo "Testing:"
+	@echo "  make test         - Run all tests"
+	@echo ""
+	@echo "Development:"
+	@echo "  make shell        - Open shell in backend container"
+	@echo "  make bash         - Open bash in backend container"
+	@echo "  make logs         - View service logs"
+	@echo "  make lint         - Run linters"
+	@echo ""
+	@echo "Setup:"
+	@echo "  make setup        - Initial project setup"
+	@echo "  make setup-admin  - Create admin user"
 
-build:
-	@echo "Building..."
-
-
-	@go build -o main apps/backend/cmd/api/main.go
-
-run:
-	@go run apps/backend/cmd/api/main.go
-
-# Create DB container
-docker-run:
-	@if docker compose up --build 2>/dev/null; then \
-		: ; \
-	else \
-		echo "Falling back to Docker Compose V1"; \
-		docker-compose up --build; \
+# Development mode with hot reload
+dev:
+	@echo "Starting MCP Gateway Stack with hot reload..."
+	@if [ ! -f .env ]; then \
+		echo "Creating .env file from .env.example..."; \
+		cp .env.example .env; \
+		echo ".env file created"; \
 	fi
+	@$(DOCKER_COMPOSE) up
 
-# Shutdown DB container
-docker-down:
-	@if docker compose down 2>/dev/null; then \
-		: ; \
-	else \
-		echo "Falling back to Docker Compose V1"; \
-		docker-compose down; \
-	fi
+# Stop all services
+stop:
+	@echo "Stopping MCP Gateway Stack..."
+	@$(DOCKER_COMPOSE) down
+	@echo "All services stopped"
 
-# Test the application
+# Clean everything (including volumes)
+clean:
+	@echo "Cleaning MCP Gateway Stack (removes all data)..."
+	@$(DOCKER_COMPOSE) down -v
+	@rm -f main api apps/backend/api logs/*.log tmp/main
+	@echo "All services stopped and data removed"
+
+# View logs
+logs:
+	@$(DOCKER_COMPOSE) logs -f
+
+# Run tests
 test:
-	@echo "Testing..."
-	@gotestsum --format standard-quiet -- -short ./...
+	@echo "Running tests..."
+	@$(GO) test -v ./...
 
-
-# Transport Tests - All transport layer tests
+# Run specific tests
 test-transport:
 	@echo "Running transport tests..."
-	@./apps/backend/tests/run_tests.sh transport
+	@$(GO) test -v ./apps/backend/tests/transport/...
 
-# Integration Tests - All integration tests
 test-integration:
 	@echo "Running integration tests..."
-	@./apps/backend/tests/run_tests.sh integration
+	@$(GO) test -v ./apps/backend/tests/integration/...
 
-# Unit Tests - All unit tests
 test-unit:
 	@echo "Running unit tests..."
-	@./apps/backend/tests/run_tests.sh unit
+	@$(GO) test -v ./apps/backend/tests/unit/...
 
-# Specific transport tests
-test-rpc:
-	@echo "Running JSON-RPC transport tests..."
-	@./apps/backend/tests/run_tests.sh rpc
+# Database operations
+migrate:
+	@echo "Running database migrations..."
+	@$(BACKEND) /app/migrate up
 
-test-sse:
-	@echo "Running SSE transport tests..."
-	@./apps/backend/tests/run_tests.sh sse
+migrate-down:
+	@echo "Rolling back migrations..."
+	@$(BACKEND) /app/migrate down
 
-test-websocket:
-	@echo "Running WebSocket transport tests..."
-	@./apps/backend/tests/run_tests.sh websocket
+migrate-status:
+	@echo "Checking migration status..."
+	@$(BACKEND) /app/migrate status
 
-test-mcp:
-	@echo "Running MCP transport tests..."
-	@./apps/backend/tests/run_tests.sh mcp
+# Create admin user
+setup-admin:
+	@echo "Setting up admin user..."
+	@$(BACKEND) /app/migrate setup-admin
 
-test-stdio:
-	@echo "Running STDIO transport tests..."
-	@./apps/backend/tests/run_tests.sh stdio
+# Development helpers
+shell:
+	@echo "Opening shell in backend container..."
+	@$(DOCKER_COMPOSE) run --rm backend sh
 
-# Test with coverage
-test-coverage:
-	@echo "Running tests with coverage..."
-	@cd apps/backend && TEST_COVERAGE=true ./tests/run_tests.sh all
+bash:
+	@echo "Opening bash in backend container..."
+	@$(DOCKER_COMPOSE) run --rm backend bash
 
-# Test with verbose output
-test-verbose:
-	@echo "Running tests with verbose output..."
-	@cd apps/backend && TEST_VERBOSE=true ./tests/run_tests.sh all
+# Run linters
+lint:
+	@echo "Running linters..."
+	@$(GO) run github.com/golangci/golangci-lint/cmd/golangci-lint@latest run
 
-# Legacy integration test (for database)
-itest:
-	@echo "Running database integration tests..."
-	@go test ./apps/backend/internal/database -v
+# Initial project setup
+setup:
+	@echo "Setting up project..."
+	@if [ ! -f .env ]; then \
+		cp .env.example .env; \
+		echo "Created .env file"; \
+	fi
+	@echo "Installing pre-commit hooks..."
+	@if command -v pre-commit > /dev/null; then \
+		pre-commit install; \
+	else \
+		echo "Warning: pre-commit not installed. Install with: pip install pre-commit"; \
+	fi
+	@echo "Setup complete! Run 'make dev' to start development"
 
-# Run all transport tests
-test-all-transports: test-rpc test-sse test-websocket test-mcp test-stdio
-	@echo "All transport tests completed!"
+# Build only (no run)
+build:
+	@echo "Building containers..."
+	@$(DOCKER_COMPOSE) build
 
-# Clean the binary
-clean:
-	@echo "Cleaning..."
-	@rm -f main api apps/backend/api
-	@rm -f logs/*.log
+# Rebuild and restart
+rebuild:
+	@echo "Rebuilding containers..."
+	@$(DOCKER_COMPOSE) down
+	@$(DOCKER_COMPOSE) build --no-cache
+	@$(DOCKER_COMPOSE) up -d
 
-# Nuclear option - stops all containers, removes images, volumes, cache, etc.
-armageddon:
-	@echo "Initiating armageddon..."
+# Database shell
+db-shell:
+	@echo "Opening PostgreSQL shell..."
+	@$(DOCKER_COMPOSE) exec postgres psql -U ${DB_USERNAME} -d ${DB_DATABASE}
+
+# Redis CLI
+redis-cli:
+	@echo "Opening Redis CLI..."
+	@$(DOCKER_COMPOSE) exec redis redis-cli -a ${REDIS_PASSWORD}
+
+# Watch for file changes (requires air installed locally)
+watch:
+	@echo "Starting local development with hot reload..."
+	@air
+
+# Nuclear strike - destroy everything
+nuclear:
+	@echo "Initiating nuclear strike..."
 	@docker stop $$(docker ps -q) 2>/dev/null || true
 	@docker rm $$(docker ps -aq) 2>/dev/null || true
 	@docker rmi $$(docker images -q) -f 2>/dev/null || true
 	@docker volume rm $$(docker volume ls -q) 2>/dev/null || true
 	@docker network rm $$(docker network ls -q --filter type=custom) 2>/dev/null || true
 	@docker system prune -a --volumes -f 2>/dev/null || true
-	@if docker compose down --volumes --remove-orphans 2>/dev/null; then \
-		true; \
-	else \
-		docker-compose down --volumes --remove-orphans 2>/dev/null || true; \
-	fi
 	@rm -rf tmp/ bin/ dist/
 	@rm -f main api apps/backend/api logs/*.log
 	@go clean -modcache 2>/dev/null || true
 	@go clean -testcache 2>/dev/null || true
 	@go clean -cache 2>/dev/null || true
 	@echo "Boom! 💥"
-
-# Live Reload
-watch:
-	@if command -v air > /dev/null; then \
-            air; \
-            echo "Watching...";\
-        else \
-            read -p "Go's 'air' is not installed on your machine. Do you want to install it? [Y/n] " choice; \
-            if [ "$$choice" != "n" ] && [ "$$choice" != "N" ]; then \
-                go install github.com/air-verse/air@latest; \
-                air; \
-                echo "Watching...";\
-            else \
-                echo "You chose not to install air. Exiting..."; \
-                exit 1; \
-            fi; \
-        fi
-
-# Run database migrations
-migrate:
-	@echo "Running database migrations..."
-	@bash -c 'cd apps/backend && migrate -path migrations -database "postgres://$$DB_USERNAME:$$DB_PASSWORD@$$DB_HOST:$$DB_PORT/$$DB_DATABASE?sslmode=disable&search_path=$$DB_SCHEMA" up'
-
-# Rollback database migrations
-migrate-down:
-	@echo "Rolling back database migrations..."
-	@bash -c 'cd apps/backend && migrate -path migrations -database "postgres://$$DB_USERNAME:$$DB_PASSWORD@$$DB_HOST:$$DB_PORT/$$DB_DATABASE?sslmode=disable&search_path=$$DB_SCHEMA" down'
-
-# Check migration status
-migrate-status:
-	@echo "Checking migration status..."
-	@bash -c 'cd apps/backend && migrate -path migrations -database "postgres://$$DB_USERNAME:$$DB_PASSWORD@$$DB_HOST:$$DB_PORT/$$DB_DATABASE?sslmode=disable&search_path=$$DB_SCHEMA" status'
-
-# Create new migration file
-migrate-create:
-	@echo "Creating new migration file..."
-	@read -p "Enter migration name: " name; \
-	cd apps/backend && migrate create -ext sql -dir migrations -seq $$name
-
-# Setup commands for local development
-setup:
-	@echo "Running local development setup..."
-	@go run apps/backend/cmd/setup/main.go
-
-setup-reset:
-	@echo "Resetting database..."
-	@go run apps/backend/cmd/setup/main.go reset
-
-# Pre-commit hooks setup
-setup-precommit:
-	@echo "Installing pre-commit hooks..."
-	@if command -v pre-commit > /dev/null; then \
-		pre-commit install; \
-		echo "Pre-commit hooks installed successfully!"; \
-	else \
-		echo "Installing pre-commit..."; \
-		pip install pre-commit; \
-		pre-commit install; \
-		echo "Pre-commit hooks installed successfully!"; \
-	fi
-
-# Run pre-commit on all files
-precommit-all:
-	@echo "Running pre-commit on all files..."
-	@pre-commit run --all-files
-
-# Code quality checks
-lint:
-	@echo "Running golangci-lint..."
-	@golangci-lint run
-
-lint-fix:
-	@echo "Running golangci-lint with fixes..."
-	@golangci-lint run --fix
-
-security:
-	@echo "Running security checks..."
-	@gosec ./...
-
-.PHONY: all build run test clean armageddon watch docker-run docker-down itest migrate migrate-down migrate-status migrate-create test-transport test-integration test-unit test-rpc test-sse test-websocket test-mcp test-stdio test-coverage test-verbose test-all-transports setup setup-admin setup-org setup-dummy setup-reset setup-precommit precommit-all lint lint-fix security

@@ -1,31 +1,40 @@
 root = "."
-testdata_dir = "testdata"
 tmp_dir = "tmp"
+testdata_dir = "testdata"
 
 [build]
-  args_bin = []
+  # Core build configuration (most important)
+  cmd = "go build -o ./main apps/backend/cmd/api/main.go"
   bin = "./main"
-  cmd = "make build"
-  delay = 1000
-  exclude_dir = ["assets", "tmp", "vendor", "testdata", "node_modules", "apps/frontend", "apps/frontend/node_modules", "apps/frontend/.next", "apps/frontend/dist", "apps/frontend/build", "apps/web"]
+
+  # File inclusion/exclusion rules (critical for performance)
+  include_ext = ["go", "tpl", "tmpl", "html"]
+  exclude_dir = ["assets", "tmp", "vendor", "testdata", "node_modules", "scripts/venv", "venv", ".env", "apps/frontend"]
   exclude_file = ["package.json", "package-lock.json", "bun.lockb", "yarn.lock", "pnpm-lock.yaml"]
-  exclude_regex = ["_test.go", "\\.(js|jsx|ts|tsx|css|scss|sass|less|vue|svelte)$", "\\.config\\.(js|ts|mjs)$"]
+  exclude_regex = ["_test.go", "\\.(js|jsx|ts|tsx|css|scss|sass|less|)$", "\\.config\\.(js|ts|mjs)$"]
+
+  # Build timing and behavior
+  delay = 1000
+  rerun_delay = 500
+  kill_delay = "0s"
+
+  # Build output and logging
+  log = "build-errors.log"
   exclude_unchanged = false
-  follow_symlink = false
+  stop_on_error = false
+
+  # Advanced options (least critical)
+  args_bin = []
   full_bin = ""
   include_dir = []
-  include_ext = ["go", "tpl", "tmpl", "html"]
   include_file = []
-  kill_delay = "0s"
-  log = "build-errors.log"
   poll = false
   poll_interval = 0
   post_cmd = []
   pre_cmd = []
   rerun = false
-  rerun_delay = 500
   send_interrupt = false
-  stop_on_error = false
+  follow_symlink = false
 
 [color]
   app = ""
