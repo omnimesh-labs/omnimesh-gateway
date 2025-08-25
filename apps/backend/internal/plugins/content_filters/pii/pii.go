@@ -99,11 +99,23 @@ func (f *PIIFilter) Apply(ctx context.Context, pluginCtx *shared.PluginContext, 
 		matches := pattern.Pattern.FindAllStringSubmatch(content.Raw, -1)
 		for _, match := range matches {
 			if len(match) > 0 {
+				// Skip if this looks like a timeout value in JSON
+				if f.isTimeoutValue(content.Raw, match[0]) {
+					continue
+				}
+
+				// Skip if this looks like a duration or timestamp
+				if f.isDurationOrTimestamp(match[0]) {
+					continue
+				}
+
+				// Find the correct index for this specific match
+				matchIndex := strings.Index(content.Raw, match[0])
 				violation := shared.CreatePluginViolation(
 					pattern.Name,
 					pattern.Pattern.String(),
 					match[0],
-					pattern.Pattern.FindStringIndex(content.Raw)[0],
+					matchIndex,
 					pattern.Severity,
 				)
 				violations = append(violations, violation)
@@ -433,4 +445,45 @@ func (f *PIIFilterFactory) GetConfigSchema() map[string]interface{} {
 			},
 		},
 	}
+}
+
+// isTimeoutValue checks if a matched value appears to be a timeout in JSON context
+func (f *PIIFilter) isTimeoutValue(content, value string) bool {
+	// Look for JSON patterns like "timeout": <value>
+	timeoutPatterns := []string{
+		`"timeout":\s*` + regexp.QuoteMeta(value),
+		`"timeout_seconds":\s*` + regexp.QuoteMeta(value),
+		`"timeout_ms":\s*` + regexp.QuoteMeta(value),
+		`"timeout_ns":\s*` + regexp.QuoteMeta(value),
+		`"duration":\s*` + regexp.QuoteMeta(value),
+		`"delay":\s*` + regexp.QuoteMeta(value),
+		`"wait_time":\s*` + regexp.QuoteMeta(value),
+	}
+
+	for _, pattern := range timeoutPatterns {
+		matched, _ := regexp.MatchString(pattern, content)
+		if matched {
+			return true
+		}
+	}
+
+	return false
+}
+
+// isDurationOrTimestamp checks if a value looks like a duration or timestamp
+func (f *PIIFilter) isDurationOrTimestamp(value string) bool {
+	// Only match very specific timestamp patterns to avoid false positives
+	// Credit cards are 13-19 digits, so we need to be careful
+
+	// Unix timestamps in seconds (exactly 10 digits, starting with 1 for current era)
+	if matched, _ := regexp.MatchString(`^1\d{9}$`, value); matched {
+		return true
+	}
+
+	// Very large durations in nanoseconds (20+ digits only)
+	if matched, _ := regexp.MatchString(`^\d{20,}$`, value); matched {
+		return true
+	}
+
+	return false
 }

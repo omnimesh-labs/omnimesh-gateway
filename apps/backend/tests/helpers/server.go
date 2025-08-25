@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"mcp-gateway/apps/backend/internal/config"
+	"mcp-gateway/apps/backend/internal/database"
 	"mcp-gateway/apps/backend/internal/logging"
 	"mcp-gateway/apps/backend/internal/logging/plugins/file"
 	"mcp-gateway/apps/backend/internal/server"
@@ -36,8 +37,17 @@ func NewTestServer() (*TestServer, error) {
 		logging.RegisterPlugin(file.NewFilePlugin())
 	})
 
-	// Set environment variable to prevent server from re-registering plugins
+	// Reset database instance to ensure fresh connection with test env vars
+	database.ResetForTests()
+
+	// Set environment variables to prevent server from re-registering plugins and configure database
 	os.Setenv("SKIP_PLUGIN_REGISTRATION", "true")
+	os.Setenv("DB_HOST", "localhost")
+	os.Setenv("DB_PORT", "5432")
+	os.Setenv("DB_DATABASE", "postgres")
+	os.Setenv("DB_USERNAME", "postgres")
+	os.Setenv("DB_PASSWORD", "changeme123")
+	os.Setenv("DB_SCHEMA", "public")
 
 	// Find an available port
 	listener, err := net.Listen("tcp", ":0")
@@ -56,9 +66,9 @@ func NewTestServer() (*TestServer, error) {
 		Database: config.DatabaseConfig{
 			Host:     "localhost",
 			Port:     5432,
-			User:     "test",
-			Password: "test",
-			Database: "test_db",
+			User:     "postgres",
+			Password: "changeme123",
+			Database: "postgres",
 			SSLMode:  "disable",
 		},
 		Auth: config.AuthConfig{

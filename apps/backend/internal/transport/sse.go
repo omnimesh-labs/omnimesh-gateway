@@ -128,6 +128,12 @@ func (s *SSETransport) Disconnect(ctx context.Context) error {
 		s.keepAliveTicker.Stop()
 	}
 
+	// Clear writer and flusher to prevent race conditions
+	s.mu.Lock()
+	s.writer = nil
+	s.flusher = nil
+	s.mu.Unlock()
+
 	// Close event queue
 	close(s.eventQueue)
 
@@ -231,7 +237,7 @@ func (s *SSETransport) writeEvent(event *types.SSEEvent) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.writer == nil {
+	if s.writer == nil || s.flusher == nil {
 		return
 	}
 
@@ -272,7 +278,7 @@ func (s *SSETransport) writeComment(comment string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.writer == nil {
+	if s.writer == nil || s.flusher == nil {
 		return
 	}
 

@@ -105,6 +105,14 @@ func AssertNotContains(t *testing.T, str, substr string, msgAndArgs ...interface
 // AssertStatusCode asserts that an HTTP response has the expected status code
 func AssertStatusCode(t *testing.T, expected int, resp *JSONResponse, msgAndArgs ...interface{}) {
 	t.Helper()
+	if resp == nil {
+		msg := "Response is nil - request likely failed or timed out"
+		if len(msgAndArgs) > 0 {
+			msg = fmt.Sprintf(msgAndArgs[0].(string), msgAndArgs[1:]...) + " - " + msg
+		}
+		t.Errorf("%s", msg)
+		return
+	}
 	if resp.StatusCode != expected {
 		msg := fmt.Sprintf("Expected status code %d, got %d", expected, resp.StatusCode)
 		if len(msgAndArgs) > 0 {
@@ -156,6 +164,14 @@ func AssertJSONRPCError(t *testing.T, resp *JSONRPCResponse, expectedCode int, m
 // AssertMapKeyExists asserts that a map contains a specific key
 func AssertMapKeyExists(t *testing.T, m map[string]interface{}, key string, msgAndArgs ...interface{}) {
 	t.Helper()
+	if m == nil {
+		msg := fmt.Sprintf("Cannot check key '%s' - map is nil", key)
+		if len(msgAndArgs) > 0 {
+			msg = fmt.Sprintf(msgAndArgs[0].(string), msgAndArgs[1:]...) + " - " + msg
+		}
+		t.Errorf("%s", msg)
+		return
+	}
 	if _, exists := m[key]; !exists {
 		msg := fmt.Sprintf("Expected map to contain key '%s'", key)
 		if len(msgAndArgs) > 0 {

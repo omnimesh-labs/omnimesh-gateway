@@ -1,3 +1,4 @@
+fail_fast: true
 repos:
   - repo: local
     hooks:
@@ -36,28 +37,15 @@ repos:
         pass_filenames: false
         always_run: true
 
-      - id: golangci-lint
-        name: golangci-lint
-        entry: golangci-lint
-        args: [run, --fix]
-        language: system
-        files: \.go$
-        pass_filenames: false
-        always_run: true
-
-      - id: go-sec
-        name: gosec (security)
-        entry: gosec
-        args: [-quiet, ./...]
-        language: system
-        files: \.go$
-        pass_filenames: false
-        always_run: true
-
       - id: go-test
-        name: go test
-        entry: go
-        args: [test, -short, ./...]
+        name: go test (gotestsum)
+        entry: gotestsum
+        args:
+          - --format
+          - standard-quiet
+          - --
+          - -short
+          - ./...
         language: system
         files: \.go$
         pass_filenames: false

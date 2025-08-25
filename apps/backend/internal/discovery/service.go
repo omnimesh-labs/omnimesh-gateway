@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net/http"
 	"sync"
 	"time"
 
@@ -43,11 +44,6 @@ type Config struct {
 // Default organization UUID for single-tenant mode (matches migration)
 var DefaultOrganizationID = uuid.MustParse("00000000-0000-0000-0000-000000000000")
 
-// dbWrapper wraps *sql.DB to implement the Database interface
-type dbWrapper struct {
-	*sql.DB
-}
-
 // NewService creates a new discovery service
 func NewService(db *sql.DB, config *Config) *Service {
 	// Wrap the database to implement the Database interface
@@ -64,7 +60,7 @@ func NewService(db *sql.DB, config *Config) *Service {
 	}
 
 	service.registry = NewRegistry(db)
-	service.health = NewHealthChecker(service.registry, config)
+	service.health = NewHealthChecker(service.registry, config, service.models.HealthCheck)
 
 	return service
 }
@@ -313,8 +309,32 @@ func (s *Service) UpdateServer(serverID string, req *types.UpdateMCPServerReques
 
 // GetServerStats returns server statistics
 func (s *Service) GetServerStats(serverID string) (*types.ServerStats, error) {
-	// TODO: Implement server statistics retrieval
-	return nil, nil
+	_, err := uuid.Parse(serverID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid server ID: %w", err)
+	}
+
+	// First, try to get stats from registry cache (real-time stats)
+	if stats, exists := s.registry.GetServerStats(serverID); exists {
+		return stats, nil
+	}
+
+	// If not in cache, try to get from database (historical stats)
+	// Note: We would need to implement a ServerStatsModel in service.models
+	// For now, return basic stats with zero values
+	defaultStats := &types.ServerStats{
+		ServerID:        serverID,
+		TotalRequests:   0,
+		SuccessRequests: 0,
+		ErrorRequests:   0,
+		AvgLatency:      0.0,
+		LastRequest:     time.Time{}, // Zero time indicates no requests yet
+	}
+
+	// Initialize stats in registry cache for future use
+	s.registry.UpdateServerStats(serverID, defaultStats)
+
+	return defaultStats, nil
 }
 
 // Start starts the discovery service
@@ -524,7 +544,99 @@ func (s *Service) performHealthCheck(serverID uuid.UUID) {
 
 // checkServerHealth performs the actual health check logic
 func (s *Service) checkServerHealth(server *models.MCPServer) string {
-	// TODO: Implement actual health checking logic based on protocol
-	// For now, just return active status (matching server_status_enum)
+	// Implement health checking logic based on protocol
+	switch server.Protocol {
+	case "http", "https":
+		// For HTTP/HTTPS servers, perform HTTP health check
+		return s.checkHTTPHealth(server)
+
+	case "websocket", "ws", "wss":
+		// For WebSocket servers, attempt connection test
+		return s.checkWebSocketHealth(server)
+
+	case "stdio":
+		// For STDIO servers, check if command exists and is executable
+		return s.checkSTDIOHealth(server)
+
+	case "tcp":
+		// For TCP servers, attempt socket connection
+		return s.checkTCPHealth(server)
+
+	default:
+		// For unknown protocols, assume healthy if server is active
+		log.Printf("Unknown protocol '%s' for server %s, assuming healthy", server.Protocol, server.ID)
+		return types.ServerStatusActive
+	}
+}
+
+// Protocol-specific health check methods
+
+// checkHTTPHealth performs HTTP-based health check
+func (s *Service) checkHTTPHealth(server *models.MCPServer) string {
+	if !server.URL.Valid || server.URL.String == "" {
+		return types.ServerStatusInactive
+	}
+
+	// Use a short timeout for health checks
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+
+	healthURL := server.URL.String
+	if server.HealthCheckURL.Valid && server.HealthCheckURL.String != "" {
+		healthURL = server.HealthCheckURL.String
+	} else {
+		healthURL += "/health"
+	}
+
+	resp, err := client.Get(healthURL)
+	if err != nil {
+		log.Printf("HTTP health check failed for server %s: %v", server.ID, err)
+		return types.ServerStatusUnhealthy
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		return types.ServerStatusActive
+	}
+
+	return types.ServerStatusUnhealthy
+}
+
+// checkWebSocketHealth performs WebSocket-based health check
+func (s *Service) checkWebSocketHealth(server *models.MCPServer) string {
+	// For WebSocket servers, we could attempt a connection test
+	// For now, assume healthy if URL is provided
+	if !server.URL.Valid || server.URL.String == "" {
+		return types.ServerStatusInactive
+	}
+
+	// TODO: Implement actual WebSocket connection test
+	log.Printf("WebSocket health check not fully implemented for server %s, assuming active", server.ID)
+	return types.ServerStatusActive
+}
+
+// checkSTDIOHealth performs STDIO-based health check
+func (s *Service) checkSTDIOHealth(server *models.MCPServer) string {
+	// For STDIO servers, check if the command exists
+	if !server.Command.Valid || server.Command.String == "" {
+		return types.ServerStatusInactive
+	}
+
+	// TODO: Could check if command exists and is executable
+	// For now, assume healthy if command is specified
+	log.Printf("STDIO health check not fully implemented for server %s, assuming active", server.ID)
+	return types.ServerStatusActive
+}
+
+// checkTCPHealth performs TCP-based health check
+func (s *Service) checkTCPHealth(server *models.MCPServer) string {
+	// For TCP servers, we could attempt a socket connection
+	if !server.URL.Valid || server.URL.String == "" {
+		return types.ServerStatusInactive
+	}
+
+	// TODO: Implement actual TCP connection test
+	log.Printf("TCP health check not fully implemented for server %s, assuming active", server.ID)
 	return types.ServerStatusActive
 }

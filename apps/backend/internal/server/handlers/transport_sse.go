@@ -96,26 +96,31 @@ func (h *SSEHandler) HandleServerSSE(c *gin.Context) {
 
 // HandleSSEEvents handles posting events to SSE streams
 func (h *SSEHandler) HandleSSEEvents(c *gin.Context) {
-	// Get session ID
-	sessionID := middleware.GetSessionID(c)
-	if sessionID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "session_id is required",
-		})
-		return
-	}
-
-	// Parse event data
+	// Parse event data first to potentially get session_id from body
 	var eventData struct {
-		Event string      `json:"event"`
-		Data  interface{} `json:"data"`
-		ID    string      `json:"id,omitempty"`
-		Retry int         `json:"retry,omitempty"`
+		Event     string      `json:"event"`
+		Data      interface{} `json:"data"`
+		ID        string      `json:"id,omitempty"`
+		Retry     int         `json:"retry,omitempty"`
+		SessionID string      `json:"session_id,omitempty"`
 	}
 
 	if err := c.ShouldBindJSON(&eventData); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid event data: " + err.Error(),
+		})
+		return
+	}
+
+	// Get session ID from middleware first, then fallback to request body
+	sessionID := middleware.GetSessionID(c)
+	if sessionID == "" && eventData.SessionID != "" {
+		sessionID = eventData.SessionID
+	}
+
+	if sessionID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "session_id is required (via header or request body)",
 		})
 		return
 	}
@@ -147,6 +152,7 @@ func (h *SSEHandler) HandleSSEEvents(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
+		"success":    true,
 		"message":    "Event sent successfully",
 		"session_id": sessionID,
 		"event_id":   sseEvent.ID,
@@ -188,6 +194,7 @@ func (h *SSEHandler) HandleSSEBroadcast(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
+		"success": true,
 		"message": "Event broadcasted successfully",
 		"event":   broadcastData.Event,
 	})
@@ -223,8 +230,17 @@ func (h *SSEHandler) HandleSSEStatus(c *gin.Context) {
 	// Get metrics
 	metrics := h.transportManager.GetMetrics()
 
+	// Extract total connections from metrics, default to 0 if not found
+	totalConnections := 0
+	if connectionsTotal, ok := metrics["connections_total"].(int64); ok {
+		totalConnections = int(connectionsTotal)
+	} else if connectionsTotal, ok := metrics["connections_total"].(int); ok {
+		totalConnections = connectionsTotal
+	}
+
 	response := gin.H{
 		"active_connections": len(sseSessions),
+		"total_connections":  totalConnections,
 		"sessions":           sseSessions,
 		"metrics":            metrics,
 		"transport_type":     types.TransportTypeSSE,

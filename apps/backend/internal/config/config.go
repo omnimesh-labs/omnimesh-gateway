@@ -3,6 +3,8 @@ package config
 import (
 	"fmt"
 	"os"
+	"regexp"
+	"strings"
 	"time"
 
 	"mcp-gateway/apps/backend/internal/types"
@@ -195,12 +197,46 @@ func loadFromFile(configPath string) (*Config, error) {
 		return nil, err
 	}
 
+	// Expand environment variables
+	expandedData := expandEnvVars(string(data))
+
 	var config Config
-	if err := yaml.Unmarshal(data, &config); err != nil {
+	if err := yaml.Unmarshal([]byte(expandedData), &config); err != nil {
 		return nil, err
 	}
 
 	return &config, nil
+}
+
+// expandEnvVars expands environment variables in the format ${VAR:-default}
+func expandEnvVars(input string) string {
+	// Pattern matches ${VAR:-default} or ${VAR}
+	envVarPattern := regexp.MustCompile(`\$\{([^}]+)\}`)
+
+	return envVarPattern.ReplaceAllStringFunc(input, func(match string) string {
+		// Remove ${ and }
+		varExpr := match[2 : len(match)-1]
+
+		// Check if it has a default value (VAR:-default)
+		if strings.Contains(varExpr, ":-") {
+			parts := strings.SplitN(varExpr, ":-", 2)
+			envVar := parts[0]
+			defaultValue := parts[1]
+
+			if value := os.Getenv(envVar); value != "" {
+				return value
+			}
+			return defaultValue
+		}
+
+		// Simple variable ${VAR}
+		if value := os.Getenv(varExpr); value != "" {
+			return value
+		}
+
+		// If no environment variable is set and no default, return empty string
+		return ""
+	})
 }
 
 // overrideWithEnv overrides configuration with environment variables

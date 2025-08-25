@@ -51,16 +51,18 @@ func TimeoutWithConfig(config *TimeoutConfig) gin.HandlerFunc {
 			// Request completed normally
 			return
 		case <-ctx.Done():
-			// Request timed out
-			if config.TimeoutHandler != nil {
-				config.TimeoutHandler(c)
-			} else {
-				// Default timeout response
-				errorResp := &types.ErrorResponse{
-					Error:   types.NewTimeoutError("Request timeout"),
-					Success: false,
+			// Request timed out - only write response if headers haven't been written yet
+			if !c.Writer.Written() {
+				if config.TimeoutHandler != nil {
+					config.TimeoutHandler(c)
+				} else {
+					// Default timeout response
+					errorResp := &types.ErrorResponse{
+						Error:   types.NewTimeoutError("Request timeout"),
+						Success: false,
+					}
+					c.JSON(http.StatusGatewayTimeout, errorResp)
 				}
-				c.JSON(http.StatusGatewayTimeout, errorResp)
 			}
 			c.Abort()
 			return

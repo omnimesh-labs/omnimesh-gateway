@@ -118,6 +118,37 @@ func ValidateMessage(message interface{}) error {
 		return nil
 	}
 
+	// Check if it's a streamable HTTP request
+	if streamReq, ok := message.(*types.StreamableHTTPRequest); ok {
+		if streamReq.Method == "" {
+			return fmt.Errorf("streamable HTTP request method is required")
+		}
+		// Path can be optional, StreamMode can have defaults
+		return nil
+	}
+
+	// Check if it's a WebSocket message
+	if wsMsg, ok := message.(*types.WebSocketMessage); ok {
+		if wsMsg.Type == "" {
+			return fmt.Errorf("WebSocket message type is required")
+		}
+		return nil
+	}
+
+	// Check if it's an SSE event
+	if _, ok := message.(*types.SSEEvent); ok {
+		// SSE events have minimal required fields, mostly optional
+		return nil
+	}
+
+	// Check if it's an STDIO command
+	if stdioCmd, ok := message.(*types.STDIOCommand); ok {
+		if stdioCmd.Command == "" {
+			return fmt.Errorf("STDIO command is required")
+		}
+		return nil
+	}
+
 	return fmt.Errorf("unsupported message type: %T", message)
 }
 

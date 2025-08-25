@@ -2,7 +2,10 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -36,13 +39,66 @@ func (h *STDIOHandler) HandleSTDIOExecute(c *gin.Context) {
 		return
 	}
 
-	// Parse STDIO command
-	var stdioCmd types.STDIOCommand
-	if err := c.ShouldBindJSON(&stdioCmd); err != nil {
+	// Read raw request body first
+	body, err := c.GetRawData()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to read request body: " + err.Error(),
+		})
+		return
+	}
+
+	// Parse STDIO command manually to handle timeout field properly
+	var rawCmd map[string]interface{}
+	if err := json.Unmarshal(body, &rawCmd); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid STDIO command: " + err.Error(),
 		})
 		return
+	}
+
+	// Convert to STDIOCommand struct
+	stdioCmd := types.STDIOCommand{}
+
+	if cmd, ok := rawCmd["command"].(string); ok {
+		stdioCmd.Command = cmd
+	}
+
+	if dir, ok := rawCmd["dir"].(string); ok {
+		stdioCmd.Dir = dir
+	}
+
+	// Handle args - can be []interface{} or []string
+	if args, ok := rawCmd["args"].([]interface{}); ok {
+		for _, arg := range args {
+			if argStr, ok := arg.(string); ok {
+				stdioCmd.Args = append(stdioCmd.Args, argStr)
+			}
+		}
+	}
+
+	// Handle environment variables
+	if envMap, ok := rawCmd["env"].(map[string]interface{}); ok {
+		stdioCmd.Env = make(map[string]string)
+		for key, value := range envMap {
+			if valueStr, ok := value.(string); ok {
+				stdioCmd.Env[key] = valueStr
+			}
+		}
+	}
+
+	// Handle timeout - can be integer (nanoseconds) or string duration
+	if timeoutRaw, exists := rawCmd["timeout"]; exists {
+		switch t := timeoutRaw.(type) {
+		case float64:
+			stdioCmd.Timeout = time.Duration(int64(t)) * time.Nanosecond
+		case int64:
+			stdioCmd.Timeout = time.Duration(t) * time.Nanosecond
+		case string:
+			if parsed, err := time.ParseDuration(t); err == nil {
+				stdioCmd.Timeout = parsed
+			}
+		}
 	}
 
 	// Validate command
@@ -91,27 +147,42 @@ func (h *STDIOHandler) HandleSTDIOExecute(c *gin.Context) {
 		stdioTransport.SetSessionID(session.ID)
 	}
 
-	// Execute the command using interface method if available
+	// For simple command execution, execute directly without expecting MCP protocol
 	var response interface{}
-	if executor, ok := stdioTransport.(interface {
-		ExecuteCommand(context.Context, *types.STDIOCommand) (interface{}, error)
-	}); ok {
-		response, err = executor.ExecuteCommand(c.Request.Context(), &stdioCmd)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to execute command: " + err.Error(),
-			})
-			return
+
+	// Execute the command directly using os/exec for simple shell commands
+	cmdCtx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(cmdCtx, stdioCmd.Command, stdioCmd.Args...)
+
+	// Set environment variables if provided
+	if stdioCmd.Env != nil {
+		for key, value := range stdioCmd.Env {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", key, value))
+		}
+	}
+
+	// Set working directory if provided
+	if stdioCmd.Dir != "" {
+		cmd.Dir = stdioCmd.Dir
+	}
+
+	// Execute the command and capture output
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		// Command failed, but we still want to return the output
+		response = map[string]interface{}{
+			"output": string(output),
+			"error":  err.Error(),
+			"status": "failed",
 		}
 	} else {
-		// Fallback to sending the command as a message
-		if err := stdioTransport.SendMessage(c.Request.Context(), &stdioCmd); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to send command: " + err.Error(),
-			})
-			return
+		// Command succeeded
+		response = map[string]interface{}{
+			"output": string(output),
+			"status": "success",
 		}
-		response = map[string]interface{}{"status": "command_sent"}
 	}
 
 	// Clean up connection after execution
@@ -127,18 +198,34 @@ func (h *STDIOHandler) HandleSTDIOExecute(c *gin.Context) {
 		pid = pidGetter.GetPID()
 	}
 
-	// Return response
+	// Return response with expected structure
 	var sessionID string
 	if session != nil {
 		sessionID = session.ID
 	}
 
+	// Extract output from response
+	var outputData interface{}
+	if response != nil {
+		if respMap, ok := response.(map[string]interface{}); ok {
+			if respMap["output"] != nil {
+				outputData = respMap["output"]
+			} else if respMap["result"] != nil {
+				outputData = respMap["result"]
+			} else {
+				outputData = response
+			}
+		} else {
+			outputData = response
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"status":     "success",
+		"success":    true,
+		"output":     outputData,
 		"command":    stdioCmd.Command,
 		"args":       stdioCmd.Args,
 		"pid":        pid,
-		"response":   response,
 		"session_id": sessionID,
 		"timestamp":  time.Now(),
 	})
@@ -352,8 +439,12 @@ func (h *STDIOHandler) handleSTDIOStatus(c *gin.Context) {
 		// Get status for specific session
 		transport, err := h.transportManager.GetConnection(sessionID)
 		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": "STDIO process not found: " + err.Error(),
+			// Session doesn't exist, return status with "not_found" status instead of error
+			c.JSON(http.StatusOK, gin.H{
+				"session_id": sessionID,
+				"status":     "not_found",
+				"message":    "STDIO process not found",
+				"timestamp":  time.Now(),
 			})
 			return
 		}
@@ -391,7 +482,8 @@ func (h *STDIOHandler) handleSTDIOStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"transport_type":   types.TransportTypeSTDIO,
 		"active_processes": len(stdioSessions),
-		"sessions":         stdioSessions,
+		"processes":        stdioSessions,
+		"sessions":         stdioSessions, // TODO: safe to remove this?
 		"timestamp":        time.Now(),
 	})
 }
