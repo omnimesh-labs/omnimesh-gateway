@@ -1,5 +1,5 @@
 import { useState, ReactNode, useMemo, useEffect, useCallback } from 'react';
-import _ from 'lodash';
+import { merge, isEqual } from '../../../utils/lodashReplacements';
 import { defaultSettings, getParsedQuerySettings } from '@fuse/default-settings';
 import settingsConfig from 'src/configs/settingsConfig';
 import themeLayoutConfigs from 'src/components/theme-layouts/themeLayoutConfigs';
@@ -15,13 +15,13 @@ const getInitialSettings = (): SettingsConfigType => {
 		style: defaultLayoutStyle,
 		config: themeLayoutConfigs[defaultLayoutStyle]?.defaults
 	};
-	return _.merge({}, defaultSettings, { layout }, settingsConfig, getParsedQuerySettings());
+	return merge({}, defaultSettings, { layout }, settingsConfig, getParsedQuerySettings());
 };
 
 const initialSettings = getInitialSettings();
 
 const generateSettings = (_defaultSettings: SettingsConfigType, _newSettings: PartialDeep<SettingsConfigType>) => {
-	return _.merge(
+	return merge(
 		{},
 		_defaultSettings,
 		{ layout: { config: themeLayoutConfigs[_newSettings?.layout?.style]?.defaults } },
@@ -36,8 +36,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 	const userSettings = useMemo(() => user?.settings || {}, [user]);
 
 	const calculateSettings = useCallback(() => {
-		const defaultSettings = _.merge({}, initialSettings);
-		return isGuest ? defaultSettings : _.merge({}, defaultSettings, userSettings);
+		const defaultSettings = merge({}, initialSettings);
+		return isGuest ? defaultSettings : merge({}, defaultSettings, userSettings);
 	}, [isGuest, userSettings]);
 
 	const [data, setData] = useState<SettingsConfigType>(calculateSettings());
@@ -47,7 +47,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 		const newSettings = calculateSettings();
 
 		// Only update if settings are different
-		if (!_.isEqual(data, newSettings)) {
+		if (!isEqual(data, newSettings)) {
 			setData(newSettings);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -57,8 +57,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 		(newSettings: Partial<SettingsConfigType>) => {
 			const _settings = generateSettings(data, newSettings);
 
-			if (!_.isEqual(_settings, data)) {
-				setData(_.merge({}, _settings));
+			if (!isEqual(_settings, data)) {
+				setData(merge({}, _settings));
 			}
 
 			return _settings;

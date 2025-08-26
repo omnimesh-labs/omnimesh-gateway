@@ -1,5 +1,5 @@
 import { useEffect, useRef, useMemo } from 'react';
-import deepEqual from 'lodash/isEqual';
+import { isEqual } from '../../utils/lodashReplacements';
 
 type UseEffectParamsType = Parameters<typeof useEffect>;
 type EffectCallbackType = UseEffectParamsType[0];
@@ -41,7 +41,7 @@ export function useDeepCompareMemoize<T>(value: T) {
 	const ref = useRef<T>(value);
 	const signalRef = useRef<number>(0);
 
-	if (!deepEqual(value, ref.current)) {
+	if (!isEqual(value, ref.current)) {
 		ref.current = value;
 		signalRef.current += 1;
 	}

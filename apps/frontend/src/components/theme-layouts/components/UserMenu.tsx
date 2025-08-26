@@ -101,8 +101,8 @@ function UserMenu(props: UserMenuProps) {
 											user.role && Array.isArray(user.role) && user.role.length > 0
 												? user.role.join(', ')
 												: user.role && typeof user.role === 'string'
-												? user.role
-												: 'Guest'
+													? user.role
+													: 'Guest'
 										}
 									>
 										<SvgIcon className="info-icon">lucide:info</SvgIcon>

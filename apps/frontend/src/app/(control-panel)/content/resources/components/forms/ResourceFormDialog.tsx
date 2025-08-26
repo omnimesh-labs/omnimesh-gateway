@@ -12,22 +12,8 @@ import {
 	DialogHeader,
 	DialogTitle
 } from '@/components/ui/dialog';
-import {
-	Form,
-	FormControl,
-	FormDescription,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage
-} from '@/components/ui/form';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue
-} from '@/components/ui/select';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -61,7 +47,7 @@ export default function ResourceFormDialog({ open, onClose, resource }: Resource
 	const isEdit = !!resource;
 	const createMutation = useCreateResource();
 	const updateMutation = useUpdateResource();
-	
+
 	const form = useForm<ResourceFormData>({
 		resolver: zodResolver(resourceSchema),
 		defaultValues: {
@@ -75,13 +61,23 @@ export default function ResourceFormDialog({ open, onClose, resource }: Resource
 			metadata: ''
 		}
 	});
-	
+
 	useEffect(() => {
 		if (resource) {
 			form.reset({
 				name: resource.name,
 				description: resource.description || '',
-				resource_type: resource.resource_type as any,
+				resource_type: resource.resource_type as
+					| 'file'
+					| 'folder'
+					| 'database'
+					| 'api'
+					| 'url'
+					| 'document'
+					| 'image'
+					| 'video'
+					| 'audio'
+					| 'other',
 				uri: resource.uri,
 				mime_type: resource.mime_type || '',
 				size_bytes: resource.size_bytes,
@@ -102,17 +98,17 @@ export default function ResourceFormDialog({ open, onClose, resource }: Resource
 			});
 		}
 	}, [resource, form]);
-	
+
 	const handleSubmit = async (data: ResourceFormData) => {
 		try {
 			const metadata = data.metadata ? JSON.parse(data.metadata) : undefined;
-			
+
 			const payload = {
 				...data,
 				metadata,
-				tags: data.tags?.filter(tag => tag.trim() !== '')
+				tags: data.tags?.filter((tag) => tag.trim() !== '')
 			};
-			
+
 			if (isEdit && resource) {
 				await updateMutation.mutateAsync({
 					id: resource.id,
@@ -121,37 +117,47 @@ export default function ResourceFormDialog({ open, onClose, resource }: Resource
 			} else {
 				await createMutation.mutateAsync(payload);
 			}
-			
+
 			onClose();
-		} catch (error) {
+		} catch (_error) {
 			// Error is handled by the mutation hooks
 		}
 	};
-	
+
 	const handleAddTag = (tag: string) => {
 		const currentTags = form.getValues('tags') || [];
+
 		if (tag && !currentTags.includes(tag)) {
 			form.setValue('tags', [...currentTags, tag]);
 		}
 	};
-	
+
 	const handleRemoveTag = (tagToRemove: string) => {
 		const currentTags = form.getValues('tags') || [];
-		form.setValue('tags', currentTags.filter(tag => tag !== tagToRemove));
+		form.setValue(
+			'tags',
+			currentTags.filter((tag) => tag !== tagToRemove)
+		);
 	};
-	
+
 	return (
-		<Dialog open={open} onOpenChange={onClose}>
-			<DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+		<Dialog
+			open={open}
+			onOpenChange={onClose}
+		>
+			<DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
 				<DialogHeader>
 					<DialogTitle>{isEdit ? 'Edit Resource' : 'Create Resource'}</DialogTitle>
 					<DialogDescription>
 						{isEdit ? 'Update the resource details' : 'Add a new resource to your gateway'}
 					</DialogDescription>
 				</DialogHeader>
-				
+
 				<Form {...form}>
-					<form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+					<form
+						onSubmit={form.handleSubmit(handleSubmit)}
+						className="space-y-4"
+					>
 						<FormField
 							control={form.control}
 							name="name"
@@ -159,13 +165,16 @@ export default function ResourceFormDialog({ open, onClose, resource }: Resource
 								<FormItem>
 									<FormLabel>Name</FormLabel>
 									<FormControl>
-										<Input placeholder="My Resource" {...field} />
+										<Input
+											placeholder="My Resource"
+											{...field}
+										/>
 									</FormControl>
 									<FormMessage />
 								</FormItem>
 							)}
 						/>
-						
+
 						<FormField
 							control={form.control}
 							name="description"
@@ -183,7 +192,7 @@ export default function ResourceFormDialog({ open, onClose, resource }: Resource
 								</FormItem>
 							)}
 						/>
-						
+
 						<div className="grid grid-cols-2 gap-4">
 							<FormField
 								control={form.control}
@@ -191,7 +200,10 @@ export default function ResourceFormDialog({ open, onClose, resource }: Resource
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel>Resource Type</FormLabel>
-										<Select onValueChange={field.onChange} value={field.value}>
+										<Select
+											onValueChange={field.onChange}
+											value={field.value}
+										>
 											<FormControl>
 												<SelectTrigger>
 													<SelectValue placeholder="Select type" />
@@ -210,7 +222,7 @@ export default function ResourceFormDialog({ open, onClose, resource }: Resource
 									</FormItem>
 								)}
 							/>
-							
+
 							<FormField
 								control={form.control}
 								name="mime_type"
@@ -218,7 +230,10 @@ export default function ResourceFormDialog({ open, onClose, resource }: Resource
 									<FormItem>
 										<FormLabel>MIME Type</FormLabel>
 										<FormControl>
-											<Input placeholder="application/json" {...field} />
+											<Input
+												placeholder="application/json"
+												{...field}
+											/>
 										</FormControl>
 										<FormDescription>Optional</FormDescription>
 										<FormMessage />
@@ -226,7 +241,7 @@ export default function ResourceFormDialog({ open, onClose, resource }: Resource
 								)}
 							/>
 						</div>
-						
+
 						<FormField
 							control={form.control}
 							name="uri"
@@ -234,16 +249,17 @@ export default function ResourceFormDialog({ open, onClose, resource }: Resource
 								<FormItem>
 									<FormLabel>URI</FormLabel>
 									<FormControl>
-										<Input placeholder="https://example.com/resource or /path/to/file" {...field} />
+										<Input
+											placeholder="https://example.com/resource or /path/to/file"
+											{...field}
+										/>
 									</FormControl>
-									<FormDescription>
-										The location of the resource
-									</FormDescription>
+									<FormDescription>The location of the resource</FormDescription>
 									<FormMessage />
 								</FormItem>
 							)}
 						/>
-						
+
 						<FormField
 							control={form.control}
 							name="size_bytes"
@@ -255,7 +271,9 @@ export default function ResourceFormDialog({ open, onClose, resource }: Resource
 											type="number"
 											placeholder="1024"
 											{...field}
-											onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+											onChange={(e) =>
+												field.onChange(e.target.value ? parseInt(e.target.value) : undefined)
+											}
 										/>
 									</FormControl>
 									<FormDescription>Optional file size in bytes</FormDescription>
@@ -263,7 +281,7 @@ export default function ResourceFormDialog({ open, onClose, resource }: Resource
 								</FormItem>
 							)}
 						/>
-						
+
 						<FormField
 							control={form.control}
 							name="tags"
@@ -284,7 +302,11 @@ export default function ResourceFormDialog({ open, onClose, resource }: Resource
 											/>
 											<div className="flex flex-wrap gap-2">
 												{field.value?.map((tag) => (
-													<Badge key={tag} variant="secondary" className="gap-1">
+													<Badge
+														key={tag}
+														variant="secondary"
+														className="gap-1"
+													>
 														{tag}
 														<X
 															className="h-3 w-3 cursor-pointer"
@@ -300,7 +322,7 @@ export default function ResourceFormDialog({ open, onClose, resource }: Resource
 								</FormItem>
 							)}
 						/>
-						
+
 						<FormField
 							control={form.control}
 							name="metadata"
@@ -315,14 +337,12 @@ export default function ResourceFormDialog({ open, onClose, resource }: Resource
 											className="font-mono text-sm"
 										/>
 									</FormControl>
-									<FormDescription>
-										Additional metadata in JSON format
-									</FormDescription>
+									<FormDescription>Additional metadata in JSON format</FormDescription>
 									<FormMessage />
 								</FormItem>
 							)}
 						/>
-						
+
 						<FormField
 							control={form.control}
 							name="is_active"
@@ -330,9 +350,7 @@ export default function ResourceFormDialog({ open, onClose, resource }: Resource
 								<FormItem className="flex items-center justify-between rounded-lg border p-3">
 									<div className="space-y-0.5">
 										<FormLabel>Active</FormLabel>
-										<FormDescription>
-											Enable or disable this resource
-										</FormDescription>
+										<FormDescription>Enable or disable this resource</FormDescription>
 									</div>
 									<FormControl>
 										<Switch
@@ -343,9 +361,13 @@ export default function ResourceFormDialog({ open, onClose, resource }: Resource
 								</FormItem>
 							)}
 						/>
-						
+
 						<DialogFooter>
-							<Button type="button" variant="outline" onClick={onClose}>
+							<Button
+								type="button"
+								variant="outline"
+								onClick={onClose}
+							>
 								Cancel
 							</Button>
 							<Button
@@ -355,8 +377,8 @@ export default function ResourceFormDialog({ open, onClose, resource }: Resource
 								{createMutation.isPending || updateMutation.isPending
 									? 'Saving...'
 									: isEdit
-									? 'Update'
-									: 'Create'}
+										? 'Update'
+										: 'Create'}
 							</Button>
 						</DialogFooter>
 					</form>

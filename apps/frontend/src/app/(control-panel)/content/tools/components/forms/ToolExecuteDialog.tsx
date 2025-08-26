@@ -9,7 +9,6 @@ import {
 	DialogTitle,
 	Button,
 	TextField,
-	Tabs,
 	Tab,
 	Box,
 	Typography,
@@ -18,9 +17,10 @@ import {
 	CircularProgress
 } from '@mui/material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
-import { Loader2, Copy, CheckCircle, AlertCircle } from 'lucide-react';
+import { Copy, CheckCircle } from 'lucide-react';
 import { useTool, useExecuteTool } from '../../api/hooks/useTools';
 import { enqueueSnackbar } from 'notistack';
+import { JSONSchema } from '@/lib/types';
 
 interface ToolExecuteDialogProps {
 	toolId: string | null;
@@ -28,20 +28,20 @@ interface ToolExecuteDialogProps {
 }
 
 export default function ToolExecuteDialog({ toolId, onClose }: ToolExecuteDialogProps) {
-	const [result, setResult] = useState<any>(null);
+	const [result, setResult] = useState<unknown>(null);
 	const [error, setError] = useState<string>('');
 	const [copied, setCopied] = useState(false);
 	const [tabValue, setTabValue] = useState('execute');
-	
+
 	const { data: tool } = useTool(toolId);
 	const executeMutation = useExecuteTool();
-	
+
 	const { control, handleSubmit, reset } = useForm({
 		defaultValues: {
 			parameters: ''
 		}
 	});
-	
+
 	useEffect(() => {
 		if (tool?.schema) {
 			// Generate example parameters based on schema
@@ -54,15 +54,16 @@ export default function ToolExecuteDialog({ toolId, onClose }: ToolExecuteDialog
 				parameters: '{}'
 			});
 		}
+
 		setResult(null);
 		setError('');
 	}, [tool, reset]);
-	
-	const generateExampleFromSchema = (schema: any): any => {
+
+	const generateExampleFromSchema = (schema: JSONSchema): Record<string, unknown> => {
 		if (!schema || !schema.properties) return {};
-		
-		const example: any = {};
-		Object.entries(schema.properties).forEach(([key, prop]: [string, any]) => {
+
+		const example: Record<string, unknown> = {};
+		Object.entries(schema.properties).forEach(([key, prop]) => {
 			switch (prop.type) {
 				case 'string':
 					example[key] = prop.example || prop.default || '';
@@ -86,13 +87,13 @@ export default function ToolExecuteDialog({ toolId, onClose }: ToolExecuteDialog
 		});
 		return example;
 	};
-	
-	const handleExecute = async (data: any) => {
+
+	const handleExecute = async (data: { parameters: string }) => {
 		if (!toolId) return;
-		
+
 		setError('');
 		setResult(null);
-		
+
 		try {
 			const parameters = JSON.parse(data.parameters);
 			const response = await executeMutation.mutateAsync({
@@ -100,25 +101,34 @@ export default function ToolExecuteDialog({ toolId, onClose }: ToolExecuteDialog
 				data: { parameters }
 			});
 			setResult(response.result);
-		} catch (error: any) {
-			setError(error.message || 'Failed to execute tool');
+		} catch (error) {
+			const message = error instanceof Error ? error.message : 'Failed to execute tool';
+			setError(message);
 		}
 	};
-	
+
 	const handleCopy = (text: string) => {
 		navigator.clipboard.writeText(text);
 		setCopied(true);
 		enqueueSnackbar('Copied to clipboard', { variant: 'success' });
 		setTimeout(() => setCopied(false), 2000);
 	};
-	
+
 	if (!toolId || !tool) return null;
-	
+
 	return (
-		<Dialog open={!!toolId} onClose={onClose} maxWidth="lg" fullWidth>
+		<Dialog
+			open={!!toolId}
+			onClose={onClose}
+			maxWidth="lg"
+			fullWidth
+		>
 			<DialogTitle>
 				Execute Tool: {tool.name}
-				<Typography variant="body2" color="text.secondary">
+				<Typography
+					variant="body2"
+					color="text.secondary"
+				>
 					Test the tool with custom parameters
 				</Typography>
 			</DialogTitle>
@@ -126,18 +136,38 @@ export default function ToolExecuteDialog({ toolId, onClose }: ToolExecuteDialog
 				<TabContext value={tabValue}>
 					<Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
 						<TabList onChange={(_, newValue) => setTabValue(newValue)}>
-							<Tab label="Execute" value="execute" />
-							<Tab label="Schema" value="schema" />
-							<Tab label="Examples" value="examples" />
+							<Tab
+								label="Execute"
+								value="execute"
+							/>
+							<Tab
+								label="Schema"
+								value="schema"
+							/>
+							<Tab
+								label="Examples"
+								value="examples"
+							/>
 						</TabList>
 					</Box>
-					
-					<TabPanel value="execute" sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 2 }}>
+
+					<TabPanel
+						value="execute"
+						sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 2 }}
+					>
 						<Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, flex: 1 }}>
 							{/* Input */}
 							<Box sx={{ display: 'flex', flexDirection: 'column' }}>
-								<Typography variant="subtitle2" sx={{ mb: 1 }}>Parameters</Typography>
-								<form onSubmit={handleSubmit(handleExecute)} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
+								<Typography
+									variant="subtitle2"
+									sx={{ mb: 1 }}
+								>
+									Parameters
+								</Typography>
+								<form
+									onSubmit={handleSubmit(handleExecute)}
+									style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}
+								>
 									<Controller
 										name="parameters"
 										control={control}
@@ -149,7 +179,7 @@ export default function ToolExecuteDialog({ toolId, onClose }: ToolExecuteDialog
 												rows={10}
 												variant="outlined"
 												fullWidth
-												sx={{ 
+												sx={{
 													flex: 1,
 													'& .MuiInputBase-input': {
 														fontFamily: 'monospace',
@@ -160,7 +190,7 @@ export default function ToolExecuteDialog({ toolId, onClose }: ToolExecuteDialog
 											/>
 										)}
 									/>
-									
+
 									<Button
 										type="submit"
 										variant="contained"
@@ -172,45 +202,53 @@ export default function ToolExecuteDialog({ toolId, onClose }: ToolExecuteDialog
 									</Button>
 								</form>
 							</Box>
-							
+
 							{/* Output */}
 							<Box sx={{ display: 'flex', flexDirection: 'column' }}>
-								<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+								<Box
+									sx={{
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'space-between',
+										mb: 1
+									}}
+								>
 									<Typography variant="subtitle2">Result</Typography>
 									{result && (
 										<IconButton
 											size="small"
 											onClick={() => handleCopy(JSON.stringify(result, null, 2))}
 										>
-											{copied ? (
-												<CheckCircle style={{ color: 'green' }} />
-											) : (
-												<Copy />
-											)}
+											{copied ? <CheckCircle style={{ color: 'green' }} /> : <Copy />}
 										</IconButton>
 									)}
 								</Box>
-								
-								<Box sx={{ 
-									flex: 1, 
-									border: 1, 
-									borderColor: 'divider', 
-									borderRadius: 1, 
-									p: 2, 
-									backgroundColor: 'grey.50',
-									overflow: 'auto'
-								}}>
+
+								<Box
+									sx={{
+										flex: 1,
+										border: 1,
+										borderColor: 'divider',
+										borderRadius: 1,
+										p: 2,
+										backgroundColor: 'grey.50',
+										overflow: 'auto'
+									}}
+								>
 									{error && (
-										<Alert severity="error" sx={{ mb: 2 }}>
+										<Alert
+											severity="error"
+											sx={{ mb: 2 }}
+										>
 											<Typography variant="body2">Error: {error}</Typography>
 										</Alert>
 									)}
-									
+
 									{result && (
 										<Box
 											component="pre"
-											sx={{ 
-												fontSize: '0.875rem', 
+											sx={{
+												fontSize: '0.875rem',
 												whiteSpace: 'pre-wrap',
 												fontFamily: 'monospace'
 											}}
@@ -218,9 +256,12 @@ export default function ToolExecuteDialog({ toolId, onClose }: ToolExecuteDialog
 											{JSON.stringify(result, null, 2)}
 										</Box>
 									)}
-									
+
 									{!error && !result && (
-										<Typography variant="body2" color="text.secondary">
+										<Typography
+											variant="body2"
+											color="text.secondary"
+										>
 											Execute the tool to see results here
 										</Typography>
 									)}
@@ -228,22 +269,27 @@ export default function ToolExecuteDialog({ toolId, onClose }: ToolExecuteDialog
 							</Box>
 						</Box>
 					</TabPanel>
-					
-					<TabPanel value="schema" sx={{ flex: 1, p: 2 }}>
-						<Box sx={{ 
-							height: '100%', 
-							border: 1, 
-							borderColor: 'divider', 
-							borderRadius: 1, 
-							p: 2, 
-							backgroundColor: 'grey.50',
-							overflow: 'auto'
-						}}>
+
+					<TabPanel
+						value="schema"
+						sx={{ flex: 1, p: 2 }}
+					>
+						<Box
+							sx={{
+								height: '100%',
+								border: 1,
+								borderColor: 'divider',
+								borderRadius: 1,
+								p: 2,
+								backgroundColor: 'grey.50',
+								overflow: 'auto'
+							}}
+						>
 							{tool.schema ? (
 								<Box
 									component="pre"
-									sx={{ 
-										fontSize: '0.875rem', 
+									sx={{
+										fontSize: '0.875rem',
 										whiteSpace: 'pre-wrap',
 										fontFamily: 'monospace'
 									}}
@@ -251,69 +297,95 @@ export default function ToolExecuteDialog({ toolId, onClose }: ToolExecuteDialog
 									{JSON.stringify(tool.schema, null, 2)}
 								</Box>
 							) : (
-								<Typography variant="body2" color="text.secondary">
+								<Typography
+									variant="body2"
+									color="text.secondary"
+								>
 									No schema defined for this tool
 								</Typography>
 							)}
 						</Box>
 					</TabPanel>
-					
-					<TabPanel value="examples" sx={{ flex: 1, p: 2 }}>
-						<Box sx={{ 
-							height: '100%', 
-							border: 1, 
-							borderColor: 'divider', 
-							borderRadius: 1, 
-							p: 2, 
-							backgroundColor: 'grey.50',
-							overflow: 'auto'
-						}}>
+
+					<TabPanel
+						value="examples"
+						sx={{ flex: 1, p: 2 }}
+					>
+						<Box
+							sx={{
+								height: '100%',
+								border: 1,
+								borderColor: 'divider',
+								borderRadius: 1,
+								p: 2,
+								backgroundColor: 'grey.50',
+								overflow: 'auto'
+							}}
+						>
 							{tool.examples && tool.examples.length > 0 ? (
 								<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-									{(tool.examples as any[]).map((example, index) => (
-										<Box key={index} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-											<Typography variant="subtitle2">Example {index + 1}</Typography>
-											<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-												{example.input && (
-													<Box>
-														<Typography variant="caption" color="text.secondary">Input:</Typography>
-														<Box
-															component="pre"
-															sx={{ 
-																fontSize: '0.875rem',
-																backgroundColor: 'background.paper',
-																borderRadius: 1,
-																p: 1,
-																fontFamily: 'monospace'
-															}}
-														>
-															{JSON.stringify(example.input, null, 2)}
+									{(tool.examples as { input?: unknown; output?: unknown }[]).map(
+										(example, index) => (
+											<Box
+												key={index}
+												sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}
+											>
+												<Typography variant="subtitle2">Example {index + 1}</Typography>
+												<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+													{example.input && (
+														<Box>
+															<Typography
+																variant="caption"
+																color="text.secondary"
+															>
+																Input:
+															</Typography>
+															<Box
+																component="pre"
+																sx={{
+																	fontSize: '0.875rem',
+																	backgroundColor: 'background.paper',
+																	borderRadius: 1,
+																	p: 1,
+																	fontFamily: 'monospace'
+																}}
+															>
+																{JSON.stringify(example.input, null, 2)}
+															</Box>
 														</Box>
-													</Box>
-												)}
-												{example.output && (
-													<Box>
-														<Typography variant="caption" color="text.secondary">Output:</Typography>
-														<Box
-															component="pre"
-															sx={{ 
-																fontSize: '0.875rem',
-																backgroundColor: 'background.paper',
-																borderRadius: 1,
-																p: 1,
-																fontFamily: 'monospace'
-															}}
-														>
-															{JSON.stringify(example.output, null, 2)}
+													)}
+													{example.output && (
+														<Box>
+															<Typography
+																variant="caption"
+																color="text.secondary"
+															>
+																Output:
+															</Typography>
+															<Box
+																component="pre"
+																sx={{
+																	fontSize: '0.875rem',
+																	backgroundColor: 'background.paper',
+																	borderRadius: 1,
+																	p: 1,
+																	fontFamily: 'monospace'
+																}}
+															>
+																{JSON.stringify(example.output, null, 2)}
+															</Box>
 														</Box>
-													</Box>
-												)}
+													)}
+												</Box>
 											</Box>
-										</Box>
-									))}
+										)
+									)}
 								</Box>
 							) : (
-								<Typography variant="body2" color="text.secondary">
+								<Typography
+									variant="body2"
+									color="text.secondary"
+								>
 									No examples defined for this tool
 								</Typography>
 							)}
@@ -322,9 +394,7 @@ export default function ToolExecuteDialog({ toolId, onClose }: ToolExecuteDialog
 				</TabContext>
 			</DialogContent>
 			<DialogActions>
-				<Button onClick={onClose}>
-					Close
-				</Button>
+				<Button onClick={onClose}>Close</Button>
 			</DialogActions>
 		</Dialog>
 	);

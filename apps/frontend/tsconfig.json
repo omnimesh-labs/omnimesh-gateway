@@ -23,9 +23,9 @@
       "@schema": [
         "./src/@schema"
       ],
-    "@/*": [
-      "./src/*"
-    ]
+      "@/*": [
+        "./src/*"
+      ]
     },
     "declaration": true,
     "target": "esnext",
@@ -57,7 +57,8 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "preserve",
-    "incremental": true
+    "incremental": true,
+    "strictNullChecks": true
   },
   "exclude": [
     "node_modules"

@@ -1,5 +1,5 @@
-import { MaterialReactTable, useMaterialReactTable, MaterialReactTableProps, MRT_Icons } from 'material-react-table';
-import _ from 'lodash';
+import { MaterialReactTable, useMaterialReactTable, MaterialReactTableProps, MRT_Icons, MRT_RowData } from 'material-react-table';
+import { defaults } from '../../utils/lodashReplacements';
 import { useMemo, useEffect, useRef } from 'react';
 import SvgIcon from '@fuse/core/SvgIcon';
 import { Theme } from '@mui/material/styles';
@@ -27,8 +27,12 @@ const tableIcons: Partial<MRT_Icons> = {
 	VisibilityOffIcon: () => <SvgIcon>lucide:eye-off</SvgIcon>
 };
 
-function DataTable<TData>(props: MaterialReactTableProps<TData>) {
+function DataTable<TData extends MRT_RowData>(props: MaterialReactTableProps<TData>) {
 	const { columns, data, initialState, ...rest } = props;
+	
+	// Ensure data and columns are never null/undefined to prevent Material React Table errors
+	const safeData = data ?? [];
+	const safeColumns = columns ?? [];
 	const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
 	const isMountedRef = useRef(false);
 
@@ -52,9 +56,9 @@ function DataTable<TData>(props: MaterialReactTableProps<TData>) {
 		[initialState, isMobile]
 	);
 
-	const defaults = useMemo(
+	const tableDefaults = useMemo(
 		() =>
-			_.defaults(rest, {
+			defaults(rest, {
 				initialState: mergedInitialState,
 				enableFullScreenToggle: false,
 				enableColumnFilterModes: true,
@@ -165,7 +169,7 @@ function DataTable<TData>(props: MaterialReactTableProps<TData>) {
 					pinnedRowBackgroundColor: theme.palette.background.paper,
 					pinnedColumnBackgroundColor: theme.palette.background.paper
 				}),
-				renderTopToolbar: (_props) => <DataTableTopToolbar {..._props} />,
+				renderTopToolbar: (_props) => <DataTableTopToolbar<TData> {..._props} />,
 				icons: tableIcons,
 				positionActionsColumn: 'last'
 			} as Partial<MaterialReactTableProps<TData>>),
@@ -183,14 +187,14 @@ function DataTable<TData>(props: MaterialReactTableProps<TData>) {
 
 	const tableOptions = useMemo(
 		() => ({
-			columns,
-			data,
-			...defaults,
+			columns: safeColumns,
+			data: safeData,
+			...tableDefaults,
 			...rest,
 			// Override autoResetPageIndex to prevent unwanted resets
 			autoResetPageIndex: false
 		}),
-		[columns, data, defaults, rest]
+		[safeColumns, safeData, tableDefaults, rest]
 	);
 
 	const tableInstance = useMaterialReactTable<TData>(tableOptions);

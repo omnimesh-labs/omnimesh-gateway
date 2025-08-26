@@ -1,7 +1,7 @@
 import { NavItemType } from '@fuse/core/Navigation/types/NavItemType';
 
 /**
- * The navigationConfig object is an array of navigation items for the MCP Gateway application.
+ * The navigationConfig object is an array of navigation items for the Janex application.
  */
 const navigationConfig: NavItemType[] = [
 	{
@@ -11,13 +11,13 @@ const navigationConfig: NavItemType[] = [
 		icon: 'lucide:house',
 		url: '/'
 	},
-	{
-		id: 'llms',
-		title: 'Models',
-		type: 'item',
-		icon: 'lucide:bot',
-		url: '/llms'
-	},
+	// {
+	// 	id: 'llms',
+	// 	title: 'Models',
+	// 	type: 'item',
+	// 	icon: 'lucide:bot',
+	// 	url: '/llms'
+	// },
 	{
 		id: 'mcp-servers',
 		title: 'MCP Servers',
@@ -87,7 +87,7 @@ const navigationConfig: NavItemType[] = [
 				title: 'Policies',
 				type: 'item',
 				icon: 'lucide:scroll',
-				url: '/security/policies'
+				url: '/policies'
 			},
 			{
 				id: 'security-filters',
@@ -118,13 +118,6 @@ const navigationConfig: NavItemType[] = [
 		type: 'collapse',
 		icon: 'lucide:computer',
 		children: [
-			{
-				id: 'policies',
-				title: 'Policies',
-				type: 'item',
-				icon: 'lucide:shield',
-				url: '/policies'
-			},
 			{
 				id: 'configuration',
 				title: 'Configuration',

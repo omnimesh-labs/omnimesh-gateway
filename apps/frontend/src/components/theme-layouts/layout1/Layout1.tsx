@@ -2,6 +2,7 @@
 import { styled } from '@mui/material/styles';
 import { memo, ReactNode } from 'react';
 import { Layout1ConfigDefaultsType } from 'src/components/theme-layouts/layout1/Layout1Config';
+import Layout1Config from 'src/components/theme-layouts/layout1/Layout1Config';
 import Configurator from 'src/components/theme-layouts/components/configurator/Configurator';
 import useLayoutSettings from '@fuse/core/Layout/useLayoutSettings';
 import FooterLayout1 from './components/FooterLayout1';
@@ -9,6 +10,7 @@ import LeftSideLayout1 from './components/LeftSideLayout1';
 import NavbarWrapperLayout1 from './components/NavbarWrapperLayout1';
 import RightSideLayout1 from './components/RightSideLayout1';
 import ToolbarLayout1 from './components/ToolbarLayout1';
+import { merge } from '../../../utils/lodashReplacements';
 
 const Root = styled('div')(({ config }: { config: Layout1ConfigDefaultsType }) => ({
 	...(config.mode === 'boxed' && {
@@ -45,7 +47,7 @@ type Layout1Props = {
 function Layout1(props: Layout1Props) {
 	const { children } = props;
 	const settings = useLayoutSettings();
-	const config = settings.config as Layout1ConfigDefaultsType;
+	const config = merge({}, Layout1Config.defaults, settings.config) as Layout1ConfigDefaultsType;
 
 	return (
 		<Root

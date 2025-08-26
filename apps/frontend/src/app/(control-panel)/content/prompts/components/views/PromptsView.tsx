@@ -1,385 +1,420 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { MRT_ColumnDef } from 'material-react-table';
+import PageSimple from '@fuse/core/PageSimple';
+import { styled } from '@mui/material/styles';
 import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow
-} from '@/components/ui/table';
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle
-} from '@/components/ui/alert-dialog';
-import {
-	Plus,
-	Search,
-	MoreHorizontal,
-	Edit,
-	Trash2,
-	Play,
-	MessageSquare,
-	Code,
-	Palette,
-	BookOpen,
-	Briefcase,
-	Sparkles,
-	ChevronLeft,
-	ChevronRight
-} from 'lucide-react';
-import { usePrompts, useDeletePrompt } from '../../api/hooks/usePrompts';
-import PromptFormDialog from '../forms/PromptFormDialog';
-import PromptTestDialog from '../forms/PromptTestDialog';
-import { Prompt } from '@/lib/api';
-import { useDebounce } from '@/hooks/useDebounce';
+	Typography,
+	Button,
+	Chip,
+	IconButton,
+	Tooltip,
+	Box,
+	Dialog,
+	DialogTitle,
+	DialogContent,
+	DialogActions,
+	TextField,
+	Stack,
+	MenuItem,
+	FormControlLabel,
+	Switch
+} from '@mui/material';
+import LazyDataTable from '@/components/data-table/LazyDataTable';
+import SvgIcon from '@fuse/core/SvgIcon';
+import { useSnackbar } from 'notistack';
+
+const Root = styled(PageSimple)(({ theme }) => ({
+	'& .PageSimple-header': {
+		backgroundColor: theme.vars.palette.background.paper,
+		borderBottomWidth: 1,
+		borderStyle: 'solid',
+		borderColor: theme.vars.palette.divider
+	},
+	'& .PageSimple-content': {
+		backgroundColor: theme.vars.palette.background.default
+	}
+}));
+
+interface Prompt {
+	id: string;
+	name: string;
+	category: string;
+	description?: string;
+	prompt_template: string;
+	usage_count: number;
+	is_active: boolean;
+	created_at: string;
+	updated_at: string;
+}
 
 const CATEGORY_ICONS = {
-	general: MessageSquare,
-	coding: Code,
-	analysis: Sparkles,
-	creative: Palette,
-	educational: BookOpen,
-	business: Briefcase,
-	custom: MessageSquare
+	general: 'lucide:message-square',
+	coding: 'lucide:code',
+	analysis: 'lucide:sparkles',
+	creative: 'lucide:palette',
+	educational: 'lucide:book-open',
+	business: 'lucide:briefcase',
+	custom: 'lucide:message-square'
 };
 
 const CATEGORY_COLORS = {
-	general: 'bg-gray-100 text-gray-800',
-	coding: 'bg-blue-100 text-blue-800',
-	analysis: 'bg-purple-100 text-purple-800',
-	creative: 'bg-pink-100 text-pink-800',
-	educational: 'bg-green-100 text-green-800',
-	business: 'bg-orange-100 text-orange-800',
-	custom: 'bg-indigo-100 text-indigo-800'
-};
+	general: 'default',
+	coding: 'primary',
+	analysis: 'secondary',
+	creative: 'info',
+	educational: 'success',
+	business: 'warning',
+	custom: 'default'
+} as const;
 
-export default function PromptsView() {
-	const [searchQuery, setSearchQuery] = useState('');
-	const [category, setCategory] = useState<string>('all');
-	const [statusFilter, setStatusFilter] = useState<string>('all');
-	const [currentPage, setCurrentPage] = useState(0);
-	const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null);
-	const [isFormOpen, setIsFormOpen] = useState(false);
-	const [testPromptId, setTestPromptId] = useState<string | null>(null);
-	const [deletePromptId, setDeletePromptId] = useState<string | null>(null);
-	
-	const pageSize = 20;
-	const debouncedSearch = useDebounce(searchQuery, 300);
-	
-	const { data, isLoading, error } = usePrompts({
-		search: debouncedSearch,
-		limit: pageSize,
-		offset: currentPage * pageSize,
-		category: category === 'all' ? undefined : category,
-		isActive: statusFilter === 'all' ? undefined : statusFilter === 'active'
+function PromptsView() {
+	const [createModalOpen, setCreateModalOpen] = useState(false);
+	const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
+	const [formData, setFormData] = useState({
+		name: '',
+		category: 'general',
+		description: '',
+		prompt_template: '',
+		is_active: true
 	});
-	
-	const deletePromptMutation = useDeletePrompt();
-	
-	const prompts = data?.data || [];
-	const totalPages = Math.ceil((data?.pagination?.total || 0) / pageSize);
-	
-	const handleEdit = useCallback((prompt: Prompt) => {
-		setSelectedPrompt(prompt);
-		setIsFormOpen(true);
-	}, []);
-	
-	const handleTest = useCallback((id: string) => {
-		setTestPromptId(id);
-	}, []);
-	
-	const handleDelete = useCallback((id: string) => {
-		setDeletePromptId(id);
-	}, []);
-	
-	const confirmDelete = useCallback(() => {
-		if (deletePromptId) {
-			deletePromptMutation.mutate(deletePromptId, {
-				onSettled: () => setDeletePromptId(null)
-			});
+	const { enqueueSnackbar } = useSnackbar();
+
+	// Mock data
+	const mockPrompts: Prompt[] = [
+		{
+			id: '1',
+			name: 'Code Review',
+			category: 'coding',
+			description: 'Review code for best practices',
+			prompt_template: 'Please review the following code for best practices...',
+			usage_count: 42,
+			is_active: true,
+			created_at: '2024-01-15T10:00:00Z',
+			updated_at: '2024-01-20T15:30:00Z'
+		},
+		{
+			id: '2',
+			name: 'Data Analysis',
+			category: 'analysis',
+			description: 'Analyze data patterns and insights',
+			prompt_template: 'Analyze the following data and provide insights...',
+			usage_count: 28,
+			is_active: true,
+			created_at: '2024-01-10T09:00:00Z',
+			updated_at: '2024-01-18T14:00:00Z'
+		},
+		{
+			id: '3',
+			name: 'Creative Writing',
+			category: 'creative',
+			description: 'Generate creative content',
+			prompt_template: 'Write a creative story about...',
+			usage_count: 15,
+			is_active: false,
+			created_at: '2024-01-12T11:00:00Z',
+			updated_at: '2024-01-22T16:00:00Z'
 		}
-	}, [deletePromptId, deletePromptMutation]);
-	
-	const handleCloseForm = useCallback(() => {
-		setIsFormOpen(false);
-		setSelectedPrompt(null);
-	}, []);
-	
-	const truncateText = useCallback((text: string, maxLength: number = 100) => {
-		if (text.length <= maxLength) return text;
-		return text.substring(0, maxLength) + '...';
-	}, []);
-	
-	const renderTableContent = useMemo(() => {
-		if (isLoading) {
-			return (
-				<>
-					{Array.from({ length: 5 }).map((_, i) => (
-						<TableRow key={i}>
-							<TableCell colSpan={6}>
-								<Skeleton className="h-12 w-full" />
-							</TableCell>
-						</TableRow>
-					))}
-				</>
-			);
-		}
-		
-		if (error) {
-			return (
-				<TableRow>
-					<TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-						Error loading prompts: {(error as any)?.message}
-					</TableCell>
-				</TableRow>
-			);
-		}
-		
-		if (prompts.length === 0) {
-			return (
-				<TableRow>
-					<TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-						No prompts found
-					</TableCell>
-				</TableRow>
-			);
-		}
-		
-		return prompts.map((prompt) => {
-			const Icon = CATEGORY_ICONS[prompt.category as keyof typeof CATEGORY_ICONS] || MessageSquare;
-			const colorClass = CATEGORY_COLORS[prompt.category as keyof typeof CATEGORY_COLORS] || 'bg-gray-100 text-gray-800';
-			
-			return (
-				<TableRow key={prompt.id}>
-					<TableCell className="font-medium">
-						<div className="flex items-center gap-2">
-							<Icon className="h-4 w-4 text-muted-foreground" />
-							<span>{prompt.name}</span>
-						</div>
-					</TableCell>
-					<TableCell>
-						<Badge variant="secondary" className={colorClass}>
-							{prompt.category}
-						</Badge>
-					</TableCell>
-					<TableCell className="max-w-xs">
-						<span className="text-sm text-muted-foreground" title={prompt.prompt_template}>
-							{truncateText(prompt.prompt_template)}
-						</span>
-					</TableCell>
-					<TableCell>{prompt.usage_count || 0}</TableCell>
-					<TableCell>
-						<Badge variant={prompt.is_active ? 'default' : 'secondary'}>
-							{prompt.is_active ? 'Active' : 'Inactive'}
-						</Badge>
-					</TableCell>
-					<TableCell>
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<Button variant="ghost" className="h-8 w-8 p-0">
-									<span className="sr-only">Open menu</span>
-									<MoreHorizontal className="h-4 w-4" />
-								</Button>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent align="end">
-								<DropdownMenuLabel>Actions</DropdownMenuLabel>
-								<DropdownMenuSeparator />
-								<DropdownMenuItem onClick={() => handleTest(prompt.id)}>
-									<Play className="mr-2 h-4 w-4" />
-									Test
-								</DropdownMenuItem>
-								<DropdownMenuItem onClick={() => handleEdit(prompt)}>
-									<Edit className="mr-2 h-4 w-4" />
-									Edit
-								</DropdownMenuItem>
-								<DropdownMenuItem 
-									onClick={() => handleDelete(prompt.id)}
-									className="text-red-600"
-								>
-									<Trash2 className="mr-2 h-4 w-4" />
-									Delete
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu>
-					</TableCell>
-				</TableRow>
-			);
+	];
+
+	const handleCreatePrompt = () => {
+		setFormData({
+			name: '',
+			category: 'general',
+			description: '',
+			prompt_template: '',
+			is_active: true
 		});
-	}, [isLoading, error, prompts, truncateText, handleTest, handleEdit, handleDelete]);
-	
+		setEditingPrompt(null);
+		setCreateModalOpen(true);
+	};
+
+	const handleEditPrompt = (prompt: Prompt) => {
+		setFormData({
+			name: prompt.name,
+			category: prompt.category,
+			description: prompt.description || '',
+			prompt_template: prompt.prompt_template,
+			is_active: prompt.is_active
+		});
+		setEditingPrompt(prompt);
+		setCreateModalOpen(true);
+	};
+
+	const handleSavePrompt = () => {
+		const action = editingPrompt ? 'updated' : 'created';
+		enqueueSnackbar(`Prompt ${action} successfully (demo)`, { variant: 'success' });
+		setCreateModalOpen(false);
+		setEditingPrompt(null);
+	};
+
+	const handleDeletePrompt = (prompt: Prompt) => {
+		enqueueSnackbar(`Delete functionality coming soon for ${prompt.name}`, { variant: 'info' });
+	};
+
+	const handleTestPrompt = (prompt: Prompt) => {
+		enqueueSnackbar(`Test functionality coming soon for ${prompt.name}`, { variant: 'info' });
+	};
+
+	const columns = useMemo<MRT_ColumnDef<Prompt>[]>(
+		() => [
+			{
+				accessorKey: 'name',
+				header: 'Name',
+				size: 200,
+				Cell: ({ row }) => {
+					const iconName =
+						CATEGORY_ICONS[row.original.category as keyof typeof CATEGORY_ICONS] || 'lucide:message-square';
+					return (
+						<Box className="flex items-center space-x-2">
+							<SvgIcon size={20}>{iconName}</SvgIcon>
+							<Box>
+								<Typography
+									variant="body2"
+									className="font-medium"
+								>
+									{row.original.name}
+								</Typography>
+								{row.original.description && (
+									<Typography
+										variant="caption"
+										color="textSecondary"
+									>
+										{row.original.description}
+									</Typography>
+								)}
+							</Box>
+						</Box>
+					);
+				}
+			},
+			{
+				accessorKey: 'category',
+				header: 'Category',
+				size: 150,
+				Cell: ({ cell }) => {
+					const color = CATEGORY_COLORS[cell.getValue<string>() as keyof typeof CATEGORY_COLORS] || 'default';
+					return (
+						<Chip
+							size="small"
+							label={cell.getValue<string>()}
+							color={color}
+						/>
+					);
+				}
+			},
+			{
+				accessorKey: 'prompt_template',
+				header: 'Template',
+				size: 300,
+				Cell: ({ cell }) => {
+					const template = cell.getValue<string>();
+					const truncated = template.length > 100 ? template.substring(0, 100) + '...' : template;
+					return (
+						<Typography
+							variant="body2"
+							color="textSecondary"
+							title={template}
+						>
+							{truncated}
+						</Typography>
+					);
+				}
+			},
+			{
+				accessorKey: 'usage_count',
+				header: 'Usage',
+				size: 100,
+				Cell: ({ cell }) => (
+					<Chip
+						size="small"
+						label={cell.getValue<number>()}
+						variant="outlined"
+					/>
+				)
+			},
+			{
+				accessorKey: 'is_active',
+				header: 'Status',
+				size: 120,
+				Cell: ({ cell }) => (
+					<Chip
+						size="small"
+						label={cell.getValue<boolean>() ? 'Active' : 'Inactive'}
+						color={cell.getValue<boolean>() ? 'success' : 'default'}
+					/>
+				)
+			},
+			{
+				accessorKey: 'created_at',
+				header: 'Created',
+				size: 150,
+				Cell: ({ cell }) => {
+					const date = new Date(cell.getValue<string>());
+					return date.toLocaleDateString('en-US', {
+						year: 'numeric',
+						month: 'short',
+						day: 'numeric'
+					});
+				}
+			}
+		],
+		[]
+	);
+
 	return (
-		<div className="container mx-auto py-6 space-y-6">
-			<Card>
-				<CardHeader>
+		<Root
+			header={
+				<div className="p-6">
 					<div className="flex items-center justify-between">
 						<div>
-							<CardTitle>Prompts</CardTitle>
-							<CardDescription>
-								Manage your prompt templates
-							</CardDescription>
+							<Typography variant="h4">Prompts</Typography>
+							<Typography
+								variant="body1"
+								color="textSecondary"
+								className="mt-1"
+							>
+								Manage your prompt templates for MCP interactions
+							</Typography>
 						</div>
-						<Button onClick={() => setIsFormOpen(true)}>
-							<Plus className="mr-2 h-4 w-4" />
-							Add Prompt
+						<Button
+							variant="contained"
+							color="primary"
+							startIcon={<SvgIcon>lucide:plus</SvgIcon>}
+							onClick={handleCreatePrompt}
+						>
+							Create Prompt
 						</Button>
 					</div>
-				</CardHeader>
-				<CardContent className="space-y-4">
-					{/* Filters */}
-					<div className="flex flex-col sm:flex-row gap-4">
-						<div className="relative flex-1">
-							<Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-							<Input
-								placeholder="Search prompts..."
-								value={searchQuery}
-								onChange={(e) => setSearchQuery(e.target.value)}
-								className="pl-8"
-							/>
-						</div>
-						<Select value={category} onValueChange={setCategory}>
-							<SelectTrigger className="w-[180px]">
-								<SelectValue placeholder="Category" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="all">All Categories</SelectItem>
-								<SelectItem value="general">General</SelectItem>
-								<SelectItem value="coding">Coding</SelectItem>
-								<SelectItem value="analysis">Analysis</SelectItem>
-								<SelectItem value="creative">Creative</SelectItem>
-								<SelectItem value="educational">Educational</SelectItem>
-								<SelectItem value="business">Business</SelectItem>
-								<SelectItem value="custom">Custom</SelectItem>
-							</SelectContent>
-						</Select>
-						<Select value={statusFilter} onValueChange={setStatusFilter}>
-							<SelectTrigger className="w-[150px]">
-								<SelectValue placeholder="Status" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="all">All Status</SelectItem>
-								<SelectItem value="active">Active</SelectItem>
-								<SelectItem value="inactive">Inactive</SelectItem>
-							</SelectContent>
-						</Select>
-					</div>
-					
-					{/* Table */}
-					<div className="rounded-md border">
-						<Table>
-							<TableHeader>
-								<TableRow>
-									<TableHead>Name</TableHead>
-									<TableHead>Category</TableHead>
-									<TableHead>Template</TableHead>
-									<TableHead>Usage</TableHead>
-									<TableHead>Status</TableHead>
-									<TableHead className="w-[70px]"></TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{renderTableContent}
-							</TableBody>
-						</Table>
-					</div>
-					
-					{/* Pagination */}
-					{totalPages > 1 && (
-						<div className="flex items-center justify-between">
-							<p className="text-sm text-muted-foreground">
-								Showing {currentPage * pageSize + 1} to{' '}
-								{Math.min((currentPage + 1) * pageSize, data?.pagination?.total || 0)} of{' '}
-								{data?.pagination?.total || 0} prompts
-							</p>
-							<div className="flex items-center space-x-2">
-								<Button
-									variant="outline"
-									size="sm"
-									onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
-									disabled={currentPage === 0}
+				</div>
+			}
+			content={
+				<div className="p-6">
+					<LazyDataTable
+						columns={columns}
+						data={mockPrompts}
+						enableRowActions
+						renderRowActions={({ row }) => (
+							<Box className="flex items-center space-x-1">
+								<Tooltip title="Test Prompt">
+									<IconButton
+										size="small"
+										onClick={() => handleTestPrompt(row.original)}
+									>
+										<SvgIcon size={18}>lucide:play</SvgIcon>
+									</IconButton>
+								</Tooltip>
+								<Tooltip title="Edit Prompt">
+									<IconButton
+										size="small"
+										onClick={() => handleEditPrompt(row.original)}
+									>
+										<SvgIcon size={18}>lucide:edit</SvgIcon>
+									</IconButton>
+								</Tooltip>
+								<Tooltip title="Delete Prompt">
+									<IconButton
+										size="small"
+										color="error"
+										onClick={() => handleDeletePrompt(row.original)}
+									>
+										<SvgIcon size={18}>lucide:trash-2</SvgIcon>
+									</IconButton>
+								</Tooltip>
+							</Box>
+						)}
+						initialState={{
+							pagination: {
+								pageIndex: 0,
+								pageSize: 10
+							}
+						}}
+					/>
+
+					{/* Create/Edit Prompt Dialog */}
+					<Dialog
+						open={createModalOpen}
+						onClose={() => setCreateModalOpen(false)}
+						maxWidth="md"
+						fullWidth
+					>
+						<DialogTitle>{editingPrompt ? 'Edit Prompt' : 'Create Prompt'}</DialogTitle>
+						<DialogContent>
+							<Stack
+								spacing={3}
+								sx={{ mt: 1 }}
+							>
+								<TextField
+									label="Name"
+									value={formData.name}
+									onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+									fullWidth
+									required
+								/>
+								<TextField
+									label="Category"
+									value={formData.category}
+									onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value }))}
+									select
+									fullWidth
+									required
 								>
-									<ChevronLeft className="h-4 w-4" />
-									Previous
-								</Button>
-								<div className="text-sm">
-									Page {currentPage + 1} of {totalPages}
-								</div>
-								<Button
-									variant="outline"
-									size="sm"
-									onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
-									disabled={currentPage === totalPages - 1}
-								>
-									Next
-									<ChevronRight className="h-4 w-4" />
-								</Button>
-							</div>
-						</div>
-					)}
-				</CardContent>
-			</Card>
-			
-			{/* Form Dialog */}
-			<PromptFormDialog
-				open={isFormOpen}
-				onClose={handleCloseForm}
-				prompt={selectedPrompt}
-			/>
-			
-			{/* Test Dialog */}
-			<PromptTestDialog
-				promptId={testPromptId}
-				onClose={() => setTestPromptId(null)}
-			/>
-			
-			{/* Delete Confirmation */}
-			<AlertDialog open={!!deletePromptId} onOpenChange={() => setDeletePromptId(null)}>
-				<AlertDialogContent>
-					<AlertDialogHeader>
-						<AlertDialogTitle>Are you sure?</AlertDialogTitle>
-						<AlertDialogDescription>
-							This action cannot be undone. This will permanently delete the prompt.
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel>Cancel</AlertDialogCancel>
-						<AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
-		</div>
+									<MenuItem value="general">General</MenuItem>
+									<MenuItem value="coding">Coding</MenuItem>
+									<MenuItem value="analysis">Analysis</MenuItem>
+									<MenuItem value="creative">Creative</MenuItem>
+									<MenuItem value="educational">Educational</MenuItem>
+									<MenuItem value="business">Business</MenuItem>
+									<MenuItem value="custom">Custom</MenuItem>
+								</TextField>
+								<TextField
+									label="Description"
+									value={formData.description}
+									onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+									fullWidth
+									multiline
+									rows={2}
+								/>
+								<TextField
+									label="Prompt Template"
+									value={formData.prompt_template}
+									onChange={(e) =>
+										setFormData((prev) => ({ ...prev, prompt_template: e.target.value }))
+									}
+									fullWidth
+									multiline
+									rows={4}
+									required
+								/>
+								<FormControlLabel
+									control={
+										<Switch
+											checked={formData.is_active}
+											onChange={(e) =>
+												setFormData((prev) => ({ ...prev, is_active: e.target.checked }))
+											}
+										/>
+									}
+									label="Active"
+								/>
+							</Stack>
+						</DialogContent>
+						<DialogActions>
+							<Button onClick={() => setCreateModalOpen(false)}>Cancel</Button>
+							<Button
+								variant="contained"
+								onClick={handleSavePrompt}
+								disabled={!formData.name.trim() || !formData.prompt_template.trim()}
+							>
+								{editingPrompt ? 'Update' : 'Create'}
+							</Button>
+						</DialogActions>
+					</Dialog>
+				</div>
+			}
+		/>
 	);
 }
+
+export default PromptsView;

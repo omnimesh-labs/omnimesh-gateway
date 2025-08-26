@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { MRT_ColumnDef } from 'material-react-table';
 import PageSimple from '@fuse/core/PageSimple';
 import { styled } from '@mui/material/styles';
@@ -23,6 +23,7 @@ import {
 import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
 import { useSnackbar } from 'notistack';
+import { namespaceApi } from '@/lib/api';
 
 const Root = styled(PageSimple)(({ theme }) => ({
 	'& .PageSimple-header': {
@@ -55,41 +56,28 @@ function NamespacesView() {
 		description: '',
 		is_active: true
 	});
+	const [namespaces, setNamespaces] = useState<Namespace[]>([]);
+	const [isLoading, setIsLoading] = useState(false);
 	const { enqueueSnackbar } = useSnackbar();
 
-	// Mock data
-	const mockNamespaces: Namespace[] = [
-		{
-			id: '1',
-			name: 'Development',
-			slug: 'development',
-			description: 'Development environment resources',
-			server_count: 5,
-			is_active: true,
-			created_at: '2024-01-15T10:00:00Z',
-			updated_at: '2024-01-20T15:30:00Z'
-		},
-		{
-			id: '2',
-			name: 'Production',
-			slug: 'production',
-			description: 'Production environment resources',
-			server_count: 8,
-			is_active: true,
-			created_at: '2024-01-10T09:00:00Z',
-			updated_at: '2024-01-18T14:00:00Z'
-		},
-		{
-			id: '3',
-			name: 'Testing',
-			slug: 'testing',
-			description: 'Testing and staging environment',
-			server_count: 3,
-			is_active: false,
-			created_at: '2024-01-12T11:00:00Z',
-			updated_at: '2024-01-22T16:00:00Z'
+	// Fetch namespaces on mount
+	useEffect(() => {
+		fetchNamespaces();
+	}, []);
+
+	const fetchNamespaces = useCallback(async () => {
+		setIsLoading(true);
+		try {
+			const data = await namespaceApi.listNamespaces();
+			setNamespaces(data);
+		} catch (error) {
+			enqueueSnackbar('Failed to fetch namespaces', { variant: 'error' });
+			console.error('Error fetching namespaces:', error);
+			setNamespaces([]); // Set empty array on error
+		} finally {
+			setIsLoading(false);
 		}
-	];
+	}, [enqueueSnackbar]);
 
 	const handleCreateNamespace = () => {
 		setFormData({ name: '', description: '', is_active: true });
@@ -107,15 +95,35 @@ function NamespacesView() {
 		setCreateModalOpen(true);
 	};
 
-	const handleSaveNamespace = () => {
-		const action = editingNamespace ? 'updated' : 'created';
-		enqueueSnackbar(`Namespace ${action} successfully (demo)`, { variant: 'success' });
-		setCreateModalOpen(false);
-		setEditingNamespace(null);
+	const handleSaveNamespace = async () => {
+		try {
+			if (editingNamespace) {
+				await namespaceApi.updateNamespace(editingNamespace.id, formData);
+				enqueueSnackbar('Namespace updated successfully', { variant: 'success' });
+			} else {
+				await namespaceApi.createNamespace(formData);
+				enqueueSnackbar('Namespace created successfully', { variant: 'success' });
+			}
+
+			setCreateModalOpen(false);
+			setEditingNamespace(null);
+			fetchNamespaces(); // Refresh the list
+		} catch (error) {
+			const action = editingNamespace ? 'update' : 'create';
+			enqueueSnackbar(`Failed to ${action} namespace`, { variant: 'error' });
+			console.error(`Error ${action}ing namespace:`, error);
+		}
 	};
 
-	const handleDeleteNamespace = (namespace: Namespace) => {
-		enqueueSnackbar(`Delete functionality coming soon for ${namespace.name}`, { variant: 'info' });
+	const handleDeleteNamespace = async (namespace: Namespace) => {
+		try {
+			await namespaceApi.deleteNamespace(namespace.id);
+			enqueueSnackbar(`Namespace ${namespace.name} deleted successfully`, { variant: 'success' });
+			fetchNamespaces(); // Refresh the list
+		} catch (error) {
+			enqueueSnackbar(`Failed to delete namespace ${namespace.name}`, { variant: 'error' });
+			console.error('Error deleting namespace:', error);
+		}
 	};
 
 	const columns = useMemo<MRT_ColumnDef<Namespace>[]>(
@@ -223,7 +231,8 @@ function NamespacesView() {
 				<div className="p-6">
 					<LazyDataTable
 						columns={columns}
-						data={mockNamespaces}
+						data={namespaces}
+						state={{ isLoading }}
 						enableRowActions
 						renderRowActions={({ row }) => (
 							<Box className="flex items-center space-x-1">

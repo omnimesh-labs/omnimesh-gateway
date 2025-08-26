@@ -280,7 +280,7 @@ function ApiKeysView() {
 
 					<DataTable
 						columns={columns}
-						data={apiKeys}
+						data={apiKeys || []}
 						state={{ isLoading: loading }}
 						enableRowActions
 						renderRowActions={({ row }) => (
@@ -336,7 +336,10 @@ function ApiKeysView() {
 										label="Role"
 										value={formData.role}
 										onChange={(e) =>
-											setFormData((prev) => ({ ...prev, role: e.target.value as any }))
+											setFormData((prev) => ({
+												...prev,
+												role: e.target.value as 'admin' | 'user' | 'viewer' | 'api_user'
+											}))
 										}
 										select
 										fullWidth

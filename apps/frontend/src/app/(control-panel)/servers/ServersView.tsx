@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOptimizedQuery } from '@/hooks/useOptimizedQuery';
-import { measurePageLoad } from '@/lib/performance';
 import { MRT_ColumnDef } from 'material-react-table';
 import PageSimple from '@fuse/core/PageSimple';
 import { styled } from '@mui/material/styles';
@@ -11,7 +10,7 @@ import { Typography, Button, Chip, IconButton, Tooltip, Box, Tabs, Tab } from '@
 import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
 import { useSnackbar } from 'notistack';
-import { MCPServer, serverApi, discoveryApi, MCPDiscoveryResponse } from '@/lib/api';
+import { MCPServer, CreateServerRequest, serverApi, discoveryApi, MCPDiscoveryResponse } from '@/lib/api';
 import RegisterServerModal from './components/RegisterServerModal';
 import AvailableServersTable from './components/AvailableServersTable';
 
@@ -46,11 +45,6 @@ function ServersView() {
 	const { enqueueSnackbar } = useSnackbar();
 	const queryClient = useQueryClient();
 
-	// Track page performance
-	useEffect(() => {
-		measurePageLoad('ServersView');
-	}, []);
-
 	// Fetch registered servers with optimized caching
 	const { data: servers = [], isLoading } = useOptimizedQuery<MCPServer[]>(
 		['servers'],
@@ -78,21 +72,23 @@ function ServersView() {
 			queryClient.invalidateQueries({ queryKey: ['servers'] });
 			enqueueSnackbar('Server unregistered successfully', { variant: 'success' });
 		},
-		onError: (error: any) => {
-			enqueueSnackbar(error.message || 'Failed to unregister server', { variant: 'error' });
+		onError: (error: Error | unknown) => {
+			const message = error instanceof Error ? error.message : 'Failed to unregister server';
+			enqueueSnackbar(message, { variant: 'error' });
 		}
 	});
 
 	// Register server mutation
 	const registerMutation = useMutation({
-		mutationFn: (serverData: any) => serverApi.registerServer(serverData),
+		mutationFn: (serverData: CreateServerRequest) => serverApi.registerServer(serverData),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['servers'] });
 			enqueueSnackbar('Server registered successfully', { variant: 'success' });
 			setRegisterModalOpen(false);
 		},
-		onError: (error: any) => {
-			enqueueSnackbar(error.message || 'Failed to register server', { variant: 'error' });
+		onError: (error: Error | unknown) => {
+			const message = error instanceof Error ? error.message : 'Failed to register server';
+			enqueueSnackbar(message, { variant: 'error' });
 		}
 	});
 
@@ -102,7 +98,7 @@ function ServersView() {
 		}
 	};
 
-	const handleRegisterServer = (serverData: any) => {
+	const handleRegisterServer = (serverData: CreateServerRequest) => {
 		registerMutation.mutate(serverData);
 	};
 

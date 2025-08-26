@@ -10,21 +10,14 @@ import {
 	DialogHeader,
 	DialogTitle
 } from '@/components/ui/dialog';
-import {
-	Form,
-	FormControl,
-	FormDescription,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage
-} from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Copy, CheckCircle } from 'lucide-react';
 import { usePrompt, usePromptTest } from '../../api/hooks/usePrompts';
+import { PromptParameter } from '@/lib/types';
 import { toast } from 'sonner';
 
 interface PromptTestDialogProps {
@@ -35,74 +28,78 @@ interface PromptTestDialogProps {
 export default function PromptTestDialog({ promptId, onClose }: PromptTestDialogProps) {
 	const [result, setResult] = useState<string>('');
 	const [copied, setCopied] = useState(false);
-	
+
 	const { data: prompt } = usePrompt(promptId);
 	const testMutation = usePromptTest();
-	
+
 	const form = useForm({
 		defaultValues: {
-			parameters: {} as Record<string, any>
+			parameters: {} as Record<string, unknown>
 		}
 	});
-	
+
 	useEffect(() => {
 		if (prompt?.parameters) {
-			const defaultParams: Record<string, any> = {};
-			(prompt.parameters as any[])?.forEach((param: any) => {
+			const defaultParams: Record<string, string> = {};
+			(prompt.parameters as PromptParameter[])?.forEach((param) => {
 				defaultParams[param.name] = '';
 			});
 			form.reset({ parameters: defaultParams });
 		}
 	}, [prompt, form]);
-	
-	const handleTest = async (data: any) => {
+
+	const handleTest = async (data: { parameters: Record<string, unknown> }) => {
 		if (!promptId) return;
-		
+
 		try {
 			const response = await testMutation.mutateAsync({
 				id: promptId,
 				data: { parameters: data.parameters }
 			});
 			setResult(response.rendered_prompt);
-		} catch (error) {
+		} catch (_error) {
 			// Error is handled by the mutation hook
 		}
 	};
-	
+
 	const handleCopy = () => {
 		navigator.clipboard.writeText(result);
 		setCopied(true);
 		toast.success('Copied to clipboard');
 		setTimeout(() => setCopied(false), 2000);
 	};
-	
+
 	if (!promptId || !prompt) return null;
-	
-	const parameters = (prompt.parameters as any[]) || [];
-	
+
+	const parameters = (prompt.parameters as PromptParameter[]) || [];
+
 	return (
-		<Dialog open={!!promptId} onOpenChange={onClose}>
-			<DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+		<Dialog
+			open={!!promptId}
+			onOpenChange={onClose}
+		>
+			<DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[700px]">
 				<DialogHeader>
 					<DialogTitle>Test Prompt: {prompt.name}</DialogTitle>
-					<DialogDescription>
-						Fill in the parameters to test this prompt template
-					</DialogDescription>
+					<DialogDescription>Fill in the parameters to test this prompt template</DialogDescription>
 				</DialogHeader>
-				
+
 				<div className="space-y-4">
 					{/* Template Preview */}
-					<div className="rounded-lg bg-muted p-4">
-						<h4 className="text-sm font-medium mb-2">Template:</h4>
-						<pre className="text-sm whitespace-pre-wrap">{prompt.prompt_template}</pre>
+					<div className="bg-muted rounded-lg p-4">
+						<h4 className="mb-2 text-sm font-medium">Template:</h4>
+						<pre className="whitespace-pre-wrap text-sm">{prompt.prompt_template}</pre>
 					</div>
-					
+
 					{/* Parameters Form */}
 					{parameters.length > 0 && (
 						<Form {...form}>
-							<form onSubmit={form.handleSubmit(handleTest)} className="space-y-4">
+							<form
+								onSubmit={form.handleSubmit(handleTest)}
+								className="space-y-4"
+							>
 								<div className="space-y-3">
-									{parameters.map((param: any) => (
+									{parameters.map((param: PromptParameter) => (
 										<FormField
 											key={param.name}
 											control={form.control}
@@ -113,7 +110,9 @@ export default function PromptTestDialog({ promptId, onClose }: PromptTestDialog
 													{param.type === 'text' ? (
 														<FormControl>
 															<Textarea
-																placeholder={param.description || `Enter ${param.name}...`}
+																placeholder={
+																	param.description || `Enter ${param.name}...`
+																}
 																{...field}
 																rows={3}
 															/>
@@ -121,7 +120,9 @@ export default function PromptTestDialog({ promptId, onClose }: PromptTestDialog
 													) : (
 														<FormControl>
 															<Input
-																placeholder={param.description || `Enter ${param.name}...`}
+																placeholder={
+																	param.description || `Enter ${param.name}...`
+																}
 																{...field}
 															/>
 														</FormControl>
@@ -135,7 +136,7 @@ export default function PromptTestDialog({ promptId, onClose }: PromptTestDialog
 										/>
 									))}
 								</div>
-								
+
 								<Button
 									type="submit"
 									className="w-full"
@@ -153,7 +154,7 @@ export default function PromptTestDialog({ promptId, onClose }: PromptTestDialog
 							</form>
 						</Form>
 					)}
-					
+
 					{/* No parameters */}
 					{parameters.length === 0 && (
 						<div className="space-y-4">
@@ -178,7 +179,7 @@ export default function PromptTestDialog({ promptId, onClose }: PromptTestDialog
 							</Button>
 						</div>
 					)}
-					
+
 					{/* Result */}
 					{result && (
 						<div className="space-y-2">
@@ -196,15 +197,18 @@ export default function PromptTestDialog({ promptId, onClose }: PromptTestDialog
 									)}
 								</Button>
 							</div>
-							<div className="rounded-lg border bg-background p-4">
-								<pre className="text-sm whitespace-pre-wrap">{result}</pre>
+							<div className="bg-background rounded-lg border p-4">
+								<pre className="whitespace-pre-wrap text-sm">{result}</pre>
 							</div>
 						</div>
 					)}
 				</div>
-				
+
 				<DialogFooter>
-					<Button variant="outline" onClick={onClose}>
+					<Button
+						variant="outline"
+						onClick={onClose}
+					>
 						Close
 					</Button>
 				</DialogFooter>

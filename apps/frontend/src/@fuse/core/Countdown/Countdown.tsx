@@ -2,13 +2,12 @@
 
 import Typography from '@mui/material/Typography';
 import clsx from 'clsx';
-import moment from 'moment';
+import { addDays, differenceInSeconds, isDate, parseISO } from 'date-fns';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { Moment } from 'moment/moment';
 
 type CountdownProps = {
 	onComplete?: () => void;
-	endDate?: Moment | Date | string;
+	endDate?: Date | string;
 	className?: string;
 };
 
@@ -18,9 +17,20 @@ type CountdownProps = {
  * It allows a callback function to be passed in to be executed when the end date is reached.
  */
 function Countdown(props: CountdownProps) {
-	const { onComplete, endDate = moment().add(15, 'days'), className } = props;
+	const { onComplete, endDate = addDays(new Date(), 15), className } = props;
 
-	const [endDateVal] = useState(moment.isMoment(endDate) ? endDate : moment(endDate));
+	const [endDateVal] = useState(() => {
+		if (isDate(endDate)) {
+			return endDate;
+		}
+
+		if (typeof endDate === 'string') {
+			return parseISO(endDate);
+		}
+
+		return addDays(new Date(), 15);
+	});
+
 	const [countdown, setCountdown] = useState({
 		days: 0,
 		hours: 0,
@@ -40,21 +50,24 @@ function Countdown(props: CountdownProps) {
 	}, [onComplete]);
 
 	const tick = useCallback(() => {
-		const currDate = moment();
-		const diff = endDateVal.diff(currDate, 'seconds');
+		const currDate = new Date();
+		const diff = differenceInSeconds(endDateVal, currDate);
 
 		if (diff < 0) {
 			complete();
 			return;
 		}
 
-		const timeLeft = moment.duration(diff, 'seconds');
+		const days = Math.floor(diff / (60 * 60 * 24));
+		const hours = Math.floor((diff % (60 * 60 * 24)) / (60 * 60));
+		const minutes = Math.floor((diff % (60 * 60)) / 60);
+		const seconds = diff % 60;
 
 		setCountdown({
-			days: Number(timeLeft.asDays().toFixed(0)),
-			hours: timeLeft.hours(),
-			minutes: timeLeft.minutes(),
-			seconds: timeLeft.seconds()
+			days,
+			hours,
+			minutes,
+			seconds
 		});
 	}, [complete, endDateVal]);
 

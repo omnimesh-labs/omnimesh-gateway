@@ -1,19 +1,19 @@
 import Toolbar from '@mui/material/Toolbar';
 import clsx from 'clsx';
 import { memo } from 'react';
-import NavbarToggleButton from 'src/components/theme-layouts/components/navbar/NavbarToggleButton';
+// import NavbarToggleButton from 'src/components/theme-layouts/components/navbar/NavbarToggleButton';
 import themeOptions from 'src/configs/themeOptions';
-import find from 'lodash/find';
+import { find } from '../../../../utils/lodashReplacements';
 import LightDarkModeToggle from 'src/components/LightDarkModeToggle';
-import useLayoutSettings from '@fuse/core/Layout/useLayoutSettings';
-import FullScreenToggle from '../../components/FullScreenToggle';
+// import useLayoutSettings from '@fuse/core/Layout/useLayoutSettings';
+// import FullScreenToggle from '../../components/FullScreenToggle';
 // import NavigationShortcuts from '../../components/navigation/NavigationShortcuts';
 // import NavigationSearch from '../../components/navigation/NavigationSearch';
-import UserMenu from '../../components/UserMenu';
-import { Layout1ConfigDefaultsType } from '@/components/theme-layouts/layout1/Layout1Config';
+import UserMenu from '@/@auth/components/UserMenu';
+// import { Layout1ConfigDefaultsType } from '@/components/theme-layouts/layout1/Layout1Config';
 import useThemeMediaQuery from '../../../../@fuse/hooks/useThemeMediaQuery';
 import AppBar from '@mui/material/AppBar';
-import Divider from '@mui/material/Divider';
+// import Divider from '@mui/material/Divider';
 import ToolbarTheme from 'src/contexts/ToolbarTheme';
 
 type ToolbarLayout1Props = {
@@ -26,8 +26,8 @@ type ToolbarLayout1Props = {
 function ToolbarLayout1(props: ToolbarLayout1Props) {
 	const { className } = props;
 
-	const settings = useLayoutSettings();
-	const config = settings.config as Layout1ConfigDefaultsType;
+	// const settings = useLayoutSettings();
+	// const config = settings.config as Layout1ConfigDefaultsType;
 	const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
 
 	return (
@@ -42,7 +42,7 @@ function ToolbarLayout1(props: ToolbarLayout1Props) {
 			>
 				<Toolbar className="min-h-12 p-0 md:min-h-16">
 					<div className="flex flex-1 items-center gap-3 px-2 md:px-4">
-						{config.navbar.display && config.navbar.position === 'left' && (
+						{/* {config.navbar.display && config.navbar.position === 'left' && (
 							<>
 								<NavbarToggleButton />
 
@@ -52,16 +52,16 @@ function ToolbarLayout1(props: ToolbarLayout1Props) {
 									variant="middle"
 								/>
 							</>
-						)}
+						)} */}
 
 						{/* {!isMobile && <NavigationShortcuts />} */}
 					</div>
 
 					<div className="flex items-center overflow-x-auto px-2 py-2 md:px-4">
-						<FullScreenToggle />
+						{/* <FullScreenToggle /> */}
 						<LightDarkModeToggle
-							lightTheme={find(themeOptions, { id: 'Default' })}
-							darkTheme={find(themeOptions, { id: 'Default Dark' })}
+							lightTheme={find(themeOptions, (theme) => theme.id === 'Default')}
+							darkTheme={find(themeOptions, (theme) => theme.id === 'Default Dark')}
 						/>
 						{/* <NavigationSearch /> */}
 						<UserMenu
@@ -81,7 +81,7 @@ function ToolbarLayout1(props: ToolbarLayout1Props) {
 						/>
 					</div>
 
-					{config.navbar.display && config.navbar.position === 'right' && (
+					{/* {config.navbar.display && config.navbar.position === 'right' && (
 						<>
 							{!isMobile && (
 								<>
@@ -96,7 +96,7 @@ function ToolbarLayout1(props: ToolbarLayout1Props) {
 
 							{isMobile && <NavbarToggleButton className="h-10 w-10 p-0 sm:mx-2" />}
 						</>
-					)}
+					)} */}
 				</Toolbar>
 			</AppBar>
 		</ToolbarTheme>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { MRT_ColumnDef, MRT_Row } from 'material-react-table';
 import PageSimple from '@fuse/core/PageSimple';
 import { styled } from '@mui/material/styles';
@@ -27,6 +27,7 @@ import {
 import DataTable from '@/components/data-table/DataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
 import { useSnackbar } from 'notistack';
+import { policyApi } from '@/lib/api';
 
 const Root = styled(PageSimple)(({ theme }) => ({
 	'& .PageSimple-header': {
@@ -50,7 +51,7 @@ interface Policy {
 	priority: number;
 	created_at: string;
 	updated_at: string;
-	rules: any;
+	rules: unknown;
 }
 
 const getPolicyTypeColor = (type: string): 'primary' | 'warning' | 'error' => {
@@ -77,59 +78,28 @@ function PoliciesView() {
 		is_active: true,
 		priority: 100
 	});
+	const [policies, setPolicies] = useState<Policy[]>([]);
+	const [isLoading, setIsLoading] = useState(false);
 	const { enqueueSnackbar } = useSnackbar();
 
-	// Mock data - memoized to prevent recreation on each render
-	const mockPolicies = useMemo<Policy[]>(
-		() => [
-			{
-				id: '1',
-				name: 'Default Rate Limit',
-				description: 'Standard rate limiting for all users',
-				type: 'rate_limit',
-				scope: 'global',
-				is_active: true,
-				priority: 100,
-				created_at: '2024-01-15T10:00:00Z',
-				updated_at: '2024-01-20T15:30:00Z',
-				rules: {
-					requests_per_minute: 60,
-					burst_limit: 10
-				}
-			},
-			{
-				id: '2',
-				name: 'Admin Access Control',
-				description: 'Full access for administrators',
-				type: 'access_control',
-				scope: 'user',
-				is_active: true,
-				priority: 200,
-				created_at: '2024-01-10T09:00:00Z',
-				updated_at: '2024-01-18T14:00:00Z',
-				rules: {
-					allowed_actions: ['*'],
-					denied_actions: []
-				}
-			},
-			{
-				id: '3',
-				name: 'Production Content Filter',
-				description: 'Content filtering for production namespace',
-				type: 'content_filter',
-				scope: 'namespace',
-				is_active: false,
-				priority: 50,
-				created_at: '2024-01-12T11:00:00Z',
-				updated_at: '2024-01-22T16:00:00Z',
-				rules: {
-					blocked_keywords: ['test', 'debug'],
-					max_content_length: 10000
-				}
-			}
-		],
-		[]
-	);
+	// Fetch policies on mount
+	useEffect(() => {
+		fetchPolicies();
+	}, []);
+
+	const fetchPolicies = async () => {
+		setIsLoading(true);
+		try {
+			const data = await policyApi.listPolicies();
+			setPolicies(data);
+		} catch (error) {
+			enqueueSnackbar('Failed to fetch policies', { variant: 'error' });
+			console.error('Error fetching policies:', error);
+			setPolicies([]); // Set empty array on error
+		} finally {
+			setIsLoading(false);
+		}
+	};
 
 	const handleCreatePolicy = useCallback(() => {
 		setFormData({
@@ -157,16 +127,36 @@ function PoliciesView() {
 		setCreateModalOpen(true);
 	}, []);
 
-	const handleSavePolicy = useCallback(() => {
-		const action = editingPolicy ? 'updated' : 'created';
-		enqueueSnackbar(`Policy ${action} successfully (demo)`, { variant: 'success' });
-		setCreateModalOpen(false);
-		setEditingPolicy(null);
-	}, [editingPolicy, enqueueSnackbar]);
+	const handleSavePolicy = useCallback(async () => {
+		try {
+			if (editingPolicy) {
+				await policyApi.updatePolicy(editingPolicy.id, formData);
+				enqueueSnackbar('Policy updated successfully', { variant: 'success' });
+			} else {
+				await policyApi.createPolicy(formData);
+				enqueueSnackbar('Policy created successfully', { variant: 'success' });
+			}
+
+			setCreateModalOpen(false);
+			setEditingPolicy(null);
+			fetchPolicies(); // Refresh the list
+		} catch (error) {
+			const action = editingPolicy ? 'update' : 'create';
+			enqueueSnackbar(`Failed to ${action} policy`, { variant: 'error' });
+			console.error(`Error ${action}ing policy:`, error);
+		}
+	}, [editingPolicy, formData, enqueueSnackbar]);
 
 	const handleDeletePolicy = useCallback(
-		(policy: Policy) => {
-			enqueueSnackbar(`Delete functionality coming soon for ${policy.name}`, { variant: 'info' });
+		async (policy: Policy) => {
+			try {
+				await policyApi.deletePolicy(policy.id);
+				enqueueSnackbar(`Policy ${policy.name} deleted successfully`, { variant: 'success' });
+				fetchPolicies(); // Refresh the list
+			} catch (error) {
+				enqueueSnackbar(`Failed to delete policy ${policy.name}`, { variant: 'error' });
+				console.error('Error deleting policy:', error);
+			}
 		},
 		[enqueueSnackbar]
 	);
@@ -289,7 +279,8 @@ function PoliciesView() {
 				<div className="p-6">
 					<DataTable
 						columns={columns}
-						data={mockPolicies}
+						data={policies}
+						state={{ isLoading }}
 						enableRowActions
 						renderRowActions={useCallback(
 							({ row }: { row: MRT_Row<Policy> }) => (
@@ -357,7 +348,13 @@ function PoliciesView() {
 										label="Policy Type"
 										value={formData.type}
 										onChange={(e) =>
-											setFormData((prev) => ({ ...prev, type: e.target.value as any }))
+											setFormData((prev) => ({
+												...prev,
+												type: e.target.value as
+													| 'rate_limit'
+													| 'access_control'
+													| 'content_filter'
+											}))
 										}
 										select
 										fullWidth
@@ -372,7 +369,10 @@ function PoliciesView() {
 										label="Scope"
 										value={formData.scope}
 										onChange={(e) =>
-											setFormData((prev) => ({ ...prev, scope: e.target.value as any }))
+											setFormData((prev) => ({
+												...prev,
+												scope: e.target.value as 'global' | 'namespace' | 'user'
+											}))
 										}
 										select
 										fullWidth

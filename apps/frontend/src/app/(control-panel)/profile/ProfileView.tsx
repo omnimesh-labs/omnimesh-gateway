@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import PageSimple from '@fuse/core/PageSimple';
 import { styled } from '@mui/material/styles';
 import {
@@ -8,7 +8,6 @@ import {
 	Button,
 	Card,
 	CardContent,
-	GridLegacy as Grid,
 	Avatar,
 	Box,
 	Divider,
@@ -21,13 +20,13 @@ import {
 	Dialog,
 	DialogTitle,
 	DialogContent,
-	DialogActions,
-	Alert
+	DialogActions
 } from '@mui/material';
 import SvgIcon from '@fuse/core/SvgIcon';
 import { useSnackbar } from 'notistack';
 import { useRouter } from 'next/navigation';
 import useUser from '@auth/useUser';
+import { authApi } from '@/lib/api';
 
 const Root = styled(PageSimple)(({ theme }) => ({
 	'& .PageSimple-header': {
@@ -63,6 +62,8 @@ function ProfileView() {
 	const { data: currentUser } = useUser();
 	const [editDialogOpen, setEditDialogOpen] = useState(false);
 	const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+	const [profile, setProfile] = useState<UserProfile | null>(null);
+	const [_isLoading, setIsLoading] = useState(false);
 	const [editFormData, setEditFormData] = useState({
 		name: '',
 		email: ''
@@ -73,37 +74,56 @@ function ProfileView() {
 		confirmPassword: ''
 	});
 
-	// Mock user profile data
-	const mockProfile: UserProfile = {
-		id: currentUser?.id || 'user-1',
-		email: currentUser?.email || 'admin@admin.com',
-		name: currentUser?.displayName || 'Admin User',
-		role: Array.isArray(currentUser?.role) ? currentUser.role[0] : currentUser?.role || 'admin',
-		organization: {
-			id: 'org-1',
-			name: 'MCP Gateway Organization',
-			plan: 'Enterprise'
-		},
-		created_at: '2024-01-01T00:00:00Z',
-		last_login: new Date().toISOString(),
-		api_keys_count: 3,
-		active_sessions: 5
+	// Fetch profile data on mount
+	useEffect(() => {
+		fetchProfile();
+	}, []);
+
+	const fetchProfile = async () => {
+		setIsLoading(true);
+		try {
+			const data = await authApi.getProfile();
+			// Transform the API response to match UserProfile interface
+			const transformedProfile: UserProfile = {
+				id: data.user?.id || currentUser?.id || '',
+				email: data.user?.email || currentUser?.email || '',
+				name: data.user?.name || currentUser?.displayName || 'User',
+				role: data.user?.role || currentUser?.role || 'user',
+				organization: {
+					id: data.organization?.id || '',
+					name: data.organization?.name || 'Organization',
+					plan: data.organization?.plan_type || 'free'
+				},
+				created_at: data.user?.created_at || new Date().toISOString(),
+				last_login: new Date().toISOString(),
+				api_keys_count: data.api_keys_count || 0,
+				active_sessions: data.active_sessions || 0
+			};
+			setProfile(transformedProfile);
+		} catch (error) {
+			enqueueSnackbar('Failed to fetch profile data', { variant: 'error' });
+			console.error('Error fetching profile:', error);
+		} finally {
+			setIsLoading(false);
+		}
 	};
 
 	const handleEditProfile = () => {
-		setEditFormData({
-			name: mockProfile.name,
-			email: mockProfile.email
-		});
-		setEditDialogOpen(true);
+		if (profile) {
+			setEditFormData({
+				name: profile.name,
+				email: profile.email
+			});
+			setEditDialogOpen(true);
+		}
 	};
 
 	const handleSaveProfile = async () => {
 		try {
-			// TODO: Replace with actual API call
-			// await authApi.updateProfile(editFormData);
+			await authApi.updateProfile(editFormData);
 			enqueueSnackbar('Profile updated successfully', { variant: 'success' });
 			setEditDialogOpen(false);
+			loadProfile();
 		} catch (error) {
 			enqueueSnackbar('Failed to update profile', { variant: 'error' });
 		}
@@ -116,8 +136,10 @@ function ProfileView() {
 		}
 
 		try {
-			// TODO: Replace with actual API call
-			// await authApi.changePassword(passwordFormData);
+			await authApi.updateProfile({
+				current_password: passwordFormData.currentPassword,
+				new_password: passwordFormData.newPassword
+			});
 			enqueueSnackbar('Password changed successfully', { variant: 'success' });
 			setPasswordDialogOpen(false);
 			setPasswordFormData({
@@ -133,7 +155,7 @@ function ProfileView() {
 	const quickActions = [
 		{
 			title: 'API Keys',
-			description: `${mockProfile.api_keys_count} active keys`,
+			description: `${profile.api_keys_count} active keys`,
 			icon: 'lucide:key',
 			url: '/profile/api-keys'
 		},
@@ -145,7 +167,7 @@ function ProfileView() {
 		},
 		{
 			title: 'Sessions',
-			description: `${mockProfile.active_sessions} active`,
+			description: `${profile.active_sessions} active`,
 			icon: 'lucide:monitor',
 			url: '#'
 		},
@@ -157,15 +179,17 @@ function ProfileView() {
 		}
 	];
 
-	const accountDetails = [
-		{ label: 'User ID', value: mockProfile.id },
-		{ label: 'Email', value: mockProfile.email },
-		{ label: 'Role', value: mockProfile.role, chip: true },
-		{ label: 'Organization', value: mockProfile.organization.name },
-		{ label: 'Plan', value: mockProfile.organization.plan, chip: true },
-		{ label: 'Member Since', value: new Date(mockProfile.created_at).toLocaleDateString() },
-		{ label: 'Last Login', value: new Date(mockProfile.last_login).toLocaleString() }
-	];
+	const accountDetails = profile
+		? [
+				{ label: 'User ID', value: profile.id },
+				{ label: 'Email', value: profile.email },
+				{ label: 'Role', value: profile.role, chip: true },
+				{ label: 'Organization', value: profile.organization.name },
+				{ label: 'Plan', value: profile.organization.plan, chip: true },
+				{ label: 'Member Since', value: new Date(profile.created_at).toLocaleDateString() },
+				{ label: 'Last Login', value: new Date(profile.last_login).toLocaleString() }
+			]
+		: [];
 
 	return (
 		<Root
@@ -174,18 +198,18 @@ function ProfileView() {
 					<div className="flex items-center justify-between">
 						<div className="flex items-center space-x-4">
 							<Avatar sx={{ width: 64, height: 64, bgcolor: 'primary.main' }}>
-								{mockProfile.name
+								{profile.name
 									.split(' ')
 									.map((n) => n[0])
 									.join('')}
 							</Avatar>
 							<div>
-								<Typography variant="h4">{mockProfile.name}</Typography>
+								<Typography variant="h4">{profile.name}</Typography>
 								<Typography
 									variant="body1"
 									color="textSecondary"
 								>
-									{mockProfile.email}
+									{profile.email}
 								</Typography>
 							</div>
 						</div>
@@ -209,234 +233,157 @@ function ProfileView() {
 				</div>
 			}
 			content={
-				<div className="p-6">
-					<Grid
-						container
-						spacing={3}
-					>
-						{/* Quick Actions */}
-						<Grid
-							item
-							xs={12}
+				<div className="space-y-6 p-6">
+					{/* Quick Actions */}
+					<div>
+						<Typography
+							variant="h6"
+							className="mb-3"
 						>
-							<Typography
-								variant="h6"
-								className="mb-3"
-							>
-								Quick Actions
-							</Typography>
-							<Grid
-								container
-								spacing={2}
-							>
-								{quickActions.map((action) => (
-									<Grid
-										item
-										xs={12}
-										sm={6}
-										md={3}
-										key={action.title}
-									>
-										<Card
-											sx={{
-												cursor: 'pointer',
-												'&:hover': { boxShadow: 3 }
-											}}
-											onClick={() => action.url !== '#' && router.push(action.url)}
+							Quick Actions
+						</Typography>
+						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+							{quickActions.map((action) => (
+								<Card
+									key={action.title}
+									sx={{
+										cursor: 'pointer',
+										'&:hover': { boxShadow: 3 }
+									}}
+									onClick={() => action.url !== '#' && router.push(action.url)}
+								>
+									<CardContent>
+										<Box className="mb-2 flex items-center justify-between">
+											<SvgIcon
+												size={24}
+												color="primary"
+											>
+												{action.icon}
+											</SvgIcon>
+											<SvgIcon size={16}>lucide:arrow-right</SvgIcon>
+										</Box>
+										<Typography variant="subtitle1">{action.title}</Typography>
+										<Typography
+											variant="body2"
+											color="textSecondary"
 										>
-											<CardContent>
-												<Box className="mb-2 flex items-center justify-between">
-													<SvgIcon
-														size={24}
-														color="primary"
-													>
-														{action.icon}
-													</SvgIcon>
-													<SvgIcon size={16}>lucide:arrow-right</SvgIcon>
-												</Box>
-												<Typography variant="subtitle1">{action.title}</Typography>
-												<Typography
-													variant="body2"
-													color="textSecondary"
-												>
-													{action.description}
-												</Typography>
-											</CardContent>
-										</Card>
-									</Grid>
-								))}
-							</Grid>
-						</Grid>
+											{action.description}
+										</Typography>
+									</CardContent>
+								</Card>
+							))}
+						</div>
+					</div>
 
+					{/* Cards Section */}
+					<div className="grid grid-cols-1 gap-6 md:grid-cols-2">
 						{/* Account Details */}
-						<Grid
-							item
-							xs={12}
-							md={6}
-						>
-							<Card>
-								<CardContent>
-									<Typography
-										variant="h6"
-										className="mb-3"
-									>
-										Account Details
-									</Typography>
-									<List>
-										{accountDetails.map((detail, index) => (
-											<div key={detail.label}>
-												<ListItem>
-													<ListItemText
-														primary={detail.label}
-														secondary={
-															detail.chip ? (
-																<Chip
-																	size="small"
-																	label={detail.value}
-																	color={
-																		detail.label === 'Role' ? 'primary' : 'default'
-																	}
-																/>
-															) : (
-																detail.value
-															)
-														}
-													/>
-												</ListItem>
-												{index < accountDetails.length - 1 && <Divider />}
-											</div>
-										))}
-									</List>
-								</CardContent>
-							</Card>
-						</Grid>
+						<Card>
+							<CardContent>
+								<Typography
+									variant="h6"
+									className="mb-3"
+								>
+									Account Details
+								</Typography>
+								<List>
+									{accountDetails.map((detail, index) => (
+										<div key={detail.label}>
+											<ListItem>
+												<ListItemText
+													primary={detail.label}
+													secondary={
+														detail.chip ? (
+															<Chip
+																size="small"
+																label={detail.value}
+																color={detail.label === 'Role' ? 'primary' : 'default'}
+															/>
+														) : (
+															detail.value
+														)
+													}
+												/>
+											</ListItem>
+											{index < accountDetails.length - 1 && <Divider />}
+										</div>
+									))}
+								</List>
+							</CardContent>
+						</Card>
 
 						{/* Security Settings */}
-						<Grid
-							item
-							xs={12}
-							md={6}
-						>
-							<Card>
-								<CardContent>
-									<Typography
-										variant="h6"
-										className="mb-3"
-									>
-										Security Settings
-									</Typography>
-									<List>
-										<ListItem>
-											<ListItemIcon>
-												<SvgIcon>lucide:shield-check</SvgIcon>
-											</ListItemIcon>
-											<ListItemText
-												primary="Two-Factor Authentication"
-												secondary="Not enabled"
-											/>
-											<Button
-												size="small"
-												variant="outlined"
-											>
-												Enable
-											</Button>
-										</ListItem>
-										<Divider />
-										<ListItem>
-											<ListItemIcon>
-												<SvgIcon>lucide:key</SvgIcon>
-											</ListItemIcon>
-											<ListItemText
-												primary="API Keys"
-												secondary={`${mockProfile.api_keys_count} active keys`}
-											/>
-											<Button
-												size="small"
-												variant="outlined"
-												onClick={() => router.push('/profile/api-keys')}
-											>
-												Manage
-											</Button>
-										</ListItem>
-										<Divider />
-										<ListItem>
-											<ListItemIcon>
-												<SvgIcon>lucide:monitor</SvgIcon>
-											</ListItemIcon>
-											<ListItemText
-												primary="Active Sessions"
-												secondary={`${mockProfile.active_sessions} devices`}
-											/>
-											<Button
-												size="small"
-												variant="outlined"
-											>
-												View All
-											</Button>
-										</ListItem>
-										<Divider />
-										<ListItem>
-											<ListItemIcon>
-												<SvgIcon>lucide:clock</SvgIcon>
-											</ListItemIcon>
-											<ListItemText
-												primary="Session Timeout"
-												secondary="24 hours"
-											/>
-										</ListItem>
-									</List>
-								</CardContent>
-							</Card>
-						</Grid>
-
-						{/* Danger Zone */}
-						<Grid
-							item
-							xs={12}
-						>
-							<Card sx={{ borderColor: 'error.main', borderWidth: 1, borderStyle: 'solid' }}>
-								<CardContent>
-									<Typography
-										variant="h6"
-										color="error"
-										className="mb-3"
-									>
-										Danger Zone
-									</Typography>
-									<Alert
-										severity="warning"
-										className="mb-3"
-									>
-										These actions are irreversible. Please be certain.
-									</Alert>
-									<Box className="flex gap-2">
+						<Card>
+							<CardContent>
+								<Typography
+									variant="h6"
+									className="mb-3"
+								>
+									Security Settings
+								</Typography>
+								<List>
+									<ListItem>
+										<ListItemIcon>
+											<SvgIcon>lucide:shield-check</SvgIcon>
+										</ListItemIcon>
+										<ListItemText
+											primary="Two-Factor Authentication"
+											secondary="Not enabled"
+										/>
 										<Button
+											size="small"
 											variant="outlined"
-											color="error"
-											startIcon={<SvgIcon>lucide:download</SvgIcon>}
-											onClick={() =>
-												enqueueSnackbar('Export functionality coming soon', { variant: 'info' })
-											}
 										>
-											Export Data
+											Enable
 										</Button>
+									</ListItem>
+									<Divider />
+									<ListItem>
+										<ListItemIcon>
+											<SvgIcon>lucide:key</SvgIcon>
+										</ListItemIcon>
+										<ListItemText
+											primary="API Keys"
+											secondary={`${profile.api_keys_count} active keys`}
+										/>
 										<Button
+											size="small"
 											variant="outlined"
-											color="error"
-											startIcon={<SvgIcon>lucide:trash-2</SvgIcon>}
-											onClick={() =>
-												enqueueSnackbar('Account deletion requires admin approval', {
-													variant: 'warning'
-												})
-											}
+											onClick={() => router.push('/profile/api-keys')}
 										>
-											Delete Account
+											Manage
 										</Button>
-									</Box>
-								</CardContent>
-							</Card>
-						</Grid>
-					</Grid>
+									</ListItem>
+									<Divider />
+									<ListItem>
+										<ListItemIcon>
+											<SvgIcon>lucide:monitor</SvgIcon>
+										</ListItemIcon>
+										<ListItemText
+											primary="Active Sessions"
+											secondary={`${profile.active_sessions} devices`}
+										/>
+										<Button
+											size="small"
+											variant="outlined"
+										>
+											View All
+										</Button>
+									</ListItem>
+									<Divider />
+									<ListItem>
+										<ListItemIcon>
+											<SvgIcon>lucide:clock</SvgIcon>
+										</ListItemIcon>
+										<ListItemText
+											primary="Session Timeout"
+											secondary="24 hours"
+										/>
+									</ListItem>
+								</List>
+							</CardContent>
+						</Card>
+					</div>
 
 					{/* Edit Profile Dialog */}
 					<Dialog

@@ -12,28 +12,14 @@ import {
 	DialogHeader,
 	DialogTitle
 } from '@/components/ui/dialog';
-import {
-	Form,
-	FormControl,
-	FormDescription,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage
-} from '@/components/ui/form';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue
-} from '@/components/ui/select';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { X, Plus } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useCreatePrompt, useUpdatePrompt } from '../../api/hooks/usePrompts';
 import { Prompt } from '@/lib/api';
 
@@ -60,7 +46,7 @@ export default function PromptFormDialog({ open, onClose, prompt }: PromptFormDi
 	const isEdit = !!prompt;
 	const createMutation = useCreatePrompt();
 	const updateMutation = useUpdatePrompt();
-	
+
 	const form = useForm<PromptFormData>({
 		resolver: zodResolver(promptSchema),
 		defaultValues: {
@@ -74,14 +60,14 @@ export default function PromptFormDialog({ open, onClose, prompt }: PromptFormDi
 			metadata: ''
 		}
 	});
-	
+
 	useEffect(() => {
 		if (prompt) {
 			form.reset({
 				name: prompt.name,
 				description: prompt.description || '',
 				prompt_template: prompt.prompt_template,
-				category: prompt.category as any,
+				category: prompt.category as 'general' | 'system' | 'knowledge_base' | 'custom',
 				is_active: prompt.is_active,
 				tags: prompt.tags || [],
 				parameters: prompt.parameters ? JSON.stringify(prompt.parameters, null, 2) : '',
@@ -100,19 +86,19 @@ export default function PromptFormDialog({ open, onClose, prompt }: PromptFormDi
 			});
 		}
 	}, [prompt, form]);
-	
+
 	const handleSubmit = async (data: PromptFormData) => {
 		try {
 			const parameters = data.parameters ? JSON.parse(data.parameters) : undefined;
 			const metadata = data.metadata ? JSON.parse(data.metadata) : undefined;
-			
+
 			const payload = {
 				...data,
 				parameters,
 				metadata,
-				tags: data.tags?.filter(tag => tag.trim() !== '')
+				tags: data.tags?.filter((tag) => tag.trim() !== '')
 			};
-			
+
 			if (isEdit && prompt) {
 				await updateMutation.mutateAsync({
 					id: prompt.id,
@@ -121,37 +107,47 @@ export default function PromptFormDialog({ open, onClose, prompt }: PromptFormDi
 			} else {
 				await createMutation.mutateAsync(payload);
 			}
-			
+
 			onClose();
-		} catch (error) {
+		} catch (_error) {
 			// Error is handled by the mutation hooks
 		}
 	};
-	
+
 	const handleAddTag = (tag: string) => {
 		const currentTags = form.getValues('tags') || [];
+
 		if (tag && !currentTags.includes(tag)) {
 			form.setValue('tags', [...currentTags, tag]);
 		}
 	};
-	
+
 	const handleRemoveTag = (tagToRemove: string) => {
 		const currentTags = form.getValues('tags') || [];
-		form.setValue('tags', currentTags.filter(tag => tag !== tagToRemove));
+		form.setValue(
+			'tags',
+			currentTags.filter((tag) => tag !== tagToRemove)
+		);
 	};
-	
+
 	return (
-		<Dialog open={open} onOpenChange={onClose}>
-			<DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+		<Dialog
+			open={open}
+			onOpenChange={onClose}
+		>
+			<DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[700px]">
 				<DialogHeader>
 					<DialogTitle>{isEdit ? 'Edit Prompt' : 'Create Prompt'}</DialogTitle>
 					<DialogDescription>
 						{isEdit ? 'Update the prompt template' : 'Add a new prompt template'}
 					</DialogDescription>
 				</DialogHeader>
-				
+
 				<Form {...form}>
-					<form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+					<form
+						onSubmit={form.handleSubmit(handleSubmit)}
+						className="space-y-4"
+					>
 						<FormField
 							control={form.control}
 							name="name"
@@ -159,13 +155,16 @@ export default function PromptFormDialog({ open, onClose, prompt }: PromptFormDi
 								<FormItem>
 									<FormLabel>Name</FormLabel>
 									<FormControl>
-										<Input placeholder="Code Review Assistant" {...field} />
+										<Input
+											placeholder="Code Review Assistant"
+											{...field}
+										/>
 									</FormControl>
 									<FormMessage />
 								</FormItem>
 							)}
 						/>
-						
+
 						<FormField
 							control={form.control}
 							name="description"
@@ -183,14 +182,17 @@ export default function PromptFormDialog({ open, onClose, prompt }: PromptFormDi
 								</FormItem>
 							)}
 						/>
-						
+
 						<FormField
 							control={form.control}
 							name="category"
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>Category</FormLabel>
-									<Select onValueChange={field.onChange} value={field.value}>
+									<Select
+										onValueChange={field.onChange}
+										value={field.value}
+									>
 										<FormControl>
 											<SelectTrigger>
 												<SelectValue placeholder="Select category" />
@@ -210,7 +212,7 @@ export default function PromptFormDialog({ open, onClose, prompt }: PromptFormDi
 								</FormItem>
 							)}
 						/>
-						
+
 						<FormField
 							control={form.control}
 							name="prompt_template"
@@ -232,7 +234,7 @@ export default function PromptFormDialog({ open, onClose, prompt }: PromptFormDi
 								</FormItem>
 							)}
 						/>
-						
+
 						<FormField
 							control={form.control}
 							name="parameters"
@@ -247,14 +249,12 @@ export default function PromptFormDialog({ open, onClose, prompt }: PromptFormDi
 											className="font-mono text-sm"
 										/>
 									</FormControl>
-									<FormDescription>
-										Define parameters as a JSON array
-									</FormDescription>
+									<FormDescription>Define parameters as a JSON array</FormDescription>
 									<FormMessage />
 								</FormItem>
 							)}
 						/>
-						
+
 						<FormField
 							control={form.control}
 							name="tags"
@@ -275,7 +275,11 @@ export default function PromptFormDialog({ open, onClose, prompt }: PromptFormDi
 											/>
 											<div className="flex flex-wrap gap-2">
 												{field.value?.map((tag) => (
-													<Badge key={tag} variant="secondary" className="gap-1">
+													<Badge
+														key={tag}
+														variant="secondary"
+														className="gap-1"
+													>
 														{tag}
 														<X
 															className="h-3 w-3 cursor-pointer"
@@ -291,7 +295,7 @@ export default function PromptFormDialog({ open, onClose, prompt }: PromptFormDi
 								</FormItem>
 							)}
 						/>
-						
+
 						<FormField
 							control={form.control}
 							name="metadata"
@@ -306,14 +310,12 @@ export default function PromptFormDialog({ open, onClose, prompt }: PromptFormDi
 											className="font-mono text-sm"
 										/>
 									</FormControl>
-									<FormDescription>
-										Additional metadata in JSON format
-									</FormDescription>
+									<FormDescription>Additional metadata in JSON format</FormDescription>
 									<FormMessage />
 								</FormItem>
 							)}
 						/>
-						
+
 						<FormField
 							control={form.control}
 							name="is_active"
@@ -321,9 +323,7 @@ export default function PromptFormDialog({ open, onClose, prompt }: PromptFormDi
 								<FormItem className="flex items-center justify-between rounded-lg border p-3">
 									<div className="space-y-0.5">
 										<FormLabel>Active</FormLabel>
-										<FormDescription>
-											Enable or disable this prompt
-										</FormDescription>
+										<FormDescription>Enable or disable this prompt</FormDescription>
 									</div>
 									<FormControl>
 										<Switch
@@ -334,9 +334,13 @@ export default function PromptFormDialog({ open, onClose, prompt }: PromptFormDi
 								</FormItem>
 							)}
 						/>
-						
+
 						<DialogFooter>
-							<Button type="button" variant="outline" onClick={onClose}>
+							<Button
+								type="button"
+								variant="outline"
+								onClick={onClose}
+							>
 								Cancel
 							</Button>
 							<Button
@@ -346,8 +350,8 @@ export default function PromptFormDialog({ open, onClose, prompt }: PromptFormDi
 								{createMutation.isPending || updateMutation.isPending
 									? 'Saving...'
 									: isEdit
-									? 'Update'
-									: 'Create'}
+										? 'Update'
+										: 'Create'}
 							</Button>
 						</DialogFooter>
 					</form>

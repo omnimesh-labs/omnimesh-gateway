@@ -26,6 +26,7 @@ import {
 } from '@mui/material';
 import SvgIcon from '@fuse/core/SvgIcon';
 import { useSnackbar } from 'notistack';
+import { configApi } from '@/lib/api';
 
 const Root = styled(PageSimple)(({ theme }) => ({
 	'& .PageSimple-header': {
@@ -62,27 +63,17 @@ function ConfigurationView() {
 		setExportProgress(0);
 
 		try {
-			// Simulate export progress
-			for (let i = 0; i <= 100; i += 10) {
-				setExportProgress(i);
-				await new Promise((resolve) => setTimeout(resolve, 200));
-			}
+			// Call the actual export API
+			const exportData = await configApi.exportConfiguration({
+				entityTypes: exportOptions.entityTypes,
+				includeInactive: exportOptions.includeInactive,
+				includeDependencies: exportOptions.includeDependencies
+			});
 
-			// Create mock export file
-			const exportData = {
-				metadata: {
-					exportId: `export-${Date.now()}`,
-					timestamp: new Date().toISOString(),
-					version: '1.0.0',
-					entityTypes: exportOptions.entityTypes
-				},
-				servers: [],
-				namespaces: [],
-				tools: [],
-				prompts: [],
-				resources: []
-			};
+			// Update progress
+			setExportProgress(100);
 
+			// Create download blob
 			const blob = new Blob([JSON.stringify(exportData, null, 2)], {
 				type: 'application/json'
 			});
@@ -106,12 +97,17 @@ function ConfigurationView() {
 		}
 	};
 
-	const handleImport = async () => {
+	const handleImport = async (file: File) => {
 		setIsImporting(true);
 		try {
-			// Simulate import process
-			await new Promise((resolve) => setTimeout(resolve, 2000));
-			enqueueSnackbar('Import functionality coming soon!', { variant: 'info' });
+			const text = await file.text();
+			const importData = JSON.parse(text);
+			await configApi.importConfiguration(importData);
+			enqueueSnackbar('Configuration imported successfully', { variant: 'success' });
+		} catch (error) {
+			enqueueSnackbar('Import failed: ' + (error instanceof Error ? error.message : 'Invalid file format'), {
+				variant: 'error'
+			});
 		} finally {
 			setIsImporting(false);
 		}
@@ -138,7 +134,7 @@ function ConfigurationView() {
 								color="textSecondary"
 								className="mt-1"
 							>
-								Export and import your MCP Gateway configuration
+								Export and import your Janex configuration
 							</Typography>
 						</div>
 					</div>
@@ -152,6 +148,13 @@ function ConfigurationView() {
 							onChange={(_, newValue) => setTabValue(newValue)}
 							variant="scrollable"
 							scrollButtons="auto"
+							sx={{
+								'& .MuiTab-root': {
+									gap: '8px',
+									paddingLeft: '16px',
+									paddingRight: '16px'
+								}
+							}}
 						>
 							<Tab
 								label="Export Configuration"
@@ -169,7 +172,7 @@ function ConfigurationView() {
 					{tabValue === 0 && (
 						<Stack spacing={3}>
 							<Alert severity="info">
-								Export your MCP Gateway configuration including servers, namespaces, and content.
+								Export your Janex configuration including servers, namespaces, and content.
 							</Alert>
 
 							<Card>
@@ -324,8 +327,10 @@ function ConfigurationView() {
 										<TextField
 											type="file"
 											label="Configuration File"
-											InputLabelProps={{ shrink: true }}
-											inputProps={{ accept: '.json' }}
+											slotProps={{
+												inputLabel: { shrink: true },
+												htmlInput: { accept: '.json' }
+											}}
 											helperText="Select a JSON configuration file to import"
 										/>
 									</Stack>

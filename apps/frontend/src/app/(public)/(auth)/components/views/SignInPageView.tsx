@@ -24,7 +24,7 @@ function SignInPageView() {
 							color: 'primary.dark'
 						}}
 					>
-						Welcome to <b>MCP Gateway</b>. Sign in to access your dashboard and manage your MCP servers.
+						Welcome to <b>Janex</b>. Sign in to access your dashboard and manage your MCP servers.
 					</Box>
 				</div>
 			</Paper>

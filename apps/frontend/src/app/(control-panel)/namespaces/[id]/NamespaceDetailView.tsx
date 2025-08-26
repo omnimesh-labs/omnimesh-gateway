@@ -39,7 +39,7 @@ import {
 import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
 import { useSnackbar } from 'notistack';
-import { MCPServer, Namespace } from '@/lib/api';
+import { MCPServer, Namespace, namespaceApi, serverApi } from '@/lib/api';
 
 const Root = styled(PageSimple)(({ theme }) => ({
 	'& .PageSimple-header': {
@@ -81,114 +81,37 @@ function NamespaceDetailView() {
 		description: ''
 	});
 
-	// Mock namespace details
-	const mockNamespace: NamespaceDetails = {
-		id: namespaceId,
-		name: 'Production Namespace',
-		description: 'Main production environment for MCP servers',
-		organization_id: 'org-1',
-		is_active: true,
-		metadata: {
-			environment: 'production',
-			region: 'us-west-2'
-		},
-		created_at: '2024-01-15T10:00:00Z',
-		updated_at: '2024-01-20T15:30:00Z',
-		servers: [
-			{
-				id: '1',
-				organization_id: 'org-1',
-				name: 'Weather API Server',
-				description: 'Provides weather data',
-				url: 'https://api.weather.com',
-				protocol: 'HTTP',
-				version: '1.0.0',
-				status: 'active',
-				metadata: {},
-				health_check_url: 'https://api.weather.com/health',
-				timeout: 30,
-				max_retries: 3,
-				is_active: true,
-				created_at: '2024-01-15T10:00:00Z',
-				updated_at: '2024-01-20T15:30:00Z'
-			},
-			{
-				id: '2',
-				organization_id: 'org-1',
-				name: 'Database Tools',
-				description: 'Database management tools',
-				url: '',
-				protocol: 'STDIO',
-				version: '2.1.0',
-				status: 'active',
-				command: 'db-tools',
-				args: ['--mode', 'interactive'],
-				metadata: {},
-				health_check_url: '',
-				timeout: 60,
-				max_retries: 3,
-				is_active: true,
-				created_at: '2024-01-16T11:00:00Z',
-				updated_at: '2024-01-21T16:30:00Z'
-			}
-		],
-		stats: {
-			total_servers: 2,
-			active_servers: 2,
-			total_sessions: 45,
-			total_requests: 1234
-		}
-	};
-
-	// Mock available servers for assignment
-	const mockAvailableServers: MCPServer[] = [
-		{
-			id: '3',
-			organization_id: 'org-1',
-			name: 'Analytics Server',
-			description: 'Data analytics and reporting',
-			url: 'https://analytics.example.com',
-			protocol: 'HTTP',
-			version: '1.5.0',
-			status: 'active',
-			metadata: {},
-			health_check_url: 'https://analytics.example.com/health',
-			timeout: 45,
-			max_retries: 3,
-			is_active: true,
-			created_at: '2024-01-17T12:00:00Z',
-			updated_at: '2024-01-22T17:30:00Z'
-		},
-		{
-			id: '4',
-			organization_id: 'org-1',
-			name: 'ML Model Server',
-			description: 'Machine learning model inference',
-			url: 'https://ml.example.com',
-			protocol: 'WebSocket',
-			version: '3.0.0',
-			status: 'inactive',
-			metadata: {},
-			health_check_url: 'https://ml.example.com/health',
-			timeout: 120,
-			max_retries: 5,
-			is_active: false,
-			created_at: '2024-01-18T13:00:00Z',
-			updated_at: '2024-01-23T18:30:00Z'
-		}
-	];
 
 	const loadNamespaceDetails = async () => {
 		try {
 			setLoading(true);
-			// TODO: Replace with actual API call
-			// const data = await namespaceApi.getNamespace(namespaceId);
+			const [namespaceData, allServers] = await Promise.all([
+				namespaceApi.getNamespace(namespaceId),
+				serverApi.listServers()
+			]);
 
-			// Mock implementation
-			await new Promise((resolve) => setTimeout(resolve, 500));
-			setNamespace(mockNamespace);
-			setAvailableServers(mockAvailableServers);
-		} catch (error) {
+			// Get servers assigned to this namespace (assuming they're returned with the namespace data)
+			const assignedServerIds = namespaceData.servers || [];
+			const assignedServers = allServers.filter(s => assignedServerIds.includes(s.id));
+			
+			// Calculate stats
+			const stats = {
+				total_servers: assignedServers.length,
+				active_servers: assignedServers.filter(s => s.is_active).length,
+				total_sessions: 0, // Would come from a sessions API
+				total_requests: 0 // Would come from metrics API
+			};
+
+			setNamespace({
+				...namespaceData,
+				servers: assignedServers,
+				stats
+			});
+			
+			// Available servers are those not assigned to any namespace
+			const unassignedServers = allServers.filter(s => !assignedServerIds.includes(s.id));
+			setAvailableServers(unassignedServers);
+		} catch (_error) {
 			console.error('Failed to load namespace:', error);
 			enqueueSnackbar('Failed to load namespace details', { variant: 'error' });
 			router.push('/namespaces');
@@ -213,8 +136,7 @@ function NamespaceDetailView() {
 
 	const handleSaveNamespace = async () => {
 		try {
-			// TODO: Replace with actual API call
-			// await namespaceApi.updateNamespace(namespaceId, editFormData);
+			await namespaceApi.updateNamespace(namespaceId, editFormData);
 			enqueueSnackbar('Namespace updated successfully', { variant: 'success' });
 			setEditDialogOpen(false);
 			loadNamespaceDetails();
@@ -229,8 +151,7 @@ function NamespaceDetailView() {
 		}
 
 		try {
-			// TODO: Replace with actual API call
-			// await namespaceApi.deleteNamespace(namespaceId);
+			await namespaceApi.deleteNamespace(namespaceId);
 			enqueueSnackbar('Namespace deleted successfully', { variant: 'success' });
 			router.push('/namespaces');
 		} catch (error) {
@@ -240,8 +161,12 @@ function NamespaceDetailView() {
 
 	const handleAssignServers = async () => {
 		try {
-			// TODO: Replace with actual API call
-			// await namespaceApi.assignServers(namespaceId, selectedServers);
+			// Assign each selected server to the namespace
+			await Promise.all(
+				selectedServers.map(serverId => 
+					namespaceApi.addServerToNamespace(namespaceId, serverId)
+				)
+			);
 			enqueueSnackbar('Servers assigned successfully', { variant: 'success' });
 			setAssignServerDialogOpen(false);
 			setSelectedServers([]);
@@ -257,8 +182,7 @@ function NamespaceDetailView() {
 		}
 
 		try {
-			// TODO: Replace with actual API call
-			// await namespaceApi.removeServer(namespaceId, serverId);
+			await namespaceApi.removeServerFromNamespace(namespaceId, serverId);
 			enqueueSnackbar('Server removed successfully', { variant: 'success' });
 			loadNamespaceDetails();
 		} catch (error) {
@@ -324,7 +248,7 @@ function NamespaceDetailView() {
 						<Chip
 							size="small"
 							label={status}
-							color={color as any}
+							color={color as 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'}
 						/>
 					);
 				}

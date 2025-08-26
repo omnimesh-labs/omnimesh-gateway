@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { MRT_ColumnDef } from 'material-react-table';
 import PageSimple from '@fuse/core/PageSimple';
 import { styled } from '@mui/material/styles';
@@ -25,6 +25,7 @@ import AccordionDetails from '@mui/material/AccordionDetails';
 import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
 import { useSnackbar } from 'notistack';
+import { endpointApi } from '@/lib/api';
 
 const Root = styled(PageSimple)(({ theme }) => ({
 	'& .PageSimple-header': {
@@ -75,51 +76,28 @@ function EndpointsView() {
 		rate_limit_window: 3600,
 		is_active: true
 	});
+	const [endpoints, setEndpoints] = useState<Endpoint[]>([]);
+	const [isLoading, setIsLoading] = useState(false);
 	const { enqueueSnackbar } = useSnackbar();
 
-	// Mock data
-	const mockEndpoints: Endpoint[] = [
-		{
-			id: '1',
-			name: 'dev-api',
-			namespace: 'development',
-			description: 'Development API endpoint',
-			enable_api_key_auth: true,
-			enable_oauth: false,
-			enable_public_access: false,
-			rate_limit_requests: 100,
-			rate_limit_window: 3600,
-			is_active: true,
-			created_at: '2024-01-15T10:00:00Z',
-			urls: {
-				sse: 'https://api.example.com/dev/sse',
-				http: 'https://api.example.com/dev/http',
-				websocket: 'wss://api.example.com/dev/ws',
-				openapi: 'https://api.example.com/dev/openapi.json',
-				documentation: 'https://docs.example.com/dev'
-			}
-		},
-		{
-			id: '2',
-			name: 'prod-api',
-			namespace: 'production',
-			description: 'Production API endpoint',
-			enable_api_key_auth: true,
-			enable_oauth: true,
-			enable_public_access: false,
-			rate_limit_requests: 1000,
-			rate_limit_window: 3600,
-			is_active: true,
-			created_at: '2024-01-10T09:00:00Z',
-			urls: {
-				sse: 'https://api.example.com/prod/sse',
-				http: 'https://api.example.com/prod/http',
-				websocket: 'wss://api.example.com/prod/ws',
-				openapi: 'https://api.example.com/prod/openapi.json',
-				documentation: 'https://docs.example.com/prod'
-			}
+	// Fetch endpoints on mount
+	useEffect(() => {
+		fetchEndpoints();
+	}, []);
+
+	const fetchEndpoints = useCallback(async () => {
+		setIsLoading(true);
+		try {
+			const data = await endpointApi.listEndpoints();
+			setEndpoints(data);
+		} catch (error) {
+			enqueueSnackbar('Failed to fetch endpoints', { variant: 'error' });
+			console.error('Error fetching endpoints:', error);
+			setEndpoints([]); // Set empty array on error
+		} finally {
+			setIsLoading(false);
 		}
-	];
+	}, [enqueueSnackbar]);
 
 	const handleCreateEndpoint = () => {
 		setFormData({
@@ -158,15 +136,35 @@ function EndpointsView() {
 		setUrlsModalOpen(true);
 	};
 
-	const handleSaveEndpoint = () => {
-		const action = editingEndpoint ? 'updated' : 'created';
-		enqueueSnackbar(`Endpoint ${action} successfully (demo)`, { variant: 'success' });
-		setCreateModalOpen(false);
-		setEditingEndpoint(null);
+	const handleSaveEndpoint = async () => {
+		try {
+			if (editingEndpoint) {
+				await endpointApi.updateEndpoint(editingEndpoint.id, formData);
+				enqueueSnackbar('Endpoint updated successfully', { variant: 'success' });
+			} else {
+				await endpointApi.createEndpoint(formData);
+				enqueueSnackbar('Endpoint created successfully', { variant: 'success' });
+			}
+
+			setCreateModalOpen(false);
+			setEditingEndpoint(null);
+			fetchEndpoints(); // Refresh the list
+		} catch (error) {
+			const action = editingEndpoint ? 'update' : 'create';
+			enqueueSnackbar(`Failed to ${action} endpoint`, { variant: 'error' });
+			console.error(`Error ${action}ing endpoint:`, error);
+		}
 	};
 
-	const handleDeleteEndpoint = (endpoint: Endpoint) => {
-		enqueueSnackbar(`Delete functionality coming soon for ${endpoint.name}`, { variant: 'info' });
+	const handleDeleteEndpoint = async (endpoint: Endpoint) => {
+		try {
+			await endpointApi.deleteEndpoint(endpoint.id);
+			enqueueSnackbar(`Endpoint ${endpoint.name} deleted successfully`, { variant: 'success' });
+			fetchEndpoints(); // Refresh the list
+		} catch (error) {
+			enqueueSnackbar(`Failed to delete endpoint ${endpoint.name}`, { variant: 'error' });
+			console.error('Error deleting endpoint:', error);
+		}
 	};
 
 	const handleCopyUrl = (url: string) => {
@@ -290,7 +288,8 @@ function EndpointsView() {
 				<div className="p-6">
 					<LazyDataTable
 						columns={columns}
-						data={mockEndpoints}
+						data={endpoints}
+						state={{ isLoading }}
 						enableRowActions
 						renderRowActions={({ row }) => (
 							<Box className="flex items-center space-x-1">

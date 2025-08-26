@@ -2,7 +2,7 @@
 import { createTheme, ThemeOptions } from '@mui/material/styles';
 import qs from 'qs';
 import { SettingsConfigType } from '@fuse/core/Settings/Settings';
-import type {} from '@mui/material/themeCssVarsAugmentation';
+import type { } from '@mui/material/themeCssVarsAugmentation';
 
 /**
  * The defaultTheme object defines the default color palette for the application.
@@ -48,7 +48,10 @@ const defaultTheme = {
 export const defaultSettings = {
 	customScrollbars: true,
 	direction: 'ltr',
-	layout: {},
+	layout: {
+		style: 'layout1',
+		config: {}
+	},
 	theme: {
 		main: defaultTheme,
 		navbar: defaultTheme,
@@ -63,7 +66,7 @@ export const defaultSettings = {
  */
 export function getParsedQuerySettings(): SettingsConfigType | object {
 	if (typeof window === 'undefined') {
-		return null;
+		return {};
 	}
 
 	const parsedQueryString = qs.parse(window?.location?.search, { ignoreQueryPrefix: true });
@@ -362,40 +365,48 @@ export const defaultThemeOptions: DefaultThemeOptions = {
 				root: {
 					textTransform: 'none',
 					fontWeight: 500,
-					lineHeight: 1,
+					lineHeight: 1.5,
+					whiteSpace: 'nowrap',
+					overflow: 'visible',
 					transition:
 						'background-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, border-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, padding 0.05s ease-out',
 					'&.Mui-focusVisible': {
 						outline: '1px solid var(--mui-palette-action-focus)',
 						outlineOffset: '2px'
+					},
+					// Force padding for buttons with icons
+					'&:has(.MuiButton-startIcon)': {
+						paddingLeft: '1rem !important',
+						paddingRight: '1rem !important'
+					},
+					'&:has(.MuiButton-endIcon)': {
+						paddingLeft: '1rem !important',
+						paddingRight: '1rem !important'
 					}
 				},
 				// Size-specific padding adjustments for the active state using --mui-spacing
 				sizeSmall: {
-					minHeight: spacing(28), // 1.75rem 28px
-					minWidth: spacing(28), // 1.75rem 28px
-					padding: `${spacing(6)} ${spacing(12)}`, // 6px 12px
+					minHeight: spacing(28),
+					padding: `${spacing(6)} ${spacing(32)} !important`, // 6px 32px with !important
 					'&:active': {
-						paddingTop: `calc(${spacing(6)} + ${spacing(1)})`, // 0.0625rem = 1px, 0.75rem = 12px
-						paddingBottom: `calc(${spacing(6)} - ${spacing(1)})` // 0.0625rem = 1px, 0.75rem = 12px
+						paddingTop: `calc(${spacing(6)} + ${spacing(1)}) !important`,
+						paddingBottom: `calc(${spacing(6)} - ${spacing(1)}) !important`
 					}
 				},
 				sizeMedium: {
-					minHeight: spacing(32), // 2rem 32px
-					minWidth: spacing(32), // 2rem 32px
-					padding: `${spacing(6)} ${spacing(12)}`, // 6px 12px
+					minHeight: spacing(32),
+					padding: `${spacing(6)} ${spacing(36)} !important`, // 6px 36px with !important
 					'&:active': {
-						paddingTop: `calc(${spacing(6)} + ${spacing(1)})`, // 0.0078125rem = 1px
-						paddingBottom: `calc(${spacing(6)} - ${spacing(1)})` // 0.0078125rem = 1px
+						paddingTop: `calc(${spacing(6)} + ${spacing(1)}) !important`,
+						paddingBottom: `calc(${spacing(6)} - ${spacing(1)}) !important`
 					}
 				},
 				sizeLarge: {
-					minHeight: spacing(36), // 2.25rem 36px
-					minWidth: spacing(36), // 2.25rem 36px
-					padding: `${spacing(8)} ${spacing(16)}`, // 8px 16px
+					minHeight: spacing(36),
+					padding: `${spacing(8)} ${spacing(40)} !important`, // 8px 40px with !important
 					'&:active': {
-						paddingTop: `calc(${spacing(8)} + ${spacing(1)})`, // 0.0625rem = 1px, 1rem = 16px
-						paddingBottom: `calc(${spacing(8)} - ${spacing(1)})` // 0.0625rem = 1px, 1rem = 16px
+						paddingTop: `calc(${spacing(8)} + ${spacing(1)}) !important`,
+						paddingBottom: `calc(${spacing(8)} - ${spacing(1)}) !important`
 					}
 				},
 				containedPrimary: generateContainedButtonStyles('primary'),
@@ -405,12 +416,18 @@ export const defaultThemeOptions: DefaultThemeOptions = {
 				containedSuccess: generateContainedButtonStyles('success'),
 				containedWarning: generateContainedButtonStyles('warning'),
 				startIcon: {
+					marginLeft: 0,
+					marginRight: spacing(8),
+					display: 'inherit',
 					fontSize: spacing(16),
 					'& > *:nth-of-type(1)': {
 						fontSize: 'inherit'
 					}
 				},
 				endIcon: {
+					marginLeft: spacing(8),
+					marginRight: 0,
+					display: 'inherit',
 					fontSize: spacing(16),
 					'& > *:nth-of-type(1)': {
 						fontSize: 'inherit'
@@ -430,10 +447,32 @@ export const defaultThemeOptions: DefaultThemeOptions = {
 					textTransform: 'none',
 					minWidth: spacing(28),
 					minHeight: spacing(28),
-					padding: `${spacing(4)} ${spacing(12)}`, // 4px 12px
+					padding: `${spacing(6)} ${spacing(32)} !important`, // 6px 32px (1rem = 16px on each side)
 					zIndex: 1,
 					'&.Mui-selected': {
 						color: 'var(--mui-palette-text-primary)'
+					},
+					// Force padding for tabs with icons
+					'&:has(svg)': {
+						paddingLeft: '1rem !important',
+						paddingRight: '1rem !important'
+					},
+					// Ensure proper spacing when icon is present
+					'& .MuiTab-iconWrapper': {
+						marginBottom: 0,
+						marginRight: spacing(8)
+					},
+					// Adjust padding when there's an icon
+					'&.MuiTab-labelIcon': {
+						minHeight: spacing(32),
+						padding: `${spacing(6)} ${spacing(24)} !important`,
+						'& .MuiTab-wrapper': {
+							flexDirection: 'row',
+							'& > svg:first-of-type': {
+								marginRight: spacing(8),
+								marginBottom: 0
+							}
+						}
 					}
 				}
 			}

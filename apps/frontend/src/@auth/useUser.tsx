@@ -2,7 +2,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { useMemo } from 'react';
 import { User } from '@auth/user';
 import { authUpdateDbUser } from '@auth/authApi';
-import _ from 'lodash';
+import { isEqual } from '../utils/lodashReplacements';
 import setIn from '@/utils/setIn';
 
 type useUser = {
@@ -46,7 +46,7 @@ function useUser(): useUser {
 	async function handleUpdateUserSettings(newSettings: User['settings']) {
 		const newUser = setIn(user, 'settings', newSettings) as User;
 
-		if (_.isEqual(user, newUser)) {
+		if (isEqual(user, newUser)) {
 			return undefined;
 		}
 

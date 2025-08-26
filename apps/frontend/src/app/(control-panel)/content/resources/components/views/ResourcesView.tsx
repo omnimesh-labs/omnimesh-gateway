@@ -1,367 +1,428 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { MRT_ColumnDef } from 'material-react-table';
+import PageSimple from '@fuse/core/PageSimple';
+import { styled } from '@mui/material/styles';
 import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow
-} from '@/components/ui/table';
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle
-} from '@/components/ui/alert-dialog';
-import {
-	Plus,
-	Search,
-	MoreHorizontal,
-	Edit,
-	Trash2,
-	FileText,
-	Link,
-	Database,
-	Globe,
-	HardDrive,
-	Code,
-	ChevronLeft,
-	ChevronRight
-} from 'lucide-react';
-import { useResources, useDeleteResource } from '../../api/hooks/useResources';
-import ResourceFormDialog from '../forms/ResourceFormDialog';
-import { Resource } from '@/lib/api';
-import { useDebounce } from '@/hooks/useDebounce';
+	Typography,
+	Button,
+	Chip,
+	IconButton,
+	Tooltip,
+	Box,
+	Dialog,
+	DialogTitle,
+	DialogContent,
+	DialogActions,
+	TextField,
+	Stack,
+	MenuItem,
+	FormControlLabel,
+	Switch
+} from '@mui/material';
+import LazyDataTable from '@/components/data-table/LazyDataTable';
+import SvgIcon from '@fuse/core/SvgIcon';
+import { useSnackbar } from 'notistack';
+
+const Root = styled(PageSimple)(({ theme }) => ({
+	'& .PageSimple-header': {
+		backgroundColor: theme.vars.palette.background.paper,
+		borderBottomWidth: 1,
+		borderStyle: 'solid',
+		borderColor: theme.vars.palette.divider
+	},
+	'& .PageSimple-content': {
+		backgroundColor: theme.vars.palette.background.default
+	}
+}));
+
+interface Resource {
+	id: string;
+	name: string;
+	resource_type: string;
+	uri: string;
+	description?: string;
+	size_bytes?: number;
+	is_active: boolean;
+	created_at: string;
+	updated_at: string;
+}
 
 const RESOURCE_TYPE_ICONS = {
-	file: FileText,
-	url: Link,
-	database: Database,
-	api: Globe,
-	memory: HardDrive,
-	custom: Code
+	file: 'lucide:file-text',
+	url: 'lucide:link',
+	database: 'lucide:database',
+	api: 'lucide:globe',
+	memory: 'lucide:hard-drive',
+	custom: 'lucide:code'
 };
 
 const RESOURCE_TYPE_COLORS = {
-	file: 'bg-blue-100 text-blue-800',
-	url: 'bg-green-100 text-green-800',
-	database: 'bg-purple-100 text-purple-800',
-	api: 'bg-orange-100 text-orange-800',
-	memory: 'bg-gray-100 text-gray-800',
-	custom: 'bg-pink-100 text-pink-800'
-};
+	file: 'primary',
+	url: 'success',
+	database: 'secondary',
+	api: 'warning',
+	memory: 'default',
+	custom: 'info'
+} as const;
 
-export default function ResourcesView() {
-	const [searchQuery, setSearchQuery] = useState('');
-	const [resourceType, setResourceType] = useState<string>('all');
-	const [statusFilter, setStatusFilter] = useState<string>('all');
-	const [currentPage, setCurrentPage] = useState(0);
-	const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
-	const [isFormOpen, setIsFormOpen] = useState(false);
-	const [deleteResourceId, setDeleteResourceId] = useState<string | null>(null);
-	
-	const pageSize = 20;
-	const debouncedSearch = useDebounce(searchQuery, 300);
-	
-	const { data, isLoading, error } = useResources({
-		search: debouncedSearch,
-		limit: pageSize,
-		offset: currentPage * pageSize,
-		resourceType: resourceType === 'all' ? undefined : resourceType,
-		isActive: statusFilter === 'all' ? undefined : statusFilter === 'active'
+function ResourcesView() {
+	const [createModalOpen, setCreateModalOpen] = useState(false);
+	const [editingResource, setEditingResource] = useState<Resource | null>(null);
+	const [formData, setFormData] = useState({
+		name: '',
+		resource_type: 'file',
+		uri: '',
+		description: '',
+		is_active: true
 	});
-	
-	const deleteResourceMutation = useDeleteResource();
-	
-	const resources = data?.data || [];
-	const totalPages = Math.ceil((data?.pagination?.total || 0) / pageSize);
-	
-	const handleEdit = useCallback((resource: Resource) => {
-		setSelectedResource(resource);
-		setIsFormOpen(true);
-	}, []);
-	
-	const handleDelete = useCallback((id: string) => {
-		setDeleteResourceId(id);
-	}, []);
-	
-	const confirmDelete = useCallback(() => {
-		if (deleteResourceId) {
-			deleteResourceMutation.mutate(deleteResourceId, {
-				onSettled: () => setDeleteResourceId(null)
-			});
+	const { enqueueSnackbar } = useSnackbar();
+
+	// Mock data
+	const mockResources: Resource[] = [
+		{
+			id: '1',
+			name: 'User Database',
+			resource_type: 'database',
+			uri: 'postgres://db.example.com:5432/users',
+			description: 'Main user database',
+			size_bytes: 5242880000,
+			is_active: true,
+			created_at: '2024-01-15T10:00:00Z',
+			updated_at: '2024-01-20T15:30:00Z'
+		},
+		{
+			id: '2',
+			name: 'API Documentation',
+			resource_type: 'url',
+			uri: 'https://docs.example.com/api',
+			description: 'API documentation site',
+			size_bytes: undefined,
+			is_active: true,
+			created_at: '2024-01-10T09:00:00Z',
+			updated_at: '2024-01-18T14:00:00Z'
+		},
+		{
+			id: '3',
+			name: 'Config File',
+			resource_type: 'file',
+			uri: '/configs/app.yaml',
+			description: 'Application configuration',
+			size_bytes: 2048,
+			is_active: false,
+			created_at: '2024-01-12T11:00:00Z',
+			updated_at: '2024-01-22T16:00:00Z'
+		},
+		{
+			id: '4',
+			name: 'Weather API',
+			resource_type: 'api',
+			uri: 'https://api.weather.com/v1',
+			description: 'External weather service',
+			size_bytes: undefined,
+			is_active: true,
+			created_at: '2024-01-14T08:00:00Z',
+			updated_at: '2024-01-21T10:00:00Z'
 		}
-	}, [deleteResourceId, deleteResourceMutation]);
-	
-	const handleCloseForm = useCallback(() => {
-		setIsFormOpen(false);
-		setSelectedResource(null);
-	}, []);
-	
-	const formatFileSize = useCallback((bytes?: number) => {
+	];
+
+	const handleCreateResource = () => {
+		setFormData({
+			name: '',
+			resource_type: 'file',
+			uri: '',
+			description: '',
+			is_active: true
+		});
+		setEditingResource(null);
+		setCreateModalOpen(true);
+	};
+
+	const handleEditResource = (resource: Resource) => {
+		setFormData({
+			name: resource.name,
+			resource_type: resource.resource_type,
+			uri: resource.uri,
+			description: resource.description || '',
+			is_active: resource.is_active
+		});
+		setEditingResource(resource);
+		setCreateModalOpen(true);
+	};
+
+	const handleSaveResource = () => {
+		const action = editingResource ? 'updated' : 'created';
+		enqueueSnackbar(`Resource ${action} successfully (demo)`, { variant: 'success' });
+		setCreateModalOpen(false);
+		setEditingResource(null);
+	};
+
+	const handleDeleteResource = (resource: Resource) => {
+		enqueueSnackbar(`Delete functionality coming soon for ${resource.name}`, { variant: 'info' });
+	};
+
+	const formatFileSize = (bytes?: number) => {
 		if (!bytes) return '-';
+
 		const sizes = ['B', 'KB', 'MB', 'GB'];
 		const i = Math.floor(Math.log(bytes) / Math.log(1024));
 		return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
-	}, []);
-	
-	const renderTableContent = useMemo(() => {
-		if (isLoading) {
-			return (
-				<>
-					{Array.from({ length: 5 }).map((_, i) => (
-						<TableRow key={i}>
-							<TableCell colSpan={6}>
-								<Skeleton className="h-12 w-full" />
-							</TableCell>
-						</TableRow>
-					))}
-				</>
-			);
-		}
-		
-		if (error) {
-			return (
-				<TableRow>
-					<TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-						Error loading resources: {(error as any)?.message}
-					</TableCell>
-				</TableRow>
-			);
-		}
-		
-		if (resources.length === 0) {
-			return (
-				<TableRow>
-					<TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-						No resources found
-					</TableCell>
-				</TableRow>
-			);
-		}
-		
-		return resources.map((resource) => {
-			const Icon = RESOURCE_TYPE_ICONS[resource.resource_type as keyof typeof RESOURCE_TYPE_ICONS] || Code;
-			const colorClass = RESOURCE_TYPE_COLORS[resource.resource_type as keyof typeof RESOURCE_TYPE_COLORS] || 'bg-gray-100 text-gray-800';
-			
-			return (
-				<TableRow key={resource.id}>
-					<TableCell className="font-medium">
-						<div className="flex items-center gap-2">
-							<Icon className="h-4 w-4 text-muted-foreground" />
-							<span>{resource.name}</span>
-						</div>
-					</TableCell>
-					<TableCell>
-						<Badge variant="secondary" className={colorClass}>
-							{resource.resource_type}
-						</Badge>
-					</TableCell>
-					<TableCell className="max-w-xs truncate">
-						<span className="text-sm text-muted-foreground" title={resource.uri}>
-							{resource.uri}
-						</span>
-					</TableCell>
-					<TableCell>{formatFileSize(resource.size_bytes)}</TableCell>
-					<TableCell>
-						<Badge variant={resource.is_active ? 'default' : 'secondary'}>
-							{resource.is_active ? 'Active' : 'Inactive'}
-						</Badge>
-					</TableCell>
-					<TableCell>
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<Button variant="ghost" className="h-8 w-8 p-0">
-									<span className="sr-only">Open menu</span>
-									<MoreHorizontal className="h-4 w-4" />
-								</Button>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent align="end">
-								<DropdownMenuLabel>Actions</DropdownMenuLabel>
-								<DropdownMenuSeparator />
-								<DropdownMenuItem onClick={() => handleEdit(resource)}>
-									<Edit className="mr-2 h-4 w-4" />
-									Edit
-								</DropdownMenuItem>
-								<DropdownMenuItem 
-									onClick={() => handleDelete(resource.id)}
-									className="text-red-600"
+	};
+
+	const columns = useMemo<MRT_ColumnDef<Resource>[]>(
+		() => [
+			{
+				accessorKey: 'name',
+				header: 'Name',
+				size: 200,
+				Cell: ({ row }) => {
+					const iconName =
+						RESOURCE_TYPE_ICONS[row.original.resource_type as keyof typeof RESOURCE_TYPE_ICONS] ||
+						'lucide:code';
+					return (
+						<Box className="flex items-center space-x-2">
+							<SvgIcon size={20}>{iconName}</SvgIcon>
+							<Box>
+								<Typography
+									variant="body2"
+									className="font-medium"
 								>
-									<Trash2 className="mr-2 h-4 w-4" />
-									Delete
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu>
-					</TableCell>
-				</TableRow>
-			);
-		});
-	}, [isLoading, error, resources, formatFileSize, handleEdit, handleDelete]);
-	
+									{row.original.name}
+								</Typography>
+								{row.original.description && (
+									<Typography
+										variant="caption"
+										color="textSecondary"
+									>
+										{row.original.description}
+									</Typography>
+								)}
+							</Box>
+						</Box>
+					);
+				}
+			},
+			{
+				accessorKey: 'resource_type',
+				header: 'Type',
+				size: 120,
+				Cell: ({ cell }) => {
+					const color =
+						RESOURCE_TYPE_COLORS[cell.getValue<string>() as keyof typeof RESOURCE_TYPE_COLORS] || 'default';
+					return (
+						<Chip
+							size="small"
+							label={cell.getValue<string>()}
+							color={color}
+						/>
+					);
+				}
+			},
+			{
+				accessorKey: 'uri',
+				header: 'URI',
+				size: 350,
+				Cell: ({ cell }) => (
+					<Typography
+						variant="body2"
+						color="textSecondary"
+						className="truncate font-mono text-xs"
+						title={cell.getValue<string>()}
+					>
+						{cell.getValue<string>()}
+					</Typography>
+				)
+			},
+			{
+				accessorKey: 'size_bytes',
+				header: 'Size',
+				size: 100,
+				Cell: ({ cell }) => <Typography variant="body2">{formatFileSize(cell.getValue<number>())}</Typography>
+			},
+			{
+				accessorKey: 'is_active',
+				header: 'Status',
+				size: 120,
+				Cell: ({ cell }) => (
+					<Chip
+						size="small"
+						label={cell.getValue<boolean>() ? 'Active' : 'Inactive'}
+						color={cell.getValue<boolean>() ? 'success' : 'default'}
+					/>
+				)
+			},
+			{
+				accessorKey: 'created_at',
+				header: 'Created',
+				size: 150,
+				Cell: ({ cell }) => {
+					const date = new Date(cell.getValue<string>());
+					return date.toLocaleDateString('en-US', {
+						year: 'numeric',
+						month: 'short',
+						day: 'numeric'
+					});
+				}
+			}
+		],
+		[]
+	);
+
 	return (
-		<div className="container mx-auto py-6 space-y-6">
-			<Card>
-				<CardHeader>
+		<Root
+			header={
+				<div className="p-6">
 					<div className="flex items-center justify-between">
 						<div>
-							<CardTitle>Resources</CardTitle>
-							<CardDescription>
+							<Typography variant="h4">Resources</Typography>
+							<Typography
+								variant="body1"
+								color="textSecondary"
+								className="mt-1"
+							>
 								Manage your MCP gateway resources
-							</CardDescription>
+							</Typography>
 						</div>
-						<Button onClick={() => setIsFormOpen(true)}>
-							<Plus className="mr-2 h-4 w-4" />
-							Add Resource
+						<Button
+							variant="contained"
+							color="primary"
+							startIcon={<SvgIcon>lucide:plus</SvgIcon>}
+							onClick={handleCreateResource}
+						>
+							Create Resource
 						</Button>
 					</div>
-				</CardHeader>
-				<CardContent className="space-y-4">
-					{/* Filters */}
-					<div className="flex flex-col sm:flex-row gap-4">
-						<div className="relative flex-1">
-							<Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-							<Input
-								placeholder="Search resources..."
-								value={searchQuery}
-								onChange={(e) => setSearchQuery(e.target.value)}
-								className="pl-8"
-							/>
-						</div>
-						<Select value={resourceType} onValueChange={setResourceType}>
-							<SelectTrigger className="w-[180px]">
-								<SelectValue placeholder="Resource Type" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="all">All Types</SelectItem>
-								<SelectItem value="file">File</SelectItem>
-								<SelectItem value="url">URL</SelectItem>
-								<SelectItem value="database">Database</SelectItem>
-								<SelectItem value="api">API</SelectItem>
-								<SelectItem value="memory">Memory</SelectItem>
-								<SelectItem value="custom">Custom</SelectItem>
-							</SelectContent>
-						</Select>
-						<Select value={statusFilter} onValueChange={setStatusFilter}>
-							<SelectTrigger className="w-[150px]">
-								<SelectValue placeholder="Status" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="all">All Status</SelectItem>
-								<SelectItem value="active">Active</SelectItem>
-								<SelectItem value="inactive">Inactive</SelectItem>
-							</SelectContent>
-						</Select>
-					</div>
-					
-					{/* Table */}
-					<div className="rounded-md border">
-						<Table>
-							<TableHeader>
-								<TableRow>
-									<TableHead>Name</TableHead>
-									<TableHead>Type</TableHead>
-									<TableHead>URI</TableHead>
-									<TableHead>Size</TableHead>
-									<TableHead>Status</TableHead>
-									<TableHead className="w-[70px]"></TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{renderTableContent}
-							</TableBody>
-						</Table>
-					</div>
-					
-					{/* Pagination */}
-					{totalPages > 1 && (
-						<div className="flex items-center justify-between">
-							<p className="text-sm text-muted-foreground">
-								Showing {currentPage * pageSize + 1} to{' '}
-								{Math.min((currentPage + 1) * pageSize, data?.pagination?.total || 0)} of{' '}
-								{data?.pagination?.total || 0} resources
-							</p>
-							<div className="flex items-center space-x-2">
-								<Button
-									variant="outline"
-									size="sm"
-									onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
-									disabled={currentPage === 0}
+				</div>
+			}
+			content={
+				<div className="p-6">
+					<LazyDataTable
+						columns={columns}
+						data={mockResources}
+						enableRowActions
+						renderRowActions={({ row }) => (
+							<Box className="flex items-center space-x-1">
+								<Tooltip title="View Details">
+									<IconButton
+										size="small"
+										onClick={() =>
+											enqueueSnackbar(`View details for ${row.original.name}`, {
+												variant: 'info'
+											})
+										}
+									>
+										<SvgIcon size={18}>lucide:eye</SvgIcon>
+									</IconButton>
+								</Tooltip>
+								<Tooltip title="Edit Resource">
+									<IconButton
+										size="small"
+										onClick={() => handleEditResource(row.original)}
+									>
+										<SvgIcon size={18}>lucide:edit</SvgIcon>
+									</IconButton>
+								</Tooltip>
+								<Tooltip title="Delete Resource">
+									<IconButton
+										size="small"
+										color="error"
+										onClick={() => handleDeleteResource(row.original)}
+									>
+										<SvgIcon size={18}>lucide:trash-2</SvgIcon>
+									</IconButton>
+								</Tooltip>
+							</Box>
+						)}
+						initialState={{
+							pagination: {
+								pageIndex: 0,
+								pageSize: 10
+							}
+						}}
+					/>
+
+					{/* Create/Edit Resource Dialog */}
+					<Dialog
+						open={createModalOpen}
+						onClose={() => setCreateModalOpen(false)}
+						maxWidth="md"
+						fullWidth
+					>
+						<DialogTitle>{editingResource ? 'Edit Resource' : 'Create Resource'}</DialogTitle>
+						<DialogContent>
+							<Stack
+								spacing={3}
+								sx={{ mt: 1 }}
+							>
+								<TextField
+									label="Name"
+									value={formData.name}
+									onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+									fullWidth
+									required
+								/>
+								<TextField
+									label="Resource Type"
+									value={formData.resource_type}
+									onChange={(e) =>
+										setFormData((prev) => ({ ...prev, resource_type: e.target.value }))
+									}
+									select
+									fullWidth
+									required
 								>
-									<ChevronLeft className="h-4 w-4" />
-									Previous
-								</Button>
-								<div className="text-sm">
-									Page {currentPage + 1} of {totalPages}
-								</div>
-								<Button
-									variant="outline"
-									size="sm"
-									onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
-									disabled={currentPage === totalPages - 1}
-								>
-									Next
-									<ChevronRight className="h-4 w-4" />
-								</Button>
-							</div>
-						</div>
-					)}
-				</CardContent>
-			</Card>
-			
-			{/* Form Dialog */}
-			<ResourceFormDialog
-				open={isFormOpen}
-				onClose={handleCloseForm}
-				resource={selectedResource}
-			/>
-			
-			{/* Delete Confirmation */}
-			<AlertDialog open={!!deleteResourceId} onOpenChange={() => setDeleteResourceId(null)}>
-				<AlertDialogContent>
-					<AlertDialogHeader>
-						<AlertDialogTitle>Are you sure?</AlertDialogTitle>
-						<AlertDialogDescription>
-							This action cannot be undone. This will permanently delete the resource.
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel>Cancel</AlertDialogCancel>
-						<AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
-		</div>
+									<MenuItem value="file">File</MenuItem>
+									<MenuItem value="url">URL</MenuItem>
+									<MenuItem value="database">Database</MenuItem>
+									<MenuItem value="api">API</MenuItem>
+									<MenuItem value="memory">Memory</MenuItem>
+									<MenuItem value="custom">Custom</MenuItem>
+								</TextField>
+								<TextField
+									label="URI"
+									value={formData.uri}
+									onChange={(e) => setFormData((prev) => ({ ...prev, uri: e.target.value }))}
+									fullWidth
+									required
+									helperText="Resource location (path, URL, or connection string)"
+								/>
+								<TextField
+									label="Description"
+									value={formData.description}
+									onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+									fullWidth
+									multiline
+									rows={3}
+								/>
+								<FormControlLabel
+									control={
+										<Switch
+											checked={formData.is_active}
+											onChange={(e) =>
+												setFormData((prev) => ({ ...prev, is_active: e.target.checked }))
+											}
+										/>
+									}
+									label="Active"
+								/>
+							</Stack>
+						</DialogContent>
+						<DialogActions>
+							<Button onClick={() => setCreateModalOpen(false)}>Cancel</Button>
+							<Button
+								variant="contained"
+								onClick={handleSaveResource}
+								disabled={!formData.name.trim() || !formData.uri.trim()}
+							>
+								{editingResource ? 'Update' : 'Create'}
+							</Button>
+						</DialogActions>
+					</Dialog>
+				</div>
+			}
+		/>
 	);
 }
+
+export default ResourcesView;

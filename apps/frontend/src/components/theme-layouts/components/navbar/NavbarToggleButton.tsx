@@ -1,5 +1,5 @@
 import IconButton from '@mui/material/IconButton';
-import _ from 'lodash';
+import { set } from '../../../../utils/lodashReplacements';
 import useThemeMediaQuery from '@fuse/hooks/useThemeMediaQuery';
 import SvgIcon from '@fuse/core/SvgIcon';
 import { IconButtonProps } from '@mui/material/IconButton';
@@ -31,7 +31,7 @@ function NavbarToggleButton(props: NavbarToggleButtonProps) {
 				if (isMobile) {
 					toggleMobileNavbar();
 				} else if (config?.navbar?.style === 'style-2') {
-					setSettings(_.set({}, 'layout.config.navbar.folded', !config?.navbar?.folded));
+					setSettings(set({}, 'layout.config.navbar.folded', !config?.navbar?.folded));
 				} else {
 					toggleNavbar();
 				}

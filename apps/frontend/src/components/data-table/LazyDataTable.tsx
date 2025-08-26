@@ -38,7 +38,7 @@ function LazyDataTable<TData>(props: MaterialReactTableProps<TData>) {
 		const timer = requestAnimationFrame(() => {
 			setMounted(true);
 		});
-		
+
 		// Track user interaction to prioritize loading
 		const handleInteraction = () => {
 			if (!hasInteracted.current) {
@@ -47,10 +47,10 @@ function LazyDataTable<TData>(props: MaterialReactTableProps<TData>) {
 				setMounted(true);
 			}
 		};
-		
+
 		window.addEventListener('mousemove', handleInteraction, { once: true });
 		window.addEventListener('touchstart', handleInteraction, { once: true });
-		
+
 		return () => {
 			cancelAnimationFrame(timer);
 			window.removeEventListener('mousemove', handleInteraction);

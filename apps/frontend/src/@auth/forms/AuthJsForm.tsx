@@ -1,5 +1,6 @@
 import { Alert } from '@mui/material';
 import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import AuthJsProviderSelect from './AuthJsProviderSelect';
 import AuthJsCredentialsSignInForm from './AuthJsCredentialsSignInForm';
 import AuthJsCredentialsSignUpForm from './AuthJsCredentialsSignUpForm';
@@ -7,12 +8,12 @@ import signinErrors from './signinErrors';
 
 type AuthJsFormProps = { formType: 'signin' | 'signup' };
 
-function AuthJsForm(props: AuthJsFormProps) {
+function AuthJsFormContent(props: AuthJsFormProps) {
 	const { formType = 'signin' } = props;
 
 	const searchParams = useSearchParams();
 
-	const errorType = searchParams.get('error');
+	const errorType = searchParams?.get('error');
 
 	const error = errorType && (signinErrors[errorType] ?? signinErrors.default);
 
@@ -34,6 +35,20 @@ function AuthJsForm(props: AuthJsFormProps) {
 			{formType === 'signup' && <AuthJsCredentialsSignUpForm />}
 			<AuthJsProviderSelect />
 		</div>
+	);
+}
+
+function AuthJsForm(props: AuthJsFormProps) {
+	return (
+		<Suspense
+			fallback={
+				<div className="flex flex-col space-y-8">
+					<div>Loading...</div>
+				</div>
+			}
+		>
+			<AuthJsFormContent {...props} />
+		</Suspense>
 	);
 }
 

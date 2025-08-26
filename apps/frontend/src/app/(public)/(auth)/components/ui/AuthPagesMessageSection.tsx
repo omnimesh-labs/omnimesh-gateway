@@ -78,7 +78,7 @@ function AuthPagesMessageSection() {
 					<div>our community</div>
 				</div>
 				<div className="mt-6 text-lg leading-6 tracking-tight text-gray-400">
-					MCP Gateway provides enterprise-grade infrastructure for Model Context Protocol servers with
+					Janex provides enterprise-grade infrastructure for Model Context Protocol servers with
 					authentication, logging, rate limiting, and multi-protocol transport support.
 				</div>
 				<div className="mt-8 flex items-center">

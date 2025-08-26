@@ -3,7 +3,7 @@ import { styled } from '@mui/material/styles';
 import clsx from 'clsx';
 import { memo } from 'react';
 import Navigation from 'src/components/theme-layouts/components/navigation/Navigation';
-import UserMenu from 'src/components/theme-layouts/components/UserMenu';
+import UserMenu from '@/@auth/components/UserMenu';
 import Logo from '../../../../components/Logo';
 
 const Root = styled('div')(({ theme }) => ({

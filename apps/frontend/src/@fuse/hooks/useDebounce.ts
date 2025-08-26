@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import _ from 'lodash';
+import { debounce } from '../../utils/lodashReplacements';
 
 /**
  * Debounce hook.
@@ -17,7 +17,7 @@ function useDebounce<T extends (...args: never[]) => void>(callback: T, delay: n
 
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	const debouncedFn = useCallback(
-		_.debounce((...args: never[]) => {
+		debounce((...args: never[]) => {
 			callbackRef.current(...args);
 		}, delay),
 		[delay]

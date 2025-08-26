@@ -1,10 +1,10 @@
-import _ from 'lodash';
 import * as colors from '@mui/material/colors';
 import { SettingsConfigType } from '@fuse/core/Settings/Settings';
 import { User } from '@auth/user';
 import { DeepPartial } from 'react-hook-form';
 import { PartialDeep } from 'type-fest';
 import EventEmitter from './EventEmitter';
+import { merge, find, some, transform, isEqual, isObject } from '../../utils/lodashReplacements';
 
 type TreeNode = {
 	id: string;
@@ -239,7 +239,7 @@ class Utils {
 
 		const applyAuth = (route: RouteItemType, parentAuth: string[] | null) => {
 			const auth = route.auth || route.auth === null ? route.auth : parentAuth;
-			const settings = _.merge({}, config.settings, route.settings);
+			const settings = merge({}, config.settings, route.settings);
 
 			const newRoute = {
 				...route,
@@ -280,7 +280,7 @@ class Utils {
 	 */
 	static findById(tree: TreeNode[], idToFind: string): TreeNode | undefined {
 		// Try to find the node at the current level
-		const node = _.find(tree, { id: idToFind });
+		const node = find(tree, (item: TreeNode) => item.id === idToFind);
 
 		if (node) {
 			return node;
@@ -288,8 +288,8 @@ class Utils {
 
 		let foundNode: TreeNode | undefined;
 
-		// If not found, search in the children using lodash's some for iteration
-		_.some(tree, (item) => {
+		// If not found, search in the children using some for iteration
+		some(tree, (item) => {
 			if (item.children) {
 				foundNode = this.findById(item.children, idToFind);
 				return foundNode; // If foundNode is truthy, _.some will stop iterating
@@ -334,12 +334,12 @@ class Utils {
 	 */
 	static difference(object: Record<string, unknown>, base: Record<string, unknown>): Record<string, unknown> {
 		function changes(_object: Record<string, unknown>, _base: Record<string, unknown>): Record<string, unknown> {
-			return _.transform(
+			return transform(
 				_object,
 				(result: Record<string, unknown>, value: unknown, key: string) => {
-					if (!_.isEqual(value, _base[key])) {
+					if (!isEqual(value, _base[key])) {
 						result[key] =
-							_.isObject(value) && _.isObject(_base[key])
+							isObject(value) && isObject(_base[key])
 								? changes(value as Record<string, unknown>, _base[key] as Record<string, unknown>)
 								: value;
 					}

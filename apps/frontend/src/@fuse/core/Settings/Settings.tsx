@@ -1,7 +1,7 @@
 import { styled, Palette } from '@mui/material/styles';
 import { Controller, useForm } from 'react-hook-form';
 import themeLayoutConfigs, { themeLayoutDefaultsProps } from 'src/components/theme-layouts/themeLayoutConfigs';
-import _ from 'lodash';
+import { merge, isEqual, set } from '../../../utils/lodashReplacements';
 import { FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, Switch, Typography } from '@mui/material';
 import { memo, useEffect, useMemo } from 'react';
 import { PartialDeep } from 'type-fest';
@@ -69,15 +69,15 @@ function Settings(props: SettingsProps) {
 
 	const layoutFormConfigs = useMemo(() => themeLayoutConfigs[formLayoutStyle].form, [formLayoutStyle]);
 
-	const prevForm = usePrevious(form ? _.merge({}, form) : null);
-	const prevSettings = usePrevious(settings ? _.merge({}, settings) : null);
+	const prevForm = usePrevious(form ? merge({}, form) : null);
+	const prevSettings = usePrevious(settings ? merge({}, settings) : null);
 
-	const formChanged = useMemo(() => !_.isEqual(form, prevForm), [form, prevForm]);
-	const settingsChanged = useMemo(() => !_.isEqual(settings, prevSettings), [settings, prevSettings]);
+	const formChanged = useMemo(() => !isEqual(form, prevForm), [form, prevForm]);
+	const settingsChanged = useMemo(() => !isEqual(settings, prevSettings), [settings, prevSettings]);
 
 	useEffect(() => {
 		// reset form if settings change and not same with form
-		if (!_.isEqual(settings, form)) {
+		if (!isEqual(settings, form)) {
 			reset(settings);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -89,17 +89,17 @@ function Settings(props: SettingsProps) {
 			return;
 		}
 
-		const newSettings = _.merge({}, settings, form);
+		const newSettings = merge({}, settings, form);
 
 		// No need to change
-		if (_.isEqual(newSettings, settings)) {
+		if (isEqual(newSettings, settings)) {
 			return;
 		}
 
 		// If form changed update theme settings
 		if (formChanged) {
 			if (settings.layout.style !== newSettings.layout.style) {
-				_.set(newSettings, 'layout.config', themeLayoutConfigs[newSettings?.layout?.style]?.defaults);
+				set(newSettings, 'layout.config', themeLayoutConfigs[newSettings?.layout?.style]?.defaults);
 			}
 
 			onChange(newSettings);

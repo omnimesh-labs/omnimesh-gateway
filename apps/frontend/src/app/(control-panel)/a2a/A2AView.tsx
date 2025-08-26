@@ -32,7 +32,7 @@ const DialogActions = lazy(() => import('@mui/material/DialogActions'));
 import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
 import { useSnackbar } from 'notistack';
-import { A2AAgent, A2AAgentSpec, A2AStats } from '@/lib/api';
+import { A2AAgent, A2AAgentSpec, A2AStats, a2aApi } from '@/lib/api';
 
 const Root = styled(PageSimple)(({ theme }) => ({
 	'& .PageSimple-header': {
@@ -86,97 +86,19 @@ function A2AView() {
 	} | null>(null);
 
 	const loadAgents = useCallback(async () => {
-		// Mock data for demonstration
-		const mockAgents: A2AAgent[] = [
-			{
-				id: '1',
-				organization_id: 'org-1',
-				name: 'Customer Support Agent',
-				description: 'Handles customer inquiries and support tickets',
-				agent_type: 'support',
-				is_active: true,
-				capabilities: ['chat', 'ticket_management', 'knowledge_base'],
-				tags: ['support', 'customer-facing'],
-				created_at: '2024-01-15T10:00:00Z',
-				updated_at: '2024-01-20T15:30:00Z',
-				metrics: {
-					request_count: 1234,
-					error_count: 12,
-					avg_response_time: 450
-				}
-			},
-			{
-				id: '2',
-				organization_id: 'org-1',
-				name: 'Code Review Agent',
-				description: 'Automated code review and suggestions',
-				agent_type: 'development',
-				is_active: true,
-				capabilities: ['code_analysis', 'best_practices', 'security_scan'],
-				tags: ['development', 'automation'],
-				created_at: '2024-01-10T09:00:00Z',
-				updated_at: '2024-01-18T14:00:00Z',
-				metrics: {
-					request_count: 856,
-					error_count: 5,
-					avg_response_time: 650
-				}
-			},
-			{
-				id: '3',
-				organization_id: 'org-1',
-				name: 'Data Analysis Agent',
-				description: 'Performs data analysis and generates insights',
-				agent_type: 'analytics',
-				is_active: false,
-				capabilities: ['data_processing', 'visualization', 'reporting'],
-				tags: ['analytics', 'data'],
-				created_at: '2024-01-12T11:00:00Z',
-				updated_at: '2024-01-22T16:00:00Z',
-				metrics: {
-					request_count: 423,
-					error_count: 2,
-					avg_response_time: 1200
-				}
-			}
-		];
-
-		const mockStats: A2AStats = {
-			total: 3,
-			active: 2,
-			inactive: 1,
-			by_type: {
-				support: 1,
-				development: 1,
-				analytics: 1
-			}
-		};
 		try {
 			setLoading(true);
-			// TODO: Replace with actual API calls when backend is ready
-			// const [agentsData, statsData] = await Promise.all([
-			//     a2aApi.listAgents({ is_active: showInactive ? undefined : true, tags: tagFilter || undefined }),
-			//     a2aApi.getStats()
-			// ]);
+			const [agentsData, statsData] = await Promise.all([
+				a2aApi.listAgents({ is_active: showInactive ? undefined : true, tags: tagFilter || undefined }),
+				a2aApi.getStats()
+			]);
 
-			// Mock implementation
-			await new Promise((resolve) => setTimeout(resolve, 500));
-			let filteredAgents = [...mockAgents];
-
-			if (!showInactive) {
-				filteredAgents = filteredAgents.filter((a) => a.is_active);
-			}
-
-			if (tagFilter) {
-				filteredAgents = filteredAgents.filter((a) => a.tags?.some((tag) => tag.includes(tagFilter)));
-			}
-
-			setAgents(filteredAgents);
-			setStats(mockStats);
+			setAgents(agentsData);
+			setStats(statsData);
 
 			// Extract unique tags
 			const tags = new Set<string>();
-			mockAgents.forEach((agent) => {
+			agentsData.forEach((agent) => {
 				agent.tags?.forEach((tag) => tags.add(tag));
 			});
 			setAvailableTags(Array.from(tags).sort());
@@ -221,30 +143,27 @@ function A2AView() {
 	const handleSaveAgent = async () => {
 		try {
 			if (editingAgent) {
-				// TODO: Replace with actual API call
-				// await a2aApi.updateAgent(editingAgent.id, formData);
+				await a2aApi.updateAgent(editingAgent.id, formData);
 				enqueueSnackbar('Agent updated successfully', { variant: 'success' });
 			} else {
-				// TODO: Replace with actual API call
-				// await a2aApi.createAgent(formData as A2AAgentSpec);
+				await a2aApi.createAgent(formData as A2AAgentSpec);
 				enqueueSnackbar('Agent created successfully', { variant: 'success' });
 			}
 
 			setCreateDialogOpen(false);
 			loadAgents();
-		} catch (_error) {
+		} catch (error) {
 			enqueueSnackbar('Failed to save agent', { variant: 'error' });
 		}
 	};
 
-	const handleDeleteAgent = async (_id: string) => {
+	const handleDeleteAgent = async (id: string) => {
 		if (confirm('Are you sure you want to delete this agent?')) {
 			try {
-				// TODO: Replace with actual API call
-				// await a2aApi.deleteAgent(id);
+				await a2aApi.deleteAgent(id);
 				enqueueSnackbar('Agent deleted successfully', { variant: 'success' });
 				loadAgents();
-			} catch (_error) {
+			} catch (error) {
 				enqueueSnackbar('Failed to delete agent', { variant: 'error' });
 			}
 		}
@@ -252,13 +171,12 @@ function A2AView() {
 
 	const handleToggleAgent = async (agent: A2AAgent) => {
 		try {
-			// TODO: Replace with actual API call
-			// await a2aApi.toggleAgent(agent.id, !agent.is_active);
+			await a2aApi.toggleAgent(agent.id, !agent.is_active);
 			enqueueSnackbar(`Agent ${!agent.is_active ? 'activated' : 'deactivated'} successfully`, {
 				variant: 'success'
 			});
 			loadAgents();
-		} catch (_error) {
+		} catch (error) {
 			enqueueSnackbar('Failed to toggle agent status', { variant: 'error' });
 		}
 	};
@@ -276,25 +194,13 @@ function A2AView() {
 
 		try {
 			setTestLoading(true);
-			// TODO: Replace with actual API call
-			// const result = await a2aApi.testAgent(selectedAgent.id, { message: testMessage, context: testContext });
-
-			// Mock result
-			await new Promise((resolve) => setTimeout(resolve, 1500));
-			setTestResult({
-				success: true,
-				content: `This is a mock response from ${selectedAgent.name}. In production, this would be the actual agent response to: "${testMessage}"`,
-				execution_time_ms: 450,
-				tokens_used: {
-					prompt: 25,
-					completion: 50,
-					total: 75
-				}
-			});
-		} catch (_error) {
+			const result = await a2aApi.testAgent(selectedAgent.id, { message: testMessage, context: testContext });
+			setTestResult(result);
+		} catch (error) {
 			setTestResult({
 				success: false,
-				error: 'Failed to test agent'
+				error: 'Failed to test agent',
+				execution_time_ms: 0
 			});
 		} finally {
 			setTestLoading(false);

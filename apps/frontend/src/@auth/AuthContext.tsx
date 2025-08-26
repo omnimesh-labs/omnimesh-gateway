@@ -113,11 +113,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 						const refreshResponse = await authApi.refresh();
 						setUser(refreshResponse.user);
 						setCachedAuth(refreshResponse.user);
-					} catch (refreshError) {
+					} catch (_refreshError) {
 						// Clear everything on refresh failure
 						authApi.clearTokens();
 						clearCachedAuth();
 						setUser(null);
+
+						// Redirect to sign-in when token is expired
+						if (typeof window !== 'undefined') {
+							window.location.href = '/sign-in';
+						}
 					}
 				} else {
 					// Non-auth error, keep existing state
@@ -132,13 +137,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 	}, []);
 
 	const login = useCallback(async (credentials: LoginRequest) => {
-		try {
-			const response = await authApi.login(credentials);
-			setUser(response.user);
-			setCachedAuth(response.user);
-		} catch (error) {
-			throw error;
-		}
+		const response = await authApi.login(credentials);
+		setUser(response.user);
+		setCachedAuth(response.user);
 	}, []);
 
 	const logout = useCallback(async () => {
@@ -149,6 +150,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 		} finally {
 			setUser(null);
 			clearCachedAuth();
+
+			// Redirect to sign-in page after logout
+			if (typeof window !== 'undefined') {
+				window.location.href = '/sign-in';
+			}
 		}
 	}, []);
 
@@ -162,6 +168,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
 			setUser(null);
 			authApi.clearTokens();
 			clearCachedAuth();
+
+			// Redirect to sign-in when token refresh fails
+			if (typeof window !== 'undefined') {
+				window.location.href = '/sign-in';
+			}
+
 			throw error;
 		}
 	}, []);

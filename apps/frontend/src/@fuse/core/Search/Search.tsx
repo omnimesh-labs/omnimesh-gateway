@@ -12,7 +12,7 @@ import Typography from '@mui/material/Typography';
 import match from 'autosuggest-highlight/match';
 import parse from 'autosuggest-highlight/parse';
 import clsx from 'clsx';
-import _ from 'lodash';
+import { deburr } from '../../../utils/lodashReplacements';
 import { memo, useEffect, useReducer, useRef, ReactNode } from 'react';
 import Autosuggest, { RenderInputComponentProps, RenderSuggestionParams, ChangeEvent } from 'react-autosuggest';
 import * as React from 'react';
@@ -158,7 +158,7 @@ function renderSuggestion(suggestion: FlatNavItemType, { query, isHighlighted }:
 }
 
 function getSuggestions(value: string, data: FlatNavItemType[]): FlatNavItemType[] {
-	const inputValue = _.deburr(value.trim()).toLowerCase();
+	const inputValue = deburr(value.trim()).toLowerCase();
 	const inputLength = inputValue.length;
 	let count = 0;
 

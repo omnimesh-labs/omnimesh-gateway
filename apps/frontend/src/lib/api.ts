@@ -1,4 +1,24 @@
-// API service functions for MCP Gateway - Migrated from old frontend
+// API service functions for Janex - Migrated from old frontend
+
+import type {
+	PromptParameter,
+	JSONSchema,
+	ToolExample,
+	PolicyCondition,
+	PolicyAction,
+	AccessPermissions,
+	ApiErrorDetails,
+	AuditLogValues,
+	ExportedServer,
+	ExportedVirtualServer,
+	ExportedTool,
+	ExportedPrompt,
+	ExportedResource,
+	ExportedPolicy,
+	ExportedRateLimit,
+	ServerStats,
+	Session
+} from './types';
 
 // Types for API responses
 export interface MCPServer {
@@ -55,7 +75,7 @@ export interface ErrorResponse {
 	error: {
 		code: string;
 		message: string;
-		details?: any;
+		details?: ApiErrorDetails;
 	};
 }
 
@@ -105,9 +125,9 @@ export interface AuditLogEntry {
 	resource_id?: string;
 	actor_id: string;
 	actor_ip?: string;
-	old_values?: Record<string, any>;
-	new_values?: Record<string, any>;
-	metadata?: Record<string, any>;
+	old_values?: AuditLogValues;
+	new_values?: AuditLogValues;
+	metadata?: Record<string, unknown>;
 	created_at: string;
 }
 
@@ -128,6 +148,8 @@ export interface AuditQueryParams {
 	resource_type?: string;
 	action?: string;
 	actor_id?: string;
+	start_date?: string;
+	end_date?: string;
 	limit?: number;
 	offset?: number;
 }
@@ -215,8 +237,8 @@ export interface Policy {
 	description: string;
 	type: 'access' | 'rate_limit' | 'security';
 	priority: number;
-	conditions: Record<string, any>;
-	actions: Record<string, any>;
+	conditions: PolicyCondition[];
+	actions: PolicyAction[];
 	is_active: boolean;
 	created_at: string;
 	updated_at: string;
@@ -227,16 +249,16 @@ export interface CreatePolicyRequest {
 	description: string;
 	type: 'access' | 'rate_limit' | 'security';
 	priority: number;
-	conditions: Record<string, any>;
-	actions: Record<string, any>;
+	conditions: PolicyCondition[];
+	actions: PolicyAction[];
 }
 
 export interface UpdatePolicyRequest {
 	name?: string;
 	description?: string;
 	priority?: number;
-	conditions?: Record<string, any>;
-	actions?: Record<string, any>;
+	conditions?: PolicyCondition[];
+	actions?: PolicyAction[];
 	is_active?: boolean;
 }
 
@@ -257,9 +279,9 @@ export interface Resource {
 	uri: string;
 	mime_type?: string;
 	size_bytes?: number;
-	access_permissions?: Record<string, any>;
+	access_permissions?: AccessPermissions;
 	is_active: boolean;
-	metadata?: Record<string, any>;
+	metadata?: Record<string, unknown>;
 	tags?: string[];
 	created_at: string;
 	updated_at: string;
@@ -273,8 +295,8 @@ export interface CreateResourceRequest {
 	uri: string;
 	mime_type?: string;
 	size_bytes?: number;
-	access_permissions?: Record<string, any>;
-	metadata?: Record<string, any>;
+	access_permissions?: AccessPermissions;
+	metadata?: Record<string, unknown>;
 	tags?: string[];
 }
 
@@ -285,9 +307,9 @@ export interface UpdateResourceRequest {
 	uri?: string;
 	mime_type?: string;
 	size_bytes?: number;
-	access_permissions?: Record<string, any>;
+	access_permissions?: AccessPermissions;
 	is_active?: boolean;
-	metadata?: Record<string, any>;
+	metadata?: Record<string, unknown>;
 	tags?: string[];
 }
 
@@ -298,11 +320,11 @@ export interface Prompt {
 	name: string;
 	description?: string;
 	prompt_template: string;
-	parameters?: any[];
+	parameters?: PromptParameter[];
 	category: 'general' | 'coding' | 'analysis' | 'creative' | 'educational' | 'business' | 'custom';
 	usage_count: number;
 	is_active: boolean;
-	metadata?: Record<string, any>;
+	metadata?: Record<string, unknown>;
 	tags?: string[];
 	created_at: string;
 	updated_at: string;
@@ -313,9 +335,9 @@ export interface CreatePromptRequest {
 	name: string;
 	description?: string;
 	prompt_template: string;
-	parameters?: any[];
+	parameters?: PromptParameter[];
 	category: string;
-	metadata?: Record<string, any>;
+	metadata?: Record<string, unknown>;
 	tags?: string[];
 }
 
@@ -323,15 +345,15 @@ export interface UpdatePromptRequest {
 	name?: string;
 	description?: string;
 	prompt_template?: string;
-	parameters?: any[];
+	parameters?: PromptParameter[];
 	category?: string;
 	is_active?: boolean;
-	metadata?: Record<string, any>;
+	metadata?: Record<string, unknown>;
 	tags?: string[];
 }
 
 export interface UsePromptRequest {
-	parameters?: Record<string, any>;
+	parameters?: Record<string, unknown>;
 }
 
 // Tool Types
@@ -341,19 +363,19 @@ export interface Tool {
 	name: string;
 	description?: string;
 	function_name: string;
-	schema?: Record<string, any>;
+	schema?: JSONSchema;
 	category: 'general' | 'data' | 'file' | 'web' | 'system' | 'ai' | 'dev' | 'custom';
 	implementation_type: 'internal' | 'external' | 'webhook' | 'script';
 	endpoint_url?: string;
 	timeout_seconds: number;
 	max_retries: number;
 	usage_count: number;
-	access_permissions?: Record<string, any>;
+	access_permissions?: AccessPermissions;
 	is_active: boolean;
 	is_public: boolean;
-	metadata?: Record<string, any>;
+	metadata?: Record<string, unknown>;
 	tags?: string[];
-	examples?: any[];
+	examples?: ToolExample[];
 	documentation?: string;
 	created_at: string;
 	updated_at: string;
@@ -364,17 +386,17 @@ export interface CreateToolRequest {
 	name: string;
 	description?: string;
 	function_name: string;
-	schema: Record<string, any>;
+	schema: JSONSchema;
 	category: string;
 	implementation_type?: string;
 	endpoint_url?: string;
 	timeout_seconds?: number;
 	max_retries?: number;
-	access_permissions?: Record<string, any>;
+	access_permissions?: AccessPermissions;
 	is_public?: boolean;
-	metadata?: Record<string, any>;
+	metadata?: Record<string, unknown>;
 	tags?: string[];
-	examples?: any[];
+	examples?: ToolExample[];
 	documentation?: string;
 }
 
@@ -382,23 +404,23 @@ export interface UpdateToolRequest {
 	name?: string;
 	description?: string;
 	function_name?: string;
-	schema?: Record<string, any>;
+	schema?: JSONSchema;
 	category?: string;
 	implementation_type?: string;
 	endpoint_url?: string;
 	timeout_seconds?: number;
 	max_retries?: number;
-	access_permissions?: Record<string, any>;
+	access_permissions?: AccessPermissions;
 	is_active?: boolean;
 	is_public?: boolean;
-	metadata?: Record<string, any>;
+	metadata?: Record<string, unknown>;
 	tags?: string[];
-	examples?: any[];
+	examples?: ToolExample[];
 	documentation?: string;
 }
 
 export interface ExecuteToolRequest {
-	parameters?: Record<string, any>;
+	parameters?: Record<string, unknown>;
 }
 
 // List Response Types
@@ -436,7 +458,7 @@ export interface Namespace {
 	updated_at: string;
 	created_by?: string;
 	is_active: boolean;
-	metadata?: Record<string, any>;
+	metadata?: Record<string, unknown>;
 }
 
 export interface CreateNamespaceRequest {
@@ -462,7 +484,7 @@ export interface NamespaceTool {
 
 export interface ExecuteNamespaceToolRequest {
 	tool_name: string;
-	parameters?: Record<string, any>;
+	parameters?: Record<string, unknown>;
 }
 
 // Endpoint Management Types
@@ -492,7 +514,7 @@ export interface Endpoint {
 	updated_at: string;
 	created_by?: string;
 	is_active: boolean;
-	metadata?: Record<string, any>;
+	metadata?: Record<string, unknown>;
 	urls?: EndpointURLs;
 	namespace?: Namespace;
 }
@@ -509,7 +531,7 @@ export interface CreateEndpointRequest {
 	rate_limit_window?: number;
 	allowed_origins?: string[];
 	allowed_methods?: string[];
-	metadata?: Record<string, any>;
+	metadata?: Record<string, unknown>;
 }
 
 export interface UpdateEndpointRequest {
@@ -523,19 +545,19 @@ export interface UpdateEndpointRequest {
 	allowed_origins?: string[];
 	allowed_methods?: string[];
 	is_active?: boolean;
-	metadata?: Record<string, any>;
+	metadata?: Record<string, unknown>;
 }
 
 // Configuration Management Types
 export interface ConfigurationExport {
 	metadata: ExportMetadata;
-	servers?: any[];
-	virtualServers?: any[];
-	tools?: any[];
-	prompts?: any[];
-	resources?: any[];
-	policies?: any[];
-	rateLimits?: any[];
+	servers?: ExportedServer[];
+	virtualServers?: ExportedVirtualServer[];
+	tools?: ExportedTool[];
+	prompts?: ExportedPrompt[];
+	resources?: ExportedResource[];
+	policies?: ExportedPolicy[];
+	rateLimits?: ExportedRateLimit[];
 }
 
 export interface ExportMetadata {
@@ -633,7 +655,7 @@ export interface ImportError {
 	message: string;
 	entityType?: string;
 	entityName?: string;
-	details?: Record<string, any>;
+	details?: Record<string, unknown>;
 }
 
 export interface ImportWarning {
@@ -641,7 +663,7 @@ export interface ImportWarning {
 	message: string;
 	entityType?: string;
 	entityName?: string;
-	details?: Record<string, any>;
+	details?: Record<string, unknown>;
 }
 
 export interface ImportHistory {
@@ -657,7 +679,7 @@ export interface ImportHistory {
 	warningCount: number;
 	duration?: number;
 	importedBy: string;
-	metadata: Record<string, any>;
+	metadata: Record<string, unknown>;
 	createdAt: string;
 	completedAt?: string;
 }
@@ -682,7 +704,7 @@ export interface ValidationError {
 	entityType?: string;
 	entityName?: string;
 	field?: string;
-	details?: Record<string, any>;
+	details?: Record<string, unknown>;
 }
 
 export interface ValidationWarning {
@@ -690,17 +712,17 @@ export interface ValidationWarning {
 	message: string;
 	entityType?: string;
 	entityName?: string;
-	details?: Record<string, any>;
+	details?: Record<string, unknown>;
 }
 
 export interface ConflictItem {
 	entityType: string;
 	entityName: string;
 	conflictType: string;
-	existingValue: any;
-	importValue: any;
+	existingValue: unknown;
+	importValue: unknown;
 	suggestion?: string;
-	details?: Record<string, any>;
+	details?: Record<string, unknown>;
 }
 
 export interface DependencyItem {
@@ -899,13 +921,13 @@ export const serverApi = {
 	},
 
 	async unregisterServer(id: string): Promise<void> {
-		await apiRequest<ApiResponse<any>>(`/gateway/servers/${id}`, {
+		await apiRequest<ApiResponse<void>>(`/gateway/servers/${id}`, {
 			method: 'DELETE'
 		});
 	},
 
-	async getServerStats(id: string): Promise<any> {
-		const response = await apiRequest<ApiResponse<any>>(`/gateway/servers/${id}/stats`);
+	async getServerStats(id: string): Promise<ServerStats> {
+		const response = await apiRequest<ApiResponse<ServerStats>>(`/gateway/servers/${id}/stats`);
 		return response.data;
 	}
 };
@@ -948,21 +970,21 @@ export const discoveryApi = {
 
 // Session Management APIs
 export const sessionApi = {
-	async createSession(serverId: string): Promise<any> {
-		const response = await apiRequest<ApiResponse<any>>('/gateway/sessions', {
+	async createSession(serverId: string): Promise<Session> {
+		const response = await apiRequest<ApiResponse<Session>>('/gateway/sessions', {
 			method: 'POST',
 			body: JSON.stringify({ server_id: serverId })
 		});
 		return response.data;
 	},
 
-	async listSessions(): Promise<any[]> {
-		const response = await apiRequest<ApiResponse<any[]>>('/gateway/sessions');
+	async listSessions(): Promise<Session[]> {
+		const response = await apiRequest<ApiResponse<Session[]>>('/gateway/sessions');
 		return response.data;
 	},
 
 	async closeSession(sessionId: string): Promise<void> {
-		await apiRequest<ApiResponse<any>>(`/gateway/sessions/${sessionId}`, {
+		await apiRequest<ApiResponse<void>>(`/gateway/sessions/${sessionId}`, {
 			method: 'DELETE'
 		});
 	}
@@ -1072,7 +1094,7 @@ export const authApi = {
 
 	async logout(): Promise<void> {
 		try {
-			await apiRequest<ApiResponse<any>>('/auth/logout', {
+			await apiRequest<ApiResponse<void>>('/auth/logout', {
 				method: 'POST'
 			});
 		} finally {
@@ -1107,7 +1129,7 @@ export const authApi = {
 	},
 
 	async deleteApiKey(keyId: string): Promise<void> {
-		await apiRequest<ApiResponse<any>>(`/auth/api-keys/${keyId}`, {
+		await apiRequest<ApiResponse<void>>(`/auth/api-keys/${keyId}`, {
 			method: 'DELETE'
 		});
 	},
@@ -1215,7 +1237,7 @@ export const resourceApi = {
 	},
 
 	async deleteResource(id: string): Promise<void> {
-		await apiRequest<ApiResponse<any>>(`/gateway/resources/${id}`, {
+		await apiRequest<ApiResponse<void>>(`/gateway/resources/${id}`, {
 			method: 'DELETE'
 		});
 	}
@@ -1262,7 +1284,7 @@ export const promptApi = {
 	},
 
 	async deletePrompt(id: string): Promise<void> {
-		await apiRequest<ApiResponse<any>>(`/gateway/prompts/${id}`, {
+		await apiRequest<ApiResponse<void>>(`/gateway/prompts/${id}`, {
 			method: 'DELETE'
 		});
 	},
@@ -1342,13 +1364,13 @@ export const toolApi = {
 	},
 
 	async deleteTool(id: string): Promise<void> {
-		await apiRequest<ApiResponse<any>>(`/gateway/tools/${id}`, {
+		await apiRequest<ApiResponse<void>>(`/gateway/tools/${id}`, {
 			method: 'DELETE'
 		});
 	},
 
-	async executeTool(id: string, executeData: ExecuteToolRequest): Promise<{ result: any; usage_count: number }> {
-		const response = await apiRequest<{ result: any; usage_count: number }>(`/gateway/tools/${id}/execute`, {
+	async executeTool(id: string, executeData: ExecuteToolRequest): Promise<{ result: unknown; usage_count: number }> {
+		const response = await apiRequest<{ result: unknown; usage_count: number }>(`/gateway/tools/${id}/execute`, {
 			method: 'POST',
 			body: JSON.stringify(executeData)
 		});
@@ -1409,7 +1431,7 @@ export const configApi = {
 					const content = e.target?.result as string;
 					const config = JSON.parse(content) as ConfigurationExport;
 					resolve(config);
-				} catch (error) {
+				} catch (_error) {
 					reject(new Error('Invalid JSON file format'));
 				}
 			};
@@ -1462,26 +1484,26 @@ export const namespaceApi = {
 	},
 
 	async deleteNamespace(id: string): Promise<void> {
-		await apiRequest<ApiResponse<any>>(`/namespaces/${id}`, {
+		await apiRequest<ApiResponse<void>>(`/namespaces/${id}`, {
 			method: 'DELETE'
 		});
 	},
 
 	async addServerToNamespace(namespaceId: string, serverId: string, priority?: number): Promise<void> {
-		await apiRequest<ApiResponse<any>>(`/namespaces/${namespaceId}/servers`, {
+		await apiRequest<ApiResponse<void>>(`/namespaces/${namespaceId}/servers`, {
 			method: 'POST',
 			body: JSON.stringify({ server_id: serverId, priority })
 		});
 	},
 
 	async removeServerFromNamespace(namespaceId: string, serverId: string): Promise<void> {
-		await apiRequest<ApiResponse<any>>(`/namespaces/${namespaceId}/servers/${serverId}`, {
+		await apiRequest<ApiResponse<void>>(`/namespaces/${namespaceId}/servers/${serverId}`, {
 			method: 'DELETE'
 		});
 	},
 
 	async updateServerStatus(namespaceId: string, serverId: string, status: string): Promise<void> {
-		await apiRequest<ApiResponse<any>>(`/namespaces/${namespaceId}/servers/${serverId}/status`, {
+		await apiRequest<ApiResponse<void>>(`/namespaces/${namespaceId}/servers/${serverId}/status`, {
 			method: 'PUT',
 			body: JSON.stringify({ status })
 		});
@@ -1493,14 +1515,14 @@ export const namespaceApi = {
 	},
 
 	async updateToolStatus(namespaceId: string, toolId: string, status: string): Promise<void> {
-		await apiRequest<ApiResponse<any>>(`/namespaces/${namespaceId}/tools/${toolId}/status`, {
+		await apiRequest<ApiResponse<void>>(`/namespaces/${namespaceId}/tools/${toolId}/status`, {
 			method: 'PUT',
 			body: JSON.stringify({ status })
 		});
 	},
 
-	async executeNamespaceTool(namespaceId: string, request: ExecuteNamespaceToolRequest): Promise<any> {
-		const response = await apiRequest<ApiResponse<any>>(`/namespaces/${namespaceId}/execute`, {
+	async executeNamespaceTool(namespaceId: string, request: ExecuteNamespaceToolRequest): Promise<unknown> {
+		const response = await apiRequest<ApiResponse<unknown>>(`/namespaces/${namespaceId}/execute`, {
 			method: 'POST',
 			body: JSON.stringify(request)
 		});
@@ -1542,7 +1564,7 @@ export const endpointApi = {
 	},
 
 	async deleteEndpoint(id: string): Promise<void> {
-		await apiRequest<ApiResponse<any>>(`/endpoints/${id}`, {
+		await apiRequest<ApiResponse<void>>(`/endpoints/${id}`, {
 			method: 'DELETE'
 		});
 	}
@@ -1559,7 +1581,7 @@ export interface A2AAgent {
 	capabilities: string[];
 	allowed_namespaces?: string[];
 	api_key_id?: string;
-	configuration?: Record<string, any>;
+	configuration?: Record<string, unknown>;
 	rate_limit?: number;
 	rate_window?: string;
 	tags?: string[];
@@ -1579,7 +1601,7 @@ export interface A2AAgentSpec {
 	agent_type: string;
 	capabilities: string[];
 	allowed_namespaces?: string[];
-	configuration?: Record<string, any>;
+	configuration?: Record<string, unknown>;
 	rate_limit?: number;
 	rate_window?: string;
 	tags?: string[];
@@ -1604,7 +1626,7 @@ export interface A2AStats {
 export interface A2ATestRequest {
 	message: string;
 	context?: string;
-	parameters?: Record<string, any>;
+	parameters?: Record<string, unknown>;
 }
 
 export interface A2ATestResponse {
@@ -1617,7 +1639,7 @@ export interface A2ATestResponse {
 		completion: number;
 		total: number;
 	};
-	metadata?: Record<string, any>;
+	metadata?: Record<string, unknown>;
 }
 
 // A2A Agent Management APIs
@@ -1673,7 +1695,7 @@ export const a2aApi = {
 
 	// Delete A2A agent
 	async deleteAgent(id: string): Promise<void> {
-		await apiRequest<ApiResponse<any>>(`/a2a/${id}`, {
+		await apiRequest<ApiResponse<void>>(`/a2a/${id}`, {
 			method: 'DELETE'
 		});
 	},
@@ -1711,8 +1733,8 @@ export const a2aApi = {
 	},
 
 	// Get available agent types and their default configurations
-	async getAgentTypes(): Promise<Record<string, any>> {
-		const response = await apiRequest<ApiResponse<Record<string, any>>>('/a2a/types');
+	async getAgentTypes(): Promise<Record<string, unknown>> {
+		const response = await apiRequest<ApiResponse<Record<string, unknown>>>('/a2a/types');
 		return response.data;
 	}
 };

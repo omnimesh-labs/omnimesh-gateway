@@ -1,5 +1,5 @@
-import dynamic from 'next/dynamic';
+import PoliciesView from './PoliciesView';
 
-const PoliciesView = dynamic(() => import('./PoliciesView'));
-
-export default PoliciesView;
+export default function PoliciesPage() {
+	return <PoliciesView />;
+}

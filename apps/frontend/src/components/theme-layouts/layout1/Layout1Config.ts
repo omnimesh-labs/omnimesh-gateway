@@ -5,7 +5,7 @@ const Layout1Config = {
 	title: 'Layout 1 - Vertical',
 	defaults: {
 		mode: 'container',
-		containerWidth: 1120,
+		containerWidth: 1920,
 		navbar: {
 			display: true,
 			style: 'style-1',

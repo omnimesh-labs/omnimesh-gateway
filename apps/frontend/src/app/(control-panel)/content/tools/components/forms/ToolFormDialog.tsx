@@ -12,22 +12,8 @@ import {
 	DialogHeader,
 	DialogTitle
 } from '@/components/ui/dialog';
-import {
-	Form,
-	FormControl,
-	FormDescription,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage
-} from '@/components/ui/form';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue
-} from '@/components/ui/select';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -41,7 +27,10 @@ import { Tool } from '@/lib/api';
 const toolSchema = z.object({
 	name: z.string().min(1, 'Name is required').max(255),
 	description: z.string().optional(),
-	function_name: z.string().min(1, 'Function name is required').regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/, 'Must be a valid function name'),
+	function_name: z
+		.string()
+		.min(1, 'Function name is required')
+		.regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/, 'Must be a valid function name'),
 	category: z.enum(['general', 'data', 'file', 'web', 'system', 'ai', 'dev', 'custom']),
 	implementation_type: z.enum(['internal', 'external', 'webhook', 'script']).optional(),
 	endpoint_url: z.string().optional(),
@@ -68,7 +57,7 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 	const isEdit = !!tool;
 	const createMutation = useCreateTool();
 	const updateMutation = useUpdateTool();
-	
+
 	const form = useForm<ToolFormData>({
 		resolver: zodResolver(toolSchema),
 		defaultValues: {
@@ -89,15 +78,28 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 			metadata: ''
 		}
 	});
-	
+
 	useEffect(() => {
 		if (tool) {
 			form.reset({
 				name: tool.name,
 				description: tool.description || '',
 				function_name: tool.function_name,
-				category: tool.category as any,
-				implementation_type: tool.implementation_type as any,
+				category: tool.category as
+					| 'general'
+					| 'data'
+					| 'communication'
+					| 'automation'
+					| 'ai'
+					| 'security'
+					| 'devops'
+					| 'custom',
+				implementation_type: tool.implementation_type as
+					| 'internal'
+					| 'external'
+					| 'webhook'
+					| 'script'
+					| 'plugin',
 				endpoint_url: tool.endpoint_url || '',
 				timeout_seconds: tool.timeout_seconds,
 				max_retries: tool.max_retries,
@@ -129,21 +131,21 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 			});
 		}
 	}, [tool, form]);
-	
+
 	const handleSubmit = async (data: ToolFormData) => {
 		try {
 			const schema = data.schema ? JSON.parse(data.schema) : undefined;
 			const examples = data.examples ? JSON.parse(data.examples) : undefined;
 			const metadata = data.metadata ? JSON.parse(data.metadata) : undefined;
-			
+
 			const payload = {
 				...data,
 				schema,
 				examples,
 				metadata,
-				tags: data.tags?.filter(tag => tag.trim() !== '')
+				tags: data.tags?.filter((tag) => tag.trim() !== '')
 			};
-			
+
 			if (isEdit && tool) {
 				await updateMutation.mutateAsync({
 					id: tool.id,
@@ -152,47 +154,63 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 			} else {
 				await createMutation.mutateAsync(payload);
 			}
-			
+
 			onClose();
-		} catch (error) {
+		} catch (_error) {
 			// Error is handled by the mutation hooks
 		}
 	};
-	
+
 	const handleAddTag = (tag: string) => {
 		const currentTags = form.getValues('tags') || [];
+
 		if (tag && !currentTags.includes(tag)) {
 			form.setValue('tags', [...currentTags, tag]);
 		}
 	};
-	
+
 	const handleRemoveTag = (tagToRemove: string) => {
 		const currentTags = form.getValues('tags') || [];
-		form.setValue('tags', currentTags.filter(tag => tag !== tagToRemove));
+		form.setValue(
+			'tags',
+			currentTags.filter((tag) => tag !== tagToRemove)
+		);
 	};
-	
+
 	const implementationType = form.watch('implementation_type');
-	
+
 	return (
-		<Dialog open={open} onOpenChange={onClose}>
-			<DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+		<Dialog
+			open={open}
+			onOpenChange={onClose}
+		>
+			<DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[800px]">
 				<DialogHeader>
 					<DialogTitle>{isEdit ? 'Edit Tool' : 'Create Tool'}</DialogTitle>
 					<DialogDescription>
 						{isEdit ? 'Update the tool configuration' : 'Add a new tool to your gateway'}
 					</DialogDescription>
 				</DialogHeader>
-				
+
 				<Form {...form}>
-					<form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-						<Tabs defaultValue="basic" className="w-full">
+					<form
+						onSubmit={form.handleSubmit(handleSubmit)}
+						className="space-y-4"
+					>
+						<Tabs
+							defaultValue="basic"
+							className="w-full"
+						>
 							<TabsList className="grid w-full grid-cols-3">
 								<TabsTrigger value="basic">Basic Info</TabsTrigger>
 								<TabsTrigger value="implementation">Implementation</TabsTrigger>
 								<TabsTrigger value="advanced">Advanced</TabsTrigger>
 							</TabsList>
-							
-							<TabsContent value="basic" className="space-y-4 mt-4">
+
+							<TabsContent
+								value="basic"
+								className="mt-4 space-y-4"
+							>
 								<FormField
 									control={form.control}
 									name="name"
@@ -200,13 +218,16 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 										<FormItem>
 											<FormLabel>Name</FormLabel>
 											<FormControl>
-												<Input placeholder="My Awesome Tool" {...field} />
+												<Input
+													placeholder="My Awesome Tool"
+													{...field}
+												/>
 											</FormControl>
 											<FormMessage />
 										</FormItem>
 									)}
 								/>
-								
+
 								<FormField
 									control={form.control}
 									name="function_name"
@@ -214,7 +235,10 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 										<FormItem>
 											<FormLabel>Function Name</FormLabel>
 											<FormControl>
-												<Input placeholder="my_awesome_tool" {...field} />
+												<Input
+													placeholder="my_awesome_tool"
+													{...field}
+												/>
 											</FormControl>
 											<FormDescription>
 												Must be a valid function identifier (letters, numbers, underscores)
@@ -223,7 +247,7 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 										</FormItem>
 									)}
 								/>
-								
+
 								<FormField
 									control={form.control}
 									name="description"
@@ -241,14 +265,17 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 										</FormItem>
 									)}
 								/>
-								
+
 								<FormField
 									control={form.control}
 									name="category"
 									render={({ field }) => (
 										<FormItem>
 											<FormLabel>Category</FormLabel>
-											<Select onValueChange={field.onChange} value={field.value}>
+											<Select
+												onValueChange={field.onChange}
+												value={field.value}
+											>
 												<FormControl>
 													<SelectTrigger>
 														<SelectValue placeholder="Select category" />
@@ -270,15 +297,21 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 									)}
 								/>
 							</TabsContent>
-							
-							<TabsContent value="implementation" className="space-y-4 mt-4">
+
+							<TabsContent
+								value="implementation"
+								className="mt-4 space-y-4"
+							>
 								<FormField
 									control={form.control}
 									name="implementation_type"
 									render={({ field }) => (
 										<FormItem>
 											<FormLabel>Implementation Type</FormLabel>
-											<Select onValueChange={field.onChange} value={field.value}>
+											<Select
+												onValueChange={field.onChange}
+												value={field.value}
+											>
 												<FormControl>
 													<SelectTrigger>
 														<SelectValue placeholder="Select type" />
@@ -295,7 +328,7 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 										</FormItem>
 									)}
 								/>
-								
+
 								{(implementationType === 'external' || implementationType === 'webhook') && (
 									<FormField
 										control={form.control}
@@ -304,17 +337,18 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 											<FormItem>
 												<FormLabel>Endpoint URL</FormLabel>
 												<FormControl>
-													<Input placeholder="https://api.example.com/endpoint" {...field} />
+													<Input
+														placeholder="https://api.example.com/endpoint"
+														{...field}
+													/>
 												</FormControl>
-												<FormDescription>
-													The URL to call for this tool
-												</FormDescription>
+												<FormDescription>The URL to call for this tool</FormDescription>
 												<FormMessage />
 											</FormItem>
 										)}
 									/>
 								)}
-								
+
 								<div className="grid grid-cols-2 gap-4">
 									<FormField
 										control={form.control}
@@ -335,7 +369,7 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 											</FormItem>
 										)}
 									/>
-									
+
 									<FormField
 										control={form.control}
 										name="max_retries"
@@ -356,7 +390,7 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 										)}
 									/>
 								</div>
-								
+
 								<FormField
 									control={form.control}
 									name="schema"
@@ -371,16 +405,17 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 													className="font-mono text-sm"
 												/>
 											</FormControl>
-											<FormDescription>
-												JSON Schema for tool parameters
-											</FormDescription>
+											<FormDescription>JSON Schema for tool parameters</FormDescription>
 											<FormMessage />
 										</FormItem>
 									)}
 								/>
 							</TabsContent>
-							
-							<TabsContent value="advanced" className="space-y-4 mt-4">
+
+							<TabsContent
+								value="advanced"
+								className="mt-4 space-y-4"
+							>
 								<FormField
 									control={form.control}
 									name="documentation"
@@ -394,14 +429,12 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 													rows={4}
 												/>
 											</FormControl>
-											<FormDescription>
-												Markdown supported
-											</FormDescription>
+											<FormDescription>Markdown supported</FormDescription>
 											<FormMessage />
 										</FormItem>
 									)}
 								/>
-								
+
 								<FormField
 									control={form.control}
 									name="examples"
@@ -416,14 +449,12 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 													className="font-mono text-sm"
 												/>
 											</FormControl>
-											<FormDescription>
-												Usage examples as JSON array
-											</FormDescription>
+											<FormDescription>Usage examples as JSON array</FormDescription>
 											<FormMessage />
 										</FormItem>
 									)}
 								/>
-								
+
 								<FormField
 									control={form.control}
 									name="tags"
@@ -444,7 +475,11 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 													/>
 													<div className="flex flex-wrap gap-2">
 														{field.value?.map((tag) => (
-															<Badge key={tag} variant="secondary" className="gap-1">
+															<Badge
+																key={tag}
+																variant="secondary"
+																className="gap-1"
+															>
 																{tag}
 																<X
 																	className="h-3 w-3 cursor-pointer"
@@ -460,7 +495,7 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 										</FormItem>
 									)}
 								/>
-								
+
 								<FormField
 									control={form.control}
 									name="metadata"
@@ -475,14 +510,12 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 													className="font-mono text-sm"
 												/>
 											</FormControl>
-											<FormDescription>
-												Additional metadata in JSON format
-											</FormDescription>
+											<FormDescription>Additional metadata in JSON format</FormDescription>
 											<FormMessage />
 										</FormItem>
 									)}
 								/>
-								
+
 								<div className="space-y-4">
 									<FormField
 										control={form.control}
@@ -504,7 +537,7 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 											</FormItem>
 										)}
 									/>
-									
+
 									<FormField
 										control={form.control}
 										name="is_active"
@@ -512,9 +545,7 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 											<FormItem className="flex items-center justify-between rounded-lg border p-3">
 												<div className="space-y-0.5">
 													<FormLabel>Active</FormLabel>
-													<FormDescription>
-														Enable or disable this tool
-													</FormDescription>
+													<FormDescription>Enable or disable this tool</FormDescription>
 												</div>
 												<FormControl>
 													<Switch
@@ -528,9 +559,13 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 								</div>
 							</TabsContent>
 						</Tabs>
-						
+
 						<DialogFooter>
-							<Button type="button" variant="outline" onClick={onClose}>
+							<Button
+								type="button"
+								variant="outline"
+								onClick={onClose}
+							>
 								Cancel
 							</Button>
 							<Button
@@ -540,8 +575,8 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 								{createMutation.isPending || updateMutation.isPending
 									? 'Saving...'
 									: isEdit
-									? 'Update'
-									: 'Create'}
+										? 'Update'
+										: 'Create'}
 							</Button>
 						</DialogFooter>
 					</form>

@@ -1,8 +1,6 @@
 import themesConfig from 'src/configs/themesConfig';
 import { SettingsConfigType } from '@fuse/core/Settings/Settings';
 
-
-
 /**
  * The settingsConfig object is a configuration object for the  application's settings.
  */

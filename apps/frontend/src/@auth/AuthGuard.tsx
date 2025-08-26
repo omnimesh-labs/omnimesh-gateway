@@ -17,7 +17,13 @@ export default function AuthGuard({ children }: AuthGuardProps) {
 	useEffect(() => {
 		if (!isLoading && !isAuthenticated) {
 			// Store the current path to redirect back after login
-			if (pathname !== '/sign-in' && pathname !== '/sign-up') {
+			if (
+				pathname &&
+				pathname !== '/sign-in' &&
+				pathname !== '/sign-up' &&
+				pathname !== '/401' &&
+				pathname !== '/404'
+			) {
 				localStorage.setItem('redirectUrl', pathname);
 			}
 
@@ -31,7 +37,8 @@ export default function AuthGuard({ children }: AuthGuardProps) {
 	}
 
 	if (!isAuthenticated) {
-		return null;
+		// Show loading while redirecting to prevent flash of protected content
+		return <Loading />;
 	}
 
 	return <>{children}</>;

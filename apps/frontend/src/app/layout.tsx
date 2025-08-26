@@ -8,12 +8,12 @@ import App from './App';
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const metadata = await generateMetadata({
-	title: 'MCP Gateway - Dashboard',
-	description: 'MCP Gateway - Production-ready API gateway for Model Context Protocol servers',
+	title: 'Janex - Dashboard',
+	description: 'Janex - Production-ready API gateway for Model Context Protocol servers',
 	cardImage: '/card.png',
 	robots: 'follow, index',
 	favicon: '/favicon.ico',
-	url: 'https://mcp-gateway.example.com'
+	url: 'https://janex.example.com'
 });
 
 export default async function RootLayout({
@@ -48,28 +48,14 @@ export default async function RootLayout({
 					rel="shortcut icon"
 					href="/favicon.ico"
 				/>
-				{/* Font and style imports - optimized for performance */}
-				<link
-					rel="preload"
-					as="style"
-					href="/assets/fonts/Geist/geist.css"
-				/>
+				{/* External stylesheets - using link tags for public assets */}
 				<link
 					rel="stylesheet"
 					href="/assets/fonts/Geist/geist.css"
 				/>
 				<link
-					rel="preload"
-					as="style"
-					href="/assets/fonts/material-design-icons/MaterialIconsOutlined.css"
-				/>
-				<link
 					rel="stylesheet"
 					href="/assets/fonts/material-design-icons/MaterialIconsOutlined.css"
-				/>
-				<link
-					rel="stylesheet"
-					href="/assets/fonts/meteocons/style.css"
 				/>
 				<link
 					rel="stylesheet"

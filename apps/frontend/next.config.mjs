@@ -11,6 +11,8 @@ const withBundleAnalyzer = process.env.ANALYZE === 'true'
 // Conditionally add webpack configuration only when NOT using turbopack
 const baseConfig = {
 	reactStrictMode: false,
+	skipTrailingSlashRedirect: true,
+	skipMiddlewareUrlNormalize: true,
 	eslint: {
 		// Only enable ESLint in development
 		ignoreDuringBuilds: process.env.NODE_ENV === 'production'

@@ -1,9 +1,11 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-
 import Link from 'next/link';
 import { Typography, Button, Container } from '@mui/material';
+
+// Force dynamic rendering for this error page
+// eslint-disable-next-line react-refresh/only-export-components
+export const dynamic = 'force-dynamic';
 
 export default function NotFound() {
 	return (

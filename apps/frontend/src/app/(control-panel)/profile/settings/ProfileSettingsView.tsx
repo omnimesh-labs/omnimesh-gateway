@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import SvgIcon from '@fuse/core/SvgIcon';
 import { useSnackbar } from 'notistack';
+import { authApi } from '@/lib/api';
 
 const Root = styled(PageSimple)(({ theme }) => ({
 	'& .PageSimple-header': {
@@ -64,9 +65,17 @@ function ProfileSettingsView() {
 
 		setIsLoading(true);
 		try {
-			// Simulate API call
-			await new Promise((resolve) => setTimeout(resolve, 1000));
-			enqueueSnackbar('Profile updated successfully (demo)', { variant: 'success' });
+			// Prepare update data
+			const updateData: any = {};
+			
+			if (profileForm.email) updateData.email = profileForm.email;
+			if (profileForm.new_password) {
+				updateData.current_password = profileForm.current_password;
+				updateData.new_password = profileForm.new_password;
+			}
+			
+			await authApi.updateProfile(updateData);
+			enqueueSnackbar('Profile updated successfully', { variant: 'success' });
 			setProfileForm((prev) => ({
 				...prev,
 				current_password: '',
