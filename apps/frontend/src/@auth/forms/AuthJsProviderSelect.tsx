@@ -1,4 +1,5 @@
-import { Box, Button, lighten, Typography } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
+import { lighten } from '@mui/material/styles';
 import { signIn } from 'next-auth/react';
 import { authJsProviderMap } from '@auth/authJs';
 

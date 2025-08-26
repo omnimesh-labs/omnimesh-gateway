@@ -1,12 +1,4 @@
-import i18n from '@i18n';
 import { NavItemType } from '@fuse/core/Navigation/types/NavItemType';
-import ar from './navigation-i18n/ar';
-import en from './navigation-i18n/en';
-import tr from './navigation-i18n/tr';
-
-i18n.addResourceBundle('en', 'navigation', en);
-i18n.addResourceBundle('tr', 'navigation', tr);
-i18n.addResourceBundle('ar', 'navigation', ar);
 
 /**
  * The navigationConfig object is an array of navigation items for the MCP Gateway application.
@@ -20,30 +12,45 @@ const navigationConfig: NavItemType[] = [
 		url: '/'
 	},
 	{
-		id: 'servers',
-		title: 'Server Management',
+		id: 'llms',
+		title: 'Models',
 		type: 'item',
+		icon: 'lucide:bot',
+		url: '/llms'
+	},
+	{
+		id: 'mcp-servers',
+		title: 'MCP Servers',
+		type: 'collapse',
 		icon: 'lucide:server',
-		url: '/servers'
-	},
-	{
-		id: 'namespaces',
-		title: 'Namespaces',
-		type: 'item',
-		icon: 'lucide:folder',
-		url: '/namespaces'
-	},
-	{
-		id: 'endpoints',
-		title: 'Endpoints',
-		type: 'item',
-		icon: 'lucide:globe',
-		url: '/endpoints'
+		children: [
+			{
+				id: 'servers',
+				title: 'Servers',
+				type: 'item',
+				icon: 'lucide:server',
+				url: '/servers'
+			},
+			{
+				id: 'namespaces',
+				title: 'Namespaces',
+				type: 'item',
+				icon: 'lucide:folder',
+				url: '/namespaces'
+			},
+			{
+				id: 'endpoints',
+				title: 'Endpoints',
+				type: 'item',
+				icon: 'lucide:globe',
+				url: '/endpoints'
+			}
+		]
 	},
 	{
 		id: 'content',
-		title: 'Content Management',
-		type: 'collapsible',
+		title: 'Content',
+		type: 'collapse',
 		icon: 'lucide:layers',
 		children: [
 			{
@@ -70,59 +77,67 @@ const navigationConfig: NavItemType[] = [
 		]
 	},
 	{
-		id: 'policies',
-		title: 'Policy Management',
-		type: 'item',
-		icon: 'lucide:shield',
-		url: '/policies'
-	},
-	{
-		id: 'a2a',
-		title: 'A2A Agents',
-		type: 'item',
-		icon: 'lucide:bot',
-		url: '/a2a'
-	},
-	{
-		id: 'configuration',
-		title: 'Configuration',
-		type: 'item',
-		icon: 'lucide:settings',
-		url: '/configuration'
-	},
-	{
-		id: 'logs',
-		title: 'Logging & Audit',
-		type: 'item',
-		icon: 'lucide:scroll-text',
-		url: '/logs'
-	},
-	{
-		id: 'profile',
-		title: 'Profile',
-		type: 'collapsible',
-		icon: 'lucide:user',
+		id: 'security',
+		title: 'Security',
+		type: 'collapse',
+		icon: 'lucide:shield-check',
 		children: [
 			{
-				id: 'profile-overview',
-				title: 'Overview',
+				id: 'security-policies',
+				title: 'Policies',
 				type: 'item',
-				icon: 'lucide:user',
-				url: '/profile'
+				icon: 'lucide:scroll',
+				url: '/security/policies'
 			},
 			{
-				id: 'profile-settings',
-				title: 'Settings',
+				id: 'security-filters',
+				title: 'Content Filters',
 				type: 'item',
-				icon: 'lucide:user-cog',
-				url: '/profile/settings'
+				icon: 'lucide:shield-check',
+				url: '/security/filters'
 			},
 			{
-				id: 'profile-api-keys',
-				title: 'API Keys',
+				id: 'security-auth',
+				title: 'Auth Methods',
 				type: 'item',
 				icon: 'lucide:key',
-				url: '/profile/api-keys'
+				url: '/security/auth'
+			}
+		]
+	},
+	// {
+	// 	id: 'a2a',
+	// 	title: 'A2A Agents',
+	// 	type: 'item',
+	// 	icon: 'lucide:bot',
+	// 	url: '/a2a'
+	// },
+	{
+		id: 'settings',
+		title: 'Settings',
+		type: 'collapse',
+		icon: 'lucide:computer',
+		children: [
+			{
+				id: 'policies',
+				title: 'Policies',
+				type: 'item',
+				icon: 'lucide:shield',
+				url: '/policies'
+			},
+			{
+				id: 'configuration',
+				title: 'Configuration',
+				type: 'item',
+				icon: 'lucide:settings',
+				url: '/configuration'
+			},
+			{
+				id: 'logs',
+				title: 'Logging & Audit',
+				type: 'item',
+				icon: 'lucide:scroll-text',
+				url: '/logs'
 			}
 		]
 	}

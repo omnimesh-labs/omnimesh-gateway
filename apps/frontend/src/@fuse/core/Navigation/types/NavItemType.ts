@@ -8,7 +8,6 @@ import { NavBadgeType } from './NavBadgeType';
 export type NavItemType = {
 	id: string;
 	title?: string;
-	translate?: string;
 	auth?: string[] | string;
 	subtitle?: string;
 	icon?: string;

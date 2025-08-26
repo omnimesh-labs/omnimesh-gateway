@@ -820,19 +820,40 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}, retryO
 							// Retry the original request with the new token
 							return apiRequest(endpoint, options, false);
 						} else {
-							// Refresh failed, clear tokens
+							// Refresh failed, clear tokens and redirect to login
 							clearTokens();
+
+							if (typeof window !== 'undefined') {
+								window.location.href = '/sign-in';
+							}
+
 							throw new Error('Session expired. Please log in again.');
 						}
-					} catch (refreshError) {
+					} catch (_refreshError) {
 						clearTokens();
+
+						// Redirect to login page when refresh fails
+						if (typeof window !== 'undefined') {
+							window.location.href = '/sign-in';
+						}
+
 						throw new Error('Session expired. Please log in again.');
 					} finally {
 						isRefreshing = false;
 					}
+				} else {
+					// No refresh token available, redirect to login
+					clearTokens();
+
+					if (typeof window !== 'undefined') {
+						window.location.href = '/sign-in';
+					}
+
+					throw new Error('Session expired. Please log in again.');
 				}
 			}
 
+			// For non-401 errors or when not retrying auth
 			throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`);
 		}
 

@@ -1,7 +1,15 @@
 const isTurbopack = process.env.TURBOPACK === '1';
 
+// Bundle analyzer for production builds
+const withBundleAnalyzer = process.env.ANALYZE === 'true'
+	? (await import('@next/bundle-analyzer').then(m => m.default))({
+		enabled: true,
+		openAnalyzer: false
+	})
+	: (config) => config;
+
 // Conditionally add webpack configuration only when NOT using turbopack
-const nextConfig = {
+const baseConfig = {
 	reactStrictMode: false,
 	eslint: {
 		// Only enable ESLint in development
@@ -12,8 +20,6 @@ const nextConfig = {
 		// your project has type errors.
 		ignoreBuildErrors: true
 	},
-	// Disable static generation for now due to Html import issue
-	output: 'standalone',
 	// Enable experimental features for better performance
 	experimental: {
 		// Optimize for faster refreshes - extensive package imports optimization
@@ -34,15 +40,17 @@ const nextConfig = {
 		],
 		// Enable optimizations for better performance in dev
 		optimizeServerReact: true,
-		// Turbopack optimizations
-		turbo: {
-			root: './',
-		},
 	},
 	// Compiler optimizations
 	compiler: {
 		// Remove console logs in production
-		removeConsole: process.env.NODE_ENV === 'production',
+		removeConsole: process.env.NODE_ENV === 'production' ? {
+			exclude: ['error', 'warn']
+		} : false,
+		// Enable React compiler optimizations
+		reactRemoveProperties: process.env.NODE_ENV === 'production' ? {
+			properties: ['^data-testid$']
+		} : false,
 	},
 	modularizeImports: {
 		'@mui/material': {
@@ -192,5 +200,7 @@ const nextConfig = {
 		}
 	})
 };
+
+const nextConfig = withBundleAnalyzer(baseConfig);
 
 export default nextConfig;

@@ -1,7 +1,5 @@
 import * as React from 'react';
 import { useMemo } from 'react';
-import rtlPlugin from 'stylis-plugin-rtl';
-import { useMainTheme } from '@fuse/core/Settings/hooks/themeHooks';
 import createCache, { Options, StylisPlugin } from '@emotion/cache';
 import { CacheProvider } from '@emotion/react';
 import { CssBaseline } from '@mui/material';
@@ -29,24 +27,14 @@ const wrapInLayer: (layerName: string) => StylisPlugin = (layerName) => (node) =
 	});
 };
 
-const emotionCacheOptions: Record<string, Options> = {
-	rtl: {
-		key: 'muirtl',
-		stylisPlugins: [rtlPlugin, wrapInLayer('mui')],
-		prepend: false
-	},
-	ltr: {
-		key: 'muiltr',
-		stylisPlugins: [wrapInLayer('mui')],
-		prepend: false
-	}
+const emotionCacheOptions: Options = {
+	key: 'muiltr',
+	stylisPlugins: [wrapInLayer('mui')],
+	prepend: false
 };
 
 function RootThemeProvider({ children }: MainThemeProviderProps) {
-	const mainTheme = useMainTheme();
-	const langDirection = mainTheme?.direction;
-
-	const cacheProviderValue = useMemo(() => createCache(emotionCacheOptions[langDirection]), [langDirection]);
+	const cacheProviderValue = useMemo(() => createCache(emotionCacheOptions), []);
 
 	return (
 		<CacheProvider value={cacheProviderValue}>

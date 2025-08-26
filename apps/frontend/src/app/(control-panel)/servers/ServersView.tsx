@@ -225,7 +225,7 @@ function ServersView() {
 								iconPosition="start"
 							/>
 							<Tab
-								label="Available Servers"
+								label="Catalog"
 								icon={<SvgIcon size={20}>lucide:search</SvgIcon>}
 								iconPosition="start"
 							/>

@@ -4,27 +4,25 @@ import { useState, useEffect, useCallback, useMemo, lazy } from 'react';
 import { MRT_ColumnDef } from 'material-react-table';
 import PageSimple from '@fuse/core/PageSimple';
 import { styled } from '@mui/material/styles';
-import {
-	Typography,
-	Button,
-	Chip,
-	IconButton,
-	Tooltip,
-	Box,
-	TextField,
-	FormControlLabel,
-	Switch,
-	Select,
-	MenuItem,
-	FormControl,
-	InputLabel,
-	Card,
-	CardContent,
-	Alert,
-	CircularProgress,
-	Stack,
-	GridLegacy as Grid
-} from '@mui/material';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import Box from '@mui/material/Box';
+import TextField from '@mui/material/TextField';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Alert from '@mui/material/Alert';
+import CircularProgress from '@mui/material/CircularProgress';
+import Stack from '@mui/material/Stack';
+import Grid from '@mui/material/Grid';
 
 // Lazy load heavy dialog components
 const Dialog = lazy(() => import('@mui/material/Dialog'));
@@ -75,75 +73,84 @@ function A2AView() {
 	const [testMessage, setTestMessage] = useState('');
 	const [testContext, setTestContext] = useState('');
 	const [testLoading, setTestLoading] = useState(false);
-	const [testResult, setTestResult] = useState<any>(null);
-
-	// Mock data for demonstration
-	const mockAgents: A2AAgent[] = [
-		{
-			id: '1',
-			organization_id: 'org-1',
-			name: 'Customer Support Agent',
-			description: 'Handles customer inquiries and support tickets',
-			agent_type: 'support',
-			is_active: true,
-			capabilities: ['chat', 'ticket_management', 'knowledge_base'],
-			tags: ['support', 'customer-facing'],
-			created_at: '2024-01-15T10:00:00Z',
-			updated_at: '2024-01-20T15:30:00Z',
-			metrics: {
-				request_count: 1234,
-				error_count: 12,
-				avg_response_time: 450
-			}
-		},
-		{
-			id: '2',
-			organization_id: 'org-1',
-			name: 'Code Review Agent',
-			description: 'Automated code review and suggestions',
-			agent_type: 'development',
-			is_active: true,
-			capabilities: ['code_analysis', 'best_practices', 'security_scan'],
-			tags: ['development', 'automation'],
-			created_at: '2024-01-10T09:00:00Z',
-			updated_at: '2024-01-18T14:00:00Z',
-			metrics: {
-				request_count: 856,
-				error_count: 5,
-				avg_response_time: 650
-			}
-		},
-		{
-			id: '3',
-			organization_id: 'org-1',
-			name: 'Data Analysis Agent',
-			description: 'Performs data analysis and generates insights',
-			agent_type: 'analytics',
-			is_active: false,
-			capabilities: ['data_processing', 'visualization', 'reporting'],
-			tags: ['analytics', 'data'],
-			created_at: '2024-01-12T11:00:00Z',
-			updated_at: '2024-01-22T16:00:00Z',
-			metrics: {
-				request_count: 423,
-				error_count: 2,
-				avg_response_time: 1200
-			}
-		}
-	];
-
-	const mockStats: A2AStats = {
-		total: 3,
-		active: 2,
-		inactive: 1,
-		by_type: {
-			support: 1,
-			development: 1,
-			analytics: 1
-		}
-	};
+	const [testResult, setTestResult] = useState<{
+		success: boolean;
+		content?: string;
+		error?: string;
+		execution_time_ms?: number;
+		tokens_used?: {
+			prompt: number;
+			completion: number;
+			total: number;
+		};
+	} | null>(null);
 
 	const loadAgents = useCallback(async () => {
+		// Mock data for demonstration
+		const mockAgents: A2AAgent[] = [
+			{
+				id: '1',
+				organization_id: 'org-1',
+				name: 'Customer Support Agent',
+				description: 'Handles customer inquiries and support tickets',
+				agent_type: 'support',
+				is_active: true,
+				capabilities: ['chat', 'ticket_management', 'knowledge_base'],
+				tags: ['support', 'customer-facing'],
+				created_at: '2024-01-15T10:00:00Z',
+				updated_at: '2024-01-20T15:30:00Z',
+				metrics: {
+					request_count: 1234,
+					error_count: 12,
+					avg_response_time: 450
+				}
+			},
+			{
+				id: '2',
+				organization_id: 'org-1',
+				name: 'Code Review Agent',
+				description: 'Automated code review and suggestions',
+				agent_type: 'development',
+				is_active: true,
+				capabilities: ['code_analysis', 'best_practices', 'security_scan'],
+				tags: ['development', 'automation'],
+				created_at: '2024-01-10T09:00:00Z',
+				updated_at: '2024-01-18T14:00:00Z',
+				metrics: {
+					request_count: 856,
+					error_count: 5,
+					avg_response_time: 650
+				}
+			},
+			{
+				id: '3',
+				organization_id: 'org-1',
+				name: 'Data Analysis Agent',
+				description: 'Performs data analysis and generates insights',
+				agent_type: 'analytics',
+				is_active: false,
+				capabilities: ['data_processing', 'visualization', 'reporting'],
+				tags: ['analytics', 'data'],
+				created_at: '2024-01-12T11:00:00Z',
+				updated_at: '2024-01-22T16:00:00Z',
+				metrics: {
+					request_count: 423,
+					error_count: 2,
+					avg_response_time: 1200
+				}
+			}
+		];
+
+		const mockStats: A2AStats = {
+			total: 3,
+			active: 2,
+			inactive: 1,
+			by_type: {
+				support: 1,
+				development: 1,
+				analytics: 1
+			}
+		};
 		try {
 			setLoading(true);
 			// TODO: Replace with actual API calls when backend is ready
@@ -225,19 +232,19 @@ function A2AView() {
 
 			setCreateDialogOpen(false);
 			loadAgents();
-		} catch (error) {
+		} catch (_error) {
 			enqueueSnackbar('Failed to save agent', { variant: 'error' });
 		}
 	};
 
-	const handleDeleteAgent = async (id: string) => {
+	const handleDeleteAgent = async (_id: string) => {
 		if (confirm('Are you sure you want to delete this agent?')) {
 			try {
 				// TODO: Replace with actual API call
 				// await a2aApi.deleteAgent(id);
 				enqueueSnackbar('Agent deleted successfully', { variant: 'success' });
 				loadAgents();
-			} catch (error) {
+			} catch (_error) {
 				enqueueSnackbar('Failed to delete agent', { variant: 'error' });
 			}
 		}
@@ -251,7 +258,7 @@ function A2AView() {
 				variant: 'success'
 			});
 			loadAgents();
-		} catch (error) {
+		} catch (_error) {
 			enqueueSnackbar('Failed to toggle agent status', { variant: 'error' });
 		}
 	};
@@ -284,7 +291,7 @@ function A2AView() {
 					total: 75
 				}
 			});
-		} catch (error) {
+		} catch (_error) {
 			setTestResult({
 				success: false,
 				error: 'Failed to test agent'
@@ -442,12 +449,7 @@ function A2AView() {
 								container
 								spacing={3}
 							>
-								<Grid
-									item
-									xs={12}
-									sm={6}
-									md={3}
-								>
+								<Grid size={{ xs: 12, sm: 6, md: 3 }}>
 									<Card>
 										<CardContent>
 											<Typography variant="h6">{stats.total}</Typography>
@@ -460,11 +462,7 @@ function A2AView() {
 										</CardContent>
 									</Card>
 								</Grid>
-								<Grid
-									xs={12}
-									sm={6}
-									md={3}
-								>
+								<Grid size={{ xs: 12, sm: 6, md: 3 }}>
 									<Card>
 										<CardContent>
 											<Typography
@@ -482,11 +480,7 @@ function A2AView() {
 										</CardContent>
 									</Card>
 								</Grid>
-								<Grid
-									xs={12}
-									sm={6}
-									md={3}
-								>
+								<Grid size={{ xs: 12, sm: 6, md: 3 }}>
 									<Card>
 										<CardContent>
 											<Typography
@@ -504,11 +498,7 @@ function A2AView() {
 										</CardContent>
 									</Card>
 								</Grid>
-								<Grid
-									xs={12}
-									sm={6}
-									md={3}
-								>
+								<Grid size={{ xs: 12, sm: 6, md: 3 }}>
 									<Card>
 										<CardContent>
 											<Typography variant="h6">{Object.keys(stats.by_type).length}</Typography>

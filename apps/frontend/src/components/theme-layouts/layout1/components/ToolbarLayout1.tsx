@@ -3,18 +3,17 @@ import clsx from 'clsx';
 import { memo } from 'react';
 import NavbarToggleButton from 'src/components/theme-layouts/components/navbar/NavbarToggleButton';
 import themeOptions from 'src/configs/themeOptions';
-import _ from 'lodash';
+import find from 'lodash/find';
 import LightDarkModeToggle from 'src/components/LightDarkModeToggle';
 import useLayoutSettings from '@fuse/core/Layout/useLayoutSettings';
-import AdjustFontSize from '../../components/AdjustFontSize';
 import FullScreenToggle from '../../components/FullScreenToggle';
-import LanguageSwitcher from '../../components/LanguageSwitcher';
-import NavigationShortcuts from '../../components/navigation/NavigationShortcuts';
-import NavigationSearch from '../../components/navigation/NavigationSearch';
-import QuickPanelToggleButton from '../../components/quickPanel/QuickPanelToggleButton';
+// import NavigationShortcuts from '../../components/navigation/NavigationShortcuts';
+// import NavigationSearch from '../../components/navigation/NavigationSearch';
+import UserMenu from '../../components/UserMenu';
 import { Layout1ConfigDefaultsType } from '@/components/theme-layouts/layout1/Layout1Config';
 import useThemeMediaQuery from '../../../../@fuse/hooks/useThemeMediaQuery';
-import { AppBar, Divider } from '@mui/material';
+import AppBar from '@mui/material/AppBar';
+import Divider from '@mui/material/Divider';
 import ToolbarTheme from 'src/contexts/ToolbarTheme';
 
 type ToolbarLayout1Props = {
@@ -55,19 +54,31 @@ function ToolbarLayout1(props: ToolbarLayout1Props) {
 							</>
 						)}
 
-						{!isMobile && <NavigationShortcuts />}
+						{/* {!isMobile && <NavigationShortcuts />} */}
 					</div>
 
 					<div className="flex items-center overflow-x-auto px-2 py-2 md:px-4">
-						{/* <LanguageSwitcher />
-						<AdjustFontSize /> */}
 						<FullScreenToggle />
 						<LightDarkModeToggle
-							lightTheme={_.find(themeOptions, { id: 'Default' })}
-							darkTheme={_.find(themeOptions, { id: 'Default Dark' })}
+							lightTheme={find(themeOptions, { id: 'Default' })}
+							darkTheme={find(themeOptions, { id: 'Default Dark' })}
 						/>
-						<NavigationSearch />
-						{/* <QuickPanelToggleButton /> */}
+						{/* <NavigationSearch /> */}
+						<UserMenu
+							className="ml-2"
+							dense={true}
+							onlyAvatar={isMobile}
+							popoverProps={{
+								anchorOrigin: {
+									vertical: 'bottom',
+									horizontal: 'right'
+								},
+								transformOrigin: {
+									vertical: 'top',
+									horizontal: 'right'
+								}
+							}}
+						/>
 					</div>
 
 					{config.navbar.display && config.navbar.position === 'right' && (

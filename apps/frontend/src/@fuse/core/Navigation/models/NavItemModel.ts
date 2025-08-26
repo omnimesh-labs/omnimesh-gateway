@@ -12,7 +12,6 @@ function NavItemModel(data?: PartialDeep<NavItemType>) {
 	return _.defaults(data, {
 		id: _.uniqueId(),
 		title: '',
-		translate: '',
 		auth: null,
 		subtitle: '',
 		icon: '',

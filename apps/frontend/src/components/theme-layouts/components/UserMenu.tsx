@@ -36,9 +36,7 @@ function UserMenu(props: UserMenuProps) {
 		setUserMenu(null);
 	};
 
-	if (!user) {
-		return null;
-	}
+	// Always show the menu, even for guests
 
 	return (
 		<>
@@ -51,69 +49,109 @@ function UserMenu(props: UserMenuProps) {
 				onClick={userMenuClick}
 				color="inherit"
 			>
-				{user?.photoURL ? (
-					<Avatar
-						sx={(theme) => ({
-							background: theme.vars.palette.background.default,
-							color: theme.vars.palette.text.secondary
-						})}
-						className={clsx('avatar rounded-lg', dense ? 'h-7 w-7' : 'h-10 w-10')}
-						alt="user photo"
-						src={user?.photoURL}
-						variant="rounded"
-					/>
-				) : (
-					<Avatar
-						sx={(theme) => ({
-							background: (theme) => darken(theme.palette.background.default, 0.05),
-							color: theme.vars.palette.text.secondary
-						})}
-						className={clsx('avatar h-10 w-10', dense && 'h-8 w-8')}
-					>
-						{user?.displayName?.[0]}
-					</Avatar>
-				)}
-				{!onlyAvatar && (
+				{user ? (
 					<>
-						<div className={clsx('flex flex-auto flex-col', dense ? '' : 'gap-2')}>
-							<Typography
-								component="span"
-								className={clsx(
-									'title flex truncate font-semibold capitalize leading-none tracking-tight',
-									dense ? 'text-md' : 'text-base'
-								)}
+						{user?.photoURL ? (
+							<Avatar
+								sx={(theme) => ({
+									background: theme.vars.palette.background.default,
+									color: theme.vars.palette.text.secondary
+								})}
+								className={clsx('avatar rounded-lg', dense ? 'h-7 w-7' : 'h-10 w-10')}
+								alt="user photo"
+								src={user?.photoURL}
+								variant="rounded"
+							/>
+						) : (
+							<Avatar
+								sx={(theme) => ({
+									background: (theme) => darken(theme.palette.background.default, 0.05),
+									color: theme.vars.palette.text.secondary
+								})}
+								className={clsx('avatar h-10 w-10', dense && 'h-8 w-8')}
 							>
-								{user?.displayName}
-							</Typography>
-							<Typography
-								className={clsx(
-									'flex font-medium leading-none tracking-tighter',
-									dense ? 'text-sm' : 'text-md'
-								)}
-								color="text.secondary"
-							>
-								{user?.email}
-							</Typography>
-						</div>
-						<div className="flex shrink-0 items-center gap-2">
-							<Tooltip
-								title={
-									<>
-										{user.role?.toString()}
-										{(!user.role || (Array.isArray(user.role) && user.role.length === 0)) &&
-											'Guest'}
-									</>
-								}
-							>
-								<SvgIcon className="info-icon">lucide:info</SvgIcon>
-							</Tooltip>
-							<SvgIcon
-								className="arrow"
-								size={13}
-							>
-								{arrowIcon}
-							</SvgIcon>
-						</div>
+								{user?.displayName?.[0]}
+							</Avatar>
+						)}
+						{!onlyAvatar && (
+							<>
+								<div className={clsx('flex flex-auto flex-col', dense ? '' : 'gap-2')}>
+									<Typography
+										component="span"
+										className={clsx(
+											'title flex truncate font-semibold capitalize leading-none tracking-tight',
+											dense ? 'text-md' : 'text-base'
+										)}
+									>
+										{user?.displayName}
+									</Typography>
+									<Typography
+										className={clsx(
+											'flex font-medium leading-none tracking-tighter',
+											dense ? 'text-sm' : 'text-md'
+										)}
+										color="text.secondary"
+									>
+										{user?.email}
+									</Typography>
+								</div>
+								<div className="flex shrink-0 items-center gap-2">
+									<Tooltip
+										title={
+											user.role && Array.isArray(user.role) && user.role.length > 0
+												? user.role.join(', ')
+												: user.role && typeof user.role === 'string'
+												? user.role
+												: 'Guest'
+										}
+									>
+										<SvgIcon className="info-icon">lucide:info</SvgIcon>
+									</Tooltip>
+									<SvgIcon
+										className="arrow"
+										size={13}
+									>
+										{arrowIcon}
+									</SvgIcon>
+								</div>
+							</>
+						)}
+					</>
+				) : (
+					<>
+						{/* Guest user - show generic user icon */}
+						<Avatar
+							sx={(theme) => ({
+								background: (theme) => darken(theme.palette.background.default, 0.05),
+								color: theme.vars.palette.text.secondary
+							})}
+							className={clsx('avatar h-10 w-10', dense && 'h-8 w-8')}
+						>
+							<SvgIcon>lucide:user</SvgIcon>
+						</Avatar>
+						{!onlyAvatar && (
+							<>
+								<div className={clsx('flex flex-auto flex-col', dense ? '' : 'gap-2')}>
+									<Typography
+										component="span"
+										className={clsx(
+											'title flex truncate font-semibold capitalize leading-none tracking-tight',
+											dense ? 'text-md' : 'text-base'
+										)}
+									>
+										Guest
+									</Typography>
+								</div>
+								<div className="flex shrink-0 items-center gap-2">
+									<SvgIcon
+										className="arrow"
+										size={13}
+									>
+										{arrowIcon}
+									</SvgIcon>
+								</div>
+							</>
+						)}
 					</>
 				)}
 			</Button>
@@ -161,25 +199,36 @@ function UserMenu(props: UserMenuProps) {
 					<>
 						<MenuItem
 							component={Link}
-							to="/apps/profile"
+							to="/profile"
 							onClick={userMenuClose}
 							role="button"
 						>
 							<ListItemIcon>
-								<SvgIcon>lucide:circle-user</SvgIcon>
+								<SvgIcon>lucide:user</SvgIcon>
 							</ListItemIcon>
-							<ListItemText primary="My Profile" />
+							<ListItemText primary="Profile Overview" />
 						</MenuItem>
 						<MenuItem
 							component={Link}
-							to="/apps/mailbox"
+							to="/profile/settings"
 							onClick={userMenuClose}
 							role="button"
 						>
 							<ListItemIcon>
-								<SvgIcon>lucide:mail</SvgIcon>
+								<SvgIcon>lucide:user-cog</SvgIcon>
 							</ListItemIcon>
-							<ListItemText primary="Inbox" />
+							<ListItemText primary="Profile Settings" />
+						</MenuItem>
+						<MenuItem
+							component={Link}
+							to="/profile/api-keys"
+							onClick={userMenuClose}
+							role="button"
+						>
+							<ListItemIcon>
+								<SvgIcon>lucide:key</SvgIcon>
+							</ListItemIcon>
+							<ListItemText primary="API Keys" />
 						</MenuItem>
 						<MenuItem
 							onClick={() => {

@@ -1,7 +1,7 @@
 import themesConfig from 'src/configs/themesConfig';
 import { SettingsConfigType } from '@fuse/core/Settings/Settings';
 
-import i18n from '@i18n/i18n';
+
 
 /**
  * The settingsConfig object is a configuration object for the  application's settings.
@@ -34,7 +34,7 @@ const settingsConfig: SettingsConfigType = {
 	/**
 	 * The direction property defines the text direction for the application.
 	 */
-	direction: i18n.dir(i18n.options.lng) || 'ltr', // rtl, ltr
+	direction: 'ltr', // rtl, ltr
 	/**
 	 * The theme object defines the color theme for the application.
 	 */
