@@ -85,8 +85,7 @@
     "start": "next start",
     "lint": "eslint ./src --config ./eslint.config.mjs",
     "lint:fix": "eslint --fix ./src --config ./eslint.config.mjs",
-    "audit": "npm audit --production",
-    "analyze": "node analyze-bundle.mjs"
+    "audit": "bun audit"
   },
   "engines": {
     "node": ">=20.0.0",

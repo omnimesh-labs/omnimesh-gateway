@@ -1,8 +1,8 @@
-# MCP Gateway - Claude Development Guide
+# Janex Gateway - Claude Development Guide
 
 ## Project Overview
 
-The **MCP Gateway** is a production-ready API gateway for Model Context Protocol (MCP) servers, providing enterprise-grade infrastructure with authentication, logging, rate limiting, server discovery, and multi-protocol transport support.
+The **Janex Gateway** is a production-ready API gateway for Model Context Protocol (MCP) servers, providing enterprise-grade infrastructure with authentication, logging, rate limiting, server discovery, and multi-protocol transport support.
 
 ### Core Purpose
 - **Enterprise Infrastructure**: Organization-level policies, JWT authentication, RBAC, and A2A authentication
@@ -554,7 +554,7 @@ cd apps/frontend && bun run dev
 
 **Admin Credentials**: `admin@admin.com` / `qwerty123`
 
-The codebase provides a comprehensive foundation for a production-ready MCP Gateway with enterprise features and multi-protocol support.
+The codebase provides a comprehensive foundation for a production-ready Janex Gateway with enterprise features and multi-protocol support.
 
 ## DEVELOPMENT GUIDELINES
 - ALWAYS use `bun` instead of `npm`

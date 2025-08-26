@@ -1,8 +1,8 @@
-# MCP Gateway Frontend
+# Janex Frontend
 
 ## Overview
 
-The MCP Gateway Frontend is a Next.js dashboard for managing the MCP Gateway - a production-ready API gateway for Model Context Protocol (MCP) servers.
+The Janex Frontend is a Next.js dashboard for managing Janex - a production-ready API gateway for Model Context Protocol (MCP) servers.
 
 ## Features
 
@@ -65,4 +65,4 @@ src/
 
 ## License
 
-This project is part of the MCP Gateway system.
+This project is part of the Janex system.

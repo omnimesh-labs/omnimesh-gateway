@@ -1,4 +1,4 @@
-# MCP Gateway
+# Janex Gateway
 
 [![CI](https://github.com/theognis1002/mcp-gateway/workflows/CI/badge.svg)](https://github.com/theognis1002/mcp-gateway/actions)
 [![Go Version](https://img.shields.io/badge/Go-1.25+-blue.svg)](https://golang.org)
@@ -14,7 +14,7 @@ A production-ready API gateway for Model Context Protocol (MCP) servers, providi
 
 ## 🚀 Quick Start
 
-Get the entire MCP Gateway stack running with a single command:
+Get the entire Janex Gateway stack running with a single command:
 
 ```bash
 # Clone the repository
@@ -59,7 +59,7 @@ make logs         # View service logs
 
 ## Architecture
 
-The MCP Gateway is designed with a modular architecture for scalability and maintainability:
+The Janex Gateway is designed with a modular architecture for scalability and maintainability:
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -69,7 +69,7 @@ The MCP Gateway is designed with a modular architecture for scalability and main
           └──────────────────────┼──────────────────────┘
                                  │
                    ┌─────────────▼─────────────┐
-                   │      MCP Gateway          │
+                   │      Janex Gateway        │
                    │  ┌─────────────────────┐  │
                    │  │   Middleware Chain  │  │
                    │  │ • Auth & AuthZ      │  │
@@ -105,7 +105,7 @@ See [.claude/architecture.md](./.claude/architecture.md) for detailed architectu
 
 ## Virtual Server Feature
 
-The MCP Gateway includes a powerful virtualization feature that allows you to wrap non-MCP services as MCP-compatible servers. This enables you to:
+The Janex Gateway includes a powerful virtualization feature that allows you to wrap non-MCP services as MCP-compatible servers. This enables you to:
 
 ### 🎯 **Unify API Access**
 - Present REST APIs, GraphQL endpoints, and other services through a consistent MCP interface
@@ -157,7 +157,7 @@ curl -X POST http://localhost:8080/mcp/rpc \
       "name": "send_message",
       "arguments": {
         "channel": "#general",
-        "text": "Hello from MCP Gateway!"
+        "text": "Hello from Janex Gateway!"
       }
     }
   }'
@@ -252,7 +252,6 @@ Security is a top priority. Please review our [Security Policy](SECURITY.md) and
 ## 🙏 Acknowledgments
 
 - [Model Context Protocol](https://modelcontextprotocol.io/) for the core specification
-- [Gin Framework](https://gin-gonic.com/) for the HTTP framework
 - All our [contributors](https://github.com/theognis1002/mcp-gateway/contributors)
 
 ---
