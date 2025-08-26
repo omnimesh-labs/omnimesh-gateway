@@ -27,18 +27,20 @@ type Organization struct {
 
 // APIKey represents an API key
 type APIKey struct {
-	CreatedAt      time.Time  `json:"created_at" db:"created_at"`
-	UpdatedAt      time.Time  `json:"updated_at" db:"updated_at"`
-	ExpiresAt      *time.Time `json:"expires_at" db:"expires_at"`
-	LastUsedAt     *time.Time `json:"last_used_at" db:"last_used_at"`
-	ID             string     `json:"id" db:"id"`
-	UserID         string     `json:"user_id" db:"user_id"`
-	OrganizationID string     `json:"organization_id" db:"organization_id"`
-	Name           string     `json:"name" db:"name"`
-	KeyHash        string     `json:"-" db:"key_hash"`
-	Prefix         string     `json:"prefix" db:"prefix"`
-	Permissions    []string   `json:"permissions" db:"permissions"`
-	IsActive       bool       `json:"is_active" db:"is_active"`
+	CreatedAt      time.Time              `json:"created_at" db:"created_at"`
+	UpdatedAt      time.Time              `json:"updated_at" db:"updated_at"`
+	ExpiresAt      *time.Time             `json:"expires_at" db:"expires_at"`
+	LastUsedAt     *time.Time             `json:"last_used_at" db:"last_used_at"`
+	ID             string                 `json:"id" db:"id"`
+	UserID         string                 `json:"user_id" db:"user_id"`
+	OrganizationID string                 `json:"organization_id" db:"organization_id"`
+	Name           string                 `json:"name" db:"name"`
+	KeyHash        string                 `json:"key_hash" db:"key_hash"`
+	Prefix         string                 `json:"prefix" db:"prefix"`
+	Permissions    []string               `json:"permissions" db:"permissions"`
+	Role           string                 `json:"role" db:"-"` // Computed from permissions
+	IsActive       bool                   `json:"is_active" db:"is_active"`
+	Metadata       map[string]interface{} `json:"metadata,omitempty" db:"-"` // Additional display metadata
 }
 
 // Policy represents an access control policy
@@ -100,9 +102,15 @@ type UpdateUserRequest struct {
 
 // CreateAPIKeyRequest represents an API key creation request
 type CreateAPIKeyRequest struct {
-	ExpiresAt   *time.Time `json:"expires_at,omitempty"`
-	Name        string     `json:"name" binding:"required,min=2"`
-	Permissions []string   `json:"permissions"`
+	Name      string `json:"name" binding:"required,min=2"`
+	Role      string `json:"role" binding:"required"`
+	ExpiresAt string `json:"expires_at,omitempty"`
+}
+
+// CreateAPIKeyResponse represents an API key creation response
+type CreateAPIKeyResponse struct {
+	APIKey *APIKey `json:"api_key"`
+	Key    string  `json:"key"` // The actual key (only returned once)
 }
 
 // CreateOrganizationRequest represents an organization creation request

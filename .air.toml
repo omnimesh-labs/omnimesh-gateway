@@ -9,7 +9,7 @@ testdata_dir = "testdata"
 
   # File inclusion/exclusion rules (critical for performance)
   include_ext = ["go", "tpl", "tmpl", "html"]
-  exclude_dir = ["assets", "tmp", "vendor", "testdata", "node_modules", "scripts/venv", "venv", ".env", "apps/frontend"]
+  exclude_dir = ["assets", "tmp", "vendor", "testdata", "node_modules", "scripts/venv", "venv", ".env", "apps/frontend", "docs", "todos"]
   exclude_file = ["package.json", "package-lock.json", "bun.lockb", "yarn.lock", "pnpm-lock.yaml"]
   exclude_regex = ["_test.go", "\\.(js|jsx|ts|tsx|css|scss|sass|less|)$", "\\.config\\.(js|ts|mjs)$"]
 

@@ -122,6 +122,10 @@ func NewInsufficientRightsError() *Error {
 	return NewError(ErrCodeInsufficientRights, "Insufficient rights to perform this action", http.StatusForbidden)
 }
 
+func NewForbiddenError(message string) *Error {
+	return NewError(ErrCodeAccessDenied, message, http.StatusForbidden)
+}
+
 // Validation error constructors
 func NewValidationError(message string) *Error {
 	return NewError(ErrCodeValidationFailed, message, http.StatusBadRequest)

@@ -48,8 +48,8 @@ services:
     volumes:
       - ./:/app
       - backend_tmp:/app/tmp
-      - backend_node_modules:/app/apps/frontend/node_modules
-      - backend_next_cache:/app/apps/frontend/.next
+      # - backend_node_modules:/app/apps/frontend/node_modules
+      # - backend_next_cache:/app/apps/frontend/.next
     environment:
       MODE: development
       DB_HOST: postgres
@@ -78,29 +78,29 @@ services:
       timeout: 5s
       retries: 5
 
-  frontend:
-    image: oven/bun:1-alpine
-    working_dir: /app
-    restart: unless-stopped
-    ports:
-      - "${FRONTEND_PORT}:3000"
-    depends_on:
-      backend:
-        condition: service_healthy
-    volumes:
-      - ./apps/frontend:/app
-      - frontend_node_modules:/app/node_modules
-      - frontend_next_cache:/app/.next
-    environment:
-      NEXT_PUBLIC_API_BASE_URL: http://localhost:8080/api
-      WATCHPACK_POLLING: true
-      NODE_ENV: development
-    command: sh -c "bun install && bun run dev"
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+  # frontend:
+  #   image: oven/bun:1-alpine
+  #   working_dir: /app
+  #   restart: unless-stopped
+  #   ports:
+  #     - "${FRONTEND_PORT}:3000"
+  #   depends_on:
+  #     backend:
+  #       condition: service_healthy
+  #   volumes:
+  #     - ./apps/frontend:/app
+  #     - frontend_node_modules:/app/node_modules
+  #     - frontend_next_cache:/app/.next
+  #   environment:
+  #     NEXT_PUBLIC_API_BASE_URL: http://localhost:8080/api
+  #     WATCHPACK_POLLING: true
+  #     NODE_ENV: development
+  #   command: sh -c "bun install && bun run dev"
+  #   healthcheck:
+  #     test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
 
 volumes:
   postgres_volume:
@@ -108,5 +108,5 @@ volumes:
   backend_tmp:
   backend_node_modules:
   backend_next_cache:
-  frontend_node_modules:
-  frontend_next_cache:
+  # frontend_node_modules:
+  # frontend_next_cache:

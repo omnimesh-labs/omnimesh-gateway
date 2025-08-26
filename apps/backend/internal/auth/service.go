@@ -2,7 +2,10 @@ package auth
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/hex"
 	"fmt"
 	"net"
 	"strings"
@@ -10,6 +13,7 @@ import (
 
 	"mcp-gateway/apps/backend/internal/types"
 
+	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -658,20 +662,332 @@ func (s *Service) DeleteUser(userID string) error {
 }
 
 // CreateAPIKey creates a new API key for a user
-func (s *Service) CreateAPIKey(userID string, req *types.CreateAPIKeyRequest) (*types.APIKey, error) {
-	// TODO: Implement API key creation
-	return nil, nil
+func (s *Service) CreateAPIKey(userID string, req *types.CreateAPIKeyRequest) (*types.CreateAPIKeyResponse, error) {
+	// Get user to validate it exists and get organization ID
+	user, err := s.GetUserByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Generate a secure random API key
+	keyString := generateAPIKey()
+	keyHash := hashAPIKey(keyString)
+	prefix := keyString[:8] // Store first 8 chars as prefix for identification
+
+	// Create API key record
+	query := `
+		INSERT INTO api_keys (
+			user_id, organization_id, name, key_hash, prefix, 
+			key_type, permissions, expires_at, is_active
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		RETURNING id, created_at
+	`
+
+	var apiKey types.APIKey
+	var expiresAt sql.NullTime
+	if req.ExpiresAt != "" {
+		t, err := time.Parse(time.RFC3339, req.ExpiresAt)
+		if err != nil {
+			return nil, types.NewValidationError("invalid expiration date format")
+		}
+		expiresAt = sql.NullTime{Time: t, Valid: true}
+	}
+
+	// Map role to permissions
+	permissions := getPermissionsForRole(req.Role)
+
+	err = s.db.QueryRow(
+		query,
+		userID,
+		user.OrganizationID,
+		req.Name,
+		keyHash,
+		prefix,
+		"user",
+		permissions,
+		expiresAt,
+		true,
+	).Scan(&apiKey.ID, &apiKey.CreatedAt)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create API key: %w", err)
+	}
+
+	// Build response with the actual key (only returned once)
+	apiKey.Name = req.Name
+	apiKey.KeyHash = prefix + "..." // Only show prefix in response
+	apiKey.Role = req.Role
+	apiKey.IsActive = true
+	if expiresAt.Valid {
+		apiKey.ExpiresAt = &expiresAt.Time
+	}
+
+	return &types.CreateAPIKeyResponse{
+		APIKey: &apiKey,
+		Key:    keyString, // Return the actual key only once
+	}, nil
+}
+
+// ListAPIKeys lists all API keys for a user
+func (s *Service) ListAPIKeys(userID string) ([]*types.APIKey, error) {
+	query := `
+		SELECT id, name, prefix || '...' as key_hash, permissions, 
+		       is_active, expires_at, created_at, last_used_at
+		FROM api_keys
+		WHERE user_id = $1
+		ORDER BY created_at DESC
+	`
+
+	rows, err := s.db.Query(query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list API keys: %w", err)
+	}
+	defer rows.Close()
+
+	var keys []*types.APIKey
+	for rows.Next() {
+		var key types.APIKey
+		var expiresAt, lastUsedAt sql.NullTime
+		var permissions []string
+
+		err := rows.Scan(
+			&key.ID,
+			&key.Name,
+			&key.KeyHash,
+			&permissions,
+			&key.IsActive,
+			&expiresAt,
+			&key.CreatedAt,
+			&lastUsedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan API key: %w", err)
+		}
+
+		// Map permissions back to role
+		key.Role = getRoleFromPermissions(permissions)
+		
+		if expiresAt.Valid {
+			key.ExpiresAt = &expiresAt.Time
+		}
+		if lastUsedAt.Valid {
+			key.LastUsedAt = &lastUsedAt.Time
+		}
+
+		keys = append(keys, &key)
+	}
+
+	return keys, nil
+}
+
+// ListAllAPIKeys lists all API keys for an organization (admin only)
+func (s *Service) ListAllAPIKeys(organizationID string) ([]*types.APIKey, error) {
+	query := `
+		SELECT ak.id, ak.name, ak.prefix || '...' as key_hash, ak.permissions, 
+		       ak.is_active, ak.expires_at, ak.created_at, ak.last_used_at,
+		       ak.user_id, ak.organization_id, u.email as user_email
+		FROM api_keys ak
+		LEFT JOIN users u ON ak.user_id = u.id
+		WHERE ak.organization_id = $1
+		ORDER BY ak.created_at DESC
+	`
+
+	rows, err := s.db.Query(query, organizationID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list API keys: %w", err)
+	}
+	defer rows.Close()
+
+	var keys []*types.APIKey
+	for rows.Next() {
+		var key types.APIKey
+		var expiresAt, lastUsedAt sql.NullTime
+		var permissions []string
+		var userEmail sql.NullString
+
+		err := rows.Scan(
+			&key.ID,
+			&key.Name,
+			&key.KeyHash,
+			pq.Array(&permissions),
+			&key.IsActive,
+			&expiresAt,
+			&key.CreatedAt,
+			&lastUsedAt,
+			&key.UserID,
+			&key.OrganizationID,
+			&userEmail,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan API key: %w", err)
+		}
+
+		// Set the role based on permissions
+		key.Role = getRoleFromPermissions(permissions)
+
+		// Set optional fields
+		if expiresAt.Valid {
+			key.ExpiresAt = &expiresAt.Time
+		}
+		if lastUsedAt.Valid {
+			key.LastUsedAt = &lastUsedAt.Time
+		}
+
+		// Add user email to metadata for display
+		if userEmail.Valid {
+			if key.Metadata == nil {
+				key.Metadata = make(map[string]interface{})
+			}
+			key.Metadata["user_email"] = userEmail.String
+		}
+
+		keys = append(keys, &key)
+	}
+
+	return keys, nil
+}
+
+// DeleteAPIKey deletes an API key
+func (s *Service) DeleteAPIKey(userID, keyID string) error {
+	// Verify the key belongs to the user
+	var ownerID string
+	err := s.db.QueryRow("SELECT user_id FROM api_keys WHERE id = $1", keyID).Scan(&ownerID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return types.NewNotFoundError("API key not found")
+		}
+		return fmt.Errorf("failed to verify API key ownership: %w", err)
+	}
+
+	if ownerID != userID {
+		return types.NewForbiddenError("you do not have permission to delete this API key")
+	}
+
+	// Delete the key
+	result, err := s.db.Exec("DELETE FROM api_keys WHERE id = $1", keyID)
+	if err != nil {
+		return fmt.Errorf("failed to delete API key: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to check deletion result: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return types.NewNotFoundError("API key not found")
+	}
+
+	return nil
+}
+
+// DeleteAPIKeyByAdmin deletes any API key in the organization (admin only)
+func (s *Service) DeleteAPIKeyByAdmin(organizationID, keyID string) error {
+	// Verify the key belongs to the organization
+	var keyOrgID string
+	err := s.db.QueryRow("SELECT organization_id FROM api_keys WHERE id = $1", keyID).Scan(&keyOrgID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return types.NewNotFoundError("API key not found")
+		}
+		return fmt.Errorf("failed to verify API key organization: %w", err)
+	}
+
+	if keyOrgID != organizationID {
+		return types.NewForbiddenError("API key does not belong to your organization")
+	}
+
+	// Delete the key
+	result, err := s.db.Exec("DELETE FROM api_keys WHERE id = $1", keyID)
+	if err != nil {
+		return fmt.Errorf("failed to delete API key: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to check deletion result: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return types.NewNotFoundError("API key not found")
+	}
+
+	return nil
 }
 
 // ValidateAPIKey validates an API key
 func (s *Service) ValidateAPIKey(keyString string) (*types.APIKey, error) {
-	// TODO: Implement API key validation
-	return nil, nil
+	keyHash := hashAPIKey(keyString)
+	
+	query := `
+		SELECT id, user_id, organization_id, name, permissions, 
+		       is_active, expires_at, created_at, last_used_at
+		FROM api_keys
+		WHERE key_hash = $1 AND is_active = true
+	`
+
+	var apiKey types.APIKey
+	var expiresAt, lastUsedAt sql.NullTime
+	var permissions []string
+
+	err := s.db.QueryRow(query, keyHash).Scan(
+		&apiKey.ID,
+		&apiKey.UserID,
+		&apiKey.OrganizationID,
+		&apiKey.Name,
+		&permissions,
+		&apiKey.IsActive,
+		&expiresAt,
+		&apiKey.CreatedAt,
+		&lastUsedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, types.NewUnauthorizedError("invalid API key")
+		}
+		return nil, fmt.Errorf("failed to validate API key: %w", err)
+	}
+
+	// Check if expired
+	if expiresAt.Valid && time.Now().After(expiresAt.Time) {
+		return nil, types.NewUnauthorizedError("API key has expired")
+	}
+
+	// Update last used timestamp
+	go func() {
+		_, _ = s.db.Exec("UPDATE api_keys SET last_used_at = NOW() WHERE id = $1", apiKey.ID)
+	}()
+
+	// Map permissions to role
+	apiKey.Role = getRoleFromPermissions(permissions)
+	
+	if expiresAt.Valid {
+		apiKey.ExpiresAt = &expiresAt.Time
+	}
+	if lastUsedAt.Valid {
+		apiKey.LastUsedAt = &lastUsedAt.Time
+	}
+
+	return &apiKey, nil
 }
 
 // RevokeAPIKey revokes an API key
 func (s *Service) RevokeAPIKey(keyID string) error {
-	// TODO: Implement API key revocation
+	result, err := s.db.Exec("UPDATE api_keys SET is_active = false WHERE id = $1", keyID)
+	if err != nil {
+		return fmt.Errorf("failed to revoke API key: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to check revocation result: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return types.NewNotFoundError("API key not found")
+	}
+
 	return nil
 }
 
@@ -688,4 +1004,59 @@ func (s *Service) hashPassword(password string) (string, error) {
 func (s *Service) validatePassword(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
+}
+
+// generateAPIKey generates a secure random API key
+func generateAPIKey() string {
+	// Generate 32 random bytes
+	b := make([]byte, 32)
+	_, err := rand.Read(b)
+	if err != nil {
+		panic(fmt.Sprintf("failed to generate random bytes: %v", err))
+	}
+	
+	// Return hex-encoded string with "mgw_" prefix for identification
+	return "mgw_" + hex.EncodeToString(b)
+}
+
+// hashAPIKey creates a SHA256 hash of an API key
+func hashAPIKey(key string) string {
+	hash := sha256.Sum256([]byte(key))
+	return hex.EncodeToString(hash[:])
+}
+
+// getPermissionsForRole maps a role to permissions
+func getPermissionsForRole(role string) []string {
+	switch role {
+	case "admin":
+		return []string{"read", "write", "delete", "execute", "admin"}
+	case "user":
+		return []string{"read", "write", "execute"}
+	case "viewer":
+		return []string{"read"}
+	case "api_user":
+		return []string{"read", "write", "execute"}
+	default:
+		return []string{"read"}
+	}
+}
+
+// getRoleFromPermissions maps permissions back to a role
+func getRoleFromPermissions(permissions []string) string {
+	permSet := make(map[string]bool)
+	for _, p := range permissions {
+		permSet[p] = true
+	}
+	
+	if permSet["admin"] {
+		return "admin"
+	}
+	if permSet["write"] && permSet["execute"] {
+		return "user"
+	}
+	if permSet["read"] && !permSet["write"] {
+		return "viewer"
+	}
+	
+	return "user" // Default
 }

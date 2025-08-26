@@ -228,6 +228,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 				protected.GET("/profile", authHandler.GetProfile)
 				protected.PUT("/profile", authHandler.UpdateProfile)
 				protected.POST("/api-keys", authHandler.CreateAPIKey)
+				protected.GET("/api-keys", authHandler.ListAPIKeys)
+				protected.DELETE("/api-keys/:id", authHandler.DeleteAPIKey)
 			}
 		}
 

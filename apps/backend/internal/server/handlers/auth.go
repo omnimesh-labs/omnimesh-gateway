@@ -126,6 +126,16 @@ func (h *AuthHandler) CreateAPIKey(c *gin.Context) {
 		return
 	}
 
+	// Get user role from context
+	userRole, exists := c.Get("role")
+	if !exists || userRole != types.RoleAdmin {
+		c.JSON(http.StatusForbidden, types.ErrorResponse{
+			Error:   types.NewForbiddenError("Only admins can create API keys"),
+			Success: false,
+		})
+		return
+	}
+
 	apiKey, err := h.authService.CreateAPIKey(userID.(string), &req)
 	if err != nil {
 		c.JSON(types.GetStatusCode(err), types.ErrorResponse{
@@ -199,5 +209,108 @@ func (h *AuthHandler) UpdateProfile(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"data":    user,
+	})
+}
+
+// ListAPIKeys returns all API keys (admin only)
+func (h *AuthHandler) ListAPIKeys(c *gin.Context) {
+	_, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
+			Error:   types.NewUnauthorizedError("User not authenticated"),
+			Success: false,
+		})
+		return
+	}
+
+	// Get user role from context
+	userRole, exists := c.Get("role")
+	if !exists || userRole != types.RoleAdmin {
+		c.JSON(http.StatusForbidden, types.ErrorResponse{
+			Error:   types.NewForbiddenError("Only admins can list API keys"),
+			Success: false,
+		})
+		return
+	}
+
+	// Get organization ID from context
+	orgID, exists := c.Get("organization_id")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			Error:   types.NewInternalError("Organization ID not found in context"),
+			Success: false,
+		})
+		return
+	}
+
+	// List all API keys for the organization (admins can see all)
+	keys, err := h.authService.ListAllAPIKeys(orgID.(string))
+	if err != nil {
+		c.JSON(types.GetStatusCode(err), types.ErrorResponse{
+			Error:   err.(*types.Error),
+			Success: false,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    keys,
+	})
+}
+
+// DeleteAPIKey deletes an API key
+func (h *AuthHandler) DeleteAPIKey(c *gin.Context) {
+	keyID := c.Param("id")
+	if keyID == "" {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   types.NewValidationError("API key ID required"),
+			Success: false,
+		})
+		return
+	}
+
+	_, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
+			Error:   types.NewUnauthorizedError("User not authenticated"),
+			Success: false,
+		})
+		return
+	}
+
+	// Get user role from context
+	userRole, exists := c.Get("role")
+	if !exists || userRole != types.RoleAdmin {
+		c.JSON(http.StatusForbidden, types.ErrorResponse{
+			Error:   types.NewForbiddenError("Only admins can delete API keys"),
+			Success: false,
+		})
+		return
+	}
+
+	// Get organization ID from context
+	orgID, exists := c.Get("organization_id")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			Error:   types.NewInternalError("Organization ID not found in context"),
+			Success: false,
+		})
+		return
+	}
+
+	// Admin can delete any API key in their organization
+	err := h.authService.DeleteAPIKeyByAdmin(orgID.(string), keyID)
+	if err != nil {
+		c.JSON(types.GetStatusCode(err), types.ErrorResponse{
+			Error:   err.(*types.Error),
+			Success: false,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "API key deleted successfully",
 	})
 }
