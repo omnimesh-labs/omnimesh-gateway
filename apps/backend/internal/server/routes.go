@@ -11,6 +11,7 @@ import (
 	"mcp-gateway/apps/backend/internal/auth"
 	"mcp-gateway/apps/backend/internal/database/models"
 	"mcp-gateway/apps/backend/internal/discovery"
+	"mcp-gateway/apps/backend/internal/inspector"
 	"mcp-gateway/apps/backend/internal/logging"
 	"mcp-gateway/apps/backend/internal/middleware"
 	"mcp-gateway/apps/backend/internal/plugins"
@@ -46,12 +47,35 @@ func (s *Server) RegisterRoutes() http.Handler {
 	}
 
 	// Apply CORS middleware globally to all routes
-	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
-		AllowHeaders:     []string{"Accept", "Authorization", "Content-Type", "X-Requested-With"},
-		AllowCredentials: true,
-	}))
+	var corsConfig cors.Config
+	if s.cfg.Logging.Environment == "development" {
+		// Development CORS - allow common development origins
+		corsConfig = cors.Config{
+			AllowOrigins: []string{
+				"http://localhost:3000",
+				"http://localhost:3001",
+				"http://localhost:5173",
+				"http://localhost:8080",
+				"http://127.0.0.1:3000",
+				"http://127.0.0.1:8080",
+				"http://backend:8080",
+				"http://frontend:3000",
+			},
+			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
+			AllowHeaders:     []string{"Accept", "Authorization", "Content-Type", "X-Requested-With", "X-API-Key"},
+			AllowCredentials: true,
+			ExposeHeaders:    []string{"Content-Length", "Content-Type"},
+		}
+	} else {
+		// Strict CORS for production
+		corsConfig = cors.Config{
+			AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173", "http://localhost:8080", "http://backend:8080"},
+			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
+			AllowHeaders:     []string{"Accept", "Authorization", "Content-Type", "X-Requested-With"},
+			AllowCredentials: true,
+		}
+	}
+	r.Use(cors.New(corsConfig))
 
 	// Apply default middleware chain to root router
 	defaultChain := middleware.DefaultChainWithConfig(securityConfig)
@@ -116,6 +140,9 @@ func (s *Server) RegisterRoutes() http.Handler {
 	// Initialize namespace service
 	namespaceService := services.NewNamespaceService(s.db.GetDB())
 
+	// Initialize inspector service
+	inspectorService := inspector.NewService(transportManager)
+
 	// Initialize handlers
 	mcpDiscoveryHandler := handlers.NewMCPDiscoveryHandler(mcpDiscoveryService)
 	gatewayHandler := handlers.NewGatewayHandler(discoveryService)
@@ -123,6 +150,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	virtualMCPHandler := handlers.NewVirtualMCPHandler(virtualService)
 	a2aHandler := handlers.NewA2AHandler(a2aService, a2aClient, a2aAdapter)
 	namespaceHandler := handlers.NewNamespaceHandler(namespaceService)
+	inspectorHandler := handlers.NewInspectorHandler(inspectorService)
 
 	// Initialize admin handler (for logging and system management)
 	adminHandler := handlers.NewAdminHandler(nil, s.logging.(*logging.Service), nil)
@@ -396,6 +424,45 @@ func (s *Server) RegisterRoutes() http.Handler {
 				authMiddleware.RequireResourceAccess("namespace", "execute"),
 				loggingMiddleware.AuditLogger("execute-tool", "namespace"),
 				namespaceHandler.ExecuteNamespaceTool)
+		}
+
+		// Inspector routes (protected)
+		inspectorChain := middleware.AuthenticatedChain().
+			Use(authMiddleware.RequireAuth()).
+			Use(authMiddleware.RequireOrganizationAccess())
+		inspectorGroup := api.Group("/inspector")
+		inspectorChain.Apply(inspectorGroup)
+		{
+			// Session management
+			inspectorGroup.POST("/sessions",
+				authMiddleware.RequireResourceAccess("inspector", "write"),
+				loggingMiddleware.AuditLogger("create", "inspector-session"),
+				inspectorHandler.CreateSession)
+			inspectorGroup.GET("/sessions/:id",
+				authMiddleware.RequireResourceAccess("inspector", "read"),
+				inspectorHandler.GetSession)
+			inspectorGroup.DELETE("/sessions/:id",
+				authMiddleware.RequireResourceAccess("inspector", "delete"),
+				loggingMiddleware.AuditLogger("close", "inspector-session"),
+				inspectorHandler.CloseSession)
+
+			// Request execution
+			inspectorGroup.POST("/sessions/:id/request",
+				authMiddleware.RequireResourceAccess("inspector", "execute"),
+				inspectorHandler.ExecuteRequest)
+
+			// Event streaming
+			inspectorGroup.GET("/sessions/:id/events",
+				authMiddleware.RequireResourceAccess("inspector", "read"),
+				inspectorHandler.StreamEvents) // SSE endpoint
+			inspectorGroup.GET("/sessions/:id/ws",
+				authMiddleware.RequireResourceAccess("inspector", "read"),
+				inspectorHandler.HandleWebSocket) // WebSocket endpoint
+
+			// Server capabilities
+			inspectorGroup.GET("/servers/:id/capabilities",
+				authMiddleware.RequireResourceAccess("inspector", "read"),
+				inspectorHandler.GetServerCapabilities)
 		}
 
 		// A2A (Agent-to-Agent) management routes (protected)

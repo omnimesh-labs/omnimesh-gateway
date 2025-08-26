@@ -1,5 +1,5 @@
 # MCP Gateway Makefile
-.PHONY: help dev stop clean test migrate lint setup shell bash migrate-down migrate-status setup-admin logs nuclear
+.PHONY: help dev stop clean test migrate lint setup shell bash migrate-down migrate-status setup-admin logs nuclear restart prune docker-prune docker-reset
 
 # Docker compose command
 DOCKER_COMPOSE = docker compose
@@ -12,26 +12,45 @@ help:
 	@echo ""
 	@echo "Quick Start:"
 	@echo "  make dev          - Start full stack with hot reload"
-	@echo "  make stop         - Stop all services"
+	@echo "  make stop         - Stop all services (clean)"
+	@echo "  make restart      - Clean restart services"
 	@echo "  make clean        - Stop and remove all data"
+	@echo ""
+	@echo "Docker Management:"
+	@echo "  make prune        - Clean unused Docker resources (safe)"
+	@echo "  make docker-prune - Aggressive Docker cleanup"
+	@echo "  make docker-reset - Reset all project Docker resources"
+	@echo "  make rebuild      - Force rebuild containers"
 	@echo ""
 	@echo "Database:"
 	@echo "  make migrate      - Run database migrations"
 	@echo "  make migrate-down - Rollback migrations"
 	@echo "  make migrate-status - Show migration status"
+	@echo "  make db-shell     - Open PostgreSQL shell"
 	@echo ""
 	@echo "Testing:"
 	@echo "  make test         - Run all tests"
+	@echo "  make test-transport - Transport layer tests"
+	@echo "  make test-integration - Integration tests"
+	@echo "  make test-unit    - Unit tests"
 	@echo ""
 	@echo "Development:"
 	@echo "  make shell        - Open shell in backend container"
 	@echo "  make bash         - Open bash in backend container"
 	@echo "  make logs         - View service logs"
 	@echo "  make lint         - Run linters"
+	@echo "  make watch        - Local development with hot reload"
 	@echo ""
 	@echo "Setup:"
 	@echo "  make setup        - Initial project setup"
 	@echo "  make setup-admin  - Create admin user"
+	@echo ""
+	@echo "Memory/Disk Management:"
+	@echo "  If running out of space, try these in order:"
+	@echo "  1. make restart   - Clean restart (safest)"
+	@echo "  2. make prune     - Remove unused resources"
+	@echo "  3. make clean     - Full cleanup with data loss"
+	@echo "  4. make docker-prune - Aggressive system cleanup"
 
 # Development mode with hot reload
 dev:
@@ -46,13 +65,14 @@ dev:
 # Stop all services
 stop:
 	@echo "Stopping MCP Gateway Stack..."
-	@$(DOCKER_COMPOSE) down
+	@$(DOCKER_COMPOSE) down --remove-orphans
 	@echo "All services stopped"
 
 # Clean everything (including volumes)
 clean:
 	@echo "Cleaning MCP Gateway Stack (removes all data)..."
-	@$(DOCKER_COMPOSE) down -v
+	@$(DOCKER_COMPOSE) down -v --remove-orphans --rmi local
+	@docker system prune -f
 	@rm -f main api apps/backend/api logs/*.log tmp/main
 	@echo "All services stopped and data removed"
 
@@ -133,9 +153,39 @@ build:
 # Rebuild and restart
 rebuild:
 	@echo "Rebuilding containers..."
-	@$(DOCKER_COMPOSE) down
+	@$(DOCKER_COMPOSE) down --remove-orphans
 	@$(DOCKER_COMPOSE) build --no-cache
-	@$(DOCKER_COMPOSE) up -d
+	@$(DOCKER_COMPOSE) up
+
+# Restart services (clean restart)
+restart:
+	@echo "Restarting MCP Gateway Stack..."
+	@$(DOCKER_COMPOSE) down --remove-orphans
+	@docker container prune -f
+	@$(DOCKER_COMPOSE) up
+
+# Clean up Docker resources (safe)
+prune:
+	@echo "Cleaning up unused Docker resources..."
+	@docker container prune -f
+	@docker image prune -f
+	@docker volume prune -f
+	@docker network prune -f
+	@echo "Docker cleanup complete"
+
+# Clean up all Docker resources (aggressive)
+docker-prune:
+	@echo "Aggressive Docker cleanup (removes all unused resources)..."
+	@$(DOCKER_COMPOSE) down --remove-orphans
+	@docker system prune -a -f --volumes
+	@echo "Aggressive Docker cleanup complete"
+
+# Complete Docker reset (nuclear option)
+docker-reset:
+	@echo "Resetting all project Docker resources..."
+	@$(DOCKER_COMPOSE) down -v --remove-orphans --rmi all
+	@docker system prune -a -f --volumes
+	@echo "Docker reset complete - all project images and volumes removed"
 
 # Database shell
 db-shell:
