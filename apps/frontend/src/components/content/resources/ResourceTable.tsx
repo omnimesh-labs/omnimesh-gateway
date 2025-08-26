@@ -56,7 +56,7 @@ export function ResourceTable({ resources, onEdit, onDelete, onView, loading = f
     });
   };
 
-  if (loading && resources.length === 0) {
+  if (loading && (!resources || resources.length === 0)) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center' }}>
         <div style={{ color: '#666' }}>Loading resources...</div>
@@ -64,7 +64,7 @@ export function ResourceTable({ resources, onEdit, onDelete, onView, loading = f
     );
   }
 
-  if (resources.length === 0) {
+  if (!resources || resources.length === 0) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center' }}>
         <div style={{ color: '#666', marginBottom: '1rem' }}>No resources found</div>

@@ -356,7 +356,7 @@ func TestMiddleware_HasRequiredRole_Hierarchy(t *testing.T) {
 	middleware, _, _ := setupTestMiddleware()
 
 	// Test role hierarchy
-	assert.True(t, middleware.hasRequiredRole(types.RoleSystemAdmin, types.RoleAdmin))
+	assert.True(t, middleware.hasRequiredRole(types.RoleAdmin, types.RoleAdmin))
 	assert.True(t, middleware.hasRequiredRole(types.RoleAdmin, types.RoleUser))
 	assert.True(t, middleware.hasRequiredRole(types.RoleUser, types.RoleViewer))
 	assert.True(t, middleware.hasRequiredRole(types.RoleAdmin, types.RoleViewer))
@@ -368,7 +368,6 @@ func TestMiddleware_HasRequiredRole_Hierarchy(t *testing.T) {
 	// Test insufficient permissions
 	assert.False(t, middleware.hasRequiredRole(types.RoleViewer, types.RoleUser))
 	assert.False(t, middleware.hasRequiredRole(types.RoleUser, types.RoleAdmin))
-	assert.False(t, middleware.hasRequiredRole(types.RoleAdmin, types.RoleSystemAdmin))
 }
 
 func TestMiddleware_RequirePermission_Success(t *testing.T) {
@@ -471,8 +470,8 @@ func TestMiddleware_RequireSystemAdmin_Success(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = httptest.NewRequest("GET", "/test", http.NoBody)
 
-	// Set user context with system admin role
-	c.Set("role", types.RoleSystemAdmin)
+	// Set user context with admin role (superuser)
+	c.Set("role", types.RoleAdmin)
 
 	handlerCalled := false
 	testHandler := func(c *gin.Context) {
@@ -498,8 +497,8 @@ func TestMiddleware_RequireSystemAdmin_Forbidden(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = httptest.NewRequest("GET", "/test", http.NoBody)
 
-	// Set user context with regular admin role (not system admin)
-	c.Set("role", types.RoleAdmin)
+	// Set user context with regular user role (not admin)
+	c.Set("role", types.RoleUser)
 
 	middleware.RequireSystemAdmin()(c)
 
@@ -545,7 +544,7 @@ func TestMiddleware_RequireOrganizationAccess_SystemAdminBypass(t *testing.T) {
 
 	// Set user context with different organization but system admin role
 	c.Set("organization_id", "org123")
-	c.Set("role", types.RoleSystemAdmin)
+	c.Set("role", types.RoleAdmin)
 
 	handlerCalled := false
 	testHandler := func(c *gin.Context) {

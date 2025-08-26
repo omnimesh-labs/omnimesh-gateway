@@ -55,7 +55,7 @@ export function PromptTable({ prompts, onEdit, onDelete, onView, loading = false
     return text.substring(0, maxLength) + '...';
   };
 
-  if (loading && prompts.length === 0) {
+  if (loading && (!prompts || prompts.length === 0)) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center' }}>
         <div style={{ color: '#666' }}>Loading prompts...</div>
@@ -63,7 +63,7 @@ export function PromptTable({ prompts, onEdit, onDelete, onView, loading = false
     );
   }
 
-  if (prompts.length === 0) {
+  if (!prompts || prompts.length === 0) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center' }}>
         <div style={{ color: '#666', marginBottom: '1rem' }}>No prompts found</div>

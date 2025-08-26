@@ -139,11 +139,10 @@ type UpdatePolicyRequest struct {
 
 // UserRole constants
 const (
-	RoleAdmin       = "admin"
-	RoleUser        = "user"
-	RoleViewer      = "viewer"
-	RoleAPIUser     = "api_user"
-	RoleSystemAdmin = "system_admin"
+	RoleAdmin   = "admin"
+	RoleUser    = "user"
+	RoleViewer  = "viewer"
+	RoleAPIUser = "api_user"
 )
 
 // Permission constants
@@ -208,6 +207,10 @@ const (
 	PermissionSystemManage = "system_manage"
 
 	// Endpoint permissions
+	PermissionEndpointRead   = "endpoint_read"
+	PermissionEndpointWrite  = "endpoint_write"
+	PermissionEndpointDelete = "endpoint_delete"
+	PermissionEndpointManage = "endpoint_manage"
 	PermissionEndpointAccess = "endpoint_access"
 	PermissionEndpointAdmin  = "endpoint_admin"
 

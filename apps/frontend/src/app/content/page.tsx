@@ -565,7 +565,7 @@ export default function ContentPage() {
     }
   };
 
-  if (loading && resources.length === 0 && prompts.length === 0 && tools.length === 0) {
+  if (loading && (!resources || resources.length === 0) && (!prompts || prompts.length === 0) && (!tools || tools.length === 0)) {
     return (
       <ProtectedRoute>
         <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
@@ -578,9 +578,9 @@ export default function ContentPage() {
   }
 
   const tabs = [
-    { id: 'resources', label: 'Resources', count: resources.length },
-    { id: 'prompts', label: 'Prompts', count: prompts.length },
-    { id: 'tools', label: 'Tools', count: tools.length },
+    { id: 'resources', label: 'Resources', count: resources?.length || 0 },
+    { id: 'prompts', label: 'Prompts', count: prompts?.length || 0 },
+    { id: 'tools', label: 'Tools', count: tools?.length || 0 },
   ] as const;
 
   return (

@@ -17,11 +17,10 @@ func NewRBAC() *RBAC {
 	rbac := &RBAC{
 		rolePermissions: make(map[string][]string),
 		roleHierarchy: map[string]int{
-			types.RoleSystemAdmin: 4,
-			types.RoleAdmin:       3,
-			types.RoleUser:        2,
-			types.RoleViewer:      1,
-			types.RoleAPIUser:     1, // Same level as viewer
+			types.RoleAdmin:   3,
+			types.RoleUser:    2,
+			types.RoleViewer:  1,
+			types.RoleAPIUser: 1, // Same level as viewer
 		},
 	}
 
@@ -32,8 +31,8 @@ func NewRBAC() *RBAC {
 
 // defineRolePermissions sets up the permission mapping for each role
 func (r *RBAC) defineRolePermissions() {
-	// System Admin - Full access to everything
-	r.rolePermissions[types.RoleSystemAdmin] = []string{
+	// Admin - Full access to everything (superuser)
+	r.rolePermissions[types.RoleAdmin] = []string{
 		// All basic permissions
 		types.PermissionRead,
 		types.PermissionWrite,
@@ -114,87 +113,13 @@ func (r *RBAC) defineRolePermissions() {
 		types.PermissionNamespaceExecute,
 		types.PermissionNamespaceAdmin,
 
-		// Endpoint access - full access to all endpoints
+		// Endpoint management - full access to all endpoints
+		types.PermissionEndpointRead,
+		types.PermissionEndpointWrite,
+		types.PermissionEndpointDelete,
+		types.PermissionEndpointManage,
 		types.PermissionEndpointAccess,
 		types.PermissionEndpointAdmin,
-	}
-
-	// Admin - Organization-level admin permissions
-	r.rolePermissions[types.RoleAdmin] = []string{
-		// Basic permissions
-		types.PermissionRead,
-		types.PermissionWrite,
-		types.PermissionDelete,
-
-		// API access
-		types.PermissionAPIAccess,
-		types.PermissionAPIKeyManage,
-
-		// User management (within organization)
-		types.PermissionUserRead,
-		types.PermissionUserWrite,
-		types.PermissionUserDelete,
-		types.PermissionUserManage,
-
-		// Server management
-		types.PermissionServerRead,
-		types.PermissionServerWrite,
-		types.PermissionServerDelete,
-		types.PermissionServerManage,
-
-		// Session management
-		types.PermissionSessionRead,
-		types.PermissionSessionWrite,
-		types.PermissionSessionDelete,
-		types.PermissionSessionManage,
-
-		// Virtual server management
-		types.PermissionVirtualServerRead,
-		types.PermissionVirtualServerWrite,
-		types.PermissionVirtualServerDelete,
-		types.PermissionVirtualServerManage,
-
-		// Resource management
-		types.PermissionResourceRead,
-		types.PermissionResourceWrite,
-		types.PermissionResourceDelete,
-		types.PermissionResourceManage,
-
-		// Prompt management
-		types.PermissionPromptRead,
-		types.PermissionPromptWrite,
-		types.PermissionPromptDelete,
-		types.PermissionPromptManage,
-
-		// Tool management
-		types.PermissionToolRead,
-		types.PermissionToolWrite,
-		types.PermissionToolDelete,
-		types.PermissionToolManage,
-		types.PermissionToolExecute,
-
-		// Audit and logging (read-only)
-		types.PermissionAuditRead,
-		types.PermissionLogsRead,
-		types.PermissionMetricsRead,
-
-		// Organization (read and update, but not delete)
-		types.PermissionOrgRead,
-		types.PermissionOrgWrite,
-
-		// A2A Agent management
-		types.PermissionA2AAgentRead,
-		types.PermissionA2AAgentWrite,
-		types.PermissionA2AAgentDelete,
-		types.PermissionA2AAgentManage,
-		types.PermissionA2AAgentExecute,
-
-		// Namespace management
-		types.PermissionNamespaceRead,
-		types.PermissionNamespaceWrite,
-		types.PermissionNamespaceDelete,
-		types.PermissionNamespaceManage,
-		types.PermissionNamespaceExecute,
 	}
 
 	// User - Regular user permissions
@@ -247,6 +172,10 @@ func (r *RBAC) defineRolePermissions() {
 		types.PermissionNamespaceRead,
 		types.PermissionNamespaceWrite,
 		types.PermissionNamespaceExecute,
+
+		// Endpoint management (limited - no delete)
+		types.PermissionEndpointRead,
+		types.PermissionEndpointWrite,
 	}
 
 	// Viewer - Read-only permissions
@@ -286,6 +215,9 @@ func (r *RBAC) defineRolePermissions() {
 
 		// Namespace read-only
 		types.PermissionNamespaceRead,
+
+		// Endpoint read-only
+		types.PermissionEndpointRead,
 	}
 
 	// API User - Similar to viewer but for API access
@@ -325,13 +257,16 @@ func (r *RBAC) defineRolePermissions() {
 		// Namespace read and execute for API users
 		types.PermissionNamespaceRead,
 		types.PermissionNamespaceExecute,
+
+		// Endpoint read for API users
+		types.PermissionEndpointRead,
 	}
 }
 
 // HasPermission checks if a role has a specific permission
 func (r *RBAC) HasPermission(role, permission string) bool {
-	// System admins have all permissions
-	if r.IsSystemAdmin(role) {
+	// Admins have all permissions (superuser bypass)
+	if r.IsAdmin(role) {
 		return true
 	}
 
@@ -350,8 +285,8 @@ func (r *RBAC) HasPermission(role, permission string) bool {
 
 // HasAnyPermission checks if a role has any of the specified permissions
 func (r *RBAC) HasAnyPermission(role string, permissions []string) bool {
-	// System admins have all permissions
-	if r.IsSystemAdmin(role) {
+	// Admins have all permissions (superuser bypass)
+	if r.IsAdmin(role) {
 		return true
 	}
 
@@ -365,8 +300,8 @@ func (r *RBAC) HasAnyPermission(role string, permissions []string) bool {
 
 // HasAllPermissions checks if a role has all of the specified permissions
 func (r *RBAC) HasAllPermissions(role string, permissions []string) bool {
-	// System admins have all permissions
-	if r.IsSystemAdmin(role) {
+	// Admins have all permissions (superuser bypass)
+	if r.IsAdmin(role) {
 		return true
 	}
 
@@ -409,8 +344,8 @@ func (r *RBAC) GetRoleLevel(role string) int {
 
 // CanAccessResource checks if a role can access a specific resource type with an action
 func (r *RBAC) CanAccessResource(role, resource, action string) bool {
-	// System admins can access any resource
-	if r.IsSystemAdmin(role) {
+	// Admins can access any resource (superuser bypass)
+	if r.IsAdmin(role) {
 		return true
 	}
 
@@ -421,8 +356,8 @@ func (r *RBAC) CanAccessResource(role, resource, action string) bool {
 
 // CanManageResource checks if a role has management permissions for a resource
 func (r *RBAC) CanManageResource(role, resource string) bool {
-	// System admins can manage any resource
-	if r.IsSystemAdmin(role) {
+	// Admins can manage any resource (superuser bypass)
+	if r.IsAdmin(role) {
 		return true
 	}
 
@@ -430,14 +365,9 @@ func (r *RBAC) CanManageResource(role, resource string) bool {
 	return r.HasPermission(role, managePermission)
 }
 
-// IsSystemAdmin checks if the role is system admin
-func (r *RBAC) IsSystemAdmin(role string) bool {
-	return role == types.RoleSystemAdmin
-}
-
-// IsAdmin checks if the role is admin or higher
+// IsAdmin checks if the role is admin (superuser)
 func (r *RBAC) IsAdmin(role string) bool {
-	return r.HasRequiredRole(role, types.RoleAdmin)
+	return role == types.RoleAdmin
 }
 
 // IsUser checks if the role is user or higher
@@ -467,16 +397,9 @@ func (r *RBAC) GetAllRoles() []string {
 
 // CanElevateToRole checks if a user with currentRole can elevate someone to targetRole
 func (r *RBAC) CanElevateToRole(currentRole, targetRole string) bool {
-	// System admins can elevate to any role
-	if r.IsSystemAdmin(currentRole) {
-		return true
-	}
-
-	// Admins can elevate to user, viewer, or api_user, but not to admin or system_admin
+	// Admins can elevate to any role
 	if r.IsAdmin(currentRole) {
-		return targetRole == types.RoleUser ||
-			targetRole == types.RoleViewer ||
-			targetRole == types.RoleAPIUser
+		return true
 	}
 
 	// Regular users cannot elevate anyone
@@ -485,8 +408,8 @@ func (r *RBAC) CanElevateToRole(currentRole, targetRole string) bool {
 
 // CanAccessNamespaceEndpoints checks if a role has access to namespace endpoints
 func (r *RBAC) CanAccessNamespaceEndpoints(role string) bool {
-	// System admins have full access
-	if r.IsSystemAdmin(role) {
+	// Admins have full access (superuser bypass)
+	if r.IsAdmin(role) {
 		return true
 	}
 
@@ -496,8 +419,8 @@ func (r *RBAC) CanAccessNamespaceEndpoints(role string) bool {
 
 // CanAccessAllEndpoints checks if a role has access to all endpoints
 func (r *RBAC) CanAccessAllEndpoints(role string) bool {
-	// System admins have full access
-	if r.IsSystemAdmin(role) {
+	// Admins have full access (superuser bypass)
+	if r.IsAdmin(role) {
 		return true
 	}
 

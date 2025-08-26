@@ -232,7 +232,7 @@ func (s *SetupManager) createAdminUser() error {
 		Name:           "Admin User",
 		PasswordHash:   string(passwordHash),
 		OrganizationID: org.ID.String(),
-		Role:           types.RoleSystemAdmin,
+		Role:           types.RoleAdmin,
 		IsActive:       true,
 	}
 

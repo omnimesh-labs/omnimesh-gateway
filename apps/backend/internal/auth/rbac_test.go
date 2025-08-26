@@ -12,7 +12,6 @@ func TestRBAC_RoleHierarchy(t *testing.T) {
 	rbac := NewRBAC()
 
 	// Test role hierarchy levels
-	assert.Equal(t, 4, rbac.GetRoleLevel(types.RoleSystemAdmin))
 	assert.Equal(t, 3, rbac.GetRoleLevel(types.RoleAdmin))
 	assert.Equal(t, 2, rbac.GetRoleLevel(types.RoleUser))
 	assert.Equal(t, 1, rbac.GetRoleLevel(types.RoleViewer))
@@ -23,25 +22,18 @@ func TestRBAC_RoleHierarchy(t *testing.T) {
 func TestRBAC_HasRequiredRole(t *testing.T) {
 	rbac := NewRBAC()
 
-	// System admin can access everything
-	assert.True(t, rbac.HasRequiredRole(types.RoleSystemAdmin, types.RoleAdmin))
-	assert.True(t, rbac.HasRequiredRole(types.RoleSystemAdmin, types.RoleUser))
-	assert.True(t, rbac.HasRequiredRole(types.RoleSystemAdmin, types.RoleViewer))
-
-	// Admin can access user and viewer
+	// Admin can access everything (superuser)
+	assert.True(t, rbac.HasRequiredRole(types.RoleAdmin, types.RoleAdmin))
 	assert.True(t, rbac.HasRequiredRole(types.RoleAdmin, types.RoleUser))
 	assert.True(t, rbac.HasRequiredRole(types.RoleAdmin, types.RoleViewer))
-	assert.False(t, rbac.HasRequiredRole(types.RoleAdmin, types.RoleSystemAdmin))
 
 	// User can access viewer
 	assert.True(t, rbac.HasRequiredRole(types.RoleUser, types.RoleViewer))
 	assert.False(t, rbac.HasRequiredRole(types.RoleUser, types.RoleAdmin))
-	assert.False(t, rbac.HasRequiredRole(types.RoleUser, types.RoleSystemAdmin))
 
 	// Viewer cannot access higher roles
 	assert.False(t, rbac.HasRequiredRole(types.RoleViewer, types.RoleUser))
 	assert.False(t, rbac.HasRequiredRole(types.RoleViewer, types.RoleAdmin))
-	assert.False(t, rbac.HasRequiredRole(types.RoleViewer, types.RoleSystemAdmin))
 
 	// Same level access
 	assert.True(t, rbac.HasRequiredRole(types.RoleViewer, types.RoleViewer))
@@ -49,11 +41,11 @@ func TestRBAC_HasRequiredRole(t *testing.T) {
 	assert.True(t, rbac.HasRequiredRole(types.RoleAPIUser, types.RoleViewer))
 }
 
-func TestRBAC_SystemAdminPermissions(t *testing.T) {
+func TestRBAC_AdminPermissions(t *testing.T) {
 	rbac := NewRBAC()
 
-	// System admin should have all permissions
-	systemAdminPerms := rbac.GetRolePermissions(types.RoleSystemAdmin)
+	// Admin should have all permissions (superuser)
+	adminPerms := rbac.GetRolePermissions(types.RoleAdmin)
 
 	expectedPermissions := []string{
 		types.PermissionRead,
@@ -74,26 +66,15 @@ func TestRBAC_SystemAdminPermissions(t *testing.T) {
 	}
 
 	for _, perm := range expectedPermissions {
-		assert.True(t, rbac.HasPermission(types.RoleSystemAdmin, perm),
-			"System admin should have permission: %s", perm)
+		assert.True(t, rbac.HasPermission(types.RoleAdmin, perm),
+			"Admin should have permission: %s", perm)
 	}
 
-	assert.True(t, len(systemAdminPerms) > 10, "System admin should have many permissions")
-}
+	assert.True(t, len(adminPerms) > 10, "Admin should have many permissions")
 
-func TestRBAC_AdminPermissions(t *testing.T) {
-	rbac := NewRBAC()
-
-	// Admin should have organization-level permissions but not system-level
-	assert.True(t, rbac.HasPermission(types.RoleAdmin, types.PermissionUserManage))
-	assert.True(t, rbac.HasPermission(types.RoleAdmin, types.PermissionServerManage))
-	assert.True(t, rbac.HasPermission(types.RoleAdmin, types.PermissionVirtualServerManage))
-	assert.True(t, rbac.HasPermission(types.RoleAdmin, types.PermissionAuditRead))
-	assert.True(t, rbac.HasPermission(types.RoleAdmin, types.PermissionOrgWrite))
-
-	// Admin should NOT have system-level permissions
-	assert.False(t, rbac.HasPermission(types.RoleAdmin, types.PermissionSystemManage))
-	assert.False(t, rbac.HasPermission(types.RoleAdmin, types.PermissionOrgDelete))
+	// Admin is now superuser, so all permissions should return true
+	assert.True(t, rbac.HasPermission(types.RoleAdmin, types.PermissionSystemManage))
+	assert.True(t, rbac.HasPermission(types.RoleAdmin, types.PermissionOrgDelete))
 }
 
 func TestRBAC_UserPermissions(t *testing.T) {
@@ -139,10 +120,7 @@ func TestRBAC_CanAccessResource(t *testing.T) {
 	rbac := NewRBAC()
 
 	// Test server resource access
-	assert.True(t, rbac.CanAccessResource(types.RoleSystemAdmin, "server", "read"))
-	assert.True(t, rbac.CanAccessResource(types.RoleSystemAdmin, "server", "write"))
-	assert.True(t, rbac.CanAccessResource(types.RoleSystemAdmin, "server", "delete"))
-
+	// Admin has superuser bypass, so can access everything
 	assert.True(t, rbac.CanAccessResource(types.RoleAdmin, "server", "read"))
 	assert.True(t, rbac.CanAccessResource(types.RoleAdmin, "server", "write"))
 	assert.True(t, rbac.CanAccessResource(types.RoleAdmin, "server", "delete"))
@@ -156,17 +134,11 @@ func TestRBAC_CanAccessResource(t *testing.T) {
 	assert.False(t, rbac.CanAccessResource(types.RoleViewer, "server", "delete"))
 
 	// Test user resource access
-	assert.True(t, rbac.CanAccessResource(types.RoleSystemAdmin, "user", "manage"))
 	assert.True(t, rbac.CanAccessResource(types.RoleAdmin, "user", "manage"))
 	assert.False(t, rbac.CanAccessResource(types.RoleUser, "user", "manage"))
 	assert.False(t, rbac.CanAccessResource(types.RoleViewer, "user", "manage"))
 
 	// Test A2A agent resource access
-	assert.True(t, rbac.CanAccessResource(types.RoleSystemAdmin, "a2a_agent", "read"))
-	assert.True(t, rbac.CanAccessResource(types.RoleSystemAdmin, "a2a_agent", "write"))
-	assert.True(t, rbac.CanAccessResource(types.RoleSystemAdmin, "a2a_agent", "delete"))
-	assert.True(t, rbac.CanAccessResource(types.RoleSystemAdmin, "a2a_agent", "execute"))
-
 	assert.True(t, rbac.CanAccessResource(types.RoleAdmin, "a2a_agent", "read"))
 	assert.True(t, rbac.CanAccessResource(types.RoleAdmin, "a2a_agent", "write"))
 	assert.True(t, rbac.CanAccessResource(types.RoleAdmin, "a2a_agent", "delete"))
@@ -190,13 +162,9 @@ func TestRBAC_HasAnyPermission(t *testing.T) {
 	userPerms := []string{types.PermissionRead, types.PermissionWrite}
 	systemPerms := []string{types.PermissionSystemManage, types.PermissionOrgDelete}
 
-	// System admin should have any admin permission
-	assert.True(t, rbac.HasAnyPermission(types.RoleSystemAdmin, adminPerms))
-	assert.True(t, rbac.HasAnyPermission(types.RoleSystemAdmin, systemPerms))
-
-	// Admin should have some admin permissions but not system permissions
+	// Admin should have all permissions (superuser bypass)
 	assert.True(t, rbac.HasAnyPermission(types.RoleAdmin, adminPerms))
-	assert.False(t, rbac.HasAnyPermission(types.RoleAdmin, systemPerms))
+	assert.True(t, rbac.HasAnyPermission(types.RoleAdmin, systemPerms))
 
 	// User should have basic permissions
 	assert.True(t, rbac.HasAnyPermission(types.RoleUser, userPerms))
@@ -214,15 +182,10 @@ func TestRBAC_HasAllPermissions(t *testing.T) {
 	allBasicPerms := []string{types.PermissionRead, types.PermissionWrite, types.PermissionDelete}
 	adminPerms := []string{types.PermissionUserManage, types.PermissionServerManage}
 
-	// System admin should have all permissions
-	assert.True(t, rbac.HasAllPermissions(types.RoleSystemAdmin, readWritePerms))
-	assert.True(t, rbac.HasAllPermissions(types.RoleSystemAdmin, allBasicPerms))
-	assert.True(t, rbac.HasAllPermissions(types.RoleSystemAdmin, adminPerms))
-
-	// Admin should have admin permissions but not all basic permissions (missing delete)
-	assert.True(t, rbac.HasAllPermissions(types.RoleAdmin, adminPerms))
+	// Admin should have all permissions (superuser bypass)
 	assert.True(t, rbac.HasAllPermissions(types.RoleAdmin, readWritePerms))
 	assert.True(t, rbac.HasAllPermissions(types.RoleAdmin, allBasicPerms))
+	assert.True(t, rbac.HasAllPermissions(types.RoleAdmin, adminPerms))
 
 	// User should have read/write but not admin permissions
 	assert.True(t, rbac.HasAllPermissions(types.RoleUser, readWritePerms))
@@ -238,7 +201,6 @@ func TestRBAC_RoleValidation(t *testing.T) {
 	rbac := NewRBAC()
 
 	// Valid roles
-	assert.True(t, rbac.ValidateRole(types.RoleSystemAdmin))
 	assert.True(t, rbac.ValidateRole(types.RoleAdmin))
 	assert.True(t, rbac.ValidateRole(types.RoleUser))
 	assert.True(t, rbac.ValidateRole(types.RoleViewer))
@@ -248,26 +210,19 @@ func TestRBAC_RoleValidation(t *testing.T) {
 	assert.False(t, rbac.ValidateRole("invalid_role"))
 	assert.False(t, rbac.ValidateRole(""))
 	assert.False(t, rbac.ValidateRole("super_admin"))
+	assert.False(t, rbac.ValidateRole("system_admin"))
 }
 
 func TestRBAC_RoleElevation(t *testing.T) {
 	rbac := NewRBAC()
 
-	// System admin can elevate to any role
-	assert.True(t, rbac.CanElevateToRole(types.RoleSystemAdmin, types.RoleAdmin))
-	assert.True(t, rbac.CanElevateToRole(types.RoleSystemAdmin, types.RoleUser))
-	assert.True(t, rbac.CanElevateToRole(types.RoleSystemAdmin, types.RoleViewer))
-	assert.True(t, rbac.CanElevateToRole(types.RoleSystemAdmin, types.RoleAPIUser))
-
-	// Admin can elevate to user roles but not admin roles
-	assert.False(t, rbac.CanElevateToRole(types.RoleAdmin, types.RoleSystemAdmin))
-	assert.False(t, rbac.CanElevateToRole(types.RoleAdmin, types.RoleAdmin))
+	// Admin can elevate to any role (superuser)
+	assert.True(t, rbac.CanElevateToRole(types.RoleAdmin, types.RoleAdmin))
 	assert.True(t, rbac.CanElevateToRole(types.RoleAdmin, types.RoleUser))
 	assert.True(t, rbac.CanElevateToRole(types.RoleAdmin, types.RoleViewer))
 	assert.True(t, rbac.CanElevateToRole(types.RoleAdmin, types.RoleAPIUser))
 
 	// User cannot elevate anyone
-	assert.False(t, rbac.CanElevateToRole(types.RoleUser, types.RoleSystemAdmin))
 	assert.False(t, rbac.CanElevateToRole(types.RoleUser, types.RoleAdmin))
 	assert.False(t, rbac.CanElevateToRole(types.RoleUser, types.RoleUser))
 	assert.False(t, rbac.CanElevateToRole(types.RoleUser, types.RoleViewer))
@@ -280,27 +235,18 @@ func TestRBAC_RoleElevation(t *testing.T) {
 func TestRBAC_RoleCheckers(t *testing.T) {
 	rbac := NewRBAC()
 
-	// IsSystemAdmin
-	assert.True(t, rbac.IsSystemAdmin(types.RoleSystemAdmin))
-	assert.False(t, rbac.IsSystemAdmin(types.RoleAdmin))
-	assert.False(t, rbac.IsSystemAdmin(types.RoleUser))
-	assert.False(t, rbac.IsSystemAdmin(types.RoleViewer))
-
-	// IsAdmin (admin or higher)
-	assert.True(t, rbac.IsAdmin(types.RoleSystemAdmin))
+	// IsAdmin (admin is superuser)
 	assert.True(t, rbac.IsAdmin(types.RoleAdmin))
 	assert.False(t, rbac.IsAdmin(types.RoleUser))
 	assert.False(t, rbac.IsAdmin(types.RoleViewer))
 
 	// IsUser (user or higher)
-	assert.True(t, rbac.IsUser(types.RoleSystemAdmin))
 	assert.True(t, rbac.IsUser(types.RoleAdmin))
 	assert.True(t, rbac.IsUser(types.RoleUser))
 	assert.False(t, rbac.IsUser(types.RoleViewer))
 	assert.False(t, rbac.IsUser(types.RoleAPIUser))
 
 	// IsViewer (viewer or higher)
-	assert.True(t, rbac.IsViewer(types.RoleSystemAdmin))
 	assert.True(t, rbac.IsViewer(types.RoleAdmin))
 	assert.True(t, rbac.IsViewer(types.RoleUser))
 	assert.True(t, rbac.IsViewer(types.RoleViewer))
@@ -311,10 +257,9 @@ func TestRBAC_GetAllRoles(t *testing.T) {
 	rbac := NewRBAC()
 
 	roles := rbac.GetAllRoles()
-	assert.Len(t, roles, 5)
+	assert.Len(t, roles, 4) // Now only 4 roles without system_admin
 
 	expectedRoles := []string{
-		types.RoleSystemAdmin,
 		types.RoleAdmin,
 		types.RoleUser,
 		types.RoleViewer,
@@ -324,4 +269,26 @@ func TestRBAC_GetAllRoles(t *testing.T) {
 	for _, expectedRole := range expectedRoles {
 		assert.Contains(t, roles, expectedRole)
 	}
+}
+
+func TestRBAC_AdminSuperuserBypass(t *testing.T) {
+	rbac := NewRBAC()
+
+	// Admin should always return true for any permission check (superuser bypass)
+	// Test with random permission strings
+	assert.True(t, rbac.HasPermission(types.RoleAdmin, "any_permission"))
+	assert.True(t, rbac.HasPermission(types.RoleAdmin, "random_permission"))
+	assert.True(t, rbac.HasPermission(types.RoleAdmin, "non_existent_permission"))
+
+	// Admin should be able to access any resource with any action
+	assert.True(t, rbac.CanAccessResource(types.RoleAdmin, "any_resource", "any_action"))
+	assert.True(t, rbac.CanAccessResource(types.RoleAdmin, "random", "delete"))
+
+	// Admin should be able to manage any resource
+	assert.True(t, rbac.CanManageResource(types.RoleAdmin, "any_resource"))
+	assert.True(t, rbac.CanManageResource(types.RoleAdmin, "random_resource"))
+
+	// Other roles should not have this bypass
+	assert.False(t, rbac.HasPermission(types.RoleUser, "non_existent_permission"))
+	assert.False(t, rbac.HasPermission(types.RoleViewer, "random_permission"))
 }

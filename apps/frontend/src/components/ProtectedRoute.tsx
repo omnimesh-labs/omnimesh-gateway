@@ -7,7 +7,7 @@ import { LoginForm } from './LoginForm';
 interface ProtectedRouteProps {
     children: ReactNode;
     fallback?: ReactNode;
-    requireRole?: 'admin' | 'user' | 'viewer' | 'system_admin';
+    requireRole?: 'admin' | 'user' | 'viewer' | 'api_user';
 }
 
 export function ProtectedRoute({ children, fallback, requireRole }: ProtectedRouteProps) {
@@ -58,7 +58,7 @@ export function ProtectedRoute({ children, fallback, requireRole }: ProtectedRou
 
     // Check role requirements
     if (requireRole && user) {
-        const roleHierarchy = { viewer: 1, user: 2, admin: 3, system_admin: 4 };
+        const roleHierarchy = { viewer: 1, api_user: 1, user: 2, admin: 3 };
         const userRoleLevel = roleHierarchy[user.role] || 0;
         const requiredRoleLevel = roleHierarchy[requireRole] || 0;
 

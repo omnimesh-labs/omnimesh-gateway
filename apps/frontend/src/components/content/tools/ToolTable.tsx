@@ -66,7 +66,7 @@ export function ToolTable({ tools, onEdit, onDelete, onView, loading = false }: 
     return text.substring(0, maxLength) + '...';
   };
 
-  if (loading && tools.length === 0) {
+  if (loading && (!tools || tools.length === 0)) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center' }}>
         <div style={{ color: '#666' }}>Loading tools...</div>
@@ -74,7 +74,7 @@ export function ToolTable({ tools, onEdit, onDelete, onView, loading = false }: 
     );
   }
 
-  if (tools.length === 0) {
+  if (!tools || tools.length === 0) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center' }}>
         <div style={{ color: '#666', marginBottom: '1rem' }}>No tools found</div>

@@ -477,7 +477,7 @@ CREATE TABLE users (
     name VARCHAR(255) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    role VARCHAR(50) NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'user', 'viewer', 'api_user', 'system_admin')),
+    role VARCHAR(50) NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'user', 'viewer', 'api_user')),
     is_active BOOLEAN DEFAULT true,
     email_verified BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

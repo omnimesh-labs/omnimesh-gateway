@@ -157,7 +157,7 @@ export interface User {
     id: string;
     organization_id: string;
     email: string;
-    role: 'admin' | 'user' | 'viewer' | 'system_admin';
+    role: 'admin' | 'user' | 'viewer' | 'api_user';
     is_active: boolean;
     created_at: string;
     updated_at: string;
@@ -183,7 +183,7 @@ export interface ApiKey {
     id: string;
     name: string;
     key_hash: string;
-    role: 'admin' | 'user' | 'viewer' | 'system_admin';
+    role: 'admin' | 'user' | 'viewer' | 'api_user';
     is_active: boolean;
     expires_at?: string;
     created_at: string;
@@ -192,7 +192,7 @@ export interface ApiKey {
 
 export interface CreateApiKeyRequest {
     name: string;
-    role: 'admin' | 'user' | 'viewer' | 'system_admin';
+    role: 'admin' | 'user' | 'viewer' | 'api_user';
     expires_at?: string;
 }
 

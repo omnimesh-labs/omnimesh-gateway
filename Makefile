@@ -81,20 +81,20 @@ test-unit:
 # Database operations
 migrate:
 	@echo "Running database migrations..."
-	@$(BACKEND) /app/migrate up
+	@$(DOCKER_COMPOSE) run --rm --entrypoint /app/migrate backend up
 
 migrate-down:
 	@echo "Rolling back migrations..."
-	@$(BACKEND) /app/migrate down
+	@$(DOCKER_COMPOSE) run --rm --entrypoint /app/migrate backend down
 
 migrate-status:
 	@echo "Checking migration status..."
-	@$(BACKEND) /app/migrate status
+	@$(DOCKER_COMPOSE) run --rm --entrypoint /app/migrate backend status
 
 # Create admin user
 setup-admin:
 	@echo "Setting up admin user..."
-	@$(BACKEND) /app/migrate setup-admin
+	@$(DOCKER_COMPOSE) run --rm --entrypoint /app/migrate backend setup-admin
 
 # Development helpers
 shell:

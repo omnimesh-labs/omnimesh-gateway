@@ -309,9 +309,9 @@ func (m *Middleware) RequireOrganizationAccess() gin.HandlerFunc {
 		// Get organization ID from request (path parameter, query, or body)
 		requestOrgID := m.extractOrganizationID(c)
 
-		// System admins can access any organization
+		// Admins can access any organization (superuser bypass)
 		userRole, _ := c.Get("role")
-		if m.rbac.IsSystemAdmin(userRole.(string)) {
+		if m.rbac.IsAdmin(userRole.(string)) {
 			c.Next()
 			return
 		}
@@ -335,8 +335,8 @@ func (m *Middleware) RequireSystemAdmin() gin.HandlerFunc {
 			return
 		}
 
-		if !m.rbac.IsSystemAdmin(userRole.(string)) {
-			m.respondWithError(c, http.StatusForbidden, "System admin access required")
+		if !m.rbac.IsAdmin(userRole.(string)) {
+			m.respondWithError(c, http.StatusForbidden, "Admin access required")
 			return
 		}
 
