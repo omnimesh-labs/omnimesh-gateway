@@ -1,27 +1,76 @@
 {
   "compilerOptions": {
-    "lib": ["dom", "dom.iterable", "es6"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "incremental": true,
+    "baseUrl": ".",
+    "paths": {
+      "@auth/*": [
+        "./src/@auth/*"
+      ],
+      "@i18n": [
+        "./src/@i18n/index"
+      ],
+      "@i18n/*": [
+        "./src/@i18n/*"
+      ],
+      "@fuse/*": [
+        "./src/@fuse/*"
+      ],
+      "@history*": [
+        "./src/@history"
+      ],
+      "@mock-utils/*": [
+        "./src/@mock-utils/*"
+      ],
+      "@schema": [
+        "./src/@schema"
+      ],
+    "@/*": [
+      "./src/*"
+    ]
+    },
+    "declaration": true,
+    "target": "esnext",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "es2020",
+      "scripthost"
+    ],
     "plugins": [
+      {
+        "name": "typescript-plugin-css-modules"
+      },
       {
         "name": "next"
       }
     ],
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "allowJs": true,
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": false,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "esnext",
+    "moduleResolution": "Node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "preserve",
+    "incremental": true
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules"
+  ],
+  "include": [
+    "./src/**/*.ts",
+    "./src/**/*.tsx",
+    "./src/global.d.ts",
+    "tailwind.config.ts",
+    "next-env.d.ts",
+    ".next/types/**/*.ts",
+    "next.config.mjs",
+    "next.config.ts",
+    "build/types/**/*.ts"
+  ]
 }

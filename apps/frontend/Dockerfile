@@ -1,23 +1,23 @@
 # Build stage
-FROM node:20-alpine AS builder
+FROM oven/bun:1-alpine AS builder
 
 WORKDIR /app
 
 # Copy package files
-COPY apps/frontend/package.json ./
-COPY apps/frontend/bun.lock* ./
+COPY package.json ./
+COPY bun.lock* ./
 
-# Install dependencies using npm install (since we don't have package-lock.json)
-RUN npm install
+# Install dependencies using bun
+RUN bun install
 
 # Copy source code
-COPY apps/frontend/ .
+COPY . .
 
 # Build the application
-RUN npm run build
+RUN bun run build
 
 # Production stage
-FROM node:20-alpine
+FROM oven/bun:1-alpine
 
 WORKDIR /app
 
@@ -31,4 +31,4 @@ COPY --from=builder /app/node_modules ./node_modules
 EXPOSE 3000
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["bun", "run", "start"]
