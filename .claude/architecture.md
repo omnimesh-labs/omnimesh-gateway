@@ -1,15 +1,16 @@
-# MCP Gateway Architecture
+# Janex MCP Gateway Architecture
 
 ## Overview
-This MCP (Model Context Protocol) Gateway provides organization-level policies, authentication, logging, and rate limiting for MCP server access.
+Janex's MCP (Model Context Protocol) Gateway provides organization-level policies, authentication, logging, and rate limiting for MCP server access.
 
 ## Core Features
-1. **Authentication & Authorization** - JWT-based auth with org-level policies and A2A support
+1. **Authentication & Authorization** - JWT-based auth with RBAC and flexible policies
 2. **Logging & Audit** - Comprehensive request/response logging and audit trails
-3. **Rate Limiting** - Per-user, per-org, and per-endpoint rate limiting
+3. **Rate Limiting** - IP-based rate limiting with Redis backing and memory fallback
 4. **MCP Server Discovery** - Dynamic discovery and health checking of MCP servers
 5. **Gateway Configuration** - Flexible policy management and configuration
-6. **Namespace Management** - Multi-tenant isolation with namespace-scoped resources
+6. **Namespace Management** - Organize MCP servers into logical namespaces
+7. **MCP Inspector** - Real-time debugging and testing interface
 
 ## Directory Structure
 
@@ -174,10 +175,10 @@ mcp-gateway/
 ## Database Schema Design
 
 ### Core Tables
-- `namespaces` - Multi-tenant namespace isolation
+- `namespaces` - Logical grouping of MCP servers
 - `organizations` - Organization metadata  
 - `users` - User accounts and roles
-- `api_keys` - API key management (both user and A2A)
+- `api_keys` - API key management
 - `mcp_servers` - Registered MCP servers (namespace-scoped)
 - `policies` - Organization policies
 - `rate_limits` - Rate limiting configurations
@@ -193,7 +194,6 @@ mcp-gateway/
 - `POST /auth/refresh` - Token refresh
 - `POST /auth/logout` - User logout
 - `POST /auth/api-keys` - Generate API key
-- `POST /auth/a2a/token` - App-to-app authentication token exchange
 
 ### Gateway Management
 - `GET /gateway/servers` - List available MCP servers
@@ -247,13 +247,22 @@ mcp-gateway/
 - `GET|POST /servers/{server_id}/mcp` - Server-specific MCP
 
 ### Namespace Management
-- `GET /api/admin/namespaces` - List all namespaces
-- `GET /api/admin/namespaces/{id}` - Get namespace details
-- `POST /api/admin/namespaces` - Create new namespace
-- `PUT /api/admin/namespaces/{id}` - Update namespace
-- `DELETE /api/admin/namespaces/{id}` - Delete namespace
-- `GET /api/admin/namespaces/{id}/servers` - List servers in namespace
-- `GET /api/admin/namespaces/{id}/sessions` - List sessions in namespace
+- `GET /api/namespaces` - List all namespaces
+- `GET /api/namespaces/{id}` - Get namespace details
+- `POST /api/namespaces` - Create new namespace
+- `PUT /api/namespaces/{id}` - Update namespace
+- `DELETE /api/namespaces/{id}` - Delete namespace
+- `GET /api/namespaces/{id}/servers` - List servers in namespace
+- `GET /api/namespaces/{id}/sessions` - List sessions in namespace
+
+### MCP Inspector
+- `POST /api/inspector/sessions` - Create inspector session
+- `GET /api/inspector/sessions/{id}` - Get inspector session details
+- `DELETE /api/inspector/sessions/{id}` - Close inspector session
+- `POST /api/inspector/sessions/{id}/request` - Execute request in session
+- `GET /api/inspector/sessions/{id}/events` - Stream events (SSE)
+- `GET /api/inspector/sessions/{id}/ws` - WebSocket connection
+- `GET /api/inspector/servers/{id}/capabilities` - Get server capabilities
 
 ### Admin & Monitoring
 - `GET /health` - Health check

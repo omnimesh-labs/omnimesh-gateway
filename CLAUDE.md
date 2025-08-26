@@ -5,22 +5,24 @@
 The **Janex Gateway** is a production-ready API gateway for Model Context Protocol (MCP) servers, providing enterprise-grade infrastructure with authentication, logging, rate limiting, server discovery, and multi-protocol transport support.
 
 ### Core Purpose
-- **Enterprise Infrastructure**: Organization-level policies, JWT authentication, RBAC, and A2A authentication
+- **Enterprise Infrastructure**: JWT authentication, RBAC, and flexible policies
 - **Multi-Protocol Support**: JSON-RPC, WebSocket, SSE, HTTP, and STDIO transports
 - **Service Virtualization**: Wrap REST/GraphQL/gRPC services as virtual MCP servers
 - **Production Ready**: Comprehensive logging, IP rate limiting with Redis/memory backends, and health monitoring
-- **Multi-tenancy**: Namespace-based isolation for resources and configurations
+- **Namespace Management**: Group MCP servers into logical namespaces within an organization
+- **Developer Tools**: MCP Inspector for real-time debugging and testing
 
 ### Key Features
-- 🔐 **Authentication & Authorization** - JWT-based auth with org-level policies, API keys, and A2A authentication
+- 🔐 **Authentication & Authorization** - JWT-based auth with API keys and RBAC
 - 📊 **Comprehensive Logging** - Request/response logging, audit trails, performance metrics
-- ⚡ **Rate Limiting** - Multi-level rate limiting (user, org, endpoint) with sliding window algorithms
-- 🛡️ **IP Rate Limiting** - Redis-backed sliding window or in-memory per-IP rate limiting with smart proxy detection
+- ⚡ **Rate Limiting** - IP-based rate limiting with sliding window algorithms
+- 🛡️ **Smart Rate Limiting** - Redis-backed with memory fallback and proxy detection
 - 🔍 **MCP Server Discovery** - Dynamic registration and health checking
 - 🌐 **Service Virtualization** - Wrap non-MCP services as virtual MCP servers
 - 🔌 **Multi-Protocol Support** - JSON-RPC, WebSocket, SSE, HTTP, and STDIO transports
 - 🚀 **High Performance** - Built with Go and Gin for maximum throughput and low latency
-- 🏢 **Multi-tenant Namespaces** - Resource isolation and management through namespace scoping
+- 🏢 **Namespace Management** - Group and organize MCP servers into logical namespaces
+- 🔍 **MCP Inspector** - Real-time debugging and testing interface
 
 ## Architecture
 
@@ -327,7 +329,6 @@ CREATE TABLE virtual_servers (
 - `POST /auth/api-keys` - Create API keys
 - `GET /auth/profile` - Get user profile
 - `PUT /auth/profile` - Update user profile
-- `POST /auth/a2a/token` - App-to-app authentication token exchange
 
 ### Gateway Management
 - `GET /gateway/servers` - List available MCP servers
@@ -370,13 +371,13 @@ CREATE TABLE virtual_servers (
 - `GET|POST /servers/{server_id}/mcp` - Server-specific MCP
 
 ### Namespace Management
-- `GET /api/admin/namespaces` - List all namespaces
-- `GET /api/admin/namespaces/{id}` - Get namespace details
-- `POST /api/admin/namespaces` - Create new namespace
-- `PUT /api/admin/namespaces/{id}` - Update namespace
-- `DELETE /api/admin/namespaces/{id}` - Delete namespace
-- `GET /api/admin/namespaces/{id}/servers` - List servers in namespace
-- `GET /api/admin/namespaces/{id}/sessions` - List sessions in namespace
+- `GET /api/namespaces` - List all namespaces
+- `GET /api/namespaces/{id}` - Get namespace details
+- `POST /api/namespaces` - Create new namespace
+- `PUT /api/namespaces/{id}` - Update namespace
+- `DELETE /api/namespaces/{id}` - Delete namespace
+- `GET /api/namespaces/{id}/servers` - List servers in namespace
+- `GET /api/namespaces/{id}/sessions` - List sessions in namespace
 
 ### Virtual Server Management
 - `GET /api/admin/virtual-servers` - List virtual servers

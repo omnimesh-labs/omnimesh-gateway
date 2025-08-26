@@ -1,16 +1,15 @@
 # Janex Gateway
 
-[![CI](https://github.com/theognis1002/mcp-gateway/workflows/CI/badge.svg)](https://github.com/theognis1002/mcp-gateway/actions)
+[![CI](https://github.com/janex-ai/janex-gateway/workflows/CI/badge.svg)](https://github.com/janex-ai/janex-gateway/actions)
 [![Go Version](https://img.shields.io/badge/Go-1.25+-blue.svg)](https://golang.org)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Go Report Card](https://goreportcard.com/badge/github.com/theognis1002/mcp-gateway)](https://goreportcard.com/report/github.com/theognis1002/mcp-gateway)
-[![codecov](https://codecov.io/gh/theognis1002/mcp-gateway/branch/main/graph/badge.svg)](https://codecov.io/gh/theognis1002/mcp-gateway)
+[![Go Report Card](https://goreportcard.com/badge/github.com/janex-ai/janex-gateway)](https://goreportcard.com/report/github.com/janex-ai/janex-gateway)
+[![codecov](https://codecov.io/gh/janex-ai/janex-gateway/branch/main/graph/badge.svg)](https://codecov.io/gh/janex-ai/janex-gateway)
 [![Security](https://img.shields.io/badge/Security-Enabled-green.svg)](SECURITY.md)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 A production-ready API gateway for Model Context Protocol (MCP) servers, providing enterprise-grade infrastructure with authentication, logging, rate limiting, server discovery, and multi-protocol transport support.
 
-> **⚡ Enterprise-Ready**: Built for production with comprehensive security, monitoring, and scalability features.
 
 ## 🚀 Quick Start
 
@@ -18,44 +17,17 @@ Get the entire Janex Gateway stack running with a single command:
 
 ```bash
 # Clone the repository
-git clone https://github.com/theognis1002/mcp-gateway.git
+git clone https://github.com/janex-ai/janex-gateway.git
 cd mcp-gateway
 
-# Start everything (PostgreSQL, Redis, Backend, Frontend, Migrations)
-make dev
+docker compose up --build  # make dev
 ```
 
-This will:
-- Start PostgreSQL and Redis databases
-- Run database migrations automatically
-- Start the backend API server on http://localhost:8080 with hot reload
-- Start the frontend dashboard on http://localhost:3000 with hot reload
-- Create an admin user: `admin@admin.com` / `qwerty123`
+- Backend: `http://localhost:8080`
+- Frontend: `http://localhost:3000`
+- Admin user: `admin@admin.com` / `qwerty123`
 
-### Available Commands
 
-```bash
-make help         # Show all available commands
-make dev          # Start in development mode with hot reload
-make stop         # Stop all services
-make clean        # Stop and remove all data
-make test         # Run tests in Docker
-make migrate      # Run database migrations
-make lint         # Run linters
-make logs         # View service logs
-```
-
-## Features
-
-- **🔐 Authentication & Authorization** - JWT-based auth with API keys and role-based access control
-- **📊 Comprehensive Logging** - Request/response logging, audit trails, performance metrics, and security events
-- **⚡ Rate Limiting** - Per-user, per-organization, and per-endpoint rate limiting with multiple algorithms
-- **🛡️ IP Rate Limiting** - Redis-backed sliding window or in-memory per-IP rate limiting with smart proxy detection and configurable limits
-- **🔍 MCP Server Discovery** - Dynamic server registration, health checking, and load balancing
-- **⚙️ Policy Management** - Flexible organization-level policies for access control and routing
-- **🌐 Service Virtualization** - Wrap non-MCP services (REST APIs, GraphQL, gRPC) as virtual MCP servers
-- **🔌 Multi-Protocol Support** - JSON-RPC 2.0, WebSocket, SSE, and HTTP transports for MCP communication
-- **🚀 High Performance** - Built with Go and Gin for maximum throughput and low latency
 
 ## Architecture
 
@@ -63,179 +35,132 @@ The Janex Gateway is designed with a modular architecture for scalability and ma
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Web Client    │    │   CLI Client    │    │  Other Client   │
+│    Employees    │    │    AI Agents    │    │     AI Agents   │
+│   (Web/Mobile)  │    │    (External)   │    │    (Internal)   │
 └─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
           │                      │                      │
           └──────────────────────┼──────────────────────┘
                                  │
                    ┌─────────────▼─────────────┐
                    │      Janex Gateway        │
+                   │                           │
                    │  ┌─────────────────────┐  │
-                   │  │   Middleware Chain  │  │
-                   │  │ • Auth & AuthZ      │  │
+                   │  │   Security Layer    │  │
+                   │  │ • JWT Auth          │  │
+                   │  │ • RBAC & Policies   │  │
+                   │  │ • API Key Mgmt      │  │
                    │  │ • Rate Limiting     │  │
-                   │  │ • Logging & Audit   │  │
-                   │  │ • CORS & Security   │  │
                    │  └─────────────────────┘  │
+                   │                           │
+                   │  ┌─────────────────────┐  │
+                   │  │     Middleware      │  │
+                   │  │ • Content Filtering │  │
+                   │  │ • Audit Logging     │  │
+                   │  │ • CORS & Headers    │  │
+                   │  │ • Request Tracking  │  │
+                   │  └─────────────────────┘  │
+                   │                           │
                    │  ┌─────────────────────┐  │
                    │  │   Core Services     │  │
                    │  │ • Server Discovery  │  │
-                   │  │ • Load Balancing    │  │
-                   │  │ • Policy Engine     │  │
+                   │  │ • Namespace Manager │  │
+                   │  │ • Transport Proxy   │  │
                    │  │ • Virtual Servers   │  │
-                   │  │ • Config Management │  │
+                   │  │ • Logging & Metrics │  │
                    │  └─────────────────────┘  │
                    └─────────────┬─────────────┘
                                  │
           ┌──────────────────────┼──────────────────────┐
           │                      │                      │
-┌─────────▼───────┐    ┌─────────▼───────┐    ┌─────────▼───────┐
-│  MCP Server A   │    │  Virtual MCP    │    │  MCP Server C   │
-│  (AI Assistant) │    │  (REST/GraphQL) │    │  (Data Access)  │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                │
-                       ┌─────────▼───────┐
-                       │   External API  │
-                       │ (Slack, GitHub, │
-                       │  Stripe, etc.)  │
-                       └─────────────────┘
+    ┌──────▼──────┐        ┌──────▼──────┐        ┌──────▼──────┐
+    │ namespace-1 │        │ namespace-2 │        │ namespace-3 │
+    │             │        │             │        │             │
+    │┌───────────┐│        │┌───────────┐│        │┌───────────┐│
+    ││MCP Server ││        ││MCP Server ││        ││Virtual    ││
+    ││     A     ││        ││     C     ││        ││Server A   ││
+    │└───────────┘│        │└───────────┘│        │└───────────┘│
+    │┌───────────┐│        │┌───────────┐│        │┌───────────┐│
+    ││MCP Server ││        ││MCP Server ││        ││Virtual    ││
+    ││     B     ││        ││     D     ││        ││Server B   ││
+    │└───────────┘│        │└───────────┘│        │└───────────┘│
+    └─────────────┘        └─────────────┘        └─────────────┘
 ```
 
 See [.claude/architecture.md](./.claude/architecture.md) for detailed architectural documentation.
 
-## Virtual Server Feature
+## Features
 
-The Janex Gateway includes a powerful virtualization feature that allows you to wrap non-MCP services as MCP-compatible servers. This enables you to:
+### 🔐 **Security & Authentication**
+- **Authentication** - Secure authentication (JWT, OAuth2, OIDC) with RBAC
+- **API Key Management** - Role-based access control with fine-grained permissions
+- **Rate Limiting** - IP-based limiting with Redis backing and memory fallback
+- **Content Filtering** - PII detection, regex patterns, and custom filters
 
-### 🎯 **Unify API Access**
-- Present REST APIs, GraphQL endpoints, and other services through a consistent MCP interface
-- Transform any HTTP-based service into an MCP server with tools, prompts, and resources
-- Centralize access control and rate limiting across all services
+### 🏢 **Server & Namespace Management**
+- **Dynamic Discovery** - Automatic MCP server discovery and registration
+- **Namespaces** - Group servers with isolated namespaces for internal & external usage
+- **Health Monitoring** - Server health checks with automated failover and recovery
+- **Public Endpoints** - Auto-generated REST APIs for namespace access
 
-### 🛠️ **Supported Protocols**
-- **REST APIs** - Convert HTTP endpoints into MCP tools with automatic parameter mapping
-- **GraphQL** - Expose GraphQL queries and mutations as MCP tools *(coming soon)*
-- **gRPC** - Bridge gRPC services to MCP protocol *(coming soon)*
-- **SOAP** - Legacy SOAP web services support *(coming soon)*
+### 🔌 **Multi-Protocol Transport**
+- **JSON-RPC 2.0** - Standard synchronous RPC over HTTP
+- **WebSocket** - Full-duplex bidirectional communication  
+- **Server-Sent Events** - Real-time server-to-client streaming
+- **Streamable HTTP** - Official MCP protocol implementation
+- **STDIO** - Command-line interface bridge
 
-### 📋 **Key Features**
-- **JSON-RPC 2.0 Interface** - Standard MCP protocol support via `POST /mcp/rpc`
-- **Admin REST API** - Full CRUD operations for virtual server management
-- **Database Persistence** - Virtual servers stored in PostgreSQL with in-memory caching
-- **Mock Responses** - Built-in testing with mock data for development
-- **Error Handling** - Proper JSON-RPC error code mapping (-32601, -32602, -32000)
-- **Tool Configuration** - Flexible tool definitions with schema validation
+### 🌐 **Service Virtualization**
+- **Protocol Support** - REST APIs, GraphQL *(coming soon)*, gRPC *(coming soon)*
+- **MCP Integration** - Transform any HTTP service into MCP tools with schema validation
+- **Example Integrations** - Internal API docs, microservers, etc.
 
-### 🚀 **Example Use Cases**
-- **Slack Integration** - Expose Slack's REST API as MCP tools for sending messages and listing channels
-- **GitHub Operations** - Wrap GitHub API for repository management, issue creation, and more
-- **Database Access** - Convert database queries into MCP tools with proper authentication
-- **Third-party SaaS** - Integrate any REST-based service (Stripe, Twilio, etc.) into your MCP workflow
+### 📊 **Logging, Auditing & Metrics**
+- **Audit Trails** - Complete request/response logging with security event tracking
+- **Performance Metrics** - Real-time monitoring with health checks and alerting
+- **External Integration** - AWS CloudWatch, file-based logging, and custom exporters
+- **Session Tracking** - Live session management with detailed interaction logs
 
-### 📖 **Quick Example**
-```bash
-# Create a virtual Slack server
-curl -X POST http://localhost:8080/api/admin/virtual-servers \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": "slack_server",
-    "name": "Slack API",
-    "description": "Slack REST API as MCP server",
-    "adapterType": "REST",
-    "tools": [...] 
-  }'
 
-# Use the virtual server via MCP JSON-RPC
-curl -X POST http://localhost:8080/mcp/rpc \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": "1",
-    "method": "tools/call",
-    "params": {
-      "server_id": "slack_server",
-      "name": "send_message",
-      "arguments": {
-        "channel": "#general",
-        "text": "Hello from Janex Gateway!"
-      }
-    }
-  }'
-```
-
-See [examples/virtual_servers_example.md](./examples/virtual_servers_example.md) for comprehensive usage examples and testing guide.
 
 ## 🛠️ Development
 
-### Docker-Based Development (Recommended)
 
-The entire stack runs in Docker containers with hot reload enabled for both backend and frontend:
-
+### Primary Commands
 ```bash
-# Start all services (PostgreSQL, Redis, Backend, Frontend)
-make dev
+# Core Development
+make dev              # Start in development mode with hot reload
+make stop             # Stop all services
+make clean            # Stop and remove all data
+make logs             # View service logs
+make help             # Show all available commands
 
-# View logs
-make logs
-
-# Stop all services
-make stop
-
-# Clean everything (removes all data)
-make clean
-```
-
-### Other Useful Commands
-
-```bash
-# Database operations
+# Database Operations
 make migrate          # Run database migrations
 make migrate-down     # Rollback migrations
 make migrate-status   # Show migration status
 make db-shell         # Open PostgreSQL shell
 
-# Testing
+# Testing & Quality
 make test             # Run all tests
-make test-transport   # Transport layer tests
-make test-integration # Integration tests
-make test-unit        # Unit tests
+make lint             # Run linters
 
-# Development utilities
-make shell            # Open shell in backend container
-make bash             # Open bash in backend container
-make redis-cli        # Open Redis CLI
-
-# Build operations
+# Build & Utilities
 make build            # Build containers
 make rebuild          # Rebuild and restart containers
-
-# Setup
+make shell            # Open shell in backend container
+make bash             # Open bash in backend container
 make setup            # Initial project setup
-make setup-admin      # Create admin user
-```
-
-### Code Quality
-
-```bash
-# Run linting
-make lint
 ```
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
-
-### Development Setup
-
 1. Fork the repository
-2. Clone your fork and enter the directory
-3. Run `make dev` to start the full stack
-4. Make your changes
-5. Run tests (`make test`)
-6. Run linting (`make lint`)
-7. Commit your changes (`git commit -m 'Add amazing feature'`)
-8. Push to the branch (`git push origin feature/amazing-feature`)
-9. Open a Pull Request
+2. Run `make dev` to start the full stack
+3. Make your changes
+4. Run `make test` and `make lint`
+5. Submit a Pull Request
+
+Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
 
 ### Code of Conduct
 
@@ -252,15 +177,15 @@ Security is a top priority. Please review our [Security Policy](SECURITY.md) and
 ## 🙏 Acknowledgments
 
 - [Model Context Protocol](https://modelcontextprotocol.io/) for the core specification
-- All our [contributors](https://github.com/theognis1002/mcp-gateway/contributors)
+- All our [contributors](https://github.com/janex-ai/janex-gateway/contributors)
 
 ---
 
 <div align="center">
   <p>Built with ❤️ for the MCP community</p>
   <p>
-    <a href="https://github.com/theognis1002/mcp-gateway">⭐ Star us on GitHub</a> •
-    <a href="https://github.com/theognis1002/mcp-gateway/issues">🐛 Report Bug</a> •
-    <a href="https://github.com/theognis1002/mcp-gateway/issues">💡 Request Feature</a>
+    <a href="https://github.com/janex-ai/janex-gateway">⭐ Star us on GitHub</a> •
+    <a href="https://github.com/janex-ai/janex-gateway/issues">🐛 Report Bug</a> •
+    <a href="https://github.com/janex-ai/janex-gateway/issues">💡 Request Feature</a>
   </p>
 </div>
