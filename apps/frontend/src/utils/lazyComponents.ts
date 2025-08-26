@@ -18,10 +18,3 @@ export const LazyDateTimePicker = lazy(() =>
 export const LazyAutocomplete = lazy(() =>
 	import('@mui/material/Autocomplete').then((mod) => ({ default: mod.default }))
 );
-
-// Lazy load heavy form components
-export const LazyReactQueryDevtools = lazy(() =>
-	process.env.NODE_ENV === 'development'
-		? import('@tanstack/react-query-devtools').then((mod) => ({ default: mod.ReactQueryDevtools }))
-		: Promise.resolve({ default: () => null })
-);

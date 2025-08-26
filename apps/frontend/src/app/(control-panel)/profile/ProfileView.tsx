@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import PageSimple from '@fuse/core/PageSimple';
 import { styled } from '@mui/material/styles';
 import {
@@ -74,39 +74,39 @@ function ProfileView() {
 		confirmPassword: ''
 	});
 
-	// Fetch profile data on mount
-	useEffect(() => {
-		fetchProfile();
-	}, []);
-
-	const fetchProfile = async () => {
+	const fetchProfile = useCallback(async () => {
 		setIsLoading(true);
 		try {
 			const data = await authApi.getProfile();
 			// Transform the API response to match UserProfile interface
 			const transformedProfile: UserProfile = {
-				id: data.user?.id || currentUser?.id || '',
-				email: data.user?.email || currentUser?.email || '',
-				name: data.user?.name || currentUser?.displayName || 'User',
-				role: data.user?.role || currentUser?.role || 'user',
+				id: data.id || currentUser?.id || '',
+				email: data.email || currentUser?.email || '',
+				name: currentUser?.displayName || 'User',
+				role: data.role || currentUser?.role || 'user',
 				organization: {
-					id: data.organization?.id || '',
-					name: data.organization?.name || 'Organization',
-					plan: data.organization?.plan_type || 'free'
+					id: data.organization_id || '',
+					name: 'Organization',
+					plan: 'free'
 				},
-				created_at: data.user?.created_at || new Date().toISOString(),
+				created_at: data.created_at || new Date().toISOString(),
 				last_login: new Date().toISOString(),
-				api_keys_count: data.api_keys_count || 0,
-				active_sessions: data.active_sessions || 0
+				api_keys_count: 0,
+				active_sessions: 0
 			};
 			setProfile(transformedProfile);
-		} catch (error) {
+		} catch (_error) {
 			enqueueSnackbar('Failed to fetch profile data', { variant: 'error' });
-			console.error('Error fetching profile:', error);
+			console.error('Error fetching profile:', _error);
 		} finally {
 			setIsLoading(false);
 		}
-	};
+	}, [currentUser, enqueueSnackbar]);
+
+	// Fetch profile data on mount
+	useEffect(() => {
+		fetchProfile();
+	}, [fetchProfile]);
 
 	const handleEditProfile = () => {
 		if (profile) {
@@ -123,8 +123,8 @@ function ProfileView() {
 			await authApi.updateProfile(editFormData);
 			enqueueSnackbar('Profile updated successfully', { variant: 'success' });
 			setEditDialogOpen(false);
-			loadProfile();
-		} catch (error) {
+			fetchProfile();
+		} catch (_error) {
 			enqueueSnackbar('Failed to update profile', { variant: 'error' });
 		}
 	};
@@ -155,7 +155,7 @@ function ProfileView() {
 	const quickActions = [
 		{
 			title: 'API Keys',
-			description: `${profile.api_keys_count} active keys`,
+			description: `${profile?.api_keys_count || 0} active keys`,
 			icon: 'lucide:key',
 			url: '/profile/api-keys'
 		},
@@ -167,7 +167,7 @@ function ProfileView() {
 		},
 		{
 			title: 'Sessions',
-			description: `${profile.active_sessions} active`,
+			description: `${profile?.active_sessions || 0} active`,
 			icon: 'lucide:monitor',
 			url: '#'
 		},
@@ -198,19 +198,16 @@ function ProfileView() {
 					<div className="flex items-center justify-between">
 						<div className="flex items-center space-x-4">
 							<Avatar sx={{ width: 64, height: 64, bgcolor: 'primary.main' }}>
-								{profile.name
-									.split(' ')
-									.map((n) => n[0])
-									.join('')}
+								{profile?.email?.split('@')[0]?.charAt(0)}
 							</Avatar>
 							<div>
-								<Typography variant="h4">{profile.name}</Typography>
-								<Typography
+								<Typography variant="h4">{profile?.email}</Typography>
+								{/* <Typography
 									variant="body1"
 									color="textSecondary"
 								>
 									{profile.email}
-								</Typography>
+								</Typography> */}
 							</div>
 						</div>
 						<Box className="flex gap-2">
@@ -344,7 +341,7 @@ function ProfileView() {
 										</ListItemIcon>
 										<ListItemText
 											primary="API Keys"
-											secondary={`${profile.api_keys_count} active keys`}
+											secondary={`${profile?.api_keys_count || 0} active keys`}
 										/>
 										<Button
 											size="small"
@@ -361,7 +358,7 @@ function ProfileView() {
 										</ListItemIcon>
 										<ListItemText
 											primary="Active Sessions"
-											secondary={`${profile.active_sessions} devices`}
+											secondary={`${profile?.active_sessions} devices`}
 										/>
 										<Button
 											size="small"

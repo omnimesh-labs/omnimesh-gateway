@@ -39,26 +39,7 @@ const Root = styled(PageSimple)(({ theme }) => ({
 	}
 }));
 
-interface Endpoint {
-	id: string;
-	name: string;
-	namespace: string;
-	description?: string;
-	enable_api_key_auth: boolean;
-	enable_oauth: boolean;
-	enable_public_access: boolean;
-	rate_limit_requests: number;
-	rate_limit_window: number;
-	is_active: boolean;
-	created_at: string;
-	urls: {
-		sse: string;
-		http: string;
-		websocket: string;
-		openapi: string;
-		documentation: string;
-	};
-}
+import { Endpoint } from '@/lib/api';
 
 function EndpointsView() {
 	const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -67,7 +48,7 @@ function EndpointsView() {
 	const [urlsModalOpen, setUrlsModalOpen] = useState(false);
 	const [formData, setFormData] = useState({
 		name: '',
-		namespace: '',
+		namespace_id: '',
 		description: '',
 		enable_api_key_auth: true,
 		enable_oauth: false,
@@ -79,11 +60,6 @@ function EndpointsView() {
 	const [endpoints, setEndpoints] = useState<Endpoint[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const { enqueueSnackbar } = useSnackbar();
-
-	// Fetch endpoints on mount
-	useEffect(() => {
-		fetchEndpoints();
-	}, []);
 
 	const fetchEndpoints = useCallback(async () => {
 		setIsLoading(true);
@@ -99,10 +75,15 @@ function EndpointsView() {
 		}
 	}, [enqueueSnackbar]);
 
+	// Fetch endpoints on mount
+	useEffect(() => {
+		fetchEndpoints();
+	}, [fetchEndpoints]);
+
 	const handleCreateEndpoint = () => {
 		setFormData({
 			name: '',
-			namespace: '',
+			namespace_id: '',
 			description: '',
 			enable_api_key_auth: true,
 			enable_oauth: false,
@@ -118,7 +99,7 @@ function EndpointsView() {
 	const handleEditEndpoint = (endpoint: Endpoint) => {
 		setFormData({
 			name: endpoint.name,
-			namespace: endpoint.namespace,
+			namespace_id: endpoint.namespace?.id || '',
 			description: endpoint.description || '',
 			enable_api_key_auth: endpoint.enable_api_key_auth,
 			enable_oauth: endpoint.enable_oauth,
@@ -192,7 +173,7 @@ function EndpointsView() {
 								variant="caption"
 								color="textSecondary"
 							>
-								{row.original.namespace}
+								{row.original.namespace?.name || 'No namespace'}
 							</Typography>
 						</Box>
 					</Box>
@@ -350,15 +331,15 @@ function EndpointsView() {
 								/>
 								<TextField
 									label="Namespace"
-									value={formData.namespace}
-									onChange={(e) => setFormData((prev) => ({ ...prev, namespace: e.target.value }))}
+									value={formData.namespace_id}
+									onChange={(e) => setFormData((prev) => ({ ...prev, namespace_id: e.target.value }))}
 									select
 									fullWidth
 									required
 								>
-									<MenuItem value="development">Development</MenuItem>
-									<MenuItem value="production">Production</MenuItem>
-									<MenuItem value="testing">Testing</MenuItem>
+									<MenuItem value="ns-dev-001">Development</MenuItem>
+									<MenuItem value="ns-prod-001">Production</MenuItem>
+									<MenuItem value="ns-test-001">Testing</MenuItem>
 								</TextField>
 								<TextField
 									label="Description"
@@ -473,7 +454,7 @@ function EndpointsView() {
 							<Button
 								variant="contained"
 								onClick={handleSaveEndpoint}
-								disabled={!formData.name.trim() || !formData.namespace.trim()}
+								disabled={!formData.name.trim() || !formData.namespace_id.trim()}
 							>
 								{editingEndpoint ? 'Update' : 'Create'}
 							</Button>
@@ -494,7 +475,7 @@ function EndpointsView() {
 									spacing={3}
 									sx={{ mt: 1 }}
 								>
-									{Object.entries(viewingUrls.urls).map(([protocol, url]) => (
+									{Object.entries(viewingUrls.urls || {}).map(([protocol, url]) => (
 										<Box
 											key={protocol}
 											className="flex items-center justify-between"
@@ -511,12 +492,12 @@ function EndpointsView() {
 													color="textSecondary"
 													className="break-all"
 												>
-													{url}
+													{String(url)}
 												</Typography>
 											</Box>
 											<IconButton
 												size="small"
-												onClick={() => handleCopyUrl(url)}
+												onClick={() => handleCopyUrl(String(url))}
 												title="Copy URL"
 											>
 												<SvgIcon size={16}>lucide:copy</SvgIcon>
