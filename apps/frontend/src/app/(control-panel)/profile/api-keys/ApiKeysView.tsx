@@ -285,11 +285,6 @@ function ApiKeysView() {
 						enableRowActions
 						renderRowActions={({ row }) => (
 							<Box className="flex items-center space-x-1">
-								<Tooltip title="View Permissions">
-									<IconButton size="small">
-										<SvgIcon size={18}>lucide:eye</SvgIcon>
-									</IconButton>
-								</Tooltip>
 								<Tooltip title="Delete API Key">
 									<IconButton
 										size="small"

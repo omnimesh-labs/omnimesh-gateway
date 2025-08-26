@@ -45,14 +45,9 @@ func (s *EndpointService) CreateEndpoint(ctx context.Context, req types.CreateEn
 	}
 
 	// Verify namespace exists and user has access
-	namespace, err := s.namespaceRepo.GetByID(ctx, req.NamespaceID)
+	namespace, err := s.namespaceRepo.GetByName(ctx, orgID, req.NamespaceID)
 	if err != nil {
 		return nil, fmt.Errorf("namespace not found: %w", err)
-	}
-
-	// Verify namespace belongs to the organization
-	if namespace.OrganizationID != orgID {
-		return nil, fmt.Errorf("namespace does not belong to organization")
 	}
 
 	// Set defaults
@@ -72,7 +67,7 @@ func (s *EndpointService) CreateEndpoint(ctx context.Context, req types.CreateEn
 	// Create endpoint
 	endpoint := &types.Endpoint{
 		OrganizationID:     orgID,
-		NamespaceID:        req.NamespaceID,
+		NamespaceID:        namespace.ID,
 		Name:               req.Name,
 		Description:        req.Description,
 		EnableAPIKeyAuth:   req.EnableAPIKeyAuth,

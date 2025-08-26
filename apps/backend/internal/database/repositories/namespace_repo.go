@@ -34,7 +34,7 @@ func (r *NamespaceRepository) Create(ctx context.Context, ns *types.Namespace) e
 
 	query := `
 		INSERT INTO namespaces (
-			id, organization_id, name, description, 
+			id, organization_id, name, description,
 			created_by, is_active, metadata
 		) VALUES (
 			$1, $2, $3, $4, $5, $6, $7
@@ -59,10 +59,10 @@ func (r *NamespaceRepository) GetByID(ctx context.Context, id string) (*types.Na
 	var metadataJSON []byte
 
 	query := `
-		SELECT 
-			id, organization_id, name, description, 
+		SELECT
+			id, organization_id, name, description,
 			created_at, updated_at, created_by, is_active, metadata
-		FROM namespaces 
+		FROM namespaces
 		WHERE id = $1`
 
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
@@ -90,10 +90,10 @@ func (r *NamespaceRepository) GetByName(ctx context.Context, orgID, name string)
 	var metadataJSON []byte
 
 	query := `
-		SELECT 
-			id, organization_id, name, description, 
+		SELECT
+			id, organization_id, name, description,
 			created_at, updated_at, created_by, is_active, metadata
-		FROM namespaces 
+		FROM namespaces
 		WHERE organization_id = $1 AND name = $2`
 
 	err := r.db.QueryRowContext(ctx, query, orgID, name).Scan(
@@ -115,13 +115,14 @@ func (r *NamespaceRepository) GetByName(ctx context.Context, orgID, name string)
 	return ns, nil
 }
 
+
 // List retrieves all namespaces for an organization
 func (r *NamespaceRepository) List(ctx context.Context, orgID string) ([]*types.Namespace, error) {
 	query := `
-		SELECT 
-			id, organization_id, name, description, 
+		SELECT
+			id, organization_id, name, description,
 			created_at, updated_at, created_by, is_active, metadata
-		FROM namespaces 
+		FROM namespaces
 		WHERE organization_id = $1
 		ORDER BY name`
 
@@ -157,14 +158,14 @@ func (r *NamespaceRepository) List(ctx context.Context, orgID string) ([]*types.
 // ListWithServerCount retrieves all namespaces for an organization with server counts
 func (r *NamespaceRepository) ListWithServerCount(ctx context.Context, orgID string) ([]*types.Namespace, error) {
 	query := `
-		SELECT 
-			n.id, n.organization_id, n.name, n.description, 
+		SELECT
+			n.id, n.organization_id, n.name, n.description,
 			n.created_at, n.updated_at, n.created_by, n.is_active, n.metadata,
 			COUNT(DISTINCT nsm.server_id) as server_count
 		FROM namespaces n
 		LEFT JOIN namespace_server_mappings nsm ON n.id = nsm.namespace_id
 		WHERE n.organization_id = $1
-		GROUP BY n.id, n.organization_id, n.name, n.description, 
+		GROUP BY n.id, n.organization_id, n.name, n.description,
 				 n.created_at, n.updated_at, n.created_by, n.is_active, n.metadata
 		ORDER BY n.name`
 
@@ -206,8 +207,8 @@ func (r *NamespaceRepository) Update(ctx context.Context, ns *types.Namespace) e
 	}
 
 	query := `
-		UPDATE namespaces 
-		SET name = $2, description = $3, is_active = $4, 
+		UPDATE namespaces
+		SET name = $2, description = $3, is_active = $4,
 		    metadata = $5, updated_at = NOW()
 		WHERE id = $1`
 
@@ -301,8 +302,8 @@ func (r *NamespaceRepository) RemoveServer(ctx context.Context, namespaceID, ser
 // UpdateServerStatus updates the status of a server in a namespace
 func (r *NamespaceRepository) UpdateServerStatus(ctx context.Context, namespaceID, serverID, status string) error {
 	query := `
-		UPDATE namespace_server_mappings 
-		SET status = $3 
+		UPDATE namespace_server_mappings
+		SET status = $3
 		WHERE namespace_id = $1 AND server_id = $2`
 
 	result, err := r.db.ExecContext(ctx, query, namespaceID, serverID, status)
@@ -325,8 +326,8 @@ func (r *NamespaceRepository) UpdateServerStatus(ctx context.Context, namespaceI
 // GetServers retrieves all servers in a namespace
 func (r *NamespaceRepository) GetServers(ctx context.Context, namespaceID string) ([]types.NamespaceServer, error) {
 	query := `
-		SELECT 
-			nsm.server_id, ms.name as server_name, nsm.status, 
+		SELECT
+			nsm.server_id, ms.name as server_name, nsm.status,
 			nsm.priority, nsm.created_at
 		FROM namespace_server_mappings nsm
 		JOIN mcp_servers ms ON nsm.server_id = ms.id
@@ -380,7 +381,7 @@ func (r *NamespaceRepository) SetToolStatus(ctx context.Context, namespaceID, se
 // GetTools retrieves all tools in a namespace
 func (r *NamespaceRepository) GetTools(ctx context.Context, namespaceID string) ([]types.NamespaceTool, error) {
 	query := `
-		SELECT 
+		SELECT
 			ntm.server_id, ms.name as server_name, ntm.tool_name, ntm.status
 		FROM namespace_tool_mappings ntm
 		JOIN mcp_servers ms ON ntm.server_id = ms.id

@@ -7,9 +7,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/jmoiron/sqlx"
 	"mcp-gateway/apps/backend/internal/database/repositories"
 	"mcp-gateway/apps/backend/internal/types"
+
+	"github.com/jmoiron/sqlx"
 )
 
 // NamespaceService handles namespace operations
@@ -24,11 +25,11 @@ type NamespaceService struct {
 func NewNamespaceService(db *sql.DB) *NamespaceService {
 	// Wrap the sql.DB with sqlx
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	
+
 	return &NamespaceService{
-		repo:         repositories.NewNamespaceRepository(sqlxDB),
-		serverRepo:   repositories.NewMCPServerRepository(sqlxDB),
-		sessionPool:  NewNamespaceSessionPool(),
+		repo:        repositories.NewNamespaceRepository(sqlxDB),
+		serverRepo:  repositories.NewMCPServerRepository(sqlxDB),
+		sessionPool: NewNamespaceSessionPool(),
 	}
 }
 
@@ -84,7 +85,7 @@ func (s *NamespaceService) GetNamespace(ctx context.Context, id string) (*types.
 	} else {
 		namespace.Tools = tools
 	}
-	
+
 	return namespace, nil
 }
 
@@ -157,11 +158,9 @@ func (s *NamespaceService) UpdateNamespace(ctx context.Context, id string, req t
 		// Add new servers
 		for _, serverID := range req.ServerIDs {
 			if !currentServerMap[serverID] {
-				fmt.Printf("DEBUG: Attempting to add server %s to namespace %s\n", serverID, id)
 				// Verify server exists before adding
-				server, err := s.serverRepo.GetByID(ctx, serverID)
+				_, err := s.serverRepo.GetByID(ctx, serverID)
 				if err == nil {
-					fmt.Printf("DEBUG: Server %s found: %s\n", serverID, server.Name)
 					if err := s.repo.AddServer(ctx, id, serverID, 0); err != nil {
 						fmt.Printf("ERROR: failed to add server %s to namespace %s: %v\n", serverID, id, err)
 					} else {
@@ -193,7 +192,7 @@ func (s *NamespaceService) UpdateNamespace(ctx context.Context, id string, req t
 func (s *NamespaceService) DeleteNamespace(ctx context.Context, id string) error {
 	// Clear sessions for this namespace
 	s.sessionPool.ClearNamespace(id)
-	
+
 	// Clear cache
 	s.clearToolCache(id)
 
@@ -429,7 +428,7 @@ func (s *NamespaceService) validateNamespaceName(name string) error {
 
 	// Name should only contain alphanumeric, underscore, and hyphen
 	for _, ch := range name {
-		if !((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || 
+		if !((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
 			(ch >= '0' && ch <= '9') || ch == '_' || ch == '-') {
 			return fmt.Errorf("namespace name can only contain alphanumeric characters, underscores, and hyphens")
 		}
@@ -462,8 +461,8 @@ func SanitizeServerName(name string) string {
 	// Replace spaces and special characters with underscores
 	var result strings.Builder
 	for _, ch := range name {
-		if (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || 
-		   (ch >= '0' && ch <= '9') || ch == '_' || ch == '-' {
+		if (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+			(ch >= '0' && ch <= '9') || ch == '_' || ch == '-' {
 			result.WriteRune(ch)
 		} else {
 			result.WriteRune('_')

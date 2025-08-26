@@ -565,7 +565,7 @@ func (s *Service) checkServerHealth(server *models.MCPServer) string {
 	default:
 		// For unknown protocols, assume healthy if server is active
 		log.Printf("Unknown protocol '%s' for server %s, assuming healthy", server.Protocol, server.ID)
-		return types.ServerStatusActive
+		return types.HealthStatusHealthy
 	}
 }
 
@@ -574,7 +574,7 @@ func (s *Service) checkServerHealth(server *models.MCPServer) string {
 // checkHTTPHealth performs HTTP-based health check
 func (s *Service) checkHTTPHealth(server *models.MCPServer) string {
 	if !server.URL.Valid || server.URL.String == "" {
-		return types.ServerStatusInactive
+		return types.HealthStatusError
 	}
 
 	// Use a short timeout for health checks
@@ -592,15 +592,15 @@ func (s *Service) checkHTTPHealth(server *models.MCPServer) string {
 	resp, err := client.Get(healthURL)
 	if err != nil {
 		log.Printf("HTTP health check failed for server %s: %v", server.ID, err)
-		return types.ServerStatusUnhealthy
+		return types.HealthStatusError
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		return types.ServerStatusActive
+		return types.HealthStatusHealthy
 	}
 
-	return types.ServerStatusUnhealthy
+	return types.HealthStatusUnhealthy
 }
 
 // checkWebSocketHealth performs WebSocket-based health check
@@ -608,35 +608,35 @@ func (s *Service) checkWebSocketHealth(server *models.MCPServer) string {
 	// For WebSocket servers, we could attempt a connection test
 	// For now, assume healthy if URL is provided
 	if !server.URL.Valid || server.URL.String == "" {
-		return types.ServerStatusInactive
+		return types.HealthStatusError
 	}
 
 	// TODO: Implement actual WebSocket connection test
-	log.Printf("WebSocket health check not fully implemented for server %s, assuming active", server.ID)
-	return types.ServerStatusActive
+	log.Printf("WebSocket health check not fully implemented for server %s, assuming healthy", server.ID)
+	return types.HealthStatusHealthy
 }
 
 // checkSTDIOHealth performs STDIO-based health check
 func (s *Service) checkSTDIOHealth(server *models.MCPServer) string {
 	// For STDIO servers, check if the command exists
 	if !server.Command.Valid || server.Command.String == "" {
-		return types.ServerStatusInactive
+		return types.HealthStatusError
 	}
 
 	// TODO: Could check if command exists and is executable
 	// For now, assume healthy if command is specified
-	log.Printf("STDIO health check not fully implemented for server %s, assuming active", server.ID)
-	return types.ServerStatusActive
+	log.Printf("STDIO health check not fully implemented for server %s, assuming healthy", server.ID)
+	return types.HealthStatusHealthy
 }
 
 // checkTCPHealth performs TCP-based health check
 func (s *Service) checkTCPHealth(server *models.MCPServer) string {
 	// For TCP servers, we could attempt a socket connection
 	if !server.URL.Valid || server.URL.String == "" {
-		return types.ServerStatusInactive
+		return types.HealthStatusError
 	}
 
 	// TODO: Implement actual TCP connection test
-	log.Printf("TCP health check not fully implemented for server %s, assuming active", server.ID)
-	return types.ServerStatusActive
+	log.Printf("TCP health check not fully implemented for server %s, assuming healthy", server.ID)
+	return types.HealthStatusHealthy
 }
