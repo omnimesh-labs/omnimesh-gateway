@@ -167,7 +167,7 @@ function NavbarStyle2(props: NavbarStyle2Props) {
 				<StyledNavBar
 					open={isNavbarOpen}
 					folded={folded ? 1 : 0}
-					position={config.navbar.position}
+					position={config.navbar?.position || 'left'}
 					className={clsx('sticky top-0 z-20 h-screen flex-auto shrink-0 flex-col', className)}
 				>
 					<NavbarStyle2Content />
@@ -179,7 +179,7 @@ function NavbarStyle2(props: NavbarStyle2Props) {
 					classes={{
 						paper: clsx('h-screen w-auto max-w-full flex-auto flex-col overflow-hidden', className)
 					}}
-					anchor={config.navbar.position as 'left' | 'right'}
+					anchor={(config.navbar?.position || 'left') as 'left' | 'right'}
 					variant="temporary"
 					open={isNavbarMobileOpen}
 					onClose={() => closeMobileNavbar()}

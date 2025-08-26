@@ -55,17 +55,17 @@ function Layout1(props: Layout1Props) {
 			config={config}
 			className="flex w-full flex-auto"
 		>
-			{config.leftSidePanel.display && <LeftSideLayout1 />}
+			{config.leftSidePanel?.display && <LeftSideLayout1 />}
 
 			<div className="flex min-w-0 flex-auto">
-				{config.navbar.display && config.navbar.position === 'left' && <NavbarWrapperLayout1 />}
+				{config.navbar?.display !== false && config.navbar?.position !== 'right' && <NavbarWrapperLayout1 />}
 
 				<main
 					id="fuse-main"
 					className="relative z-10 flex min-h-svh min-w-0 flex-auto flex-col"
 				>
-					{config.toolbar.display && (
-						<ToolbarLayout1 className={config.toolbar.style === 'fixed' ? 'sticky top-0' : ''} />
+					{config.toolbar?.display !== false && (
+						<ToolbarLayout1 className={config.toolbar?.style === 'fixed' ? 'sticky top-0' : ''} />
 					)}
 
 					<div className="z-99 sticky top-0">
@@ -74,15 +74,15 @@ function Layout1(props: Layout1Props) {
 
 					<div className="relative z-10 flex min-h-0 flex-auto flex-col">{children}</div>
 
-					{config.footer.display && (
-						<FooterLayout1 className={config.footer.style === 'fixed' ? 'sticky bottom-0' : ''} />
+					{config.footer?.display && (
+						<FooterLayout1 className={config.footer?.style === 'fixed' ? 'sticky bottom-0' : ''} />
 					)}
 				</main>
 
-				{config.navbar.display && config.navbar.position === 'right' && <NavbarWrapperLayout1 />}
+				{config.navbar?.display !== false && config.navbar?.position === 'right' && <NavbarWrapperLayout1 />}
 			</div>
 
-			{config.rightSidePanel.display && <RightSideLayout1 />}
+			{config.rightSidePanel?.display && <RightSideLayout1 />}
 		</Root>
 	);
 }

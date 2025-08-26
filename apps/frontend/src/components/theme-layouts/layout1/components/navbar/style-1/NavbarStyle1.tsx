@@ -102,7 +102,7 @@ function NavbarStyle1() {
 				<StyledNavBar
 					className="sticky top-0 z-20 h-screen flex-auto shrink-0 flex-col"
 					open={isNavbarOpen}
-					position={config.navbar.position}
+					position={config.navbar?.position || 'left'}
 				>
 					<NavbarStyle1Content />
 				</StyledNavBar>
@@ -113,7 +113,7 @@ function NavbarStyle1() {
 					classes={{
 						paper: 'flex-col flex-auto h-full'
 					}}
-					anchor={config.navbar.position as 'left' | 'top' | 'right' | 'bottom'}
+					anchor={(config.navbar?.position || 'left') as 'left' | 'top' | 'right' | 'bottom'}
 					variant="temporary"
 					open={isNavbarMobileOpen}
 					onClose={() => closeMobileNavbar()}

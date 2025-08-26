@@ -29,7 +29,7 @@ function NavbarToggleFabLayout1(props: NavbarToggleFabLayout1Props) {
 					toggleNavbar();
 				}
 			}}
-			position={config.navbar.position}
+			position={config.navbar?.position || 'left'}
 		/>
 	);
 }

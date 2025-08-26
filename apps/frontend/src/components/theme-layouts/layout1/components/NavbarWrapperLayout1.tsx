@@ -26,15 +26,20 @@ function NavbarWrapperLayout1() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [pathname, isMobile]);
 
+	// Ensure navbar config exists with default values
+	const navbarStyle = config.navbar?.style || 'style-1';
+	const navbarDisplay = config.navbar?.display !== false;
+	const toolbarDisplay = config.toolbar?.display !== false;
+
 	return (
 		<>
 			<NavbarTheme>
 				<>
-					{config.navbar.style === 'style-1' && <NavbarStyle1 />}
-					{config.navbar.style === 'style-2' && <NavbarStyle2 />}
+					{navbarStyle === 'style-1' && <NavbarStyle1 />}
+					{navbarStyle === 'style-2' && <NavbarStyle2 />}
 				</>
 			</NavbarTheme>
-			{config.navbar.display && !config.toolbar.display && !isNavbarOpen && <NavbarToggleFabLayout1 />}
+			{navbarDisplay && !toolbarDisplay && !isNavbarOpen && <NavbarToggleFabLayout1 />}
 		</>
 	);
 }
