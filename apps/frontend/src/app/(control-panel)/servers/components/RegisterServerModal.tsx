@@ -28,7 +28,7 @@ const schema = z.object({
 	name: z.string().min(1, 'Server name is required'),
 	description: z.string().optional(),
 	protocol: z.enum(['stdio', 'http', 'websocket'], {
-		errorMap: () => ({ message: 'Please select a protocol' })
+		message: 'Please select a protocol'
 	}),
 	url: z.string().url('Invalid URL').optional().or(z.literal('')),
 	command: z.string().optional(),
@@ -101,15 +101,15 @@ export default function RegisterServerModal({ open, onClose, onRegister, loading
 	const onSubmit = (data: FormType) => {
 		const serverData: CreateServerRequest = {
 			name: data.name,
-			description: data.description,
+			description: data.description || '',
 			protocol: data.protocol,
-			url: data.url,
-			command: data.command,
-			version: data.version,
-			timeout: data.timeout,
-			max_retries: data.max_retries,
-			health_check_url: data.health_check_url,
-			working_dir: data.working_dir,
+			url: data.url || '',
+			command: data.command || '',
+			version: data.version || '',
+			timeout: data.timeout || 30,
+			max_retries: data.max_retries || 3,
+			health_check_url: data.health_check_url || '',
+			working_dir: data.working_dir || '',
 			args: data.args ? data.args.split(' ').filter((arg) => arg.trim()) : undefined,
 			environment: data.environment ? data.environment.split('\n').filter((env) => env.trim()) : undefined,
 			metadata: tags.length > 0 ? { tags: tags.join(',') } : undefined
@@ -226,7 +226,7 @@ export default function RegisterServerModal({ open, onClose, onRegister, loading
 											label="Command"
 											fullWidth
 											placeholder="e.g., node server.js"
-											helperText="Command to start the MCP server"
+											// helperText="Command to start the MCP server"
 										/>
 									)}
 								/>
@@ -240,7 +240,7 @@ export default function RegisterServerModal({ open, onClose, onRegister, loading
 											label="Arguments"
 											fullWidth
 											placeholder="e.g., --port 3000 --verbose"
-											helperText="Space-separated command line arguments"
+											// helperText="Space-separated command line arguments"
 										/>
 									)}
 								/>
@@ -254,7 +254,7 @@ export default function RegisterServerModal({ open, onClose, onRegister, loading
 											label="Working Directory"
 											fullWidth
 											placeholder="e.g., /path/to/server"
-											helperText="Working directory for the server process"
+											// helperText="Working directory for the server process"
 										/>
 									)}
 								/>
@@ -270,7 +270,8 @@ export default function RegisterServerModal({ open, onClose, onRegister, loading
 										fullWidth
 										placeholder="e.g., http://localhost:3000 or ws://localhost:3000"
 										error={!!errors.url}
-										helperText={errors.url?.message || 'URL to connect to the MCP server'}
+										helperText={errors.url?.message}
+									// helperText={errors.url?.message || 'URL to connect to the MCP server'}
 									/>
 								)}
 							/>
@@ -287,7 +288,7 @@ export default function RegisterServerModal({ open, onClose, onRegister, loading
 									multiline
 									rows={3}
 									placeholder="KEY=value&#10;ANOTHER_KEY=another_value"
-									helperText="One environment variable per line (KEY=value format)"
+									// helperText="One environment variable per line (KEY=value format)"
 								/>
 							)}
 						/>

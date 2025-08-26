@@ -553,9 +553,12 @@ export const defaultThemeOptions: DefaultThemeOptions = {
 		},
 		MuiPaper: {
 			styleOverrides: {
-				root: {
-					backgroundImage: 'none'
-				},
+				root: ({theme}) => ({
+					backgroundImage: 'none',
+					backgroundColor: theme.palette.mode === 'dark'
+						? '#2a2d35'
+						: 'var(--mui-palette-background-paper)'
+				}),
 				rounded: {
 					borderRadius: spacing(12)
 				}
@@ -711,10 +714,12 @@ export const defaultThemeOptions: DefaultThemeOptions = {
 				color: 'secondary'
 			},
 			styleOverrides: {
-				root: {
+				root: ({theme}) => ({
 					height: 'auto!important',
 					minHeight: spacing(32),
-					backgroundColor: 'var(--mui-palette-background-paper)',
+					backgroundColor: theme.palette.mode === 'dark'
+						? 'rgba(255, 255, 255, 0.05)'
+						: '#f8f9fa',
 					color: 'var(--mui-palette-text-primary)',
 					'&.MuiInputBase-sizeSmall': {
 						minHeight: spacing(28)
@@ -731,7 +736,7 @@ export const defaultThemeOptions: DefaultThemeOptions = {
 						borderColor: 'var(--mui-palette-primary-main)',
 						borderWidth: '2px'
 					}
-				},
+				}),
 				sizeSmall: {
 					minHeight: spacing(28)
 				},
@@ -775,9 +780,12 @@ export const defaultThemeOptions: DefaultThemeOptions = {
 		},
 		MuiFilledInput: {
 			styleOverrides: {
-				root: {
-					color: 'var(--mui-palette-text-primary)'
-				},
+				root: ({theme}) => ({
+					color: 'var(--mui-palette-text-primary)',
+					backgroundColor: theme.palette.mode === 'dark'
+						? 'rgba(255, 255, 255, 0.05)'
+						: '#f3f4f6'
+				}),
 				input: {
 					padding: `${spacing(4)} ${spacing(12)}`, // 4px 12px
 					color: 'var(--mui-palette-text-primary)',

@@ -3,7 +3,6 @@ import { styled } from '@mui/material/styles';
 import clsx from 'clsx';
 import { memo } from 'react';
 import Navigation from 'src/components/theme-layouts/components/navigation/Navigation';
-import UserMenu from '@/@auth/components/UserMenu';
 import Logo from '../../../../components/Logo';
 
 const Root = styled('div')(({ theme }) => ({
@@ -55,10 +54,6 @@ function NavbarStyle1Content(props: NavbarStyle1ContentProps) {
 			>
 				<Navigation layout="vertical" />
 			</StyledContent>
-
-			<div className="flex flex-col gap-3 p-3">
-				<UserMenu className="w-full" />
-			</div>
 		</Root>
 	);
 }

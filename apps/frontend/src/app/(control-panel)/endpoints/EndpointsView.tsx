@@ -59,6 +59,7 @@ function EndpointsView() {
 	});
 	const [endpoints, setEndpoints] = useState<Endpoint[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
+	const [togglingEndpointId, setTogglingEndpointId] = useState<string | null>(null);
 	const { enqueueSnackbar } = useSnackbar();
 
 	const fetchEndpoints = useCallback(async () => {
@@ -153,8 +154,48 @@ function EndpointsView() {
 		enqueueSnackbar('URL copied to clipboard', { variant: 'success' });
 	};
 
+	const handleToggleEndpointStatus = async (endpoint: Endpoint) => {
+		setTogglingEndpointId(endpoint.id);
+		try {
+			const updatedEndpoint = await endpointApi.updateEndpoint(endpoint.id, {
+				is_active: !endpoint.is_active
+			});
+
+			// Update the local state with the updated endpoint
+			setEndpoints(prev => prev.map(ep =>
+				ep.id === endpoint.id ? updatedEndpoint : ep
+			));
+
+			enqueueSnackbar('Endpoint status updated successfully', { variant: 'success' });
+		} catch (error) {
+			const message = error instanceof Error ? error.message : 'Failed to update endpoint status';
+			enqueueSnackbar(message, { variant: 'error' });
+			console.error('Error updating endpoint status:', error);
+			// Refresh data on error to ensure UI is in sync
+			fetchEndpoints();
+		} finally {
+			setTogglingEndpointId(null);
+		}
+	};
+
 	const columns = useMemo<MRT_ColumnDef<Endpoint>[]>(
 		() => [
+			{
+				accessorKey: 'is_active',
+				header: 'Active',
+				size: 80,
+				Cell: ({ row }) => (
+					<Tooltip title={row.original.is_active ? 'Deactivate endpoint' : 'Activate endpoint'}>
+						<Switch
+							checked={!!row.original.is_active}
+							onChange={() => handleToggleEndpointStatus(row.original)}
+							disabled={togglingEndpointId === row.original.id}
+							size="small"
+							color="success"
+						/>
+					</Tooltip>
+				)
+			},
 			{
 				accessorKey: 'name',
 				header: 'Name',
@@ -223,20 +264,8 @@ function EndpointsView() {
 				size: 120,
 				Cell: ({ row }) => <Typography variant="body2">{row.original.rate_limit_requests}/hr</Typography>
 			},
-			{
-				accessorKey: 'is_active',
-				header: 'Status',
-				size: 120,
-				Cell: ({ cell }) => (
-					<Chip
-						size="small"
-						label={cell.getValue<boolean>() ? 'Active' : 'Inactive'}
-						color={cell.getValue<boolean>() ? 'success' : 'default'}
-					/>
-				)
-			}
 		],
-		[]
+		[togglingEndpointId]
 	);
 
 	return (
@@ -482,10 +511,10 @@ function EndpointsView() {
 										>
 											<Box>
 												<Typography
-													variant="subtitle2"
+													variant="subtitle1"
 													className="capitalize"
 												>
-													{protocol.replace('_', ' ')}
+													{protocol.replace('_', ' ').toUpperCase()}
 												</Typography>
 												<Typography
 													variant="body2"

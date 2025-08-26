@@ -19,13 +19,13 @@ import {
 	Stack,
 	FormControlLabel,
 	Switch,
-	FormControl,
-	InputLabel,
-	Select,
-	OutlinedInput,
-	MenuItem,
-	ListItemText,
-	Checkbox
+	Checkbox,
+	Grid,
+	Card,
+	CardContent,
+	Alert,
+	Tab,
+	Tabs
 } from '@mui/material';
 import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
@@ -53,11 +53,15 @@ interface Namespace {
 	is_active: boolean;
 	created_at: string;
 	updated_at: string;
+	servers?: string[];
 }
 
 function NamespacesView() {
 	const [createModalOpen, setCreateModalOpen] = useState(false);
+	const [viewModalOpen, setViewModalOpen] = useState(false);
 	const [editingNamespace, setEditingNamespace] = useState<Namespace | null>(null);
+	const [viewingNamespace, setViewingNamespace] = useState<Namespace | null>(null);
+	const [modalTab, setModalTab] = useState(0);
 	const [formData, setFormData] = useState({
 		name: '',
 		description: '',
@@ -68,6 +72,7 @@ function NamespacesView() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [servers, setServers] = useState<MCPServer[]>([]);
 	const [loadingServers, setLoadingServers] = useState(false);
+	const [togglingNamespaceId, setTogglingNamespaceId] = useState<string | null>(null);
 	const { enqueueSnackbar } = useSnackbar();
 
 	// Fetch namespaces and servers on mount
@@ -110,6 +115,18 @@ function NamespacesView() {
 		setCreateModalOpen(true);
 	};
 
+	const handleViewNamespace = (namespace: Namespace) => {
+		setViewingNamespace(namespace);
+		setFormData({
+			name: namespace.name,
+			description: namespace.description || '',
+			is_active: namespace.is_active,
+			servers: namespace.servers || []
+		});
+		setModalTab(0);
+		setViewModalOpen(true);
+	};
+
 	const handleEditNamespace = (namespace: Namespace) => {
 		setFormData({
 			name: namespace.name,
@@ -129,8 +146,8 @@ function NamespacesView() {
 					...formData,
 					server_ids: formData.servers
 				};
-				delete updateData.servers; // Remove servers field, use server_ids instead
-				await namespaceApi.updateNamespace(editingNamespace.id, updateData);
+				const { servers, ...finalUpdateData } = updateData;
+				await namespaceApi.updateNamespace(editingNamespace.id, finalUpdateData);
 				enqueueSnackbar('Namespace updated successfully', { variant: 'success' });
 			} else {
 				// For creation, servers field is correct
@@ -148,6 +165,31 @@ function NamespacesView() {
 		}
 	};
 
+	const handleCloseViewModal = () => {
+		setViewModalOpen(false);
+		setViewingNamespace(null);
+		setModalTab(0);
+	};
+
+	const handleUpdateFromView = async () => {
+		if (!viewingNamespace) return;
+
+		try {
+			const updateData = {
+				...formData,
+				server_ids: formData.servers
+			};
+			delete updateData.servers;
+			await namespaceApi.updateNamespace(viewingNamespace.id, updateData);
+			enqueueSnackbar('Namespace updated successfully', { variant: 'success' });
+			handleCloseViewModal();
+			fetchNamespaces();
+		} catch (error) {
+			enqueueSnackbar('Failed to update namespace', { variant: 'error' });
+			console.error('Error updating namespace:', error);
+		}
+	};
+
 	const handleDeleteNamespace = async (namespace: Namespace) => {
 		try {
 			await namespaceApi.deleteNamespace(namespace.id);
@@ -159,8 +201,48 @@ function NamespacesView() {
 		}
 	};
 
+	const handleToggleNamespaceStatus = async (namespace: Namespace) => {
+		setTogglingNamespaceId(namespace.id);
+		try {
+			const updatedNamespace = await namespaceApi.updateNamespace(namespace.id, {
+				is_active: !namespace.is_active
+			});
+
+			// Update the local state with the updated namespace
+			setNamespaces(prev => prev.map(ns =>
+				ns.id === namespace.id ? updatedNamespace : ns
+			));
+
+			enqueueSnackbar('Namespace status updated successfully', { variant: 'success' });
+		} catch (error) {
+			const message = error instanceof Error ? error.message : 'Failed to update namespace status';
+			enqueueSnackbar(message, { variant: 'error' });
+			console.error('Error updating namespace status:', error);
+			// Refresh data on error to ensure UI is in sync
+			fetchNamespaces();
+		} finally {
+			setTogglingNamespaceId(null);
+		}
+	};
+
 	const columns = useMemo<MRT_ColumnDef<Namespace>[]>(
 		() => [
+			{
+				accessorKey: 'is_active',
+				header: 'Active',
+				size: 80,
+				Cell: ({ row }) => (
+					<Tooltip title={row.original.is_active ? 'Deactivate namespace' : 'Activate namespace'}>
+						<Switch
+							checked={!!row.original.is_active}
+							onChange={() => handleToggleNamespaceStatus(row.original)}
+							disabled={togglingNamespaceId === row.original.id}
+							size="small"
+							color="success"
+						/>
+					</Tooltip>
+				)
+			},
 			{
 				accessorKey: 'name',
 				header: 'Name',
@@ -206,18 +288,6 @@ function NamespacesView() {
 				)
 			},
 			{
-				accessorKey: 'is_active',
-				header: 'Status',
-				size: 120,
-				Cell: ({ cell }) => (
-					<Chip
-						size="small"
-						label={cell.getValue<boolean>() ? 'Active' : 'Inactive'}
-						color={cell.getValue<boolean>() ? 'success' : 'default'}
-					/>
-				)
-			},
-			{
 				accessorKey: 'created_at',
 				header: 'Created',
 				size: 150,
@@ -231,7 +301,7 @@ function NamespacesView() {
 				}
 			}
 		],
-		[]
+		[togglingNamespaceId]
 	);
 
 	return (
@@ -269,9 +339,12 @@ function NamespacesView() {
 						enableRowActions
 						renderRowActions={({ row }) => (
 							<Box className="flex items-center space-x-1">
-								<Tooltip title="View Servers">
-									<IconButton size="small">
-										<SvgIcon size={18}>lucide:server</SvgIcon>
+								<Tooltip title="View Details">
+									<IconButton
+										size="small"
+										onClick={() => handleViewNamespace(row.original)}
+									>
+										<SvgIcon size={18}>lucide:eye</SvgIcon>
 									</IconButton>
 								</Tooltip>
 								<Tooltip title="Edit Namespace">
@@ -329,51 +402,99 @@ function NamespacesView() {
 									multiline
 									rows={3}
 								/>
-								<FormControl fullWidth>
-									<InputLabel id="servers-select-label">Servers</InputLabel>
-									<Select
-										labelId="servers-select-label"
-										multiple
-										value={formData.servers}
-										onChange={(e) => {
-											const value =
-												typeof e.target.value === 'string'
-													? e.target.value.split(',')
-													: e.target.value;
-											setFormData((prev) => ({ ...prev, servers: value }));
-										}}
-										input={<OutlinedInput label="Servers" />}
-										renderValue={(selected) => {
-											const selectedNames = selected.map(
-												(id) => servers.find((s) => s.id === id)?.name || 'Unknown'
-											);
-											return selectedNames.join(', ');
-										}}
-										disabled={loadingServers}
-									>
-										{servers.map((server) => (
-											<MenuItem
-												key={server.id}
-												value={server.id}
-											>
-												<Checkbox checked={formData.servers.indexOf(server.id) > -1} />
-												<ListItemText
-													primary={server.name}
-													secondary={server.description}
-												/>
-											</MenuItem>
-										))}
-									</Select>
-									{loadingServers && (
+								<Box>
+									<Typography variant="body2" color="textSecondary" gutterBottom>
+										Select Servers
+									</Typography>
+									{loadingServers ? (
 										<Typography
 											variant="caption"
 											color="textSecondary"
-											sx={{ mt: 1 }}
 										>
 											Loading servers...
 										</Typography>
+									) : (
+										<Box
+											sx={{
+												maxHeight: 200,
+												overflowY: 'auto',
+												border: 1,
+												borderColor: 'divider',
+												borderRadius: 1,
+												p: 1
+											}}
+										>
+											{servers.length === 0 ? (
+												<Typography variant="body2" color="textSecondary" sx={{ p: 1 }}>
+													No servers available
+												</Typography>
+											) : (
+												servers.map((server) => (
+													<FormControlLabel
+														key={server.id}
+														control={
+															<Checkbox
+																checked={formData.servers.includes(server.id)}
+																onChange={(e) => {
+																	if (e.target.checked) {
+																		setFormData((prev) => ({
+																			...prev,
+																			servers: [...prev.servers, server.id]
+																		}));
+																	} else {
+																		setFormData((prev) => ({
+																			...prev,
+																			servers: prev.servers.filter((id) => id !== server.id)
+																		}));
+																	}
+																}}
+															/>
+														}
+														label={
+															<Box>
+																<Typography variant="body2" component="div">
+																	{server.name}
+																</Typography>
+																{/* {server.description && (
+																	<Typography variant="caption" color="textSecondary">
+																		{server.description}
+																	</Typography>
+																)} */}
+															</Box>
+														}
+														sx={{ alignItems: 'flex-start', width: '100%', ml: 0 }}
+													/>
+												))
+											)}
+										</Box>
 									)}
-								</FormControl>
+									{formData.servers.length > 0 && (
+										<Box sx={{ mt: 2 }}>
+											<Typography variant="body2" color="textSecondary" gutterBottom>
+												Selected ({formData.servers.length})
+											</Typography>
+											<Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+												{formData.servers.map((serverId) => {
+													const server = servers.find((s) => s.id === serverId);
+													return (
+														<Chip
+															key={serverId}
+															label={server?.name || 'Unknown'}
+															size="small"
+															variant="outlined"
+															onDelete={() => {
+																setFormData((prev) => ({
+																	...prev,
+																	servers: prev.servers.filter((id) => id !== serverId)
+																}));
+															}}
+														/>
+													);
+												})}
+											</Stack>
+										</Box>
+									)}
+								</Box>
 								<FormControlLabel
 									control={
 										<Switch
@@ -395,6 +516,250 @@ function NamespacesView() {
 								disabled={!formData.name.trim()}
 							>
 								{editingNamespace ? 'Update' : 'Create'}
+							</Button>
+						</DialogActions>
+					</Dialog>
+
+					{/* View/Edit Namespace Modal */}
+					<Dialog
+						open={viewModalOpen}
+						onClose={handleCloseViewModal}
+						maxWidth="md"
+						fullWidth
+					>
+						<DialogTitle>
+							<Box className="flex items-center justify-between">
+								<Typography variant="h6">
+									{viewingNamespace?.name || 'Namespace Details'}
+								</Typography>
+								<Chip
+									size="small"
+									label={viewingNamespace?.is_active ? 'Active' : 'Inactive'}
+									color={viewingNamespace?.is_active ? 'success' : 'default'}
+								/>
+							</Box>
+						</DialogTitle>
+						<DialogContent>
+							<Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+								<Tabs value={modalTab} onChange={(e, newValue) => setModalTab(newValue)}>
+									<Tab label="Overview" />
+									<Tab label="Settings" />
+									<Tab label="Servers" />
+								</Tabs>
+							</Box>
+
+							{/* Overview Tab */}
+							{modalTab === 0 && (
+								<Stack spacing={3}>
+									<Card variant="outlined">
+										<CardContent>
+											<Typography variant="h6" gutterBottom>
+												Namespace Information
+											</Typography>
+											<Grid container spacing={2}>
+												<Grid item xs={6}>
+													<Typography variant="body2" color="textSecondary">
+														Name
+													</Typography>
+													<Typography variant="body1">
+														{viewingNamespace?.name}
+													</Typography>
+												</Grid>
+												<Grid item xs={6}>
+													<Typography variant="body2" color="textSecondary">
+														Slug
+													</Typography>
+													<Typography variant="body1">
+														{viewingNamespace?.slug}
+													</Typography>
+												</Grid>
+												<Grid item xs={6}>
+													<Typography variant="body2" color="textSecondary">
+														Server Count
+													</Typography>
+													<Typography variant="body1">
+														{viewingNamespace?.server_count || 0} servers
+													</Typography>
+												</Grid>
+												<Grid item xs={6}>
+													<Typography variant="body2" color="textSecondary">
+														Created
+													</Typography>
+													<Typography variant="body1">
+														{viewingNamespace?.created_at ? new Date(viewingNamespace.created_at).toLocaleDateString('en-US', {
+															year: 'numeric',
+															month: 'short',
+															day: 'numeric'
+														}) : 'N/A'}
+													</Typography>
+												</Grid>
+												<Grid item xs={12}>
+													<Typography variant="body2" color="textSecondary">
+														Description
+													</Typography>
+													<Typography variant="body1">
+														{viewingNamespace?.description || 'No description provided'}
+													</Typography>
+												</Grid>
+											</Grid>
+										</CardContent>
+									</Card>
+								</Stack>
+							)}
+
+							{/* Settings Tab */}
+							{modalTab === 1 && (
+								<Stack spacing={3}>
+									<Alert severity="info">
+										Modify namespace settings. Changes will be saved when you click Update.
+									</Alert>
+									<TextField
+										label="Name"
+										value={formData.name}
+										onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+										fullWidth
+										required
+										helperText="The display name for this namespace"
+									/>
+									<TextField
+										label="Description"
+										value={formData.description}
+										onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+										fullWidth
+										multiline
+										rows={3}
+										helperText="Optional description to help identify this namespace"
+									/>
+									<FormControlLabel
+										control={
+											<Switch
+												checked={formData.is_active}
+												onChange={(e) =>
+													setFormData((prev) => ({ ...prev, is_active: e.target.checked }))
+												}
+												color={formData.is_active ? 'success' : 'default'}
+											/>
+										}
+										label={`Namespace is ${formData.is_active ? 'Active' : 'Inactive'}`}
+									/>
+									{!formData.is_active && (
+										<Alert severity="warning">
+											Deactivating this namespace will make it unavailable for use, but data will be preserved.
+										</Alert>
+									)}
+								</Stack>
+							)}
+
+							{/* Servers Tab */}
+							{modalTab === 2 && (
+								<Stack spacing={3}>
+									<Alert severity="info">
+										Manage which servers are associated with this namespace.
+									</Alert>
+									<Box>
+										<Typography variant="body2" color="textSecondary" gutterBottom>
+											Select Servers
+										</Typography>
+										{loadingServers ? (
+											<Typography
+												variant="caption"
+												color="textSecondary"
+											>
+												Loading servers...
+											</Typography>
+										) : (
+											<Box
+												sx={{
+													maxHeight: 200,
+													overflowY: 'auto',
+													border: 1,
+													borderColor: 'divider',
+													borderRadius: 1,
+													p: 1
+												}}
+											>
+												{servers.length === 0 ? (
+													<Typography variant="body2" color="textSecondary" sx={{ p: 1 }}>
+														No servers available
+													</Typography>
+												) : (
+													servers.map((server) => (
+														<FormControlLabel
+															key={server.id}
+															control={
+																<Checkbox
+																	checked={formData.servers.includes(server.id)}
+																	onChange={(e) => {
+																		if (e.target.checked) {
+																			setFormData((prev) => ({
+																				...prev,
+																				servers: [...prev.servers, server.id]
+																			}));
+																		} else {
+																			setFormData((prev) => ({
+																				...prev,
+																				servers: prev.servers.filter((id) => id !== server.id)
+																			}));
+																		}
+																	}}
+																/>
+															}
+															label={
+																<Box>
+																	<Typography variant="body2" component="div">
+																		{server.name}
+																	</Typography>
+																	{server.description && (
+																		<Typography variant="caption" color="textSecondary">
+																			{server.description}
+																		</Typography>
+																	)}
+																</Box>
+															}
+															sx={{ alignItems: 'flex-start', width: '100%', ml: 0 }}
+														/>
+													))
+												)}
+											</Box>
+										)}
+									</Box>
+									{formData.servers.length > 0 && (
+										<Box>
+											<Typography variant="body2" color="textSecondary" gutterBottom>
+												Selected Servers ({formData.servers.length})
+											</Typography>
+											<Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+												{formData.servers.map((serverId) => {
+													const server = servers.find((s) => s.id === serverId);
+													return (
+														<Chip
+															key={serverId}
+															label={server?.name || 'Unknown'}
+															size="small"
+															variant="outlined"
+															onDelete={() => {
+																setFormData((prev) => ({
+																	...prev,
+																	servers: prev.servers.filter((id) => id !== serverId)
+																}));
+															}}
+														/>
+													);
+												})}
+											</Stack>
+										</Box>
+									)}
+								</Stack>
+							)}
+						</DialogContent>
+						<DialogActions>
+							<Button onClick={handleCloseViewModal}>Cancel</Button>
+							<Button
+								variant="contained"
+								onClick={handleUpdateFromView}
+								disabled={!formData.name.trim()}
+							>
+								Update
 							</Button>
 						</DialogActions>
 					</Dialog>

@@ -83,3 +83,81 @@ When working on app features, follow this folder structure:
 ```
 
 Follow this structure for consistent app development.
+
+## FORM FIELD STYLING & ACCESSIBILITY
+
+### Form Field Background Colors
+
+The application uses two styling systems that need proper contrast for ADA compliance:
+
+#### 1. Custom UI Components (Tailwind)
+Located in `src/components/ui/`:
+- **Input** (`input.tsx`): Light mode `bg-gray-50`, Dark mode `dark:bg-gray-800`
+- **Textarea** (`textarea.tsx`): Light mode `bg-gray-50`, Dark mode `dark:bg-gray-800`
+- **Select** (`select.tsx`): Light mode `bg-gray-50`, Dark mode `dark:bg-gray-800`
+
+To adjust these:
+```tsx
+// Example: Change input background colors
+className={cn(
+  'bg-gray-50',           // Light mode background
+  'dark:bg-gray-800',      // Dark mode background
+  // ... other classes
+)}
+```
+
+#### 2. Material-UI Components
+Located in `src/@fuse/default-settings/DefaultSettings.ts`:
+
+- **MuiOutlinedInput**: Controls TextField with variant="outlined"
+```javascript
+MuiOutlinedInput: {
+  styleOverrides: {
+    root: ({theme}) => ({
+      backgroundColor: theme.palette.mode === 'dark' 
+        ? 'rgba(255, 255, 255, 0.05)'  // Dark mode: subtle white overlay
+        : '#f8f9fa',                    // Light mode: light gray
+    }),
+  }
+}
+```
+
+- **MuiFilledInput**: Controls TextField with variant="filled"
+```javascript
+MuiFilledInput: {
+  styleOverrides: {
+    root: ({theme}) => ({
+      backgroundColor: theme.palette.mode === 'dark'
+        ? 'rgba(255, 255, 255, 0.05)'  // Dark mode
+        : '#f3f4f6',                    // Light mode
+    }),
+  }
+}
+```
+
+### Accessibility Requirements
+
+Form fields must have sufficient contrast from the background:
+- **WCAG AA Standard**: Minimum 3:1 contrast ratio for UI elements
+- **Best Practice**: Use subtle background colors that distinguish fields from the page background
+- **Testing**: Always verify form visibility in both light and dark modes
+
+### Common Background Color Values
+
+**Light Mode Options:**
+- `#f8f9fa` - Very light gray (recommended for outlined inputs)
+- `#f3f4f6` - Light gray (recommended for filled inputs)
+- `gray-50` - Tailwind's lightest gray (#f9fafb)
+
+**Dark Mode Options:**
+- `rgba(255, 255, 255, 0.05)` - 5% white overlay (subtle)
+- `#2a2d35` - Dark gray (for dropdowns/papers)
+- `gray-800` - Tailwind's dark gray (#1f2937)
+
+### Quick Reference for Future Adjustments
+
+1. **To make form fields more visible in light mode**: Increase the gray tone (e.g., from `gray-50` to `gray-100`)
+2. **To make form fields more visible in dark mode**: Increase the white overlay (e.g., from `0.05` to `0.08`)
+3. **Always test changes** by toggling between light/dark modes in the UI
+
+Follow this structure for consistent app development.

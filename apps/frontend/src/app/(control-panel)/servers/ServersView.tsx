@@ -6,7 +6,7 @@ import { useOptimizedQuery } from '@/hooks/useOptimizedQuery';
 import { MRT_ColumnDef } from 'material-react-table';
 import PageSimple from '@fuse/core/PageSimple';
 import { styled } from '@mui/material/styles';
-import { Typography, Button, Chip, IconButton, Tooltip, Box, Tabs, Tab } from '@mui/material';
+import { Typography, Button, Chip, IconButton, Tooltip, Box, Tabs, Tab, Switch } from '@mui/material';
 import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
 import { useSnackbar } from 'notistack';
@@ -52,12 +52,13 @@ function ServersView() {
 	const queryClient = useQueryClient();
 
 	// Fetch registered servers with optimized caching
-	const { data: servers = [], isLoading } = useOptimizedQuery<MCPServer[]>(
+	const { data: servers = [], isLoading, refetch } = useOptimizedQuery<MCPServer[]>(
 		['servers'],
 		() => serverApi.listServers(),
 		{
-			refetchInterval: 15000,
-			cacheKey: 'servers-list'
+			refetchInterval: false, // Disable auto-refetch to prevent conflicts with manual updates
+			cacheKey: 'servers-list',
+			staleTime: 5 * 60 * 1000, // Consider data stale after 5 minutes
 		}
 	);
 
@@ -98,6 +99,28 @@ function ServersView() {
 		}
 	});
 
+	// Toggle server active status mutation
+	const toggleServerMutation = useMutation({
+		mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
+			serverApi.updateServer(id, { is_active: isActive }),
+		onSuccess: (updatedServer, variables) => {
+			// Update the cache with the actual server data returned from API
+			queryClient.setQueryData<MCPServer[]>(['servers'], (oldServers) => {
+				if (!oldServers) return oldServers;
+				return oldServers.map(server =>
+					server.id === variables.id ? updatedServer : server
+				);
+			});
+			enqueueSnackbar('Server status updated successfully', { variant: 'success' });
+		},
+		onError: (error: Error | unknown) => {
+			const message = error instanceof Error ? error.message : 'Failed to update server status';
+			enqueueSnackbar(message, { variant: 'error' });
+			// Refetch to ensure UI is in sync after error
+			refetch();
+		}
+	});
+
 	const handleUnregisterServer = (server: MCPServer) => {
 		setServerToUnregister(server);
 		setUnregisterDialogOpen(true);
@@ -128,19 +151,45 @@ function ServersView() {
 		setSelectedServer(null);
 	};
 
+	const handleToggleServerStatus = (server: MCPServer) => {
+		toggleServerMutation.mutate({ id: server.id, isActive: !server.is_active });
+	};
+
 	const columns = useMemo<MRT_ColumnDef<MCPServer>[]>(
 		() => [
+			{
+				accessorKey: 'is_active',
+				header: 'Active',
+				size: 80,
+				Cell: ({ row }) => (
+					<Tooltip title={row.original.is_active ? 'Deactivate server' : 'Activate server'}>
+						<Switch
+							checked={!!row.original.is_active}
+							onChange={() => handleToggleServerStatus(row.original)}
+							disabled={toggleServerMutation.isPending}
+							size="small"
+							color="success"
+						/>
+					</Tooltip>
+				)
+			},
 			{
 				accessorKey: 'name',
 				header: 'Name',
 				size: 200,
+				maxSize: 250,
 				Cell: ({ row }) => (
-					<Box className="flex items-center space-x-2">
+					<Box className="flex items-center space-x-2" sx={{ maxWidth: 250 }}>
 						<SvgIcon size={20}>lucide:server</SvgIcon>
-						<Box>
+						<Box sx={{ minWidth: 0, flex: 1 }}>
 							<Typography
 								variant="body2"
 								className="font-medium"
+								sx={{
+									overflow: 'hidden',
+									textOverflow: 'ellipsis',
+									whiteSpace: 'nowrap'
+								}}
 							>
 								{row.original.name}
 							</Typography>
@@ -148,6 +197,12 @@ function ServersView() {
 								<Typography
 									variant="caption"
 									color="textSecondary"
+									sx={{
+										overflow: 'hidden',
+										textOverflow: 'ellipsis',
+										whiteSpace: 'nowrap',
+										display: 'block'
+									}}
 								>
 									{row.original.description}
 								</Typography>
@@ -165,19 +220,6 @@ function ServersView() {
 						size="small"
 						label={cell.getValue<string>().toUpperCase()}
 						variant="outlined"
-					/>
-				)
-			},
-			{
-				accessorKey: 'status',
-				header: 'Status',
-				size: 120,
-				Cell: ({ cell }) => (
-					<Chip
-						size="small"
-						label={cell.getValue<string>()}
-						color={getStatusColor(cell.getValue<string>())}
-						sx={{ textTransform: 'capitalize' }}
 					/>
 				)
 			},

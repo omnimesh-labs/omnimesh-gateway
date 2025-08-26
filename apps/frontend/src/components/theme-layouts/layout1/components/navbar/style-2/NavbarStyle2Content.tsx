@@ -8,7 +8,6 @@ import useThemeMediaQuery from '@fuse/hooks/useThemeMediaQuery';
 import isUrlInChildren from '@fuse/core/Navigation/isUrlInChildren';
 import { Theme } from '@mui/system';
 import { NavItemType } from '@fuse/core/Navigation/types/NavItemType';
-import UserMenu from '@/@auth/components/UserMenu';
 import usePathname from '@fuse/hooks/usePathname';
 import useNavigationItems from '@/components/theme-layouts/components/navigation/hooks/useNavigationItems';
 import { useNavbarContext } from '@/components/theme-layouts/components/navbar/contexts/NavbarContext/useNavbarContext';
@@ -133,10 +132,6 @@ function NavbarStyle2Content(props: NavbarStyle2ContentProps) {
 							selectedId={selectedNavigation[0]?.id}
 						/>
 					</Scrollbars>
-
-					<div className="flex w-full shrink-0 items-center justify-center py-2">
-						<UserMenu onlyAvatar />
-					</div>
 				</div>
 
 				{selectedNavigation.length > 0 && (

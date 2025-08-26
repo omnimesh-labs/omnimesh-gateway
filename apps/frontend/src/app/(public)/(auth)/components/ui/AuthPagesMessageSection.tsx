@@ -74,11 +74,11 @@ function AuthPagesMessageSection() {
 
 			<div className="relative z-10 w-full max-w-4xl">
 				<div className="text-7xl font-bold leading-none text-gray-100">
-					<div>Welcome to</div>
-					<div>our community</div>
+					<div>Janex Gateway</div>
+					<div>Admin Dashboard</div>
 				</div>
 				<div className="mt-6 text-lg leading-6 tracking-tight text-gray-400">
-					Janex provides enterprise-grade infrastructure for Model Context Protocol servers with
+					Manage your Model Context Protocol servers with enterprise-grade infrastructure featuring
 					authentication, logging, rate limiting, and multi-protocol transport support.
 				</div>
 				<div className="mt-8 flex items-center">
@@ -96,7 +96,7 @@ function AuthPagesMessageSection() {
 					</AvatarGroup>
 
 					<div className="ml-4 font-medium tracking-tight text-gray-400">
-						Join developers building the future of AI integration
+						Trusted by teams managing MCP server infrastructure
 					</div>
 				</div>
 			</div>
