@@ -461,8 +461,8 @@ func (m *MCPToolModel) Update(tool *MCPTool) error {
 		UPDATE mcp_tools
 		SET name = $2, description = $3, function_name = $4, schema = $5, category = $6,
 			implementation_type = $7, endpoint_url = $8, timeout_seconds = $9, max_retries = $10,
-			access_permissions = $11, is_public = $12, metadata = $13, tags = $14,
-			examples = $15, documentation = $16
+			access_permissions = $11, is_active = $12, is_public = $13, metadata = $14, tags = $15,
+			examples = $16, documentation = $17
 		WHERE id = $1
 	`
 
@@ -506,7 +506,7 @@ func (m *MCPToolModel) Update(tool *MCPTool) error {
 	_, err := m.db.Exec(query,
 		tool.ID, tool.Name, tool.Description, tool.FunctionName, schemaJSON, tool.Category,
 		tool.ImplementationType, tool.EndpointURL, tool.TimeoutSeconds, tool.MaxRetries,
-		accessPermissionsJSON, tool.IsPublic, metadataJSON, tool.Tags, examplesJSON,
+		accessPermissionsJSON, tool.IsActive, tool.IsPublic, metadataJSON, tool.Tags, examplesJSON,
 		tool.Documentation)
 	return err
 }

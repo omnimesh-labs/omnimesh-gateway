@@ -111,7 +111,12 @@ function ServersView() {
 					server.id === variables.id ? updatedServer : server
 				);
 			});
-			enqueueSnackbar('Server status updated successfully', { variant: 'success' });
+			// Show specific toast based on activation/deactivation
+			if (variables.isActive) {
+				enqueueSnackbar('Server activated successfully', { variant: 'success' });
+			} else {
+				enqueueSnackbar('Server deactivated successfully', { variant: 'success' });
+			}
 		},
 		onError: (error: Error | unknown) => {
 			const message = error instanceof Error ? error.message : 'Failed to update server status';

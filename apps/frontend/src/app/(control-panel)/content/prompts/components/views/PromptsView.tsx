@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { MRT_ColumnDef } from 'material-react-table';
 import PageSimple from '@fuse/core/PageSimple';
 import { styled } from '@mui/material/styles';
@@ -19,11 +19,20 @@ import {
 	Stack,
 	MenuItem,
 	FormControlLabel,
-	Switch
+	Switch,
+	Divider,
+	Card,
+	CardContent
 } from '@mui/material';
 import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
-import { useSnackbar } from 'notistack';
+import {
+	usePrompts,
+	useCreatePrompt,
+	useUpdatePrompt,
+	useDeletePrompt
+} from '../../api/hooks/usePrompts';
+import { Prompt, CreatePromptRequest, UpdatePromptRequest } from '@/lib/api';
 
 const Root = styled(PageSimple)(({ theme }) => ({
 	'& .PageSimple-header': {
@@ -37,17 +46,6 @@ const Root = styled(PageSimple)(({ theme }) => ({
 	}
 }));
 
-interface Prompt {
-	id: string;
-	name: string;
-	category: string;
-	description?: string;
-	prompt_template: string;
-	usage_count: number;
-	is_active: boolean;
-	created_at: string;
-	updated_at: string;
-}
 
 const CATEGORY_ICONS = {
 	general: 'lucide:message-square',
@@ -71,52 +69,26 @@ const CATEGORY_COLORS = {
 
 function PromptsView() {
 	const [createModalOpen, setCreateModalOpen] = useState(false);
+	const [viewModalOpen, setViewModalOpen] = useState(false);
 	const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
-	const [formData, setFormData] = useState({
+	const [viewingPrompt, setViewingPrompt] = useState<Prompt | null>(null);
+	const [formData, setFormData] = useState<CreatePromptRequest>({
 		name: '',
 		category: 'general',
 		description: '',
 		prompt_template: '',
 		is_active: true
 	});
-	const { enqueueSnackbar } = useSnackbar();
 
-	// Mock data
-	const mockPrompts: Prompt[] = [
-		{
-			id: '1',
-			name: 'Code Review',
-			category: 'coding',
-			description: 'Review code for best practices',
-			prompt_template: 'Please review the following code for best practices...',
-			usage_count: 42,
-			is_active: true,
-			created_at: '2024-01-15T10:00:00Z',
-			updated_at: '2024-01-20T15:30:00Z'
-		},
-		{
-			id: '2',
-			name: 'Data Analysis',
-			category: 'analysis',
-			description: 'Analyze data patterns and insights',
-			prompt_template: 'Analyze the following data and provide insights...',
-			usage_count: 28,
-			is_active: true,
-			created_at: '2024-01-10T09:00:00Z',
-			updated_at: '2024-01-18T14:00:00Z'
-		},
-		{
-			id: '3',
-			name: 'Creative Writing',
-			category: 'creative',
-			description: 'Generate creative content',
-			prompt_template: 'Write a creative story about...',
-			usage_count: 15,
-			is_active: false,
-			created_at: '2024-01-12T11:00:00Z',
-			updated_at: '2024-01-22T16:00:00Z'
-		}
-	];
+	// API hooks
+	const { data: promptsResponse, isLoading, error } = usePrompts();
+	const createPrompt = useCreatePrompt();
+	const updatePrompt = useUpdatePrompt();
+	const deletePrompt = useDeletePrompt();
+
+	const prompts = promptsResponse?.data || [];
+	const [togglingPromptId, setTogglingPromptId] = useState<string | null>(null);
+
 
 	const handleCreatePrompt = () => {
 		setFormData({
@@ -128,6 +100,11 @@ function PromptsView() {
 		});
 		setEditingPrompt(null);
 		setCreateModalOpen(true);
+	};
+
+	const handleViewPrompt = (prompt: Prompt) => {
+		setViewingPrompt(prompt);
+		setViewModalOpen(true);
 	};
 
 	const handleEditPrompt = (prompt: Prompt) => {
@@ -142,23 +119,77 @@ function PromptsView() {
 		setCreateModalOpen(true);
 	};
 
-	const handleSavePrompt = () => {
-		const action = editingPrompt ? 'updated' : 'created';
-		enqueueSnackbar(`Prompt ${action} successfully (demo)`, { variant: 'success' });
-		setCreateModalOpen(false);
-		setEditingPrompt(null);
+	const handleSavePrompt = async () => {
+		try {
+			if (editingPrompt) {
+				const updateData: UpdatePromptRequest = {
+					name: formData.name,
+					category: formData.category,
+					description: formData.description,
+					prompt_template: formData.prompt_template
+				};
+				await updatePrompt.mutateAsync({
+					id: editingPrompt.id,
+					data: updateData
+				});
+			} else {
+				await createPrompt.mutateAsync(formData);
+			}
+			setCreateModalOpen(false);
+			setEditingPrompt(null);
+		} catch (error) {
+			// Error handling is done in the mutation hooks
+			console.error('Failed to save prompt:', error);
+		}
 	};
 
-	const handleDeletePrompt = (prompt: Prompt) => {
-		enqueueSnackbar(`Delete functionality coming soon for ${prompt.name}`, { variant: 'info' });
+	const handleDeletePrompt = async (prompt: Prompt) => {
+		if (confirm(`Are you sure you want to delete "${prompt.name}"? This action cannot be undone.`)) {
+			try {
+				await deletePrompt.mutateAsync(prompt.id);
+			} catch (error) {
+				// Error handling is done in the mutation hook
+				console.error('Failed to delete prompt:', error);
+			}
+		}
 	};
 
-	const handleTestPrompt = (prompt: Prompt) => {
-		enqueueSnackbar(`Test functionality coming soon for ${prompt.name}`, { variant: 'info' });
-	};
+	const handleTogglePromptStatus = useCallback(async (prompt: Prompt) => {
+		setTogglingPromptId(prompt.id);
+		try {
+			const updateData: UpdatePromptRequest = {
+				is_active: !prompt.is_active
+			};
+			const updatedPrompt = await updatePrompt.mutateAsync({
+				id: prompt.id,
+				data: updateData
+			});
+		} catch (error) {
+			console.error('Failed to update prompt status:', error);
+		} finally {
+			setTogglingPromptId(null);
+		}
+	}, [updatePrompt]);
+
 
 	const columns = useMemo<MRT_ColumnDef<Prompt>[]>(
 		() => [
+			{
+				accessorKey: 'is_active',
+				header: 'Active',
+				size: 80,
+				Cell: ({ row }) => (
+					<Tooltip title={row.original.is_active ? 'Deactivate prompt' : 'Activate prompt'}>
+						<Switch
+							checked={!!row.original.is_active}
+							onChange={() => handleTogglePromptStatus(row.original)}
+							disabled={togglingPromptId === row.original.id}
+							size="small"
+							color="success"
+						/>
+					</Tooltip>
+				)
+			},
 			{
 				accessorKey: 'name',
 				header: 'Name',
@@ -223,30 +254,6 @@ function PromptsView() {
 				}
 			},
 			{
-				accessorKey: 'usage_count',
-				header: 'Usage',
-				size: 100,
-				Cell: ({ cell }) => (
-					<Chip
-						size="small"
-						label={cell.getValue<number>()}
-						variant="outlined"
-					/>
-				)
-			},
-			{
-				accessorKey: 'is_active',
-				header: 'Status',
-				size: 120,
-				Cell: ({ cell }) => (
-					<Chip
-						size="small"
-						label={cell.getValue<boolean>() ? 'Active' : 'Inactive'}
-						color={cell.getValue<boolean>() ? 'success' : 'default'}
-					/>
-				)
-			},
-			{
 				accessorKey: 'created_at',
 				header: 'Created',
 				size: 150,
@@ -260,7 +267,7 @@ function PromptsView() {
 				}
 			}
 		],
-		[]
+		[handleTogglePromptStatus, togglingPromptId]
 	);
 
 	return (
@@ -293,16 +300,17 @@ function PromptsView() {
 				<div className="p-6">
 					<LazyDataTable
 						columns={columns}
-						data={mockPrompts}
+						data={prompts}
+						state={{ isLoading: isLoading }}
 						enableRowActions
 						renderRowActions={({ row }) => (
 							<Box className="flex items-center space-x-1">
-								<Tooltip title="Test Prompt">
+								<Tooltip title="View Details">
 									<IconButton
 										size="small"
-										onClick={() => handleTestPrompt(row.original)}
+										onClick={() => handleViewPrompt(row.original)}
 									>
-										<SvgIcon size={18}>lucide:play</SvgIcon>
+										<SvgIcon size={18}>lucide:eye</SvgIcon>
 									</IconButton>
 								</Tooltip>
 								<Tooltip title="Edit Prompt">
@@ -409,6 +417,115 @@ function PromptsView() {
 							>
 								{editingPrompt ? 'Update' : 'Create'}
 							</Button>
+						</DialogActions>
+					</Dialog>
+
+					{/* View Prompt Dialog */}
+					<Dialog
+						open={viewModalOpen}
+						onClose={() => setViewModalOpen(false)}
+						maxWidth="md"
+						fullWidth
+					>
+						<DialogTitle>Prompt Details</DialogTitle>
+						<DialogContent>
+							{viewingPrompt && (
+								<Stack spacing={3} sx={{ mt: 1 }}>
+									<Card variant="outlined">
+										<CardContent>
+											<Stack spacing={2}>
+												<Box>
+													<Typography variant="subtitle2" color="textSecondary">
+														Name
+													</Typography>
+													<Typography variant="body1">{viewingPrompt.name}</Typography>
+												</Box>
+
+												<Box>
+													<Typography variant="subtitle2" color="textSecondary">
+														Category
+													</Typography>
+													<Chip
+														size="small"
+														label={viewingPrompt.category}
+														color={CATEGORY_COLORS[viewingPrompt.category as keyof typeof CATEGORY_COLORS] || 'default'}
+													/>
+												</Box>
+
+												{viewingPrompt.description && (
+													<Box>
+														<Typography variant="subtitle2" color="textSecondary">
+															Description
+														</Typography>
+														<Typography variant="body1">
+															{viewingPrompt.description}
+														</Typography>
+													</Box>
+												)}
+
+												<Box>
+													<Typography variant="subtitle2" color="textSecondary">
+														Prompt Template
+													</Typography>
+													<Card variant="outlined" sx={{ bgcolor: 'grey.50' }}>
+														<CardContent>
+															<Typography variant="body2" component="pre" sx={{ whiteSpace: 'pre-wrap' }}>
+																{viewingPrompt.prompt_template}
+															</Typography>
+														</CardContent>
+													</Card>
+												</Box>
+
+												<Box>
+													<Typography variant="subtitle2" color="textSecondary">
+														Status
+													</Typography>
+													<Chip
+														size="small"
+														label={viewingPrompt.is_active ? 'Active' : 'Inactive'}
+														color={viewingPrompt.is_active ? 'success' : 'default'}
+													/>
+												</Box>
+
+												<Divider />
+
+												<Box>
+													<Typography variant="subtitle2" color="textSecondary">
+														Created
+													</Typography>
+													<Typography variant="body2">
+														{new Date(viewingPrompt.created_at).toLocaleString()}
+													</Typography>
+												</Box>
+
+												<Box>
+													<Typography variant="subtitle2" color="textSecondary">
+														Last Updated
+													</Typography>
+													<Typography variant="body2">
+														{new Date(viewingPrompt.updated_at).toLocaleString()}
+													</Typography>
+												</Box>
+											</Stack>
+										</CardContent>
+									</Card>
+								</Stack>
+							)}
+						</DialogContent>
+						<DialogActions>
+							<Button onClick={() => setViewModalOpen(false)}>Close</Button>
+							{viewingPrompt && (
+								<Button
+									variant="contained"
+									color="primary"
+									onClick={() => {
+										setViewModalOpen(false);
+										handleEditPrompt(viewingPrompt);
+									}}
+								>
+									Edit Prompt
+								</Button>
+							)}
 						</DialogActions>
 					</Dialog>
 				</div>

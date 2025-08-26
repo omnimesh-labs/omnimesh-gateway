@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { MRT_ColumnDef } from 'material-react-table';
 import PageSimple from '@fuse/core/PageSimple';
 import { styled } from '@mui/material/styles';
@@ -19,11 +19,24 @@ import {
 	Stack,
 	MenuItem,
 	FormControlLabel,
-	Switch
+	Switch,
+	Divider,
+	Card,
+	CardContent
 } from '@mui/material';
 import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
-import { useSnackbar } from 'notistack';
+import {
+	useResources,
+	useCreateResource,
+	useUpdateResource,
+	useDeleteResource
+} from '../../api/hooks/useResources';
+import { Resource, CreateResourceRequest, UpdateResourceRequest } from '@/lib/api';
+
+interface ResourceFormData extends CreateResourceRequest {
+	is_active: boolean;
+}
 
 const Root = styled(PageSimple)(({ theme }) => ({
 	'& .PageSimple-header': {
@@ -37,17 +50,6 @@ const Root = styled(PageSimple)(({ theme }) => ({
 	}
 }));
 
-interface Resource {
-	id: string;
-	name: string;
-	resource_type: string;
-	uri: string;
-	description?: string;
-	size_bytes?: number;
-	is_active: boolean;
-	created_at: string;
-	updated_at: string;
-}
 
 const RESOURCE_TYPE_ICONS = {
 	file: 'lucide:file-text',
@@ -69,63 +71,26 @@ const RESOURCE_TYPE_COLORS = {
 
 function ResourcesView() {
 	const [createModalOpen, setCreateModalOpen] = useState(false);
+	const [viewModalOpen, setViewModalOpen] = useState(false);
 	const [editingResource, setEditingResource] = useState<Resource | null>(null);
-	const [formData, setFormData] = useState({
+	const [viewingResource, setViewingResource] = useState<Resource | null>(null);
+	const [formData, setFormData] = useState<ResourceFormData>({
 		name: '',
 		resource_type: 'file',
 		uri: '',
 		description: '',
 		is_active: true
 	});
-	const { enqueueSnackbar } = useSnackbar();
 
-	// Mock data
-	const mockResources: Resource[] = [
-		{
-			id: '1',
-			name: 'User Database',
-			resource_type: 'database',
-			uri: 'postgres://db.example.com:5432/users',
-			description: 'Main user database',
-			size_bytes: 5242880000,
-			is_active: true,
-			created_at: '2024-01-15T10:00:00Z',
-			updated_at: '2024-01-20T15:30:00Z'
-		},
-		{
-			id: '2',
-			name: 'API Documentation',
-			resource_type: 'url',
-			uri: 'https://docs.example.com/api',
-			description: 'API documentation site',
-			size_bytes: undefined,
-			is_active: true,
-			created_at: '2024-01-10T09:00:00Z',
-			updated_at: '2024-01-18T14:00:00Z'
-		},
-		{
-			id: '3',
-			name: 'Config File',
-			resource_type: 'file',
-			uri: '/configs/app.yaml',
-			description: 'Application configuration',
-			size_bytes: 2048,
-			is_active: false,
-			created_at: '2024-01-12T11:00:00Z',
-			updated_at: '2024-01-22T16:00:00Z'
-		},
-		{
-			id: '4',
-			name: 'Weather API',
-			resource_type: 'api',
-			uri: 'https://api.weather.com/v1',
-			description: 'External weather service',
-			size_bytes: undefined,
-			is_active: true,
-			created_at: '2024-01-14T08:00:00Z',
-			updated_at: '2024-01-21T10:00:00Z'
-		}
-	];
+	// API hooks
+	const { data: resourcesResponse, isLoading, error } = useResources();
+	const createResource = useCreateResource();
+	const updateResource = useUpdateResource();
+	const deleteResource = useDeleteResource();
+
+	const resources = resourcesResponse?.data || [];
+	const [togglingResourceId, setTogglingResourceId] = useState<string | null>(null);
+
 
 	const handleCreateResource = () => {
 		setFormData({
@@ -137,6 +102,11 @@ function ResourcesView() {
 		});
 		setEditingResource(null);
 		setCreateModalOpen(true);
+	};
+
+	const handleViewResource = (resource: Resource) => {
+		setViewingResource(resource);
+		setViewModalOpen(true);
 	};
 
 	const handleEditResource = (resource: Resource) => {
@@ -151,16 +121,63 @@ function ResourcesView() {
 		setCreateModalOpen(true);
 	};
 
-	const handleSaveResource = () => {
-		const action = editingResource ? 'updated' : 'created';
-		enqueueSnackbar(`Resource ${action} successfully (demo)`, { variant: 'success' });
-		setCreateModalOpen(false);
-		setEditingResource(null);
+	const handleSaveResource = async () => {
+		try {
+			if (editingResource) {
+				const updateData: UpdateResourceRequest = {
+					name: formData.name,
+					resource_type: formData.resource_type,
+					uri: formData.uri,
+					description: formData.description
+				};
+				await updateResource.mutateAsync({
+					id: editingResource.id,
+					data: updateData
+				});
+			} else {
+				const createData: CreateResourceRequest = {
+					name: formData.name,
+					resource_type: formData.resource_type,
+					uri: formData.uri,
+					description: formData.description
+				};
+				await createResource.mutateAsync(createData);
+			}
+			setCreateModalOpen(false);
+			setEditingResource(null);
+		} catch (error) {
+			// Error handling is done in the mutation hooks
+			console.error('Failed to save resource:', error);
+		}
 	};
 
-	const handleDeleteResource = (resource: Resource) => {
-		enqueueSnackbar(`Delete functionality coming soon for ${resource.name}`, { variant: 'info' });
+	const handleDeleteResource = async (resource: Resource) => {
+		if (confirm(`Are you sure you want to delete "${resource.name}"? This action cannot be undone.`)) {
+			try {
+				await deleteResource.mutateAsync(resource.id);
+			} catch (error) {
+				// Error handling is done in the mutation hook
+				console.error('Failed to delete resource:', error);
+			}
+		}
 	};
+
+	const handleToggleResourceStatus = useCallback(async (resource: Resource) => {
+		setTogglingResourceId(resource.id);
+		try {
+			const updateData: UpdateResourceRequest = {
+				is_active: !resource.is_active
+			};
+			await updateResource.mutateAsync({
+				id: resource.id,
+				data: updateData
+			});
+		} catch (error) {
+			console.error('Failed to update resource status:', error);
+		} finally {
+			setTogglingResourceId(null);
+		}
+	}, [updateResource]);
 
 	const formatFileSize = (bytes?: number) => {
 		if (!bytes) return '-';
@@ -172,6 +189,22 @@ function ResourcesView() {
 
 	const columns = useMemo<MRT_ColumnDef<Resource>[]>(
 		() => [
+			{
+				accessorKey: 'is_active',
+				header: 'Active',
+				size: 80,
+				Cell: ({ row }) => (
+					<Tooltip title={row.original.is_active ? 'Deactivate resource' : 'Activate resource'}>
+						<Switch
+							checked={!!row.original.is_active}
+							onChange={() => handleToggleResourceStatus(row.original)}
+							disabled={togglingResourceId === row.original.id}
+							size="small"
+							color="success"
+						/>
+					</Tooltip>
+				)
+			},
 			{
 				accessorKey: 'name',
 				header: 'Name',
@@ -241,18 +274,6 @@ function ResourcesView() {
 				Cell: ({ cell }) => <Typography variant="body2">{formatFileSize(cell.getValue<number>())}</Typography>
 			},
 			{
-				accessorKey: 'is_active',
-				header: 'Status',
-				size: 120,
-				Cell: ({ cell }) => (
-					<Chip
-						size="small"
-						label={cell.getValue<boolean>() ? 'Active' : 'Inactive'}
-						color={cell.getValue<boolean>() ? 'success' : 'default'}
-					/>
-				)
-			},
-			{
 				accessorKey: 'created_at',
 				header: 'Created',
 				size: 150,
@@ -266,7 +287,7 @@ function ResourcesView() {
 				}
 			}
 		],
-		[]
+		[handleToggleResourceStatus, togglingResourceId]
 	);
 
 	return (
@@ -299,18 +320,15 @@ function ResourcesView() {
 				<div className="p-6">
 					<LazyDataTable
 						columns={columns}
-						data={mockResources}
+						data={resources}
+						state={{ isLoading: isLoading }}
 						enableRowActions
 						renderRowActions={({ row }) => (
 							<Box className="flex items-center space-x-1">
 								<Tooltip title="View Details">
 									<IconButton
 										size="small"
-										onClick={() =>
-											enqueueSnackbar(`View details for ${row.original.name}`, {
-												variant: 'info'
-											})
-										}
+										onClick={() => handleViewResource(row.original)}
 									>
 										<SvgIcon size={18}>lucide:eye</SvgIcon>
 									</IconButton>
@@ -417,6 +435,122 @@ function ResourcesView() {
 							>
 								{editingResource ? 'Update' : 'Create'}
 							</Button>
+						</DialogActions>
+					</Dialog>
+
+					{/* View Resource Dialog */}
+					<Dialog
+						open={viewModalOpen}
+						onClose={() => setViewModalOpen(false)}
+						maxWidth="md"
+						fullWidth
+					>
+						<DialogTitle>Resource Details</DialogTitle>
+						<DialogContent>
+							{viewingResource && (
+								<Stack spacing={3} sx={{ mt: 1 }}>
+									<Card variant="outlined">
+										<CardContent>
+											<Stack spacing={2}>
+												<Box>
+													<Typography variant="subtitle2" color="textSecondary">
+														Name
+													</Typography>
+													<Typography variant="body1">{viewingResource.name}</Typography>
+												</Box>
+
+												<Box>
+													<Typography variant="subtitle2" color="textSecondary">
+														Type
+													</Typography>
+													<Chip
+														size="small"
+														label={viewingResource.resource_type}
+														color={RESOURCE_TYPE_COLORS[viewingResource.resource_type as keyof typeof RESOURCE_TYPE_COLORS] || 'default'}
+													/>
+												</Box>
+
+												<Box>
+													<Typography variant="subtitle2" color="textSecondary">
+														URI
+													</Typography>
+													<Typography variant="body2" className="font-mono break-all">
+														{viewingResource.uri}
+													</Typography>
+												</Box>
+
+												{viewingResource.description && (
+													<Box>
+														<Typography variant="subtitle2" color="textSecondary">
+															Description
+														</Typography>
+														<Typography variant="body1">
+															{viewingResource.description}
+														</Typography>
+													</Box>
+												)}
+
+												{viewingResource.size_bytes && (
+													<Box>
+														<Typography variant="subtitle2" color="textSecondary">
+															Size
+														</Typography>
+														<Typography variant="body1">
+															{formatFileSize(viewingResource.size_bytes)}
+														</Typography>
+													</Box>
+												)}
+
+												<Box>
+													<Typography variant="subtitle2" color="textSecondary">
+														Status
+													</Typography>
+													<Chip
+														size="small"
+														label={viewingResource.is_active ? 'Active' : 'Inactive'}
+														color={viewingResource.is_active ? 'success' : 'default'}
+													/>
+												</Box>
+
+												<Divider />
+
+												<Box>
+													<Typography variant="subtitle2" color="textSecondary">
+														Created
+													</Typography>
+													<Typography variant="body2">
+														{new Date(viewingResource.created_at).toLocaleString()}
+													</Typography>
+												</Box>
+
+												<Box>
+													<Typography variant="subtitle2" color="textSecondary">
+														Last Updated
+													</Typography>
+													<Typography variant="body2">
+														{new Date(viewingResource.updated_at).toLocaleString()}
+													</Typography>
+												</Box>
+											</Stack>
+										</CardContent>
+									</Card>
+								</Stack>
+							)}
+						</DialogContent>
+						<DialogActions>
+							<Button onClick={() => setViewModalOpen(false)}>Close</Button>
+							{viewingResource && (
+								<Button
+									variant="contained"
+									color="primary"
+									onClick={() => {
+										setViewModalOpen(false);
+										handleEditResource(viewingResource);
+									}}
+								>
+									Edit Resource
+								</Button>
+							)}
 						</DialogActions>
 					</Dialog>
 				</div>

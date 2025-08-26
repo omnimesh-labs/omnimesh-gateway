@@ -371,7 +371,7 @@ func (m *MCPPromptModel) Update(prompt *MCPPrompt) error {
 	query := `
 		UPDATE mcp_prompts
 		SET name = $2, description = $3, prompt_template = $4, parameters = $5,
-			category = $6, metadata = $7, tags = $8
+			category = $6, metadata = $7, tags = $8, is_active = $9
 		WHERE id = $1
 	`
 
@@ -397,7 +397,7 @@ func (m *MCPPromptModel) Update(prompt *MCPPrompt) error {
 
 	_, err := m.db.Exec(query,
 		prompt.ID, prompt.Name, prompt.Description, prompt.PromptTemplate,
-		parametersJSON, prompt.Category, metadataJSON, prompt.Tags)
+		parametersJSON, prompt.Category, metadataJSON, prompt.Tags, prompt.IsActive)
 	return err
 }
 

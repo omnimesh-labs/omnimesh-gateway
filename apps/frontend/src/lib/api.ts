@@ -174,7 +174,6 @@ export interface SystemStats {
 	};
 }
 
-// Authentication Types
 export interface User {
 	id: string;
 	organization_id: string;
@@ -220,7 +219,7 @@ export interface CreateApiKeyRequest {
 
 export interface CreateApiKeyResponse {
 	api_key: ApiKey;
-	key: string; // The actual key value (only returned once)
+	key: string;
 }
 
 export interface UpdateProfileRequest {
@@ -229,7 +228,6 @@ export interface UpdateProfileRequest {
 	new_password?: string;
 }
 
-// Policy Management Types
 export interface Policy {
 	id: string;
 	organization_id: string;
@@ -269,7 +267,6 @@ export interface PolicyListResponse {
 	offset: number;
 }
 
-// Content Management Types - Resource Types
 export interface Resource {
 	id: string;
 	organization_id: string;
@@ -313,7 +310,6 @@ export interface UpdateResourceRequest {
 	tags?: string[];
 }
 
-// Prompt Types
 export interface Prompt {
 	id: string;
 	organization_id: string;
@@ -339,6 +335,7 @@ export interface CreatePromptRequest {
 	category: string;
 	metadata?: Record<string, unknown>;
 	tags?: string[];
+	is_active?: boolean;
 }
 
 export interface UpdatePromptRequest {
@@ -356,7 +353,6 @@ export interface UsePromptRequest {
 	parameters?: Record<string, unknown>;
 }
 
-// Tool Types
 export interface Tool {
 	id: string;
 	organization_id: string;
@@ -471,6 +467,7 @@ export interface UpdateNamespaceRequest {
 	name?: string;
 	description?: string;
 	server_ids?: string[];
+	is_active?: boolean;
 }
 
 export interface NamespaceTool {

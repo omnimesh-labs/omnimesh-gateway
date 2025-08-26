@@ -30,7 +30,7 @@ import {
 import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
 import { useSnackbar } from 'notistack';
-import { namespaceApi, serverApi, type MCPServer } from '@/lib/api';
+import { namespaceApi, serverApi, type MCPServer, type Namespace } from '@/lib/api';
 
 const Root = styled(PageSimple)(({ theme }) => ({
 	'& .PageSimple-header': {
@@ -44,17 +44,7 @@ const Root = styled(PageSimple)(({ theme }) => ({
 	}
 }));
 
-interface Namespace {
-	id: string;
-	name: string;
-	slug: string;
-	description?: string;
-	server_count: number;
-	is_active: boolean;
-	created_at: string;
-	updated_at: string;
-	servers?: string[];
-}
+
 
 function NamespacesView() {
 	const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -146,7 +136,7 @@ function NamespacesView() {
 					...formData,
 					server_ids: formData.servers
 				};
-				const { servers, ...finalUpdateData } = updateData;
+				const { servers: _, ...finalUpdateData } = updateData;
 				await namespaceApi.updateNamespace(editingNamespace.id, finalUpdateData);
 				enqueueSnackbar('Namespace updated successfully', { variant: 'success' });
 			} else {
@@ -175,11 +165,10 @@ function NamespacesView() {
 		if (!viewingNamespace) return;
 
 		try {
-			const updateData = {
+			const { servers: _, ...updateData } = {
 				...formData,
 				server_ids: formData.servers
 			};
-			delete updateData.servers;
 			await namespaceApi.updateNamespace(viewingNamespace.id, updateData);
 			enqueueSnackbar('Namespace updated successfully', { variant: 'success' });
 			handleCloseViewModal();
@@ -213,7 +202,12 @@ function NamespacesView() {
 				ns.id === namespace.id ? updatedNamespace : ns
 			));
 
-			enqueueSnackbar('Namespace status updated successfully', { variant: 'success' });
+			// Show specific toast based on activation/deactivation
+			if (!namespace.is_active) {
+				enqueueSnackbar('Namespace activated successfully', { variant: 'success' });
+			} else {
+				enqueueSnackbar('Namespace deactivated successfully', { variant: 'success' });
+			}
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Failed to update namespace status';
 			enqueueSnackbar(message, { variant: 'error' });
@@ -261,7 +255,7 @@ function NamespacesView() {
 								variant="caption"
 								color="textSecondary"
 							>
-								{row.original.slug}
+								{row.original.id}
 							</Typography>
 						</Box>
 					</Box>
@@ -567,10 +561,10 @@ function NamespacesView() {
 												</Grid>
 												<Grid item xs={6}>
 													<Typography variant="body2" color="textSecondary">
-														Slug
+														ID
 													</Typography>
 													<Typography variant="body1">
-														{viewingNamespace?.slug}
+														{viewingNamespace?.id}
 													</Typography>
 												</Grid>
 												<Grid item xs={6}>

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { enqueueSnackbar } from 'notistack';
 import { MRT_ColumnDef } from 'material-react-table';
 import PageSimple from '@fuse/core/PageSimple';
 import { styled } from '@mui/material/styles';
@@ -19,12 +20,20 @@ import {
 	Stack,
 	MenuItem,
 	FormControlLabel,
-	Switch
+	Switch,
+	Divider,
+	Card,
+	CardContent
 } from '@mui/material';
 import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
-import { useSnackbar } from 'notistack';
-import { toolApi, Tool as ApiTool } from '@/lib/api';
+import { Tool as ApiTool, UpdateToolRequest } from '@/lib/api';
+import {
+	useTools,
+	useCreateTool,
+	useUpdateTool,
+	useDeleteTool
+} from '../../api/hooks/useTools';
 
 const Root = styled(PageSimple)(({ theme }) => ({
 	'& .PageSimple-header': {
@@ -40,6 +49,18 @@ const Root = styled(PageSimple)(({ theme }) => ({
 
 // Use the ApiTool type from the API
 type Tool = ApiTool;
+
+// Form data type that includes both create and edit fields
+interface ToolFormData {
+	name: string;
+	function_name: string;
+	category: string;
+	description: string;
+	implementation_type: string;
+	schema?: any;  // eslint-disable-line @typescript-eslint/no-explicit-any
+	is_public: boolean;
+	is_active?: boolean;
+}
 
 const CATEGORY_ICONS = {
 	general: 'lucide:wrench',
@@ -65,89 +86,30 @@ const CATEGORY_COLORS = {
 
 function ToolsView() {
 	const [createModalOpen, setCreateModalOpen] = useState(false);
+	const [viewModalOpen, setViewModalOpen] = useState(false);
 	const [editingTool, setEditingTool] = useState<Tool | null>(null);
-	const [tools, setTools] = useState<Tool[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [formData, setFormData] = useState({
+	const [viewingTool, setViewingTool] = useState<Tool | null>(null);
+	const [formData, setFormData] = useState<ToolFormData>({
 		name: '',
 		function_name: '',
 		category: 'general',
 		description: '',
 		implementation_type: 'internal',
+		schema: {},
 		is_public: false,
 		is_active: true
 	});
-	const { enqueueSnackbar } = useSnackbar();
 
-	// Load tools from API
-	const loadTools = useCallback(async () => {
-		try {
-			setLoading(true);
-			const response = await toolApi.listTools();
-			setTools(response.data || []);
-		} catch (error) {
-			enqueueSnackbar('Failed to load tools', { variant: 'error' });
-			console.error('Error loading tools:', error);
-		} finally {
-			setLoading(false);
-		}
-	}, [enqueueSnackbar]);
+	// API hooks
+	const { data: toolsResponse, isLoading, error } = useTools();
+	const createTool = useCreateTool();
+	const updateTool = useUpdateTool();
+	const deleteTool = useDeleteTool();
 
-	useEffect(() => {
-		loadTools();
-	}, [loadTools]);
+	const tools = toolsResponse?.data || [];
+	const [togglingToolId, setTogglingToolId] = useState<string | null>(null);
 
-	// Mock data fallback (for development)
-	const _mockTools: Tool[] = [
-		{
-			id: '1',
-			organization_id: 'org-1',
-			name: 'Database Query',
-			function_name: 'db_query',
-			category: 'data' as const,
-			description: 'Execute database queries',
-			implementation_type: 'internal' as const,
-			timeout_seconds: 30,
-			max_retries: 3,
-			usage_count: 156,
-			is_public: false,
-			is_active: true,
-			created_at: '2024-01-15T10:00:00Z',
-			updated_at: '2024-01-20T15:30:00Z'
-		},
-		{
-			id: '2',
-			organization_id: 'org-1',
-			name: 'File Upload',
-			function_name: 'file_upload',
-			category: 'file' as const,
-			description: 'Handle file uploads',
-			implementation_type: 'external' as const,
-			timeout_seconds: 60,
-			max_retries: 2,
-			usage_count: 89,
-			is_public: true,
-			is_active: true,
-			created_at: '2024-01-10T09:00:00Z',
-			updated_at: '2024-01-18T14:00:00Z'
-		},
-		{
-			id: '3',
-			organization_id: 'org-1',
-			name: 'Web Scraper',
-			function_name: 'web_scrape',
-			category: 'web' as const,
-			description: 'Scrape web content',
-			implementation_type: 'webhook' as const,
-			timeout_seconds: 45,
-			max_retries: 1,
-			usage_count: 42,
-			is_public: true,
-			is_active: false,
-			created_at: '2024-01-12T11:00:00Z',
-			updated_at: '2024-01-22T16:00:00Z'
-		}
-	];
+
 
 	const handleCreateTool = () => {
 		setFormData({
@@ -156,11 +118,17 @@ function ToolsView() {
 			category: 'general',
 			description: '',
 			implementation_type: 'internal',
+			schema: {},
 			is_public: false,
 			is_active: true
 		});
 		setEditingTool(null);
 		setCreateModalOpen(true);
+	};
+
+	const handleViewTool = (tool: Tool) => {
+		setViewingTool(tool);
+		setViewModalOpen(true);
 	};
 
 	const handleEditTool = (tool: Tool) => {
@@ -170,8 +138,8 @@ function ToolsView() {
 			category: tool.category,
 			description: tool.description || '',
 			implementation_type: tool.implementation_type,
-			is_public: tool.is_public,
-			is_active: tool.is_active
+			is_public: Boolean(tool.is_public),
+			is_active: Boolean(tool.is_active)
 		});
 		setEditingTool(tool);
 		setCreateModalOpen(true);
@@ -184,33 +152,56 @@ function ToolsView() {
 		setEditingTool(null);
 	};
 
-	const handleDeleteTool = (tool: Tool) => {
-		enqueueSnackbar(`Delete functionality coming soon for ${tool.name}`, { variant: 'info' });
+	const handleDeleteTool = async (tool: Tool) => {
+		if (confirm(`Are you sure you want to delete "${tool.name}"? This action cannot be undone.`)) {
+			try {
+				await deleteTool.mutateAsync(tool.id);
+			} catch (error) {
+				// Error handling is done in the mutation hook
+				console.error('Failed to delete tool:', error);
+			}
+		}
 	};
 
 	const handleExecuteTool = (tool: Tool) => {
 		enqueueSnackbar(`Execute functionality coming soon for ${tool.name}`, { variant: 'info' });
 	};
 
-	const handleToggleStatus = useCallback(
-		async (tool: Tool) => {
-			try {
-				await toolApi.updateTool(tool.id, { is_active: !tool.is_active });
-				enqueueSnackbar(`Tool ${!tool.is_active ? 'activated' : 'deactivated'} successfully`, {
-					variant: 'success'
-				});
-				// Refresh the tools data
-				await loadTools();
-			} catch (error) {
-				enqueueSnackbar('Failed to update tool status', { variant: 'error' });
-				console.error('Error updating tool status:', error);
-			}
-		},
-		[loadTools, enqueueSnackbar]
-	);
+	const handleToggleStatus = useCallback(async (tool: Tool) => {
+		setTogglingToolId(tool.id);
+		try {
+			const updateData: UpdateToolRequest = {
+				is_active: !tool.is_active
+			};
+			await updateTool.mutateAsync({
+				id: tool.id,
+				data: updateData
+			});
+		} catch (error) {
+			console.error('Failed to update tool status:', error);
+		} finally {
+			setTogglingToolId(null);
+		}
+	}, [updateTool, enqueueSnackbar]);
 
 	const columns = useMemo<MRT_ColumnDef<Tool>[]>(
 		() => [
+			{
+				accessorKey: 'is_active',
+				header: 'Active',
+				size: 80,
+				Cell: ({ row }) => (
+					<Tooltip title={row.original.is_active ? 'Deactivate tool' : 'Activate tool'}>
+						<Switch
+							checked={!!row.original.is_active}
+							onChange={() => handleToggleStatus(row.original)}
+							disabled={togglingToolId === row.original.id}
+							size="small"
+							color="success"
+						/>
+					</Tooltip>
+				)
+			},
 			{
 				accessorKey: 'name',
 				header: 'Name',
@@ -310,20 +301,6 @@ function ToolsView() {
 				)
 			},
 			{
-				accessorKey: 'is_active',
-				header: 'Status',
-				size: 120,
-				Cell: ({ cell, row }) => (
-					<Chip
-						size="small"
-						label={cell.getValue<boolean>() ? 'Active' : 'Inactive'}
-						color={cell.getValue<boolean>() ? 'success' : 'default'}
-						onClick={() => handleToggleStatus(row.original)}
-						sx={{ cursor: 'pointer' }}
-					/>
-				)
-			},
-			{
 				accessorKey: 'created_at',
 				header: 'Created',
 				size: 150,
@@ -337,7 +314,7 @@ function ToolsView() {
 				}
 			}
 		],
-		[handleToggleStatus]
+		[handleToggleStatus, togglingToolId]
 	);
 
 	return (
@@ -370,11 +347,19 @@ function ToolsView() {
 				<div className="p-6">
 					<LazyDataTable
 						columns={columns}
-						data={loading ? [] : tools}
+						data={tools}
 						enableRowActions
-						state={{ isLoading: loading }}
+						state={{ isLoading: isLoading }}
 						renderRowActions={({ row }) => (
 							<Box className="flex items-center space-x-1">
+								<Tooltip title="View Details">
+									<IconButton
+										size="small"
+										onClick={() => handleViewTool(row.original)}
+									>
+										<SvgIcon size={18}>lucide:eye</SvgIcon>
+									</IconButton>
+								</Tooltip>
 								<Tooltip title="Execute Tool">
 									<IconButton
 										size="small"
@@ -483,7 +468,7 @@ function ToolsView() {
 								<FormControlLabel
 									control={
 										<Switch
-											checked={formData.is_public}
+											checked={Boolean(formData.is_public)}
 											onChange={(e) =>
 												setFormData((prev) => ({ ...prev, is_public: e.target.checked }))
 											}
@@ -494,7 +479,7 @@ function ToolsView() {
 								<FormControlLabel
 									control={
 										<Switch
-											checked={formData.is_active}
+											checked={Boolean(formData.is_active)}
 											onChange={(e) =>
 												setFormData((prev) => ({ ...prev, is_active: e.target.checked }))
 											}
@@ -513,6 +498,178 @@ function ToolsView() {
 							>
 								{editingTool ? 'Update' : 'Create'}
 							</Button>
+						</DialogActions>
+					</Dialog>
+
+					{/* View Tool Dialog */}
+					<Dialog
+						open={viewModalOpen}
+						onClose={() => setViewModalOpen(false)}
+						maxWidth="md"
+						fullWidth
+					>
+						<DialogTitle>Tool Details</DialogTitle>
+						<DialogContent>
+							{viewingTool && (
+								<Stack spacing={3} sx={{ mt: 1 }}>
+									<Card variant="outlined">
+										<CardContent>
+											<Stack spacing={2}>
+												<Box>
+													<Typography variant="subtitle2" color="textSecondary">
+														Name
+													</Typography>
+													<Typography variant="body1">{viewingTool.name}</Typography>
+												</Box>
+
+												<Box>
+													<Typography variant="subtitle2" color="textSecondary">
+														Function Name
+													</Typography>
+													<Typography variant="body2" className="font-mono">
+														{viewingTool.function_name}
+													</Typography>
+												</Box>
+
+												<Box>
+													<Typography variant="subtitle2" color="textSecondary">
+														Category
+													</Typography>
+													<Chip
+														size="small"
+														label={viewingTool.category}
+														color={CATEGORY_COLORS[viewingTool.category as keyof typeof CATEGORY_COLORS] || 'default'}
+													/>
+												</Box>
+
+												<Box>
+													<Typography variant="subtitle2" color="textSecondary">
+														Implementation Type
+													</Typography>
+													<Chip
+														size="small"
+														label={viewingTool.implementation_type}
+														color={viewingTool.implementation_type === 'internal' ? 'primary' : 'secondary'}
+													/>
+												</Box>
+
+												{viewingTool.description && (
+													<Box>
+														<Typography variant="subtitle2" color="textSecondary">
+															Description
+														</Typography>
+														<Typography variant="body1">
+															{viewingTool.description}
+														</Typography>
+													</Box>
+												)}
+
+												{viewingTool.schema && Object.keys(viewingTool.schema).length > 0 && (
+													<Box>
+														<Typography variant="subtitle2" color="textSecondary">
+															Schema
+														</Typography>
+														<Card variant="outlined" sx={{ bgcolor: 'grey.50' }}>
+															<CardContent>
+																<Typography variant="body2" component="pre" sx={{ whiteSpace: 'pre-wrap' }}>
+																	{JSON.stringify(viewingTool.schema, null, 2)}
+																</Typography>
+															</CardContent>
+														</Card>
+													</Box>
+												)}
+
+												<Box>
+													<Typography variant="subtitle2" color="textSecondary">
+														Usage Count
+													</Typography>
+													<Typography variant="body1">
+														{viewingTool.usage_count || 0} times
+													</Typography>
+												</Box>
+
+												<Box sx={{ display: 'flex', gap: 2 }}>
+													<Box>
+														<Typography variant="subtitle2" color="textSecondary">
+															Status
+														</Typography>
+														<Chip
+															size="small"
+															label={viewingTool.is_active ? 'Active' : 'Inactive'}
+															color={viewingTool.is_active ? 'success' : 'default'}
+														/>
+													</Box>
+													<Box>
+														<Typography variant="subtitle2" color="textSecondary">
+															Visibility
+														</Typography>
+														<Chip
+															size="small"
+															label={viewingTool.is_public ? 'Public' : 'Private'}
+															color={viewingTool.is_public ? 'info' : 'default'}
+														/>
+													</Box>
+												</Box>
+
+												{(viewingTool.timeout_seconds || viewingTool.max_retries) && (
+													<Box>
+														<Typography variant="subtitle2" color="textSecondary">
+															Configuration
+														</Typography>
+														<Stack direction="row" spacing={2}>
+															{viewingTool.timeout_seconds && (
+																<Typography variant="body2">
+																	Timeout: {viewingTool.timeout_seconds}s
+																</Typography>
+															)}
+															{viewingTool.max_retries && (
+																<Typography variant="body2">
+																	Max Retries: {viewingTool.max_retries}
+																</Typography>
+															)}
+														</Stack>
+													</Box>
+												)}
+
+												<Divider />
+
+												<Box>
+													<Typography variant="subtitle2" color="textSecondary">
+														Created
+													</Typography>
+													<Typography variant="body2">
+														{new Date(viewingTool.created_at).toLocaleString()}
+													</Typography>
+												</Box>
+
+												<Box>
+													<Typography variant="subtitle2" color="textSecondary">
+														Last Updated
+													</Typography>
+													<Typography variant="body2">
+														{new Date(viewingTool.updated_at).toLocaleString()}
+													</Typography>
+												</Box>
+											</Stack>
+										</CardContent>
+									</Card>
+								</Stack>
+							)}
+						</DialogContent>
+						<DialogActions>
+							<Button onClick={() => setViewModalOpen(false)}>Close</Button>
+							{viewingTool && (
+								<Button
+									variant="contained"
+									color="primary"
+									onClick={() => {
+										setViewModalOpen(false);
+										handleEditTool(viewingTool);
+									}}
+								>
+									Edit Tool
+								</Button>
+							)}
 						</DialogActions>
 					</Dialog>
 				</div>

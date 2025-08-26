@@ -166,7 +166,12 @@ function EndpointsView() {
 				ep.id === endpoint.id ? updatedEndpoint : ep
 			));
 
-			enqueueSnackbar('Endpoint status updated successfully', { variant: 'success' });
+			// Show specific toast based on activation/deactivation
+			if (!endpoint.is_active) {
+				enqueueSnackbar('Endpoint activated successfully', { variant: 'success' });
+			} else {
+				enqueueSnackbar('Endpoint deactivated successfully', { variant: 'success' });
+			}
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Failed to update endpoint status';
 			enqueueSnackbar(message, { variant: 'error' });
