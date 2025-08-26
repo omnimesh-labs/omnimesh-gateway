@@ -2,7 +2,6 @@
 import { createTheme, ThemeOptions } from '@mui/material/styles';
 import qs from 'qs';
 import { SettingsConfigType } from '@fuse/core/Settings/Settings';
-import type { } from '@mui/material/themeCssVarsAugmentation';
 
 /**
  * The defaultTheme object defines the default color palette for the application.
@@ -125,7 +124,37 @@ export const defaultThemeOptions: DefaultThemeOptions = {
 		fontFamily: ['Geist', 'Roboto', '"Helvetica"', 'Arial', 'sans-serif'].join(','),
 		fontWeightLight: 300,
 		fontWeightRegular: 400,
-		fontWeightMedium: 500
+		fontWeightMedium: 500,
+		h1: {
+			fontSize: '2.5rem',
+			fontWeight: 500,
+			lineHeight: 1.2
+		},
+		h2: {
+			fontSize: '2rem',
+			fontWeight: 500,
+			lineHeight: 1.3
+		},
+		h3: {
+			fontSize: '1.75rem',
+			fontWeight: 500,
+			lineHeight: 1.3
+		},
+		h4: {
+			fontSize: '1.5rem',
+			fontWeight: 500,
+			lineHeight: 1.4
+		},
+		h5: {
+			fontSize: '1.25rem',
+			fontWeight: 500,
+			lineHeight: 1.4
+		},
+		h6: {
+			fontSize: '1.125rem',
+			fontWeight: 500,
+			lineHeight: 1.5
+		}
 	},
 	breakpoints: {
 		values: {
@@ -648,8 +677,21 @@ export const defaultThemeOptions: DefaultThemeOptions = {
 				root: {
 					height: 'auto!important',
 					minHeight: spacing(32),
+					backgroundColor: 'var(--mui-palette-background-paper)',
 					'&.MuiInputBase-sizeSmall': {
 						minHeight: spacing(28)
+					},
+					'& .MuiOutlinedInput-notchedOutline': {
+						borderColor: 'var(--mui-palette-divider)',
+						borderWidth: '1px'
+					},
+					'&:hover .MuiOutlinedInput-notchedOutline': {
+						borderColor: 'var(--mui-palette-text-primary)',
+						borderWidth: '1px'
+					},
+					'&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+						borderColor: 'var(--mui-palette-primary-main)',
+						borderWidth: '2px'
 					}
 				},
 				sizeSmall: {
@@ -785,7 +827,45 @@ export const defaultThemeOptions: DefaultThemeOptions = {
 			}
 		},
 		MuiTypography: {
-			variants: []
+			variants: [],
+			styleOverrides: {
+				h1: {
+					fontSize: '2.5rem',
+					fontWeight: 500,
+					lineHeight: 1.2,
+					margin: 0
+				},
+				h2: {
+					fontSize: '2rem',
+					fontWeight: 500,
+					lineHeight: 1.3,
+					margin: 0
+				},
+				h3: {
+					fontSize: '1.75rem',
+					fontWeight: 500,
+					lineHeight: 1.3,
+					margin: 0
+				},
+				h4: {
+					fontSize: '1.5rem',
+					fontWeight: 500,
+					lineHeight: 1.4,
+					margin: 0
+				},
+				h5: {
+					fontSize: '1.25rem',
+					fontWeight: 500,
+					lineHeight: 1.4,
+					margin: 0
+				},
+				h6: {
+					fontSize: '1.125rem',
+					fontWeight: 500,
+					lineHeight: 1.5,
+					margin: 0
+				}
+			}
 		},
 		MuiAlert: {
 			styleOverrides: {
@@ -953,6 +1033,36 @@ export const mustHaveThemeOptions = {
 	typography: {
 		htmlFontSize: 16,
 		fontSize: 13,
+		h1: {
+			fontSize: '2.5rem',
+			fontWeight: 500,
+			lineHeight: 1.2
+		},
+		h2: {
+			fontSize: '2rem',
+			fontWeight: 500,
+			lineHeight: 1.3
+		},
+		h3: {
+			fontSize: '1.75rem',
+			fontWeight: 500,
+			lineHeight: 1.3
+		},
+		h4: {
+			fontSize: '1.5rem',
+			fontWeight: 500,
+			lineHeight: 1.4
+		},
+		h5: {
+			fontSize: '1.25rem',
+			fontWeight: 500,
+			lineHeight: 1.4
+		},
+		h6: {
+			fontSize: '1.125rem',
+			fontWeight: 500,
+			lineHeight: 1.5
+		},
 		body1: {
 			fontSize: '0.8125rem'
 		},

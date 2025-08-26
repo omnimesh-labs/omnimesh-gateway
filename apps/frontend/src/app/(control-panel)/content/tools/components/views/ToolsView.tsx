@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { MRT_ColumnDef } from 'material-react-table';
 import PageSimple from '@fuse/core/PageSimple';
 import { styled } from '@mui/material/styles';
@@ -24,6 +24,7 @@ import {
 import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
 import { useSnackbar } from 'notistack';
+import { toolApi, Tool as ApiTool } from '@/lib/api';
 
 const Root = styled(PageSimple)(({ theme }) => ({
 	'& .PageSimple-header': {
@@ -37,19 +38,8 @@ const Root = styled(PageSimple)(({ theme }) => ({
 	}
 }));
 
-interface Tool {
-	id: string;
-	name: string;
-	function_name: string;
-	category: string;
-	description?: string;
-	implementation_type: string;
-	usage_count: number;
-	is_public: boolean;
-	is_active: boolean;
-	created_at: string;
-	updated_at: string;
-}
+// Use the ApiTool type from the API
+type Tool = ApiTool;
 
 const CATEGORY_ICONS = {
 	general: 'lucide:wrench',
@@ -73,16 +63,11 @@ const CATEGORY_COLORS = {
 	custom: 'default'
 } as const;
 
-const IMPLEMENTATION_COLORS = {
-	internal: 'primary',
-	external: 'success',
-	webhook: 'secondary',
-	script: 'warning'
-} as const;
-
 function ToolsView() {
 	const [createModalOpen, setCreateModalOpen] = useState(false);
 	const [editingTool, setEditingTool] = useState<Tool | null>(null);
+	const [tools, setTools] = useState<Tool[]>([]);
+	const [loading, setLoading] = useState(true);
 	const [formData, setFormData] = useState({
 		name: '',
 		function_name: '',
@@ -94,15 +79,36 @@ function ToolsView() {
 	});
 	const { enqueueSnackbar } = useSnackbar();
 
-	// Mock data
-	const mockTools: Tool[] = [
+	// Load tools from API
+	const loadTools = useCallback(async () => {
+		try {
+			setLoading(true);
+			const response = await toolApi.listTools();
+			setTools(response.data || []);
+		} catch (error) {
+			enqueueSnackbar('Failed to load tools', { variant: 'error' });
+			console.error('Error loading tools:', error);
+		} finally {
+			setLoading(false);
+		}
+	}, [enqueueSnackbar]);
+
+	useEffect(() => {
+		loadTools();
+	}, [loadTools]);
+
+	// Mock data fallback (for development)
+	const _mockTools: Tool[] = [
 		{
 			id: '1',
+			organization_id: 'org-1',
 			name: 'Database Query',
 			function_name: 'db_query',
-			category: 'data',
+			category: 'data' as const,
 			description: 'Execute database queries',
-			implementation_type: 'internal',
+			implementation_type: 'internal' as const,
+			timeout_seconds: 30,
+			max_retries: 3,
 			usage_count: 156,
 			is_public: false,
 			is_active: true,
@@ -111,11 +117,14 @@ function ToolsView() {
 		},
 		{
 			id: '2',
+			organization_id: 'org-1',
 			name: 'File Upload',
 			function_name: 'file_upload',
-			category: 'file',
+			category: 'file' as const,
 			description: 'Handle file uploads',
-			implementation_type: 'external',
+			implementation_type: 'external' as const,
+			timeout_seconds: 60,
+			max_retries: 2,
 			usage_count: 89,
 			is_public: true,
 			is_active: true,
@@ -124,11 +133,14 @@ function ToolsView() {
 		},
 		{
 			id: '3',
+			organization_id: 'org-1',
 			name: 'Web Scraper',
 			function_name: 'web_scrape',
-			category: 'web',
+			category: 'web' as const,
 			description: 'Scrape web content',
-			implementation_type: 'webhook',
+			implementation_type: 'webhook' as const,
+			timeout_seconds: 45,
+			max_retries: 1,
 			usage_count: 42,
 			is_public: true,
 			is_active: false,
@@ -180,6 +192,23 @@ function ToolsView() {
 		enqueueSnackbar(`Execute functionality coming soon for ${tool.name}`, { variant: 'info' });
 	};
 
+	const handleToggleStatus = useCallback(
+		async (tool: Tool) => {
+			try {
+				await toolApi.updateTool(tool.id, { is_active: !tool.is_active });
+				enqueueSnackbar(`Tool ${!tool.is_active ? 'activated' : 'deactivated'} successfully`, {
+					variant: 'success'
+				});
+				// Refresh the tools data
+				await loadTools();
+			} catch (error) {
+				enqueueSnackbar('Failed to update tool status', { variant: 'error' });
+				console.error('Error updating tool status:', error);
+			}
+		},
+		[loadTools, enqueueSnackbar]
+	);
+
 	const columns = useMemo<MRT_ColumnDef<Tool>[]>(
 		() => [
 			{
@@ -230,19 +259,13 @@ function ToolsView() {
 				accessorKey: 'implementation_type',
 				header: 'Type',
 				size: 120,
-				Cell: ({ cell }) => {
-					const color =
-						IMPLEMENTATION_COLORS[cell.getValue<string>() as keyof typeof IMPLEMENTATION_COLORS] ||
-						'default';
-					return (
-						<Chip
-							size="small"
-							label={cell.getValue<string>()}
-							color={color}
-							variant="outlined"
-						/>
-					);
-				}
+				Cell: ({ cell }) => (
+					<Chip
+						size="small"
+						label={cell.getValue<string>()}
+						variant="outlined"
+					/>
+				)
 			},
 			{
 				accessorKey: 'usage_count',
@@ -290,11 +313,13 @@ function ToolsView() {
 				accessorKey: 'is_active',
 				header: 'Status',
 				size: 120,
-				Cell: ({ cell }) => (
+				Cell: ({ cell, row }) => (
 					<Chip
 						size="small"
 						label={cell.getValue<boolean>() ? 'Active' : 'Inactive'}
 						color={cell.getValue<boolean>() ? 'success' : 'default'}
+						onClick={() => handleToggleStatus(row.original)}
+						sx={{ cursor: 'pointer' }}
 					/>
 				)
 			},
@@ -312,7 +337,7 @@ function ToolsView() {
 				}
 			}
 		],
-		[]
+		[handleToggleStatus]
 	);
 
 	return (
@@ -345,8 +370,9 @@ function ToolsView() {
 				<div className="p-6">
 					<LazyDataTable
 						columns={columns}
-						data={mockTools}
+						data={loading ? [] : tools}
 						enableRowActions
+						state={{ isLoading: loading }}
 						renderRowActions={({ row }) => (
 							<Box className="flex items-center space-x-1">
 								<Tooltip title="Execute Tool">
@@ -403,6 +429,12 @@ function ToolsView() {
 									onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
 									fullWidth
 									required
+									sx={{
+										'& .MuiOutlinedInput-root': {
+											backgroundColor: (theme) => 
+												theme.palette.mode === 'light' ? 'rgba(0, 0, 0, 0.02)' : 'inherit'
+										}
+									}}
 								/>
 								<TextField
 									label="Function Name"
@@ -412,7 +444,13 @@ function ToolsView() {
 									}
 									fullWidth
 									required
-									helperText="Unique identifier for the function"
+									placeholder="Unique identifier for the function"
+									sx={{
+										'& .MuiOutlinedInput-root': {
+											backgroundColor: (theme) => 
+												theme.palette.mode === 'light' ? 'rgba(0, 0, 0, 0.02)' : 'inherit'
+										}
+									}}
 								/>
 								<TextField
 									label="Category"
@@ -421,6 +459,12 @@ function ToolsView() {
 									select
 									fullWidth
 									required
+									sx={{
+										'& .MuiOutlinedInput-root': {
+											backgroundColor: (theme) => 
+												theme.palette.mode === 'light' ? 'rgba(0, 0, 0, 0.02)' : 'inherit'
+										}
+									}}
 								>
 									<MenuItem value="general">General</MenuItem>
 									<MenuItem value="data">Data</MenuItem>
@@ -440,6 +484,12 @@ function ToolsView() {
 									select
 									fullWidth
 									required
+									sx={{
+										'& .MuiOutlinedInput-root': {
+											backgroundColor: (theme) => 
+												theme.palette.mode === 'light' ? 'rgba(0, 0, 0, 0.02)' : 'inherit'
+										}
+									}}
 								>
 									<MenuItem value="internal">Internal</MenuItem>
 									<MenuItem value="external">External</MenuItem>
@@ -453,6 +503,12 @@ function ToolsView() {
 									fullWidth
 									multiline
 									rows={3}
+									sx={{
+										'& .MuiOutlinedInput-root': {
+											backgroundColor: (theme) => 
+												theme.palette.mode === 'light' ? 'rgba(0, 0, 0, 0.02)' : 'inherit'
+										}
+									}}
 								/>
 								<FormControlLabel
 									control={

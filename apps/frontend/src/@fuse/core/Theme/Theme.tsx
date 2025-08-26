@@ -39,9 +39,6 @@ function Theme(props: ThemeProps) {
 	}, [mode, root]);
 
 	const baseStyles = {
-		'& .MuiOutlinedInput-root': {
-			backgroundColor: theme.vars.palette.common.background
-		},
 		'& .border-divider ': {
 			borderColor: `${theme.vars.palette.divider}!important`
 		},

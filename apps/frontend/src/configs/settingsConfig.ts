@@ -19,7 +19,19 @@ const settingsConfig: SettingsConfigType = {
 		 */
 		config: {
 			navbar: {
-				style: 'style-1'
+				display: true,
+				style: 'style-1',
+				folded: false,
+				position: 'left',
+				open: true
+			},
+			toolbar: {
+				display: true,
+				style: 'fixed'
+			},
+			footer: {
+				display: false,
+				style: 'fixed'
 			}
 		} // checkout default layout configs at src/components/theme-layouts for example  src/components/theme-layouts/layout1/Layout1Config.js
 	},

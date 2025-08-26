@@ -199,17 +199,6 @@ function UserMenu(props: UserMenuProps) {
 					<>
 						<MenuItem
 							component={Link}
-							to="/profile"
-							onClick={userMenuClose}
-							role="button"
-						>
-							<ListItemIcon>
-								<SvgIcon>lucide:user</SvgIcon>
-							</ListItemIcon>
-							<ListItemText primary="Profile Overview" />
-						</MenuItem>
-						<MenuItem
-							component={Link}
 							to="/profile/settings"
 							onClick={userMenuClose}
 							role="button"
@@ -217,7 +206,7 @@ function UserMenu(props: UserMenuProps) {
 							<ListItemIcon>
 								<SvgIcon>lucide:user-cog</SvgIcon>
 							</ListItemIcon>
-							<ListItemText primary="Profile Settings" />
+							<ListItemText primary="Profile" />
 						</MenuItem>
 						<MenuItem
 							component={Link}

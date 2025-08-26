@@ -43,7 +43,7 @@ function UserMenu(props: UserMenuProps) {
 	};
 
 	// Get display name from user email
-	const displayName = user?.name || user?.email?.split('@')[0] || 'User';
+	const displayName = user?.email?.split('@')[0] || 'User';
 	const userInitial = displayName[0]?.toUpperCase() || 'U';
 
 	return (
@@ -186,17 +186,6 @@ function UserMenu(props: UserMenuProps) {
 					<>
 						<MenuItem
 							component={Link}
-							to="/profile"
-							onClick={userMenuClose}
-							role="button"
-						>
-							<ListItemIcon>
-								<SvgIcon>lucide:user</SvgIcon>
-							</ListItemIcon>
-							<ListItemText primary="Profile Overview" />
-						</MenuItem>
-						<MenuItem
-							component={Link}
 							to="/profile/settings"
 							onClick={userMenuClose}
 							role="button"
@@ -204,7 +193,7 @@ function UserMenu(props: UserMenuProps) {
 							<ListItemIcon>
 								<SvgIcon>lucide:user-cog</SvgIcon>
 							</ListItemIcon>
-							<ListItemText primary="Profile Settings" />
+							<ListItemText primary="Profile" />
 						</MenuItem>
 						<MenuItem
 							component={Link}
