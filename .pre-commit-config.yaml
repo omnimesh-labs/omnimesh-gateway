@@ -8,7 +8,6 @@ repos:
         language: system
         files: \.go$
         pass_filenames: false
-        always_run: true
 
       - id: go-imports
         name: go imports
@@ -17,7 +16,6 @@ repos:
         language: system
         files: \.go$
         pass_filenames: false
-        always_run: true
 
       - id: go-mod-tidy
         name: go mod tidy
@@ -26,7 +24,6 @@ repos:
         language: system
         files: go\.(mod|sum)$
         pass_filenames: false
-        always_run: true
 
       - id: go-vet
         name: go vet
@@ -35,7 +32,6 @@ repos:
         language: system
         files: \.go$
         pass_filenames: false
-        always_run: true
 
       - id: go-test
         name: go test (gotestsum)
@@ -49,7 +45,6 @@ repos:
         language: system
         files: \.go$
         pass_filenames: false
-        always_run: true
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
