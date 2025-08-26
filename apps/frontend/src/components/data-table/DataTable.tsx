@@ -1,4 +1,10 @@
-import { MaterialReactTable, useMaterialReactTable, MaterialReactTableProps, MRT_Icons, MRT_RowData } from 'material-react-table';
+import {
+	MaterialReactTable,
+	useMaterialReactTable,
+	MaterialReactTableProps,
+	MRT_Icons,
+	MRT_RowData
+} from 'material-react-table';
 import { defaults } from '../../utils/lodashReplacements';
 import { useMemo, useEffect, useRef } from 'react';
 import SvgIcon from '@fuse/core/SvgIcon';
@@ -29,7 +35,7 @@ const tableIcons: Partial<MRT_Icons> = {
 
 function DataTable<TData extends MRT_RowData>(props: MaterialReactTableProps<TData>) {
 	const { columns, data, initialState, ...rest } = props;
-	
+
 	// Ensure data and columns are never null/undefined to prevent Material React Table errors
 	const safeData = data ?? [];
 	const safeColumns = columns ?? [];

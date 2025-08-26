@@ -1,62 +1,49 @@
 {
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@auth/*": [
-        "./src/@auth/*"
-      ],
-      "@fuse/*": [
-        "./src/@fuse/*"
-      ],
-      "@/*": [
-        "./src/*"
-      ]
-    },
-    "declaration": true,
-    "target": "esnext",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "es2020",
-      "scripthost"
-    ],
-    "plugins": [
-      {
-        "name": "typescript-plugin-css-modules"
-      },
-      {
-        "name": "next"
-      }
-    ],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "skipDefaultLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": false,
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
-    "module": "esnext",
-    "moduleResolution": "Node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "preserve",
-    "incremental": true,
-    "strictNullChecks": true
-  },
-  "exclude": [
-    "node_modules"
-  ],
-  "include": [
-    "./src/**/*.ts",
-    "./src/**/*.tsx",
-    "./src/global.d.ts",
-    "tailwind.config.ts",
-    "next-env.d.ts",
-    ".next/types/**/*.ts",
-    "next.config.mjs",
-    "next.config.ts",
-    "build/types/**/*.ts"
-  ]
+	"compilerOptions": {
+		"baseUrl": ".",
+		"paths": {
+			"@auth/*": ["./src/@auth/*"],
+			"@fuse/*": ["./src/@fuse/*"],
+			"@/*": ["./src/*"]
+		},
+		"declaration": true,
+		"target": "esnext",
+		"lib": ["dom", "dom.iterable", "es2020", "scripthost"],
+		"plugins": [
+			{
+				"name": "typescript-plugin-css-modules"
+			},
+			{
+				"name": "next"
+			}
+		],
+		"allowJs": true,
+		"skipLibCheck": true,
+		"skipDefaultLibCheck": true,
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
+		"strict": false,
+		"forceConsistentCasingInFileNames": true,
+		"noFallthroughCasesInSwitch": true,
+		"module": "esnext",
+		"moduleResolution": "Node",
+		"resolveJsonModule": true,
+		"isolatedModules": true,
+		"noEmit": true,
+		"jsx": "preserve",
+		"incremental": true,
+		"strictNullChecks": true
+	},
+	"exclude": ["node_modules"],
+	"include": [
+		"./src/**/*.ts",
+		"./src/**/*.tsx",
+		"./src/global.d.ts",
+		"tailwind.config.ts",
+		"next-env.d.ts",
+		".next/types/**/*.ts",
+		"next.config.mjs",
+		"next.config.ts",
+		"build/types/**/*.ts"
+	]
 }

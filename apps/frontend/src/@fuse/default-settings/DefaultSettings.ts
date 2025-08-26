@@ -272,11 +272,17 @@ export const defaultThemeOptions: DefaultThemeOptions = {
 				inputRoot: {
 					paddingTop: spacing(3),
 					paddingBottom: spacing(3),
-					gap: spacing(3)
+					gap: spacing(3),
+					color: 'var(--mui-palette-text-primary)'
 				},
 				root: {
 					'& .MuiOutlinedInput-root .MuiAutocomplete-input': {
-						padding: `${spacing(4)} ${spacing(12)}` // 4px 12px
+						padding: `${spacing(4)} ${spacing(12)}`, // 4px 12px
+						color: 'var(--mui-palette-text-primary)',
+						'&::placeholder': {
+							color: 'var(--mui-palette-text-secondary)',
+							opacity: 1
+						}
 					},
 					'& .MuiOutlinedInput-root': {
 						paddingLeft: spacing(4)
@@ -639,7 +645,11 @@ export const defaultThemeOptions: DefaultThemeOptions = {
 			},
 			styleOverrides: {
 				select: {
-					minHeight: 0
+					minHeight: 0,
+					color: 'var(--mui-palette-text-primary)',
+					'&:focus': {
+						color: 'var(--mui-palette-text-primary)'
+					}
 				}
 			}
 		},
@@ -663,8 +673,35 @@ export const defaultThemeOptions: DefaultThemeOptions = {
 		MuiInputBase: {
 			styleOverrides: {
 				root: {
+					color: 'var(--mui-palette-text-primary)',
 					'& > textarea': {
-						padding: 0
+						padding: 0,
+						color: 'var(--mui-palette-text-primary)',
+						'&::placeholder': {
+							color: 'var(--mui-palette-text-secondary)',
+							opacity: 1
+						}
+					},
+					'& > input': {
+						color: 'var(--mui-palette-text-primary)',
+						'&::placeholder': {
+							color: 'var(--mui-palette-text-secondary)',
+							opacity: 1
+						}
+					}
+				},
+				input: {
+					color: 'var(--mui-palette-text-primary)',
+					'&::placeholder': {
+						color: 'var(--mui-palette-text-secondary)',
+						opacity: 1
+					}
+				},
+				inputMultiline: {
+					color: 'var(--mui-palette-text-primary)',
+					'&::placeholder': {
+						color: 'var(--mui-palette-text-secondary)',
+						opacity: 1
 					}
 				}
 			}
@@ -678,6 +715,7 @@ export const defaultThemeOptions: DefaultThemeOptions = {
 					height: 'auto!important',
 					minHeight: spacing(32),
 					backgroundColor: 'var(--mui-palette-background-paper)',
+					color: 'var(--mui-palette-text-primary)',
 					'&.MuiInputBase-sizeSmall': {
 						minHeight: spacing(28)
 					},
@@ -698,13 +736,28 @@ export const defaultThemeOptions: DefaultThemeOptions = {
 					minHeight: spacing(28)
 				},
 				input: {
-					padding: `${spacing(6)} ${spacing(12)}` // 6px 12px
+					padding: `${spacing(6)} ${spacing(12)}`, // 6px 12px
+					color: 'var(--mui-palette-text-primary)',
+					'&::placeholder': {
+						color: 'var(--mui-palette-text-secondary)',
+						opacity: 1
+					}
 				},
 				inputSizeSmall: {
-					padding: `${spacing(4)} ${spacing(12)}` // 4px 12px
+					padding: `${spacing(4)} ${spacing(12)}`, // 4px 12px
+					color: 'var(--mui-palette-text-primary)',
+					'&::placeholder': {
+						color: 'var(--mui-palette-text-secondary)',
+						opacity: 1
+					}
 				},
 				multiline: {
-					padding: `${spacing(6)} ${spacing(12)}` // 6px 12px
+					padding: `${spacing(6)} ${spacing(12)}`, // 6px 12px
+					color: 'var(--mui-palette-text-primary)',
+					'&::placeholder': {
+						color: 'var(--mui-palette-text-secondary)',
+						opacity: 1
+					}
 				},
 				adornedStart: {
 					paddingLeft: `${spacing(8)}`
@@ -722,11 +775,24 @@ export const defaultThemeOptions: DefaultThemeOptions = {
 		},
 		MuiFilledInput: {
 			styleOverrides: {
+				root: {
+					color: 'var(--mui-palette-text-primary)'
+				},
 				input: {
-					padding: `${spacing(4)} ${spacing(12)}` // 4px 12px
+					padding: `${spacing(4)} ${spacing(12)}`, // 4px 12px
+					color: 'var(--mui-palette-text-primary)',
+					'&::placeholder': {
+						color: 'var(--mui-palette-text-secondary)',
+						opacity: 1
+					}
 				},
 				multiline: {
-					padding: `${spacing(4)} ${spacing(12)}` // 4px 12px
+					padding: `${spacing(4)} ${spacing(12)}`, // 4px 12px
+					color: 'var(--mui-palette-text-primary)',
+					'&::placeholder': {
+						color: 'var(--mui-palette-text-secondary)',
+						opacity: 1
+					}
 				},
 				adornedStart: {
 					paddingLeft: `${spacing(8)}`

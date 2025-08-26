@@ -18,12 +18,19 @@ import {
 	TextField,
 	Stack,
 	FormControlLabel,
-	Switch
+	Switch,
+	FormControl,
+	InputLabel,
+	Select,
+	OutlinedInput,
+	MenuItem,
+	ListItemText,
+	Checkbox
 } from '@mui/material';
 import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
 import { useSnackbar } from 'notistack';
-import { namespaceApi } from '@/lib/api';
+import { namespaceApi, serverApi, type MCPServer } from '@/lib/api';
 
 const Root = styled(PageSimple)(({ theme }) => ({
 	'& .PageSimple-header': {
@@ -54,15 +61,19 @@ function NamespacesView() {
 	const [formData, setFormData] = useState({
 		name: '',
 		description: '',
-		is_active: true
+		is_active: true,
+		servers: [] as string[]
 	});
 	const [namespaces, setNamespaces] = useState<Namespace[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
+	const [servers, setServers] = useState<MCPServer[]>([]);
+	const [loadingServers, setLoadingServers] = useState(false);
 	const { enqueueSnackbar } = useSnackbar();
 
-	// Fetch namespaces on mount
+	// Fetch namespaces and servers on mount
 	useEffect(() => {
 		fetchNamespaces();
+		fetchServers();
 	}, []);
 
 	const fetchNamespaces = useCallback(async () => {
@@ -79,8 +90,22 @@ function NamespacesView() {
 		}
 	}, [enqueueSnackbar]);
 
+	const fetchServers = useCallback(async () => {
+		setLoadingServers(true);
+		try {
+			const data = await serverApi.listServers();
+			setServers(data);
+		} catch (error) {
+			enqueueSnackbar('Failed to fetch servers', { variant: 'error' });
+			console.error('Error fetching servers:', error);
+			setServers([]);
+		} finally {
+			setLoadingServers(false);
+		}
+	}, [enqueueSnackbar]);
+
 	const handleCreateNamespace = () => {
-		setFormData({ name: '', description: '', is_active: true });
+		setFormData({ name: '', description: '', is_active: true, servers: [] });
 		setEditingNamespace(null);
 		setCreateModalOpen(true);
 	};
@@ -89,7 +114,8 @@ function NamespacesView() {
 		setFormData({
 			name: namespace.name,
 			description: namespace.description || '',
-			is_active: namespace.is_active
+			is_active: namespace.is_active,
+			servers: namespace.servers || []
 		});
 		setEditingNamespace(namespace);
 		setCreateModalOpen(true);
@@ -98,9 +124,16 @@ function NamespacesView() {
 	const handleSaveNamespace = async () => {
 		try {
 			if (editingNamespace) {
-				await namespaceApi.updateNamespace(editingNamespace.id, formData);
+				// For updates, use server_ids field
+				const updateData = {
+					...formData,
+					server_ids: formData.servers
+				};
+				delete updateData.servers; // Remove servers field, use server_ids instead
+				await namespaceApi.updateNamespace(editingNamespace.id, updateData);
 				enqueueSnackbar('Namespace updated successfully', { variant: 'success' });
 			} else {
+				// For creation, servers field is correct
 				await namespaceApi.createNamespace(formData);
 				enqueueSnackbar('Namespace created successfully', { variant: 'success' });
 			}
@@ -296,6 +329,51 @@ function NamespacesView() {
 									multiline
 									rows={3}
 								/>
+								<FormControl fullWidth>
+									<InputLabel id="servers-select-label">Servers</InputLabel>
+									<Select
+										labelId="servers-select-label"
+										multiple
+										value={formData.servers}
+										onChange={(e) => {
+											const value =
+												typeof e.target.value === 'string'
+													? e.target.value.split(',')
+													: e.target.value;
+											setFormData((prev) => ({ ...prev, servers: value }));
+										}}
+										input={<OutlinedInput label="Servers" />}
+										renderValue={(selected) => {
+											const selectedNames = selected.map(
+												(id) => servers.find((s) => s.id === id)?.name || 'Unknown'
+											);
+											return selectedNames.join(', ');
+										}}
+										disabled={loadingServers}
+									>
+										{servers.map((server) => (
+											<MenuItem
+												key={server.id}
+												value={server.id}
+											>
+												<Checkbox checked={formData.servers.indexOf(server.id) > -1} />
+												<ListItemText
+													primary={server.name}
+													secondary={server.description}
+												/>
+											</MenuItem>
+										))}
+									</Select>
+									{loadingServers && (
+										<Typography
+											variant="caption"
+											color="textSecondary"
+											sx={{ mt: 1 }}
+										>
+											Loading servers...
+										</Typography>
+									)}
+								</FormControl>
 								<FormControlLabel
 									control={
 										<Switch

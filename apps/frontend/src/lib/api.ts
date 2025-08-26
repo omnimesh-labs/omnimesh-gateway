@@ -464,7 +464,7 @@ export interface Namespace {
 export interface CreateNamespaceRequest {
 	name: string;
 	description?: string;
-	server_ids?: string[];
+	servers?: string[];
 }
 
 export interface UpdateNamespaceRequest {

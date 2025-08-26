@@ -1,12 +1,13 @@
 const isTurbopack = process.env.TURBOPACK === '1';
 
 // Bundle analyzer for production builds
-const withBundleAnalyzer = process.env.ANALYZE === 'true'
-	? (await import('@next/bundle-analyzer').then(m => m.default))({
-		enabled: true,
-		openAnalyzer: false
-	})
-	: (config) => config;
+const withBundleAnalyzer =
+	process.env.ANALYZE === 'true'
+		? (await import('@next/bundle-analyzer').then((m) => m.default))({
+				enabled: true,
+				openAnalyzer: false
+			})
+		: (config) => config;
 
 // Conditionally add webpack configuration only when NOT using turbopack
 const baseConfig = {
@@ -41,29 +42,35 @@ const baseConfig = {
 			'@fuse/hooks'
 		],
 		// Enable optimizations for better performance in dev
-		optimizeServerReact: true,
+		optimizeServerReact: true
 	},
 	// Compiler optimizations
 	compiler: {
 		// Remove console logs in production
-		removeConsole: process.env.NODE_ENV === 'production' ? {
-			exclude: ['error', 'warn']
-		} : false,
+		removeConsole:
+			process.env.NODE_ENV === 'production'
+				? {
+						exclude: ['error', 'warn']
+					}
+				: false,
 		// Enable React compiler optimizations
-		reactRemoveProperties: process.env.NODE_ENV === 'production' ? {
-			properties: ['^data-testid$']
-		} : false,
+		reactRemoveProperties:
+			process.env.NODE_ENV === 'production'
+				? {
+						properties: ['^data-testid$']
+					}
+				: false
 	},
 	modularizeImports: {
 		'@mui/material': {
-			transform: '@mui/material/{{member}}',
+			transform: '@mui/material/{{member}}'
 		},
 		'@mui/icons-material': {
-			transform: '@mui/icons-material/{{member}}',
+			transform: '@mui/icons-material/{{member}}'
 		},
 		lodash: {
-			transform: 'lodash/{{member}}',
-		},
+			transform: 'lodash/{{member}}'
+		}
 	},
 
 	...(!isTurbopack && {
@@ -91,7 +98,7 @@ const baseConfig = {
 					// Prefer ESM modules for better tree shaking
 					mainFields: ['module', 'main'],
 					// Optimize extensions resolution order
-					extensions: ['.ts', '.tsx', '.js', '.jsx'],
+					extensions: ['.ts', '.tsx', '.js', '.jsx']
 				};
 
 				// Optimize for faster rebuilds
@@ -113,7 +120,7 @@ const baseConfig = {
 								test: /[\\/]node_modules[\\/](react|react-dom|scheduler|next)[\\/]/,
 								chunks: 'all',
 								priority: 40,
-								reuseExistingChunk: true,
+								reuseExistingChunk: true
 							},
 							// Create separate chunk for MUI to reduce compilation time
 							mui: {
@@ -121,7 +128,7 @@ const baseConfig = {
 								test: /[\\/]node_modules[\\/]@mui[\\/]/,
 								chunks: 'all',
 								priority: 30,
-								reuseExistingChunk: true,
+								reuseExistingChunk: true
 							},
 							// Create separate chunk for React Query
 							reactQuery: {
@@ -129,7 +136,7 @@ const baseConfig = {
 								test: /[\\/]node_modules[\\/]@tanstack[\\/]/,
 								chunks: 'all',
 								priority: 25,
-								reuseExistingChunk: true,
+								reuseExistingChunk: true
 							},
 							// Create separate chunk for Material React Table
 							materialReactTable: {
@@ -138,7 +145,7 @@ const baseConfig = {
 								chunks: 'all',
 								priority: 35,
 								enforce: true,
-								reuseExistingChunk: true,
+								reuseExistingChunk: true
 							},
 							// Fuse components
 							fuse: {
@@ -146,21 +153,21 @@ const baseConfig = {
 								test: /[\\/]@fuse[\\/]/,
 								chunks: 'all',
 								priority: 20,
-								reuseExistingChunk: true,
+								reuseExistingChunk: true
 							},
 							// Common chunks for shared modules
 							common: {
 								name: 'common',
 								minChunks: 2,
 								priority: 10,
-								reuseExistingChunk: true,
-							},
+								reuseExistingChunk: true
+							}
 						}
 					},
 					// Skip minimization in dev
 					minimize: false,
 					// Use deterministic module ids for caching
-					moduleIds: 'deterministic',
+					moduleIds: 'deterministic'
 				};
 
 				// Use faster hashing algorithm in dev
@@ -172,19 +179,19 @@ const baseConfig = {
 					allowCollectingMemory: true,
 					maxMemoryGenerations: 10,
 					buildDependencies: {
-						config: [require.resolve('./next.config.mjs')],
+						config: [require.resolve('./next.config.mjs')]
 					},
 					// Add cache invalidation for better performance
 					version: '2.0',
 					// Store cache in memory for faster access
-					store: 'pack',
+					store: 'pack'
 				};
 
 				// Optimized watch options
 				config.watchOptions = {
 					ignored: ['**/node_modules', '**/.next', '**/logs/**'],
 					aggregateTimeout: 300,
-					poll: false,
+					poll: false
 				};
 
 				// Add module concatenation for better performance
@@ -193,7 +200,7 @@ const baseConfig = {
 				// Optimize for development
 				config.optimization.usedExports = false;
 				config.optimization.sideEffects = false;
-				
+
 				// Disable runtime chunk in dev for faster rebuilds
 				config.optimization.runtimeChunk = false;
 			}

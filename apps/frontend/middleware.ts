@@ -7,7 +7,7 @@ const authRoutes = ['/sign-in', '/sign-up'];
 
 export function middleware(request: NextRequest) {
 	const { pathname } = request.nextUrl;
-	
+
 	// Allow access to static files and API routes
 	if (
 		pathname.startsWith('/_next') ||
@@ -52,6 +52,6 @@ export const config = {
 		 * - favicon.ico (favicon file)
 		 * - public folder
 		 */
-		'/((?!_next/static|_next/image|favicon.ico|public|assets|.*\\..*|api/auth).*)',
-	],
+		'/((?!_next/static|_next/image|favicon.ico|public|assets|.*\\..*|api/auth).*)'
+	]
 };

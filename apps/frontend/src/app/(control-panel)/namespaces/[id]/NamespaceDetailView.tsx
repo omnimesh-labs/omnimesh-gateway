@@ -81,7 +81,6 @@ function NamespaceDetailView() {
 		description: ''
 	});
 
-
 	const loadNamespaceDetails = async () => {
 		try {
 			setLoading(true);
@@ -92,12 +91,12 @@ function NamespaceDetailView() {
 
 			// Get servers assigned to this namespace (assuming they're returned with the namespace data)
 			const assignedServerIds = namespaceData.servers || [];
-			const assignedServers = allServers.filter(s => assignedServerIds.includes(s.id));
-			
+			const assignedServers = allServers.filter((s) => assignedServerIds.includes(s.id));
+
 			// Calculate stats
 			const stats = {
 				total_servers: assignedServers.length,
-				active_servers: assignedServers.filter(s => s.is_active).length,
+				active_servers: assignedServers.filter((s) => s.is_active).length,
 				total_sessions: 0, // Would come from a sessions API
 				total_requests: 0 // Would come from metrics API
 			};
@@ -107,9 +106,9 @@ function NamespaceDetailView() {
 				servers: assignedServers,
 				stats
 			});
-			
+
 			// Available servers are those not assigned to any namespace
-			const unassignedServers = allServers.filter(s => !assignedServerIds.includes(s.id));
+			const unassignedServers = allServers.filter((s) => !assignedServerIds.includes(s.id));
 			setAvailableServers(unassignedServers);
 		} catch (_error) {
 			console.error('Failed to load namespace:', error);
@@ -163,9 +162,7 @@ function NamespaceDetailView() {
 		try {
 			// Assign each selected server to the namespace
 			await Promise.all(
-				selectedServers.map(serverId => 
-					namespaceApi.addServerToNamespace(namespaceId, serverId)
-				)
+				selectedServers.map((serverId) => namespaceApi.addServerToNamespace(namespaceId, serverId))
 			);
 			enqueueSnackbar('Servers assigned successfully', { variant: 'success' });
 			setAssignServerDialogOpen(false);
@@ -248,7 +245,9 @@ function NamespaceDetailView() {
 						<Chip
 							size="small"
 							label={status}
-							color={color as 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'}
+							color={
+								color as 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'
+							}
 						/>
 					);
 				}

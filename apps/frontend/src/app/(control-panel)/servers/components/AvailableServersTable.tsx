@@ -5,22 +5,29 @@ import { MRT_ColumnDef } from 'material-react-table';
 import { Typography, Button, Chip, Box, IconButton, Tooltip } from '@mui/material';
 import DataTable from '@/components/data-table/DataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
-import { MCPPackage, CreateServerRequest } from '@/lib/api';
+import { MCPPackage, CreateServerRequest, MCPServer } from '@/lib/api';
 
 interface AvailableServersTableProps {
 	servers: MCPPackage[];
 	loading: boolean;
 	onRegisterServer: (serverData: CreateServerRequest) => void;
 	registering: boolean;
+	registeredServers: MCPServer[];
 }
 
 export default function AvailableServersTable({
 	servers,
 	loading,
 	onRegisterServer,
-	registering
+	registering,
+	registeredServers
 }: AvailableServersTableProps) {
 	const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
+
+	const isServerRegistered = (pkg: MCPPackage) => {
+		const packageNameNormalized = pkg.name.replace(/^@.*\//, ''); // Remove scope prefix
+		return registeredServers.some((server) => server.name === packageNameNormalized);
+	};
 
 	const handleRegisterFromPackage = (pkg: MCPPackage) => {
 		setSelectedPackage(pkg.name);
@@ -202,24 +209,31 @@ export default function AvailableServersTable({
 				isLoading: loading
 			}}
 			enableRowActions
-			renderRowActions={({ row }) => (
-				<Button
-					size="small"
-					variant="contained"
-					color="primary"
-					startIcon={
-						selectedPackage === row.original.name && registering ? (
-							<SvgIcon size={16}>lucide:loader-2</SvgIcon>
-						) : (
-							<SvgIcon size={16}>lucide:download</SvgIcon>
-						)
-					}
-					onClick={() => handleRegisterFromPackage(row.original)}
-					disabled={registering}
-				>
-					{selectedPackage === row.original.name && registering ? 'Adding...' : 'Add Server'}
-				</Button>
-			)}
+			renderRowActions={({ row }) => {
+				const isRegistered = isServerRegistered(row.original);
+				const isCurrentlyRegistering = selectedPackage === row.original.name && registering;
+
+				return (
+					<Button
+						size="small"
+						variant={isRegistered ? 'outlined' : 'contained'}
+						color={isRegistered ? 'success' : 'primary'}
+						startIcon={
+							isCurrentlyRegistering ? (
+								<SvgIcon size={16}>lucide:loader-2</SvgIcon>
+							) : isRegistered ? (
+								<SvgIcon size={16}>lucide:check</SvgIcon>
+							) : (
+								<SvgIcon size={16}>lucide:download</SvgIcon>
+							)
+						}
+						onClick={() => handleRegisterFromPackage(row.original)}
+						disabled={registering || isRegistered}
+					>
+						{isCurrentlyRegistering ? 'Adding...' : isRegistered ? 'Registered' : 'Add Server'}
+					</Button>
+				);
+			}}
 			initialState={{
 				pagination: {
 					pageIndex: 0,

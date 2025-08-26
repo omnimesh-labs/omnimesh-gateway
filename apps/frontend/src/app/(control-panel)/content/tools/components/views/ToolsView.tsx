@@ -429,12 +429,6 @@ function ToolsView() {
 									onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
 									fullWidth
 									required
-									sx={{
-										'& .MuiOutlinedInput-root': {
-											backgroundColor: (theme) => 
-												theme.palette.mode === 'light' ? 'rgba(0, 0, 0, 0.02)' : 'inherit'
-										}
-									}}
 								/>
 								<TextField
 									label="Function Name"
@@ -445,12 +439,6 @@ function ToolsView() {
 									fullWidth
 									required
 									placeholder="Unique identifier for the function"
-									sx={{
-										'& .MuiOutlinedInput-root': {
-											backgroundColor: (theme) => 
-												theme.palette.mode === 'light' ? 'rgba(0, 0, 0, 0.02)' : 'inherit'
-										}
-									}}
 								/>
 								<TextField
 									label="Category"
@@ -459,12 +447,6 @@ function ToolsView() {
 									select
 									fullWidth
 									required
-									sx={{
-										'& .MuiOutlinedInput-root': {
-											backgroundColor: (theme) => 
-												theme.palette.mode === 'light' ? 'rgba(0, 0, 0, 0.02)' : 'inherit'
-										}
-									}}
 								>
 									<MenuItem value="general">General</MenuItem>
 									<MenuItem value="data">Data</MenuItem>
@@ -484,12 +466,6 @@ function ToolsView() {
 									select
 									fullWidth
 									required
-									sx={{
-										'& .MuiOutlinedInput-root': {
-											backgroundColor: (theme) => 
-												theme.palette.mode === 'light' ? 'rgba(0, 0, 0, 0.02)' : 'inherit'
-										}
-									}}
 								>
 									<MenuItem value="internal">Internal</MenuItem>
 									<MenuItem value="external">External</MenuItem>
@@ -503,12 +479,6 @@ function ToolsView() {
 									fullWidth
 									multiline
 									rows={3}
-									sx={{
-										'& .MuiOutlinedInput-root': {
-											backgroundColor: (theme) => 
-												theme.palette.mode === 'light' ? 'rgba(0, 0, 0, 0.02)' : 'inherit'
-										}
-									}}
 								/>
 								<FormControlLabel
 									control={

@@ -67,13 +67,14 @@ function ProfileSettingsView() {
 		try {
 			// Prepare update data
 			const updateData: any = {};
-			
+
 			if (profileForm.email) updateData.email = profileForm.email;
+
 			if (profileForm.new_password) {
 				updateData.current_password = profileForm.current_password;
 				updateData.new_password = profileForm.new_password;
 			}
-			
+
 			await authApi.updateProfile(updateData);
 			enqueueSnackbar('Profile updated successfully', { variant: 'success' });
 			setProfileForm((prev) => ({

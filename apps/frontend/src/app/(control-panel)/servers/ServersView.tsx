@@ -13,6 +13,8 @@ import { useSnackbar } from 'notistack';
 import { MCPServer, CreateServerRequest, serverApi, discoveryApi, MCPDiscoveryResponse } from '@/lib/api';
 import RegisterServerModal from './components/RegisterServerModal';
 import AvailableServersTable from './components/AvailableServersTable';
+import ServerDetailsModal from './components/ServerDetailsModal';
+import UnregisterConfirmDialog from './components/UnregisterConfirmDialog';
 
 const Root = styled(PageSimple)(({ theme }) => ({
 	'& .PageSimple-header': {
@@ -42,6 +44,10 @@ const getStatusColor = (status: string): 'success' | 'warning' | 'error' | 'defa
 function ServersView() {
 	const [tabValue, setTabValue] = useState(0);
 	const [registerModalOpen, setRegisterModalOpen] = useState(false);
+	const [selectedServer, setSelectedServer] = useState<MCPServer | null>(null);
+	const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+	const [serverToUnregister, setServerToUnregister] = useState<MCPServer | null>(null);
+	const [unregisterDialogOpen, setUnregisterDialogOpen] = useState(false);
 	const { enqueueSnackbar } = useSnackbar();
 	const queryClient = useQueryClient();
 
@@ -92,14 +98,34 @@ function ServersView() {
 		}
 	});
 
-	const handleUnregisterServer = async (serverId: string, serverName: string) => {
-		if (window.confirm(`Are you sure you want to unregister "${serverName}"?`)) {
-			unregisterMutation.mutate(serverId);
-		}
+	const handleUnregisterServer = (server: MCPServer) => {
+		setServerToUnregister(server);
+		setUnregisterDialogOpen(true);
+	};
+
+	const handleConfirmUnregister = (serverId: string) => {
+		unregisterMutation.mutate(serverId);
+		setUnregisterDialogOpen(false);
+		setServerToUnregister(null);
+	};
+
+	const handleCloseUnregisterDialog = () => {
+		setUnregisterDialogOpen(false);
+		setServerToUnregister(null);
 	};
 
 	const handleRegisterServer = (serverData: CreateServerRequest) => {
 		registerMutation.mutate(serverData);
+	};
+
+	const handleViewDetails = (server: MCPServer) => {
+		setSelectedServer(server);
+		setDetailsModalOpen(true);
+	};
+
+	const handleCloseDetails = () => {
+		setDetailsModalOpen(false);
+		setSelectedServer(null);
 	};
 
 	const columns = useMemo<MRT_ColumnDef<MCPServer>[]>(
@@ -239,14 +265,17 @@ function ServersView() {
 							renderRowActions={({ row }) => (
 								<Box className="flex items-center space-x-1">
 									<Tooltip title="View Details">
-										<IconButton size="small">
+										<IconButton
+											size="small"
+											onClick={() => handleViewDetails(row.original)}
+										>
 											<SvgIcon size={18}>lucide:eye</SvgIcon>
 										</IconButton>
 									</Tooltip>
-									<Tooltip title="Remove Server">
+									<Tooltip title="Unregister Server">
 										<IconButton
 											size="small"
-											onClick={() => handleUnregisterServer(row.original.id, row.original.name)}
+											onClick={() => handleUnregisterServer(row.original)}
 											disabled={unregisterMutation.isPending}
 											color="error"
 										>
@@ -270,6 +299,7 @@ function ServersView() {
 							loading={discoveryLoading}
 							onRegisterServer={handleRegisterServer}
 							registering={registerMutation.isPending}
+							registeredServers={servers}
 						/>
 					)}
 
@@ -278,6 +308,20 @@ function ServersView() {
 						onClose={() => setRegisterModalOpen(false)}
 						onRegister={handleRegisterServer}
 						loading={registerMutation.isPending}
+					/>
+
+					<ServerDetailsModal
+						server={selectedServer}
+						open={detailsModalOpen}
+						onClose={handleCloseDetails}
+					/>
+
+					<UnregisterConfirmDialog
+						server={serverToUnregister}
+						open={unregisterDialogOpen}
+						onClose={handleCloseUnregisterDialog}
+						onConfirm={handleConfirmUnregister}
+						loading={unregisterMutation.isPending}
 					/>
 				</div>
 			}
