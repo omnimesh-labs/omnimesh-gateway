@@ -56,7 +56,7 @@ function SchemePreview(props: SchemePreviewProps) {
 					<span className="text-md opacity-75">Header (Primary)</span>
 
 					<div
-						className="absolute right-0 bottom-0 mr-1 -mb-2.5 flex h-5 w-5 items-center justify-center rounded-full text-xs shadow-sm"
+						className="absolute bottom-0 right-0 -mb-2.5 mr-1 flex h-5 w-5 items-center justify-center rounded-full text-xs shadow-sm"
 						style={{
 							backgroundColor: secondaryColor,
 							color: secondaryColorContrast
@@ -65,7 +65,7 @@ function SchemePreview(props: SchemePreviewProps) {
 						<span className="opacity-75">S</span>
 					</div>
 				</div>
-				<div className="-mt-6 w-full pr-7 pl-2">
+				<div className="-mt-6 w-full pl-2 pr-7">
 					<div
 						className="relative h-24 w-full rounded-sm p-2 shadow-sm"
 						style={{

@@ -63,7 +63,7 @@ function PageBreadcrumb(props: PageBreadcrumbProps) {
 	return (
 		<Breadcrumbs
 			classes={{ ol: 'list-none m-0 p-0' }}
-			className={clsx('flex w-fit rounded-sm border-1 px-2', className)}
+			className={clsx('border-1 flex w-fit rounded-sm px-2', className)}
 			sx={{ borderColor: borderColor + '!important' }}
 			aria-label="breadcrumb"
 			color={color}
@@ -75,7 +75,7 @@ function PageBreadcrumb(props: PageBreadcrumbProps) {
 					component={item.url ? Link : 'span'}
 					to={item.url}
 					key={index}
-					className="text-md block max-w-32 truncate font-medium tracking-tight capitalize"
+					className="block max-w-32 truncate text-md font-medium capitalize tracking-tight"
 					role="button"
 					color="inherit"
 				>

@@ -35,7 +35,7 @@ function AuthJsProviderSelect() {
 					.map((provider) => (
 						<Button
 							key={provider.id}
-							className="items-between text-md flex"
+							className="items-between flex text-md"
 							onClick={() => handleSignIn(provider.id)}
 							sx={(theme) => ({
 								backgroundColor: theme.palette.background.default,

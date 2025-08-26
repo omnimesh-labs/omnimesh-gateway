@@ -234,7 +234,7 @@ function Error404PageView() {
 				>
 					<Typography
 						variant="h1"
-						className="mt-12 text-center text-4xl leading-[1.25] font-extrabold tracking-tight md:text-7xl md:leading-none"
+						className="mt-12 text-center text-4xl font-extrabold leading-[1.25] tracking-tight md:text-7xl md:leading-none"
 					/>
 				</motion.div>
 				<motion.div

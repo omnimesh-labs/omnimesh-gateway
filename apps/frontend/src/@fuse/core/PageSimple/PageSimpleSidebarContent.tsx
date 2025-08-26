@@ -22,9 +22,7 @@ function PageSimpleSidebarContent(props: PageSimpleSidebarContentProps) {
 
 	return (
 		<Scrollbars enable={innerScroll}>
-			<div className="PageSimple-sidebarContent flex min-h-full flex-col lg:min-w-0">
-				{content || children}
-			</div>
+			<div className="PageSimple-sidebarContent flex min-h-full flex-col lg:min-w-0">{content || children}</div>
 		</Scrollbars>
 	);
 }

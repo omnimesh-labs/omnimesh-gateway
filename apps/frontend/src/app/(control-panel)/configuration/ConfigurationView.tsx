@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import PageSimple from '@fuse/core/PageSimple';
 import { styled } from '@mui/material/styles';
-import { 
-	Typography, 
-	Button, 
+import {
+	Typography,
+	Button,
 	Paper,
 	Box,
 	Tabs,
@@ -65,7 +65,7 @@ function ConfigurationView() {
 			// Simulate export progress
 			for (let i = 0; i <= 100; i += 10) {
 				setExportProgress(i);
-				await new Promise(resolve => setTimeout(resolve, 200));
+				await new Promise((resolve) => setTimeout(resolve, 200));
 			}
 
 			// Create mock export file
@@ -74,7 +74,7 @@ function ConfigurationView() {
 					exportId: `export-${Date.now()}`,
 					timestamp: new Date().toISOString(),
 					version: '1.0.0',
-					entityTypes: exportOptions.entityTypes,
+					entityTypes: exportOptions.entityTypes
 				},
 				servers: [],
 				namespaces: [],
@@ -97,7 +97,9 @@ function ConfigurationView() {
 
 			enqueueSnackbar('Configuration exported successfully', { variant: 'success' });
 		} catch (error) {
-			enqueueSnackbar('Export failed: ' + (error instanceof Error ? error.message : 'Unknown error'), { variant: 'error' });
+			enqueueSnackbar('Export failed: ' + (error instanceof Error ? error.message : 'Unknown error'), {
+				variant: 'error'
+			});
 		} finally {
 			setIsExporting(false);
 			setExportProgress(0);
@@ -108,7 +110,7 @@ function ConfigurationView() {
 		setIsImporting(true);
 		try {
 			// Simulate import process
-			await new Promise(resolve => setTimeout(resolve, 2000));
+			await new Promise((resolve) => setTimeout(resolve, 2000));
 			enqueueSnackbar('Import functionality coming soon!', { variant: 'info' });
 		} finally {
 			setIsImporting(false);
@@ -116,11 +118,11 @@ function ConfigurationView() {
 	};
 
 	const handleEntityTypeChange = (entityType: string, checked: boolean) => {
-		setExportOptions(prev => ({
+		setExportOptions((prev) => ({
 			...prev,
-			entityTypes: checked 
+			entityTypes: checked
 				? [...prev.entityTypes, entityType]
-				: prev.entityTypes.filter(type => type !== entityType)
+				: prev.entityTypes.filter((type) => type !== entityType)
 		}));
 	};
 
@@ -131,7 +133,11 @@ function ConfigurationView() {
 					<div className="flex items-center justify-between">
 						<div>
 							<Typography variant="h4">Configuration Management</Typography>
-							<Typography variant="body1" color="textSecondary" className="mt-1">
+							<Typography
+								variant="body1"
+								color="textSecondary"
+								className="mt-1"
+							>
 								Export and import your MCP Gateway configuration
 							</Typography>
 						</div>
@@ -141,18 +147,18 @@ function ConfigurationView() {
 			content={
 				<div className="p-6">
 					<Box className="mb-6">
-						<Tabs 
-							value={tabValue} 
+						<Tabs
+							value={tabValue}
 							onChange={(_, newValue) => setTabValue(newValue)}
 							variant="scrollable"
 							scrollButtons="auto"
 						>
-							<Tab 
+							<Tab
 								label="Export Configuration"
 								icon={<SvgIcon size={20}>lucide:download</SvgIcon>}
 								iconPosition="start"
 							/>
-							<Tab 
+							<Tab
 								label="Import Configuration"
 								icon={<SvgIcon size={20}>lucide:upload</SvgIcon>}
 								iconPosition="start"
@@ -168,10 +174,13 @@ function ConfigurationView() {
 
 							<Card>
 								<CardContent>
-									<Typography variant="h6" gutterBottom>
+									<Typography
+										variant="h6"
+										gutterBottom
+									>
 										Export Options
 									</Typography>
-									
+
 									<Stack spacing={3}>
 										<FormControl component="fieldset">
 											<FormLabel component="legend">Entity Types</FormLabel>
@@ -181,14 +190,21 @@ function ConfigurationView() {
 													{ id: 'namespaces', label: 'Namespaces' },
 													{ id: 'tools', label: 'Tools' },
 													{ id: 'prompts', label: 'Prompts' },
-													{ id: 'resources', label: 'Resources' },
+													{ id: 'resources', label: 'Resources' }
 												].map((entityType) => (
 													<FormControlLabel
 														key={entityType.id}
 														control={
 															<Checkbox
-																checked={exportOptions.entityTypes.includes(entityType.id)}
-																onChange={(e) => handleEntityTypeChange(entityType.id, e.target.checked)}
+																checked={exportOptions.entityTypes.includes(
+																	entityType.id
+																)}
+																onChange={(e) =>
+																	handleEntityTypeChange(
+																		entityType.id,
+																		e.target.checked
+																	)
+																}
 															/>
 														}
 														label={entityType.label}
@@ -204,7 +220,12 @@ function ConfigurationView() {
 													control={
 														<Checkbox
 															checked={exportOptions.includeInactive}
-															onChange={(e) => setExportOptions(prev => ({...prev, includeInactive: e.target.checked}))}
+															onChange={(e) =>
+																setExportOptions((prev) => ({
+																	...prev,
+																	includeInactive: e.target.checked
+																}))
+															}
 														/>
 													}
 													label="Include inactive items"
@@ -213,7 +234,12 @@ function ConfigurationView() {
 													control={
 														<Checkbox
 															checked={exportOptions.includeDependencies}
-															onChange={(e) => setExportOptions(prev => ({...prev, includeDependencies: e.target.checked}))}
+															onChange={(e) =>
+																setExportOptions((prev) => ({
+																	...prev,
+																	includeDependencies: e.target.checked
+																}))
+															}
 														/>
 													}
 													label="Include dependencies"
@@ -224,10 +250,17 @@ function ConfigurationView() {
 
 									{isExporting && (
 										<Box sx={{ mt: 2 }}>
-											<Typography variant="body2" color="textSecondary" gutterBottom>
+											<Typography
+												variant="body2"
+												color="textSecondary"
+												gutterBottom
+											>
 												Exporting configuration... {exportProgress}%
 											</Typography>
-											<LinearProgress variant="determinate" value={exportProgress} />
+											<LinearProgress
+												variant="determinate"
+												value={exportProgress}
+											/>
 										</Box>
 									)}
 								</CardContent>
@@ -244,15 +277,25 @@ function ConfigurationView() {
 							</Card>
 
 							<Paper sx={{ p: 2 }}>
-								<Typography variant="subtitle2" gutterBottom>
+								<Typography
+									variant="subtitle2"
+									gutterBottom
+								>
 									Selected for Export:
 								</Typography>
 								<Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-									{exportOptions.entityTypes.map(type => (
-										<Chip key={type} label={type} size="small" />
+									{exportOptions.entityTypes.map((type) => (
+										<Chip
+											key={type}
+											label={type}
+											size="small"
+										/>
 									))}
 									{exportOptions.entityTypes.length === 0 && (
-										<Typography variant="body2" color="textSecondary">
+										<Typography
+											variant="body2"
+											color="textSecondary"
+										>
 											No entity types selected
 										</Typography>
 									)}
@@ -264,15 +307,19 @@ function ConfigurationView() {
 					{tabValue === 1 && (
 						<Stack spacing={3}>
 							<Alert severity="warning">
-								Import functionality will overwrite existing configuration. Please backup your current setup first.
+								Import functionality will overwrite existing configuration. Please backup your current
+								setup first.
 							</Alert>
 
 							<Card>
 								<CardContent>
-									<Typography variant="h6" gutterBottom>
+									<Typography
+										variant="h6"
+										gutterBottom
+									>
 										Import Configuration
 									</Typography>
-									
+
 									<Stack spacing={2}>
 										<TextField
 											type="file"
@@ -296,10 +343,16 @@ function ConfigurationView() {
 							</Card>
 
 							<Alert severity="info">
-								<Typography variant="subtitle2" gutterBottom>
+								<Typography
+									variant="subtitle2"
+									gutterBottom
+								>
 									Supported Configuration Format:
 								</Typography>
-								<Typography variant="body2" component="div">
+								<Typography
+									variant="body2"
+									component="div"
+								>
 									<ul>
 										<li>JSON format with metadata section</li>
 										<li>Entity sections: servers, namespaces, tools, prompts, resources</li>

@@ -267,10 +267,7 @@ class Utils {
 	 * It takes in an array of route configurations as a parameter and returns an array of routes.
 	 *
 	 */
-	static generateRoutesFromConfigs(
-		configs: RouteConfigsType,
-		defaultAuth: SettingsConfigType['defaultAuth']
-	) {
+	static generateRoutesFromConfigs(configs: RouteConfigsType, defaultAuth: SettingsConfigType['defaultAuth']) {
 		let allRoutes: RouteItemType[] = [];
 		configs.forEach((config: RouteConfigType) => {
 			allRoutes = [...allRoutes, ...this.setRoutes(config, defaultAuth)];
@@ -405,31 +402,31 @@ class Utils {
 		return !data
 			? null
 			: data.reduce((list: unknown[], entry: { children?: [] }) => {
-				let clone: unknown = null;
+					let clone: unknown = null;
 
-				if (predicate(entry)) {
-					// if the object matches the filter, clone it as it is
-					clone = { ...entry };
-				}
-
-				if (entry.children != null) {
-					// if the object has childrens, filter the list of children
-					const children = this.filterRecursive(entry.children, predicate);
-
-					if (children && children?.length > 0) {
-						// if any of the children matches, clone the parent object, overwrite
-						// the children list with the filtered list
-						clone = { ...entry, children };
+					if (predicate(entry)) {
+						// if the object matches the filter, clone it as it is
+						clone = { ...entry };
 					}
-				}
 
-				// if there's a cloned object, push it to the output list
-				if (clone) {
-					list.push(clone);
-				}
+					if (entry.children != null) {
+						// if the object has childrens, filter the list of children
+						const children = this.filterRecursive(entry.children, predicate);
 
-				return list;
-			}, []);
+						if (children && children?.length > 0) {
+							// if any of the children matches, clone the parent object, overwrite
+							// the children list with the filtered list
+							clone = { ...entry, children };
+						}
+					}
+
+					// if there's a cloned object, push it to the output list
+					if (clone) {
+						list.push(clone);
+					}
+
+					return list;
+				}, []);
 	}
 }
 

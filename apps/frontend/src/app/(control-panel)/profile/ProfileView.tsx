@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import PageSimple from '@fuse/core/PageSimple';
 import { styled } from '@mui/material/styles';
-import { 
-	Typography, 
-	Button, 
+import {
+	Typography,
+	Button,
 	Card,
 	CardContent,
 	GridLegacy as Grid,
@@ -17,7 +17,6 @@ import {
 	ListItemText,
 	ListItemIcon,
 	Chip,
-	IconButton,
 	TextField,
 	Dialog,
 	DialogTitle,
@@ -79,7 +78,7 @@ function ProfileView() {
 		id: currentUser?.id || 'user-1',
 		email: currentUser?.email || 'admin@admin.com',
 		name: currentUser?.displayName || 'Admin User',
-		role: Array.isArray(currentUser?.role) ? currentUser.role[0] : (currentUser?.role || 'admin'),
+		role: Array.isArray(currentUser?.role) ? currentUser.role[0] : currentUser?.role || 'admin',
 		organization: {
 			id: 'org-1',
 			name: 'MCP Gateway Organization',
@@ -115,7 +114,7 @@ function ProfileView() {
 			enqueueSnackbar('Passwords do not match', { variant: 'error' });
 			return;
 		}
-		
+
 		try {
 			// TODO: Replace with actual API call
 			// await authApi.changePassword(passwordFormData);
@@ -174,14 +173,18 @@ function ProfileView() {
 				<div className="p-6">
 					<div className="flex items-center justify-between">
 						<div className="flex items-center space-x-4">
-							<Avatar 
-								sx={{ width: 64, height: 64, bgcolor: 'primary.main' }}
-							>
-								{mockProfile.name.split(' ').map(n => n[0]).join('')}
+							<Avatar sx={{ width: 64, height: 64, bgcolor: 'primary.main' }}>
+								{mockProfile.name
+									.split(' ')
+									.map((n) => n[0])
+									.join('')}
 							</Avatar>
 							<div>
 								<Typography variant="h4">{mockProfile.name}</Typography>
-								<Typography variant="body1" color="textSecondary">
+								<Typography
+									variant="body1"
+									color="textSecondary"
+								>
 									{mockProfile.email}
 								</Typography>
 							</div>
@@ -207,33 +210,55 @@ function ProfileView() {
 			}
 			content={
 				<div className="p-6">
-					<Grid container spacing={3}>
+					<Grid
+						container
+						spacing={3}
+					>
 						{/* Quick Actions */}
-						<Grid item xs={12}>
-							<Typography variant="h6" className="mb-3">Quick Actions</Typography>
-							<Grid container spacing={2}>
+						<Grid
+							item
+							xs={12}
+						>
+							<Typography
+								variant="h6"
+								className="mb-3"
+							>
+								Quick Actions
+							</Typography>
+							<Grid
+								container
+								spacing={2}
+							>
 								{quickActions.map((action) => (
-									<Grid item xs={12} sm={6} md={3} key={action.title}>
-										<Card 
-											sx={{ 
+									<Grid
+										item
+										xs={12}
+										sm={6}
+										md={3}
+										key={action.title}
+									>
+										<Card
+											sx={{
 												cursor: 'pointer',
 												'&:hover': { boxShadow: 3 }
 											}}
 											onClick={() => action.url !== '#' && router.push(action.url)}
 										>
 											<CardContent>
-												<Box className="flex items-center justify-between mb-2">
-													<SvgIcon size={24} color="primary">
+												<Box className="mb-2 flex items-center justify-between">
+													<SvgIcon
+														size={24}
+														color="primary"
+													>
 														{action.icon}
 													</SvgIcon>
-													<SvgIcon size={16}>
-														lucide:arrow-right
-													</SvgIcon>
+													<SvgIcon size={16}>lucide:arrow-right</SvgIcon>
 												</Box>
-												<Typography variant="subtitle1">
-													{action.title}
-												</Typography>
-												<Typography variant="body2" color="textSecondary">
+												<Typography variant="subtitle1">{action.title}</Typography>
+												<Typography
+													variant="body2"
+													color="textSecondary"
+												>
 													{action.description}
 												</Typography>
 											</CardContent>
@@ -244,10 +269,17 @@ function ProfileView() {
 						</Grid>
 
 						{/* Account Details */}
-						<Grid item xs={12} md={6}>
+						<Grid
+							item
+							xs={12}
+							md={6}
+						>
 							<Card>
 								<CardContent>
-									<Typography variant="h6" className="mb-3">
+									<Typography
+										variant="h6"
+										className="mb-3"
+									>
 										Account Details
 									</Typography>
 									<List>
@@ -258,10 +290,12 @@ function ProfileView() {
 														primary={detail.label}
 														secondary={
 															detail.chip ? (
-																<Chip 
-																	size="small" 
+																<Chip
+																	size="small"
 																	label={detail.value}
-																	color={detail.label === 'Role' ? 'primary' : 'default'}
+																	color={
+																		detail.label === 'Role' ? 'primary' : 'default'
+																	}
 																/>
 															) : (
 																detail.value
@@ -278,10 +312,17 @@ function ProfileView() {
 						</Grid>
 
 						{/* Security Settings */}
-						<Grid item xs={12} md={6}>
+						<Grid
+							item
+							xs={12}
+							md={6}
+						>
 							<Card>
 								<CardContent>
-									<Typography variant="h6" className="mb-3">
+									<Typography
+										variant="h6"
+										className="mb-3"
+									>
 										Security Settings
 									</Typography>
 									<List>
@@ -293,7 +334,10 @@ function ProfileView() {
 												primary="Two-Factor Authentication"
 												secondary="Not enabled"
 											/>
-											<Button size="small" variant="outlined">
+											<Button
+												size="small"
+												variant="outlined"
+											>
 												Enable
 											</Button>
 										</ListItem>
@@ -306,8 +350,8 @@ function ProfileView() {
 												primary="API Keys"
 												secondary={`${mockProfile.api_keys_count} active keys`}
 											/>
-											<Button 
-												size="small" 
+											<Button
+												size="small"
 												variant="outlined"
 												onClick={() => router.push('/profile/api-keys')}
 											>
@@ -323,7 +367,10 @@ function ProfileView() {
 												primary="Active Sessions"
 												secondary={`${mockProfile.active_sessions} devices`}
 											/>
-											<Button size="small" variant="outlined">
+											<Button
+												size="small"
+												variant="outlined"
+											>
 												View All
 											</Button>
 										</ListItem>
@@ -343,13 +390,23 @@ function ProfileView() {
 						</Grid>
 
 						{/* Danger Zone */}
-						<Grid item xs={12}>
+						<Grid
+							item
+							xs={12}
+						>
 							<Card sx={{ borderColor: 'error.main', borderWidth: 1, borderStyle: 'solid' }}>
 								<CardContent>
-									<Typography variant="h6" color="error" className="mb-3">
+									<Typography
+										variant="h6"
+										color="error"
+										className="mb-3"
+									>
 										Danger Zone
 									</Typography>
-									<Alert severity="warning" className="mb-3">
+									<Alert
+										severity="warning"
+										className="mb-3"
+									>
 										These actions are irreversible. Please be certain.
 									</Alert>
 									<Box className="flex gap-2">
@@ -357,7 +414,9 @@ function ProfileView() {
 											variant="outlined"
 											color="error"
 											startIcon={<SvgIcon>lucide:download</SvgIcon>}
-											onClick={() => enqueueSnackbar('Export functionality coming soon', { variant: 'info' })}
+											onClick={() =>
+												enqueueSnackbar('Export functionality coming soon', { variant: 'info' })
+											}
 										>
 											Export Data
 										</Button>
@@ -365,7 +424,11 @@ function ProfileView() {
 											variant="outlined"
 											color="error"
 											startIcon={<SvgIcon>lucide:trash-2</SvgIcon>}
-											onClick={() => enqueueSnackbar('Account deletion requires admin approval', { variant: 'warning' })}
+											onClick={() =>
+												enqueueSnackbar('Account deletion requires admin approval', {
+													variant: 'warning'
+												})
+											}
 										>
 											Delete Account
 										</Button>
@@ -376,15 +439,15 @@ function ProfileView() {
 					</Grid>
 
 					{/* Edit Profile Dialog */}
-					<Dialog 
-						open={editDialogOpen} 
+					<Dialog
+						open={editDialogOpen}
 						onClose={() => setEditDialogOpen(false)}
 						maxWidth="sm"
 						fullWidth
 					>
 						<DialogTitle>Edit Profile</DialogTitle>
 						<DialogContent>
-							<Box className="space-y-4 mt-2">
+							<Box className="mt-2 space-y-4">
 								<TextField
 									label="Name"
 									value={editFormData.name}
@@ -402,55 +465,68 @@ function ProfileView() {
 						</DialogContent>
 						<DialogActions>
 							<Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
-							<Button variant="contained" onClick={handleSaveProfile}>Save Changes</Button>
+							<Button
+								variant="contained"
+								onClick={handleSaveProfile}
+							>
+								Save Changes
+							</Button>
 						</DialogActions>
 					</Dialog>
 
 					{/* Change Password Dialog */}
-					<Dialog 
-						open={passwordDialogOpen} 
+					<Dialog
+						open={passwordDialogOpen}
 						onClose={() => setPasswordDialogOpen(false)}
 						maxWidth="sm"
 						fullWidth
 					>
 						<DialogTitle>Change Password</DialogTitle>
 						<DialogContent>
-							<Box className="space-y-4 mt-2">
+							<Box className="mt-2 space-y-4">
 								<TextField
 									label="Current Password"
 									type="password"
 									value={passwordFormData.currentPassword}
-									onChange={(e) => setPasswordFormData({ 
-										...passwordFormData, 
-										currentPassword: e.target.value 
-									})}
+									onChange={(e) =>
+										setPasswordFormData({
+											...passwordFormData,
+											currentPassword: e.target.value
+										})
+									}
 									fullWidth
 								/>
 								<TextField
 									label="New Password"
 									type="password"
 									value={passwordFormData.newPassword}
-									onChange={(e) => setPasswordFormData({ 
-										...passwordFormData, 
-										newPassword: e.target.value 
-									})}
+									onChange={(e) =>
+										setPasswordFormData({
+											...passwordFormData,
+											newPassword: e.target.value
+										})
+									}
 									fullWidth
 								/>
 								<TextField
 									label="Confirm New Password"
 									type="password"
 									value={passwordFormData.confirmPassword}
-									onChange={(e) => setPasswordFormData({ 
-										...passwordFormData, 
-										confirmPassword: e.target.value 
-									})}
+									onChange={(e) =>
+										setPasswordFormData({
+											...passwordFormData,
+											confirmPassword: e.target.value
+										})
+									}
 									fullWidth
-									error={passwordFormData.confirmPassword !== '' && 
-										   passwordFormData.newPassword !== passwordFormData.confirmPassword}
+									error={
+										passwordFormData.confirmPassword !== '' &&
+										passwordFormData.newPassword !== passwordFormData.confirmPassword
+									}
 									helperText={
-										passwordFormData.confirmPassword !== '' && 
-										passwordFormData.newPassword !== passwordFormData.confirmPassword 
-											? 'Passwords do not match' 
+										passwordFormData.confirmPassword !== '' &&
+										passwordFormData.newPassword !== passwordFormData.confirmPassword
+											? 'Passwords do not match'
 											: ''
 									}
 								/>
@@ -458,12 +534,12 @@ function ProfileView() {
 						</DialogContent>
 						<DialogActions>
 							<Button onClick={() => setPasswordDialogOpen(false)}>Cancel</Button>
-							<Button 
-								variant="contained" 
+							<Button
+								variant="contained"
 								onClick={handleChangePassword}
 								disabled={
-									!passwordFormData.currentPassword || 
-									!passwordFormData.newPassword || 
+									!passwordFormData.currentPassword ||
+									!passwordFormData.newPassword ||
 									passwordFormData.newPassword !== passwordFormData.confirmPassword
 								}
 							>

@@ -59,5 +59,4 @@ function NavVerticalCollapse(props: NavItemComponentProps) {
 	return memoizedContent;
 }
 
-
 export default NavVerticalCollapse;

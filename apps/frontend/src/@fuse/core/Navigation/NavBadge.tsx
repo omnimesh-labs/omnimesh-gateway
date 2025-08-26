@@ -19,7 +19,7 @@ function NavBadge(props: NavBadgeProps) {
 
 	return (
 		<Chip
-			className={clsx('item-badge truncate text-xs leading-none font-bold', className)}
+			className={clsx('item-badge truncate text-xs font-bold leading-none', className)}
 			size="small"
 			color="secondary"
 			sx={{

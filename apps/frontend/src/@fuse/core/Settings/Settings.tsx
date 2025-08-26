@@ -160,7 +160,7 @@ function Settings(props: SettingsProps) {
 				)}
 
 				<Typography
-					className="text-md my-4 italic"
+					className="my-4 text-md italic"
 					color="text.secondary"
 				>
 					*Not all option combinations are available

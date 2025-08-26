@@ -23,11 +23,7 @@ class NavigationHelper {
 		return undefined;
 	}
 
-	static appendNavItem(
-		nav: NavItemType[],
-		item: NavItemType,
-		parentId: string | null = null
-	): NavItemType[] {
+	static appendNavItem(nav: NavItemType[], item: NavItemType, parentId: string | null = null): NavItemType[] {
 		if (!parentId) {
 			return [...nav, item];
 		}
@@ -47,11 +43,7 @@ class NavigationHelper {
 		});
 	}
 
-	static prependNavItem(
-		nav: NavItemType[],
-		item: NavItemType,
-		parentId: string | null = null
-	): NavItemType[] {
+	static prependNavItem(nav: NavItemType[], item: NavItemType, parentId: string | null = null): NavItemType[] {
 		if (!parentId) {
 			return [item, ...nav];
 		}
@@ -180,9 +172,7 @@ class NavigationHelper {
 
 		return navigation?.flatMap((item, index) => {
 			const order = parentOrder ? `${parentOrder}.${index + 1}` : `${index + 1}`;
-			let flattened: FlatNavItemType[] = [
-				{ ...item, order, children: item.children?.map((child) => child.id) }
-			];
+			let flattened: FlatNavItemType[] = [{ ...item, order, children: item.children?.map((child) => child.id) }];
 
 			if (item.children) {
 				flattened = flattened.concat(this.flattenNavigation(item.children, order));

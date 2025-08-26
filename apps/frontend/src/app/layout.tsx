@@ -48,11 +48,33 @@ export default async function RootLayout({
 					rel="shortcut icon"
 					href="/favicon.ico"
 				/>
-				{/* Font and style imports */}
-				<link rel="stylesheet" href="/assets/fonts/material-design-icons/MaterialIconsOutlined.css" />
-				<link rel="stylesheet" href="/assets/fonts/Geist/geist.css" />
-				<link rel="stylesheet" href="/assets/fonts/meteocons/style.css" />
-				<link rel="stylesheet" href="/assets/styles/prism.css" />
+				{/* Font and style imports - optimized for performance */}
+				<link
+					rel="preload"
+					as="style"
+					href="/assets/fonts/Geist/geist.css"
+				/>
+				<link
+					rel="stylesheet"
+					href="/assets/fonts/Geist/geist.css"
+				/>
+				<link
+					rel="preload"
+					as="style"
+					href="/assets/fonts/material-design-icons/MaterialIconsOutlined.css"
+				/>
+				<link
+					rel="stylesheet"
+					href="/assets/fonts/material-design-icons/MaterialIconsOutlined.css"
+				/>
+				<link
+					rel="stylesheet"
+					href="/assets/fonts/meteocons/style.css"
+				/>
+				<link
+					rel="stylesheet"
+					href="/assets/styles/prism.css"
+				/>
 				<noscript id="emotion-insertion-point" />
 			</head>
 			<body

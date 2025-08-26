@@ -79,7 +79,7 @@ function UserMenu(props: UserMenuProps) {
 							<Typography
 								component="span"
 								className={clsx(
-									'title flex truncate leading-none font-semibold tracking-tight capitalize',
+									'title flex truncate font-semibold capitalize leading-none tracking-tight',
 									dense ? 'text-md' : 'text-base'
 								)}
 							>
@@ -87,7 +87,7 @@ function UserMenu(props: UserMenuProps) {
 							</Typography>
 							<Typography
 								className={clsx(
-									'flex leading-none font-medium tracking-tighter',
+									'flex font-medium leading-none tracking-tighter',
 									dense ? 'text-sm' : 'text-md'
 								)}
 								color="text.secondary"

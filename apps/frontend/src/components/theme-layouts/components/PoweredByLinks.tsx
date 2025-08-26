@@ -153,7 +153,7 @@ function PoweredByLinks() {
 					role="button"
 				>
 					<Box
-						className="flex h-6 w-6 min-w-6 items-end justify-end overflow-hidden rounded-sm px-1 py-0.25"
+						className="py-0.25 flex h-6 w-6 min-w-6 items-end justify-end overflow-hidden rounded-sm px-1"
 						sx={{ backgroundColor: '#2e79c7!important', color: '#ffffff!important' }}
 					>
 						<span className="react-text text-sm text-xs font-semibold">TS</span>

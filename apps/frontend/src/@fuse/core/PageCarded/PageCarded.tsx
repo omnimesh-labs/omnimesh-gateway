@@ -237,7 +237,7 @@ function PageCarded(props: PageCardedProps) {
 			>
 				{header && <PageCardedHeader header={header} />}
 
-				<div className="relative z-10 container flex h-full flex-auto flex-col overflow-hidden">
+				<div className="container relative z-10 flex h-full flex-auto flex-col overflow-hidden">
 					<div className="PageCarded-wrapper">
 						<PageCardedSidebar
 							position="left"

@@ -57,7 +57,7 @@ function SettingsViewerDialog(props: SettingsViewerDialogProps) {
 			>
 				<DialogTitle> Settings Viewer</DialogTitle>
 				<DialogContent>
-					<Typography className="mt-6 mb-4 text-lg font-bold">JSON</Typography>
+					<Typography className="mb-4 mt-6 text-lg font-bold">JSON</Typography>
 
 					<Highlight
 						component="pre"
@@ -66,7 +66,7 @@ function SettingsViewerDialog(props: SettingsViewerDialogProps) {
 						{JSON.stringify(settings, null, 2)}
 					</Highlight>
 
-					<Typography className="mt-6 mb-4 text-lg font-bold">Query Params</Typography>
+					<Typography className="mb-4 mt-6 text-lg font-bold">Query Params</Typography>
 
 					{queryString}
 				</DialogContent>

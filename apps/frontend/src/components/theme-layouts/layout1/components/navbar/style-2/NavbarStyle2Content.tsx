@@ -118,7 +118,7 @@ function NavbarStyle2Content(props: NavbarStyle2ContentProps) {
 					/>
 
 					<Scrollbars
-						className="flex min-h-0 w-full flex-1 flex-col justify-start overflow-x-hidden overflow-y-auto"
+						className="flex min-h-0 w-full flex-1 flex-col justify-start overflow-y-auto overflow-x-hidden"
 						option={{
 							suppressScrollX: true,
 							wheelPropagation: false
@@ -143,7 +143,7 @@ function NavbarStyle2Content(props: NavbarStyle2ContentProps) {
 					<StyledPanel
 						id="fuse-navbar-panel"
 						opened={panelOpen}
-						className={clsx('overflow-x-hidden overflow-y-auto shadow-sm')}
+						className={clsx('overflow-y-auto overflow-x-hidden shadow-sm')}
 						option={{ suppressScrollX: true, wheelPropagation: false }}
 					>
 						<Navigation

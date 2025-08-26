@@ -25,7 +25,8 @@ const iconSize = plugin(
 		// Standard spacing scale utilities
 		addUtilities(
 			Object.entries(spacingScale).map(([key, value]) => ({
-				[`.icon-size-${key}`]: createIconStyles(value)
+				// Replace dots with underscores in class names to avoid CSS parsing errors
+				[`.icon-size-${key.replace(/\./g, '_')}`]: createIconStyles(value)
 			}))
 		);
 

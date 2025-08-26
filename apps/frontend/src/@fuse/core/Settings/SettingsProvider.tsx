@@ -20,10 +20,7 @@ const getInitialSettings = (): SettingsConfigType => {
 
 const initialSettings = getInitialSettings();
 
-const generateSettings = (
-	_defaultSettings: SettingsConfigType,
-	_newSettings: PartialDeep<SettingsConfigType>
-) => {
+const generateSettings = (_defaultSettings: SettingsConfigType, _newSettings: PartialDeep<SettingsConfigType>) => {
 	return _.merge(
 		{},
 		_defaultSettings,

@@ -59,15 +59,15 @@ function ToolbarLayout1(props: ToolbarLayout1Props) {
 					</div>
 
 					<div className="flex items-center overflow-x-auto px-2 py-2 md:px-4">
-						<LanguageSwitcher />
-						<AdjustFontSize />
+						{/* <LanguageSwitcher />
+						<AdjustFontSize /> */}
 						<FullScreenToggle />
 						<LightDarkModeToggle
 							lightTheme={_.find(themeOptions, { id: 'Default' })}
 							darkTheme={_.find(themeOptions, { id: 'Default Dark' })}
 						/>
 						<NavigationSearch />
-						<QuickPanelToggleButton />
+						{/* <QuickPanelToggleButton /> */}
 					</div>
 
 					{config.navbar.display && config.navbar.position === 'right' && (

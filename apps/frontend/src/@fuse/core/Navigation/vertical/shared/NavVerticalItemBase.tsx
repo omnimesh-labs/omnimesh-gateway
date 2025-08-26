@@ -138,9 +138,7 @@ function NavVerticalItemBase(props: NavVerticalBaseProps) {
 				{...itemProps}
 			>
 				{!isGroup && showIcon && item.icon && (
-					<SvgIcon className={clsx('fuse-list-item-icon', 'shrink-0', item.iconClass)}>
-						{item.icon}
-					</SvgIcon>
+					<SvgIcon className={clsx('fuse-list-item-icon', 'shrink-0', item.iconClass)}>{item.icon}</SvgIcon>
 				)}
 				<div className="flex min-w-0 flex-auto flex-col items-start gap-1">
 					{item.title && (

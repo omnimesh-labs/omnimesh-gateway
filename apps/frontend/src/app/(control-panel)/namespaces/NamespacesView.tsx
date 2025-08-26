@@ -4,11 +4,11 @@ import { useState, useMemo } from 'react';
 import { MRT_ColumnDef } from 'material-react-table';
 import PageSimple from '@fuse/core/PageSimple';
 import { styled } from '@mui/material/styles';
-import { 
-	Typography, 
-	Button, 
-	Chip, 
-	IconButton, 
+import {
+	Typography,
+	Button,
+	Chip,
+	IconButton,
 	Tooltip,
 	Box,
 	Dialog,
@@ -20,7 +20,7 @@ import {
 	FormControlLabel,
 	Switch
 } from '@mui/material';
-import DataTable from '@/components/data-table/DataTable';
+import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
 import { useSnackbar } from 'notistack';
 
@@ -118,73 +118,80 @@ function NamespacesView() {
 		enqueueSnackbar(`Delete functionality coming soon for ${namespace.name}`, { variant: 'info' });
 	};
 
-	const columns = useMemo<MRT_ColumnDef<Namespace>[]>(() => [
-		{
-			accessorKey: 'name',
-			header: 'Name',
-			size: 200,
-			Cell: ({ row }) => (
-				<Box className="flex items-center space-x-2">
-					<SvgIcon size={20}>lucide:folder</SvgIcon>
-					<Box>
-						<Typography variant="body2" className="font-medium">
-							{row.original.name}
-						</Typography>
-						<Typography variant="caption" color="textSecondary">
-							{row.original.slug}
-						</Typography>
+	const columns = useMemo<MRT_ColumnDef<Namespace>[]>(
+		() => [
+			{
+				accessorKey: 'name',
+				header: 'Name',
+				size: 200,
+				Cell: ({ row }) => (
+					<Box className="flex items-center space-x-2">
+						<SvgIcon size={20}>lucide:folder</SvgIcon>
+						<Box>
+							<Typography
+								variant="body2"
+								className="font-medium"
+							>
+								{row.original.name}
+							</Typography>
+							<Typography
+								variant="caption"
+								color="textSecondary"
+							>
+								{row.original.slug}
+							</Typography>
+						</Box>
 					</Box>
-				</Box>
-			)
-		},
-		{
-			accessorKey: 'description',
-			header: 'Description',
-			size: 250,
-			Cell: ({ cell }) => (
-				<Typography variant="body2">
-					{cell.getValue<string>() || 'No description'}
-				</Typography>
-			)
-		},
-		{
-			accessorKey: 'server_count',
-			header: 'Servers',
-			size: 100,
-			Cell: ({ cell }) => (
-				<Chip
-					size="small"
-					label={cell.getValue<number>()}
-					variant="outlined"
-				/>
-			)
-		},
-		{
-			accessorKey: 'is_active',
-			header: 'Status',
-			size: 120,
-			Cell: ({ cell }) => (
-				<Chip
-					size="small"
-					label={cell.getValue<boolean>() ? 'Active' : 'Inactive'}
-					color={cell.getValue<boolean>() ? 'success' : 'default'}
-				/>
-			)
-		},
-		{
-			accessorKey: 'created_at',
-			header: 'Created',
-			size: 150,
-			Cell: ({ cell }) => {
-				const date = new Date(cell.getValue<string>());
-				return date.toLocaleDateString('en-US', {
-					year: 'numeric',
-					month: 'short',
-					day: 'numeric'
-				});
+				)
+			},
+			{
+				accessorKey: 'description',
+				header: 'Description',
+				size: 250,
+				Cell: ({ cell }) => (
+					<Typography variant="body2">{cell.getValue<string>() || 'No description'}</Typography>
+				)
+			},
+			{
+				accessorKey: 'server_count',
+				header: 'Servers',
+				size: 100,
+				Cell: ({ cell }) => (
+					<Chip
+						size="small"
+						label={cell.getValue<number>()}
+						variant="outlined"
+					/>
+				)
+			},
+			{
+				accessorKey: 'is_active',
+				header: 'Status',
+				size: 120,
+				Cell: ({ cell }) => (
+					<Chip
+						size="small"
+						label={cell.getValue<boolean>() ? 'Active' : 'Inactive'}
+						color={cell.getValue<boolean>() ? 'success' : 'default'}
+					/>
+				)
+			},
+			{
+				accessorKey: 'created_at',
+				header: 'Created',
+				size: 150,
+				Cell: ({ cell }) => {
+					const date = new Date(cell.getValue<string>());
+					return date.toLocaleDateString('en-US', {
+						year: 'numeric',
+						month: 'short',
+						day: 'numeric'
+					});
+				}
 			}
-		}
-	], []);
+		],
+		[]
+	);
 
 	return (
 		<Root
@@ -193,7 +200,11 @@ function NamespacesView() {
 					<div className="flex items-center justify-between">
 						<div>
 							<Typography variant="h4">Namespaces</Typography>
-							<Typography variant="body1" color="textSecondary" className="mt-1">
+							<Typography
+								variant="body1"
+								color="textSecondary"
+								className="mt-1"
+							>
 								Group and organize your MCP servers into logical namespaces
 							</Typography>
 						</div>
@@ -210,7 +221,7 @@ function NamespacesView() {
 			}
 			content={
 				<div className="p-6">
-					<DataTable
+					<LazyDataTable
 						columns={columns}
 						data={mockNamespaces}
 						enableRowActions
@@ -222,7 +233,10 @@ function NamespacesView() {
 									</IconButton>
 								</Tooltip>
 								<Tooltip title="Edit Namespace">
-									<IconButton size="small" onClick={() => handleEditNamespace(row.original)}>
+									<IconButton
+										size="small"
+										onClick={() => handleEditNamespace(row.original)}
+									>
 										<SvgIcon size={18}>lucide:edit</SvgIcon>
 									</IconButton>
 								</Tooltip>
@@ -246,28 +260,29 @@ function NamespacesView() {
 					/>
 
 					{/* Create/Edit Namespace Dialog */}
-					<Dialog 
-						open={createModalOpen} 
+					<Dialog
+						open={createModalOpen}
 						onClose={() => setCreateModalOpen(false)}
 						maxWidth="sm"
 						fullWidth
 					>
-						<DialogTitle>
-							{editingNamespace ? 'Edit Namespace' : 'Create Namespace'}
-						</DialogTitle>
+						<DialogTitle>{editingNamespace ? 'Edit Namespace' : 'Create Namespace'}</DialogTitle>
 						<DialogContent>
-							<Stack spacing={3} sx={{ mt: 1 }}>
+							<Stack
+								spacing={3}
+								sx={{ mt: 1 }}
+							>
 								<TextField
 									label="Name"
 									value={formData.name}
-									onChange={(e) => setFormData(prev => ({...prev, name: e.target.value}))}
+									onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
 									fullWidth
 									required
 								/>
 								<TextField
 									label="Description"
 									value={formData.description}
-									onChange={(e) => setFormData(prev => ({...prev, description: e.target.value}))}
+									onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
 									fullWidth
 									multiline
 									rows={3}
@@ -276,7 +291,9 @@ function NamespacesView() {
 									control={
 										<Switch
 											checked={formData.is_active}
-											onChange={(e) => setFormData(prev => ({...prev, is_active: e.target.checked}))}
+											onChange={(e) =>
+												setFormData((prev) => ({ ...prev, is_active: e.target.checked }))
+											}
 										/>
 									}
 									label="Active"
@@ -284,11 +301,9 @@ function NamespacesView() {
 							</Stack>
 						</DialogContent>
 						<DialogActions>
-							<Button onClick={() => setCreateModalOpen(false)}>
-								Cancel
-							</Button>
-							<Button 
-								variant="contained" 
+							<Button onClick={() => setCreateModalOpen(false)}>Cancel</Button>
+							<Button
+								variant="contained"
 								onClick={handleSaveNamespace}
 								disabled={!formData.name.trim()}
 							>

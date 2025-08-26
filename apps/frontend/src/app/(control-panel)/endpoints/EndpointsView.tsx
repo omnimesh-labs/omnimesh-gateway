@@ -4,11 +4,11 @@ import { useState, useMemo } from 'react';
 import { MRT_ColumnDef } from 'material-react-table';
 import PageSimple from '@fuse/core/PageSimple';
 import { styled } from '@mui/material/styles';
-import { 
-	Typography, 
-	Button, 
-	Chip, 
-	IconButton, 
+import {
+	Typography,
+	Button,
+	Chip,
+	IconButton,
 	Tooltip,
 	Box,
 	Dialog,
@@ -24,7 +24,7 @@ import {
 	AccordionSummary,
 	AccordionDetails
 } from '@mui/material';
-import DataTable from '@/components/data-table/DataTable';
+import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
 import { useSnackbar } from 'notistack';
 
@@ -176,76 +176,91 @@ function EndpointsView() {
 		enqueueSnackbar('URL copied to clipboard', { variant: 'success' });
 	};
 
-	const columns = useMemo<MRT_ColumnDef<Endpoint>[]>(() => [
-		{
-			accessorKey: 'name',
-			header: 'Name',
-			size: 200,
-			Cell: ({ row }) => (
-				<Box className="flex items-center space-x-2">
-					<SvgIcon size={20}>lucide:globe</SvgIcon>
-					<Box>
-						<Typography variant="body2" className="font-medium">
-							{row.original.name}
-						</Typography>
-						<Typography variant="caption" color="textSecondary">
-							{row.original.namespace}
-						</Typography>
+	const columns = useMemo<MRT_ColumnDef<Endpoint>[]>(
+		() => [
+			{
+				accessorKey: 'name',
+				header: 'Name',
+				size: 200,
+				Cell: ({ row }) => (
+					<Box className="flex items-center space-x-2">
+						<SvgIcon size={20}>lucide:globe</SvgIcon>
+						<Box>
+							<Typography
+								variant="body2"
+								className="font-medium"
+							>
+								{row.original.name}
+							</Typography>
+							<Typography
+								variant="caption"
+								color="textSecondary"
+							>
+								{row.original.namespace}
+							</Typography>
+						</Box>
 					</Box>
-				</Box>
-			)
-		},
-		{
-			accessorKey: 'description',
-			header: 'Description',
-			size: 250,
-			Cell: ({ cell }) => (
-				<Typography variant="body2">
-					{cell.getValue<string>() || 'No description'}
-				</Typography>
-			)
-		},
-		{
-			accessorKey: 'authentication',
-			header: 'Auth Methods',
-			size: 200,
-			Cell: ({ row }) => (
-				<Box className="flex gap-1 flex-wrap">
-					{row.original.enable_api_key_auth && (
-						<Chip size="small" label="API Key" color="primary" />
-					)}
-					{row.original.enable_oauth && (
-						<Chip size="small" label="OAuth" color="secondary" />
-					)}
-					{row.original.enable_public_access && (
-						<Chip size="small" label="Public" color="warning" />
-					)}
-				</Box>
-			)
-		},
-		{
-			accessorKey: 'rate_limit_requests',
-			header: 'Rate Limit',
-			size: 120,
-			Cell: ({ row }) => (
-				<Typography variant="body2">
-					{row.original.rate_limit_requests}/hr
-				</Typography>
-			)
-		},
-		{
-			accessorKey: 'is_active',
-			header: 'Status',
-			size: 120,
-			Cell: ({ cell }) => (
-				<Chip
-					size="small"
-					label={cell.getValue<boolean>() ? 'Active' : 'Inactive'}
-					color={cell.getValue<boolean>() ? 'success' : 'default'}
-				/>
-			)
-		}
-	], []);
+				)
+			},
+			{
+				accessorKey: 'description',
+				header: 'Description',
+				size: 250,
+				Cell: ({ cell }) => (
+					<Typography variant="body2">{cell.getValue<string>() || 'No description'}</Typography>
+				)
+			},
+			{
+				accessorKey: 'authentication',
+				header: 'Auth Methods',
+				size: 200,
+				Cell: ({ row }) => (
+					<Box className="flex flex-wrap gap-1">
+						{row.original.enable_api_key_auth && (
+							<Chip
+								size="small"
+								label="API Key"
+								color="primary"
+							/>
+						)}
+						{row.original.enable_oauth && (
+							<Chip
+								size="small"
+								label="OAuth"
+								color="secondary"
+							/>
+						)}
+						{row.original.enable_public_access && (
+							<Chip
+								size="small"
+								label="Public"
+								color="warning"
+							/>
+						)}
+					</Box>
+				)
+			},
+			{
+				accessorKey: 'rate_limit_requests',
+				header: 'Rate Limit',
+				size: 120,
+				Cell: ({ row }) => <Typography variant="body2">{row.original.rate_limit_requests}/hr</Typography>
+			},
+			{
+				accessorKey: 'is_active',
+				header: 'Status',
+				size: 120,
+				Cell: ({ cell }) => (
+					<Chip
+						size="small"
+						label={cell.getValue<boolean>() ? 'Active' : 'Inactive'}
+						color={cell.getValue<boolean>() ? 'success' : 'default'}
+					/>
+				)
+			}
+		],
+		[]
+	);
 
 	return (
 		<Root
@@ -254,7 +269,11 @@ function EndpointsView() {
 					<div className="flex items-center justify-between">
 						<div>
 							<Typography variant="h4">Endpoints</Typography>
-							<Typography variant="body1" color="textSecondary" className="mt-1">
+							<Typography
+								variant="body1"
+								color="textSecondary"
+								className="mt-1"
+							>
 								Manage public-facing endpoints for your namespaces
 							</Typography>
 						</div>
@@ -271,19 +290,25 @@ function EndpointsView() {
 			}
 			content={
 				<div className="p-6">
-					<DataTable
+					<LazyDataTable
 						columns={columns}
 						data={mockEndpoints}
 						enableRowActions
 						renderRowActions={({ row }) => (
 							<Box className="flex items-center space-x-1">
 								<Tooltip title="View URLs">
-									<IconButton size="small" onClick={() => handleViewUrls(row.original)}>
+									<IconButton
+										size="small"
+										onClick={() => handleViewUrls(row.original)}
+									>
 										<SvgIcon size={18}>lucide:link</SvgIcon>
 									</IconButton>
 								</Tooltip>
 								<Tooltip title="Edit Endpoint">
-									<IconButton size="small" onClick={() => handleEditEndpoint(row.original)}>
+									<IconButton
+										size="small"
+										onClick={() => handleEditEndpoint(row.original)}
+									>
 										<SvgIcon size={18}>lucide:edit</SvgIcon>
 									</IconButton>
 								</Tooltip>
@@ -307,28 +332,29 @@ function EndpointsView() {
 					/>
 
 					{/* Create/Edit Endpoint Dialog */}
-					<Dialog 
-						open={createModalOpen} 
+					<Dialog
+						open={createModalOpen}
 						onClose={() => setCreateModalOpen(false)}
 						maxWidth="md"
 						fullWidth
 					>
-						<DialogTitle>
-							{editingEndpoint ? 'Edit Endpoint' : 'Create Endpoint'}
-						</DialogTitle>
+						<DialogTitle>{editingEndpoint ? 'Edit Endpoint' : 'Create Endpoint'}</DialogTitle>
 						<DialogContent>
-							<Stack spacing={3} sx={{ mt: 1 }}>
+							<Stack
+								spacing={3}
+								sx={{ mt: 1 }}
+							>
 								<TextField
 									label="Name"
 									value={formData.name}
-									onChange={(e) => setFormData(prev => ({...prev, name: e.target.value}))}
+									onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
 									fullWidth
 									required
 								/>
 								<TextField
 									label="Namespace"
 									value={formData.namespace}
-									onChange={(e) => setFormData(prev => ({...prev, namespace: e.target.value}))}
+									onChange={(e) => setFormData((prev) => ({ ...prev, namespace: e.target.value }))}
 									select
 									fullWidth
 									required
@@ -340,7 +366,7 @@ function EndpointsView() {
 								<TextField
 									label="Description"
 									value={formData.description}
-									onChange={(e) => setFormData(prev => ({...prev, description: e.target.value}))}
+									onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
 									fullWidth
 									multiline
 									rows={2}
@@ -356,7 +382,12 @@ function EndpointsView() {
 												control={
 													<Switch
 														checked={formData.enable_api_key_auth}
-														onChange={(e) => setFormData(prev => ({...prev, enable_api_key_auth: e.target.checked}))}
+														onChange={(e) =>
+															setFormData((prev) => ({
+																...prev,
+																enable_api_key_auth: e.target.checked
+															}))
+														}
 													/>
 												}
 												label="Enable API Key Authentication"
@@ -365,7 +396,12 @@ function EndpointsView() {
 												control={
 													<Switch
 														checked={formData.enable_oauth}
-														onChange={(e) => setFormData(prev => ({...prev, enable_oauth: e.target.checked}))}
+														onChange={(e) =>
+															setFormData((prev) => ({
+																...prev,
+																enable_oauth: e.target.checked
+															}))
+														}
 													/>
 												}
 												label="Enable OAuth Authentication"
@@ -374,7 +410,12 @@ function EndpointsView() {
 												control={
 													<Switch
 														checked={formData.enable_public_access}
-														onChange={(e) => setFormData(prev => ({...prev, enable_public_access: e.target.checked}))}
+														onChange={(e) =>
+															setFormData((prev) => ({
+																...prev,
+																enable_public_access: e.target.checked
+															}))
+														}
 													/>
 												}
 												label="Enable Public Access"
@@ -393,14 +434,24 @@ function EndpointsView() {
 												label="Requests per Hour"
 												type="number"
 												value={formData.rate_limit_requests}
-												onChange={(e) => setFormData(prev => ({...prev, rate_limit_requests: parseInt(e.target.value) || 0}))}
+												onChange={(e) =>
+													setFormData((prev) => ({
+														...prev,
+														rate_limit_requests: parseInt(e.target.value) || 0
+													}))
+												}
 												fullWidth
 											/>
 											<TextField
 												label="Window (seconds)"
 												type="number"
 												value={formData.rate_limit_window}
-												onChange={(e) => setFormData(prev => ({...prev, rate_limit_window: parseInt(e.target.value) || 3600}))}
+												onChange={(e) =>
+													setFormData((prev) => ({
+														...prev,
+														rate_limit_window: parseInt(e.target.value) || 3600
+													}))
+												}
 												fullWidth
 											/>
 										</Stack>
@@ -411,7 +462,9 @@ function EndpointsView() {
 									control={
 										<Switch
 											checked={formData.is_active}
-											onChange={(e) => setFormData(prev => ({...prev, is_active: e.target.checked}))}
+											onChange={(e) =>
+												setFormData((prev) => ({ ...prev, is_active: e.target.checked }))
+											}
 										/>
 									}
 									label="Active"
@@ -419,11 +472,9 @@ function EndpointsView() {
 							</Stack>
 						</DialogContent>
 						<DialogActions>
-							<Button onClick={() => setCreateModalOpen(false)}>
-								Cancel
-							</Button>
-							<Button 
-								variant="contained" 
+							<Button onClick={() => setCreateModalOpen(false)}>Cancel</Button>
+							<Button
+								variant="contained"
 								onClick={handleSaveEndpoint}
 								disabled={!formData.name.trim() || !formData.namespace.trim()}
 							>
@@ -433,30 +484,41 @@ function EndpointsView() {
 					</Dialog>
 
 					{/* View URLs Dialog */}
-					<Dialog 
-						open={urlsModalOpen} 
+					<Dialog
+						open={urlsModalOpen}
 						onClose={() => setUrlsModalOpen(false)}
 						maxWidth="md"
 						fullWidth
 					>
-						<DialogTitle>
-							Endpoint URLs - {viewingUrls?.name}
-						</DialogTitle>
+						<DialogTitle>Endpoint URLs - {viewingUrls?.name}</DialogTitle>
 						<DialogContent>
 							{viewingUrls && (
-								<Stack spacing={3} sx={{ mt: 1 }}>
+								<Stack
+									spacing={3}
+									sx={{ mt: 1 }}
+								>
 									{Object.entries(viewingUrls.urls).map(([protocol, url]) => (
-										<Box key={protocol} className="flex items-center justify-between">
+										<Box
+											key={protocol}
+											className="flex items-center justify-between"
+										>
 											<Box>
-												<Typography variant="subtitle2" className="capitalize">
+												<Typography
+													variant="subtitle2"
+													className="capitalize"
+												>
 													{protocol.replace('_', ' ')}
 												</Typography>
-												<Typography variant="body2" color="textSecondary" className="break-all">
+												<Typography
+													variant="body2"
+													color="textSecondary"
+													className="break-all"
+												>
 													{url}
 												</Typography>
 											</Box>
-											<IconButton 
-												size="small" 
+											<IconButton
+												size="small"
 												onClick={() => handleCopyUrl(url)}
 												title="Copy URL"
 											>
@@ -468,9 +530,7 @@ function EndpointsView() {
 							)}
 						</DialogContent>
 						<DialogActions>
-							<Button onClick={() => setUrlsModalOpen(false)}>
-								Close
-							</Button>
+							<Button onClick={() => setUrlsModalOpen(false)}>Close</Button>
 						</DialogActions>
 					</Dialog>
 				</div>

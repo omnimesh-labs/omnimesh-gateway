@@ -66,7 +66,7 @@ function Layout1(props: Layout1Props) {
 						<ToolbarLayout1 className={config.toolbar.style === 'fixed' ? 'sticky top-0' : ''} />
 					)}
 
-					<div className="sticky top-0 z-99">
+					<div className="z-99 sticky top-0">
 						<Configurator />
 					</div>
 

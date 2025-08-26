@@ -4,11 +4,11 @@ import { useState, useMemo } from 'react';
 import { MRT_ColumnDef } from 'material-react-table';
 import PageSimple from '@fuse/core/PageSimple';
 import { styled } from '@mui/material/styles';
-import { 
-	Typography, 
-	Button, 
-	Chip, 
-	IconButton, 
+import {
+	Typography,
+	Button,
+	Chip,
+	IconButton,
 	Tooltip,
 	Box,
 	Tabs,
@@ -116,10 +116,14 @@ function ContentView() {
 
 	const getCurrentData = () => {
 		switch (tabValue) {
-			case 0: return mockTools;
-			case 1: return mockPrompts;
-			case 2: return mockResources;
-			default: return [];
+			case 0:
+				return mockTools;
+			case 1:
+				return mockPrompts;
+			case 2:
+				return mockResources;
+			default:
+				return [];
 		}
 	};
 
@@ -128,62 +132,74 @@ function ContentView() {
 		setViewDialogOpen(true);
 	};
 
-	const columns = useMemo<MRT_ColumnDef<ContentItem>[]>(() => [
-		{
-			accessorKey: 'name',
-			header: 'Name',
-			size: 200,
-			Cell: ({ row }) => (
-				<Box className="flex items-center space-x-2">
-					<SvgIcon size={20}>
-						{tabValue === 0 ? 'lucide:wrench' : 
-						 tabValue === 1 ? 'lucide:message-square' : 'lucide:database'}
-					</SvgIcon>
-					<Box>
-						<Typography variant="body2" className="font-medium">
-							{row.original.name}
-						</Typography>
-						{row.original.description && (
-							<Typography variant="caption" color="textSecondary">
-								{row.original.description}
+	const columns = useMemo<MRT_ColumnDef<ContentItem>[]>(
+		() => [
+			{
+				accessorKey: 'name',
+				header: 'Name',
+				size: 200,
+				Cell: ({ row }) => (
+					<Box className="flex items-center space-x-2">
+						<SvgIcon size={20}>
+							{tabValue === 0
+								? 'lucide:wrench'
+								: tabValue === 1
+									? 'lucide:message-square'
+									: 'lucide:database'}
+						</SvgIcon>
+						<Box>
+							<Typography
+								variant="body2"
+								className="font-medium"
+							>
+								{row.original.name}
 							</Typography>
-						)}
+							{row.original.description && (
+								<Typography
+									variant="caption"
+									color="textSecondary"
+								>
+									{row.original.description}
+								</Typography>
+							)}
+						</Box>
 					</Box>
-				</Box>
-			)
-		},
-		{
-			accessorKey: 'category',
-			header: 'Category',
-			size: 120,
-			Cell: ({ cell }) => (
-				<Chip
-					size="small"
-					label={cell.getValue<string>()}
-					variant="outlined"
-					sx={{ textTransform: 'capitalize' }}
-				/>
-			)
-		},
-		{
-			accessorKey: 'usage_count',
-			header: 'Usage Count',
-			size: 120,
-		},
-		{
-			accessorKey: 'created_at',
-			header: 'Created',
-			size: 150,
-			Cell: ({ cell }) => {
-				const date = new Date(cell.getValue<string>());
-				return date.toLocaleDateString('en-US', {
-					year: 'numeric',
-					month: 'short',
-					day: 'numeric'
-				});
+				)
+			},
+			{
+				accessorKey: 'category',
+				header: 'Category',
+				size: 120,
+				Cell: ({ cell }) => (
+					<Chip
+						size="small"
+						label={cell.getValue<string>()}
+						variant="outlined"
+						sx={{ textTransform: 'capitalize' }}
+					/>
+				)
+			},
+			{
+				accessorKey: 'usage_count',
+				header: 'Usage Count',
+				size: 120
+			},
+			{
+				accessorKey: 'created_at',
+				header: 'Created',
+				size: 150,
+				Cell: ({ cell }) => {
+					const date = new Date(cell.getValue<string>());
+					return date.toLocaleDateString('en-US', {
+						year: 'numeric',
+						month: 'short',
+						day: 'numeric'
+					});
+				}
 			}
-		}
-	], [tabValue]);
+		],
+		[tabValue]
+	);
 
 	const currentData = getCurrentData();
 	const currentType = ['Tools', 'Prompts', 'Resources'][tabValue];
@@ -195,7 +211,11 @@ function ContentView() {
 					<div className="flex items-center justify-between">
 						<div>
 							<Typography variant="h4">Content Management</Typography>
-							<Typography variant="body1" color="textSecondary" className="mt-1">
+							<Typography
+								variant="body1"
+								color="textSecondary"
+								className="mt-1"
+							>
 								Manage your organization's tools, prompts, and resources
 							</Typography>
 						</div>
@@ -213,23 +233,23 @@ function ContentView() {
 			content={
 				<div className="p-6">
 					<Box className="mb-6">
-						<Tabs 
-							value={tabValue} 
+						<Tabs
+							value={tabValue}
 							onChange={(_, newValue) => setTabValue(newValue)}
 							variant="scrollable"
 							scrollButtons="auto"
 						>
-							<Tab 
+							<Tab
 								label={`Tools (${mockTools.length})`}
 								icon={<SvgIcon size={20}>lucide:wrench</SvgIcon>}
 								iconPosition="start"
 							/>
-							<Tab 
+							<Tab
 								label={`Prompts (${mockPrompts.length})`}
 								icon={<SvgIcon size={20}>lucide:message-square</SvgIcon>}
 								iconPosition="start"
 							/>
-							<Tab 
+							<Tab
 								label={`Resources (${mockResources.length})`}
 								icon={<SvgIcon size={20}>lucide:database</SvgIcon>}
 								iconPosition="start"
@@ -244,14 +264,19 @@ function ContentView() {
 						renderRowActions={({ row }) => (
 							<Box className="flex items-center space-x-1">
 								<Tooltip title="View Details">
-									<IconButton size="small" onClick={() => handleViewItem(row.original)}>
+									<IconButton
+										size="small"
+										onClick={() => handleViewItem(row.original)}
+									>
 										<SvgIcon size={18}>lucide:eye</SvgIcon>
 									</IconButton>
 								</Tooltip>
 								<Tooltip title="Edit">
-									<IconButton 
+									<IconButton
 										size="small"
-										onClick={() => enqueueSnackbar('Edit functionality coming soon!', { variant: 'info' })}
+										onClick={() =>
+											enqueueSnackbar('Edit functionality coming soon!', { variant: 'info' })
+										}
 									>
 										<SvgIcon size={18}>lucide:edit</SvgIcon>
 									</IconButton>
@@ -260,7 +285,9 @@ function ContentView() {
 									<IconButton
 										size="small"
 										color="error"
-										onClick={() => enqueueSnackbar('Delete functionality coming soon!', { variant: 'info' })}
+										onClick={() =>
+											enqueueSnackbar('Delete functionality coming soon!', { variant: 'info' })
+										}
 									>
 										<SvgIcon size={18}>lucide:trash-2</SvgIcon>
 									</IconButton>
@@ -276,20 +303,21 @@ function ContentView() {
 					/>
 
 					{/* View Item Dialog */}
-					<Dialog 
-						open={viewDialogOpen} 
+					<Dialog
+						open={viewDialogOpen}
 						onClose={() => setViewDialogOpen(false)}
 						maxWidth="md"
 						fullWidth
 					>
-						<DialogTitle>
-							{selectedItem?.name}
-						</DialogTitle>
+						<DialogTitle>{selectedItem?.name}</DialogTitle>
 						<DialogContent>
 							{selectedItem && (
 								<Box className="space-y-4">
 									<Box>
-										<Typography variant="subtitle2" color="textSecondary">
+										<Typography
+											variant="subtitle2"
+											color="textSecondary"
+										>
 											Description
 										</Typography>
 										<Typography variant="body2">
@@ -297,26 +325,41 @@ function ContentView() {
 										</Typography>
 									</Box>
 									<Box>
-										<Typography variant="subtitle2" color="textSecondary">
+										<Typography
+											variant="subtitle2"
+											color="textSecondary"
+										>
 											Category
 										</Typography>
-										<Chip size="small" label={selectedItem.category} />
+										<Chip
+											size="small"
+											label={selectedItem.category}
+										/>
 									</Box>
 									<Box>
-										<Typography variant="subtitle2" color="textSecondary">
+										<Typography
+											variant="subtitle2"
+											color="textSecondary"
+										>
 											Usage Count
 										</Typography>
-										<Typography variant="body2">
-											{selectedItem.usage_count}
-										</Typography>
+										<Typography variant="body2">{selectedItem.usage_count}</Typography>
 									</Box>
 									<Box>
-										<Typography variant="subtitle2" color="textSecondary">
+										<Typography
+											variant="subtitle2"
+											color="textSecondary"
+										>
 											Tags
 										</Typography>
-										<Box className="flex gap-1 mt-1">
-											{selectedItem.tags?.map(tag => (
-												<Chip key={tag} size="small" label={tag} variant="outlined" />
+										<Box className="mt-1 flex gap-1">
+											{selectedItem.tags?.map((tag) => (
+												<Chip
+													key={tag}
+													size="small"
+													label={tag}
+													variant="outlined"
+												/>
 											))}
 										</Box>
 									</Box>

@@ -38,7 +38,7 @@ const schema = z.object({
 	timeout: z.number().int().min(1).max(300).optional(),
 	max_retries: z.number().int().min(0).max(10).optional(),
 	health_check_url: z.string().url('Invalid URL').optional().or(z.literal('')),
-	working_dir: z.string().optional(),
+	working_dir: z.string().optional()
 });
 
 type FormType = z.infer<typeof schema>;
@@ -50,12 +50,7 @@ interface RegisterServerModalProps {
 	loading?: boolean;
 }
 
-export default function RegisterServerModal({
-	open,
-	onClose,
-	onRegister,
-	loading = false
-}: RegisterServerModalProps) {
+export default function RegisterServerModal({ open, onClose, onRegister, loading = false }: RegisterServerModalProps) {
 	const [tags, setTags] = useState<string[]>([]);
 	const [tagInput, setTagInput] = useState('');
 
@@ -93,7 +88,7 @@ export default function RegisterServerModal({
 	};
 
 	const handleRemoveTag = (tagToRemove: string) => {
-		setTags(tags.filter(tag => tag !== tagToRemove));
+		setTags(tags.filter((tag) => tag !== tagToRemove));
 	};
 
 	const handleClose = () => {
@@ -115,14 +110,15 @@ export default function RegisterServerModal({
 			max_retries: data.max_retries,
 			health_check_url: data.health_check_url,
 			working_dir: data.working_dir,
-			args: data.args ? data.args.split(' ').filter(arg => arg.trim()) : undefined,
-			environment: data.environment ? data.environment.split('\n').filter(env => env.trim()) : undefined,
-			metadata: tags.length > 0 ? { tags: tags.join(',') } : undefined,
+			args: data.args ? data.args.split(' ').filter((arg) => arg.trim()) : undefined,
+			environment: data.environment ? data.environment.split('\n').filter((env) => env.trim()) : undefined,
+			metadata: tags.length > 0 ? { tags: tags.join(',') } : undefined
 		};
 
 		// Clean up empty fields
-		Object.keys(serverData).forEach(key => {
+		Object.keys(serverData).forEach((key) => {
 			const value = serverData[key as keyof CreateServerRequest];
+
 			if (value === '' || value === undefined) {
 				delete serverData[key as keyof CreateServerRequest];
 			}
@@ -132,8 +128,8 @@ export default function RegisterServerModal({
 	};
 
 	return (
-		<Dialog 
-			open={open} 
+		<Dialog
+			open={open}
 			onClose={handleClose}
 			maxWidth="md"
 			fullWidth
@@ -149,8 +145,13 @@ export default function RegisterServerModal({
 				<DialogContent>
 					<Box className="space-y-4">
 						{/* Basic Information */}
-						<Typography variant="h6" className="mb-3">Basic Information</Typography>
-						
+						<Typography
+							variant="h6"
+							className="mb-3"
+						>
+							Basic Information
+						</Typography>
+
 						<Controller
 							name="name"
 							control={control}
@@ -186,16 +187,20 @@ export default function RegisterServerModal({
 							name="protocol"
 							control={control}
 							render={({ field }) => (
-								<FormControl fullWidth error={!!errors.protocol}>
+								<FormControl
+									fullWidth
+									error={!!errors.protocol}
+								>
 									<InputLabel>Protocol</InputLabel>
-									<Select {...field} label="Protocol">
+									<Select
+										{...field}
+										label="Protocol"
+									>
 										<MenuItem value="stdio">STDIO</MenuItem>
 										<MenuItem value="http">HTTP</MenuItem>
 										<MenuItem value="websocket">WebSocket</MenuItem>
 									</Select>
-									{errors.protocol && (
-										<FormHelperText>{errors.protocol.message}</FormHelperText>
-									)}
+									{errors.protocol && <FormHelperText>{errors.protocol.message}</FormHelperText>}
 								</FormControl>
 							)}
 						/>
@@ -203,7 +208,10 @@ export default function RegisterServerModal({
 						<Divider className="my-4" />
 
 						{/* Protocol-specific fields */}
-						<Typography variant="h6" className="mb-3">
+						<Typography
+							variant="h6"
+							className="mb-3"
+						>
 							{protocol === 'stdio' ? 'Command Configuration' : 'Connection Configuration'}
 						</Typography>
 
@@ -287,7 +295,12 @@ export default function RegisterServerModal({
 						<Divider className="my-4" />
 
 						{/* Advanced Configuration */}
-						<Typography variant="h6" className="mb-3">Advanced Configuration</Typography>
+						<Typography
+							variant="h6"
+							className="mb-3"
+						>
+							Advanced Configuration
+						</Typography>
 
 						<Box className="grid grid-cols-2 gap-4">
 							<Controller
@@ -351,8 +364,13 @@ export default function RegisterServerModal({
 
 						{/* Tags */}
 						<Box>
-							<Typography variant="body2" className="mb-2">Tags</Typography>
-							<Box className="flex flex-wrap gap-1 mb-2">
+							<Typography
+								variant="body2"
+								className="mb-2"
+							>
+								Tags
+							</Typography>
+							<Box className="mb-2 flex flex-wrap gap-1">
 								{tags.map((tag) => (
 									<Chip
 										key={tag}
@@ -383,9 +401,7 @@ export default function RegisterServerModal({
 				</DialogContent>
 
 				<DialogActions>
-					<Button onClick={handleClose}>
-						Cancel
-					</Button>
+					<Button onClick={handleClose}>Cancel</Button>
 					<Button
 						type="submit"
 						variant="contained"

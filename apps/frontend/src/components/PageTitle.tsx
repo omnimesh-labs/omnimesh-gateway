@@ -21,7 +21,7 @@ function PageTitle(props: PageTitleProps) {
 		<div className={clsx('flex flex-col justify-between', className)}>
 			{backUrl && backTitle && (
 				<Typography
-					className="mb-px flex items-center gap-0.25 leading-none"
+					className="gap-0.25 mb-px flex items-center leading-none"
 					component={Link}
 					to={backUrl}
 					role="button"

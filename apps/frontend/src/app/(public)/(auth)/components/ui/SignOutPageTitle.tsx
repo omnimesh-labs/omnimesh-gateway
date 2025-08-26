@@ -9,7 +9,7 @@ function SignOutPageTitle() {
 				alt="logo"
 			/>
 
-			<Typography className="mt-8 text-center text-4xl leading-[1.25] font-extrabold tracking-tight">
+			<Typography className="mt-8 text-center text-4xl font-extrabold leading-[1.25] tracking-tight">
 				You have signed out!
 			</Typography>
 		</div>

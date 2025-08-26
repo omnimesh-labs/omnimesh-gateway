@@ -40,7 +40,7 @@ function AuthPagesMessageSection() {
 			</svg>
 			<Box
 				component="svg"
-				className="absolute -top-16 -right-16 opacity-20"
+				className="absolute -right-16 -top-16 opacity-20"
 				sx={{ color: 'primary.light' }}
 				viewBox="0 0 220 192"
 				width="220px"
@@ -73,12 +73,12 @@ function AuthPagesMessageSection() {
 			</Box>
 
 			<div className="relative z-10 w-full max-w-4xl">
-				<div className="text-7xl leading-none font-bold text-gray-100">
+				<div className="text-7xl font-bold leading-none text-gray-100">
 					<div>Welcome to</div>
 					<div>our community</div>
 				</div>
 				<div className="mt-6 text-lg leading-6 tracking-tight text-gray-400">
-					MCP Gateway provides enterprise-grade infrastructure for Model Context Protocol servers with 
+					MCP Gateway provides enterprise-grade infrastructure for Model Context Protocol servers with
 					authentication, logging, rate limiting, and multi-protocol transport support.
 				</div>
 				<div className="mt-8 flex items-center">

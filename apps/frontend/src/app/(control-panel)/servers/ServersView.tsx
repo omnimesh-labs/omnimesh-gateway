@@ -1,21 +1,14 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useMemo, useEffect } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useOptimizedQuery } from '@/hooks/useOptimizedQuery';
+import { measurePageLoad } from '@/lib/performance';
 import { MRT_ColumnDef } from 'material-react-table';
 import PageSimple from '@fuse/core/PageSimple';
 import { styled } from '@mui/material/styles';
-import { 
-	Typography, 
-	Button, 
-	Chip, 
-	IconButton, 
-	Tooltip,
-	Box,
-	Tabs,
-	Tab
-} from '@mui/material';
-import DataTable from '@/components/data-table/DataTable';
+import { Typography, Button, Chip, IconButton, Tooltip, Box, Tabs, Tab } from '@mui/material';
+import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
 import { useSnackbar } from 'notistack';
 import { MCPServer, serverApi, discoveryApi, MCPDiscoveryResponse } from '@/lib/api';
@@ -53,19 +46,30 @@ function ServersView() {
 	const { enqueueSnackbar } = useSnackbar();
 	const queryClient = useQueryClient();
 
-	// Fetch registered servers
-	const { data: servers = [], isLoading, refetch } = useQuery<MCPServer[]>({
-		queryKey: ['servers'],
-		queryFn: () => serverApi.listServers(),
-		refetchInterval: 15000,
-	});
+	// Track page performance
+	useEffect(() => {
+		measurePageLoad('ServersView');
+	}, []);
 
-	// Fetch available servers for discovery
-	const { data: discoveryData, isLoading: discoveryLoading } = useQuery<MCPDiscoveryResponse>({
-		queryKey: ['discovery', 'packages'],
-		queryFn: () => discoveryApi.listPackages(0, 50),
-		enabled: tabValue === 1,
-	});
+	// Fetch registered servers with optimized caching
+	const { data: servers = [], isLoading } = useOptimizedQuery<MCPServer[]>(
+		['servers'],
+		() => serverApi.listServers(),
+		{
+			refetchInterval: 15000,
+			cacheKey: 'servers-list'
+		}
+	);
+
+	// Fetch available servers for discovery with optimized caching
+	const { data: discoveryData, isLoading: discoveryLoading } = useOptimizedQuery<MCPDiscoveryResponse>(
+		['discovery', 'packages'],
+		() => discoveryApi.listPackages(0, 50),
+		{
+			enabled: tabValue === 1,
+			cacheKey: 'discovery-packages'
+		}
+	);
 
 	// Unregister server mutation
 	const unregisterMutation = useMutation({
@@ -76,7 +80,7 @@ function ServersView() {
 		},
 		onError: (error: any) => {
 			enqueueSnackbar(error.message || 'Failed to unregister server', { variant: 'error' });
-		},
+		}
 	});
 
 	// Register server mutation
@@ -89,7 +93,7 @@ function ServersView() {
 		},
 		onError: (error: any) => {
 			enqueueSnackbar(error.message || 'Failed to register server', { variant: 'error' });
-		},
+		}
 	});
 
 	const handleUnregisterServer = async (serverId: string, serverName: string) => {
@@ -102,71 +106,80 @@ function ServersView() {
 		registerMutation.mutate(serverData);
 	};
 
-	const columns = useMemo<MRT_ColumnDef<MCPServer>[]>(() => [
-		{
-			accessorKey: 'name',
-			header: 'Name',
-			size: 200,
-			Cell: ({ row }) => (
-				<Box className="flex items-center space-x-2">
-					<SvgIcon size={20}>lucide:server</SvgIcon>
-					<Box>
-						<Typography variant="body2" className="font-medium">
-							{row.original.name}
-						</Typography>
-						{row.original.description && (
-							<Typography variant="caption" color="textSecondary">
-								{row.original.description}
+	const columns = useMemo<MRT_ColumnDef<MCPServer>[]>(
+		() => [
+			{
+				accessorKey: 'name',
+				header: 'Name',
+				size: 200,
+				Cell: ({ row }) => (
+					<Box className="flex items-center space-x-2">
+						<SvgIcon size={20}>lucide:server</SvgIcon>
+						<Box>
+							<Typography
+								variant="body2"
+								className="font-medium"
+							>
+								{row.original.name}
 							</Typography>
-						)}
+							{row.original.description && (
+								<Typography
+									variant="caption"
+									color="textSecondary"
+								>
+									{row.original.description}
+								</Typography>
+							)}
+						</Box>
 					</Box>
-				</Box>
-			)
-		},
-		{
-			accessorKey: 'protocol',
-			header: 'Protocol',
-			size: 100,
-			Cell: ({ cell }) => (
-				<Chip
-					size="small"
-					label={cell.getValue<string>().toUpperCase()}
-					variant="outlined"
-				/>
-			)
-		},
-		{
-			accessorKey: 'status',
-			header: 'Status',
-			size: 120,
-			Cell: ({ cell }) => (
-				<Chip
-					size="small"
-					label={cell.getValue<string>()}
-					color={getStatusColor(cell.getValue<string>())}
-					sx={{ textTransform: 'capitalize' }}
-				/>
-			)
-		},
-		{
-			accessorKey: 'version',
-			header: 'Version',
-			size: 100,
-		},
-		{
-			accessorKey: 'created_at',
-			header: 'Created',
-			size: 150,
-			Cell: ({ cell }) => {
-				const date = new Date(cell.getValue<string>());
-				return date.toLocaleDateString('en-US', {
-					year: 'numeric',
-					month: 'short',
-					day: 'numeric'
-				});
+				)
+			},
+			{
+				accessorKey: 'protocol',
+				header: 'Protocol',
+				size: 100,
+				Cell: ({ cell }) => (
+					<Chip
+						size="small"
+						label={cell.getValue<string>().toUpperCase()}
+						variant="outlined"
+					/>
+				)
+			},
+			{
+				accessorKey: 'status',
+				header: 'Status',
+				size: 120,
+				Cell: ({ cell }) => (
+					<Chip
+						size="small"
+						label={cell.getValue<string>()}
+						color={getStatusColor(cell.getValue<string>())}
+						sx={{ textTransform: 'capitalize' }}
+					/>
+				)
+			},
+			{
+				accessorKey: 'version',
+				header: 'Version',
+				size: 100
+			},
+			{
+				accessorKey: 'created_at',
+				header: 'Created',
+				size: 150,
+				Cell: ({ cell }) => {
+					const date = new Date(cell.getValue<string>());
+					return date.toLocaleDateString('en-US', {
+						year: 'numeric',
+						month: 'short',
+						day: 'numeric'
+					});
+				}
 			}
-		}
-	], []);
+		],
+		[]
+	);
 
 	const availableServers = discoveryData ? Object.values(discoveryData.results) : [];
 
@@ -177,7 +190,11 @@ function ServersView() {
 					<div className="flex items-center justify-between">
 						<div>
 							<Typography variant="h4">Server Management</Typography>
-							<Typography variant="body1" color="textSecondary" className="mt-1">
+							<Typography
+								variant="body1"
+								color="textSecondary"
+								className="mt-1"
+							>
 								Manage your MCP servers and discover new ones
 							</Typography>
 						</div>
@@ -196,18 +213,18 @@ function ServersView() {
 			content={
 				<div className="p-6">
 					<Box className="mb-6">
-						<Tabs 
-							value={tabValue} 
+						<Tabs
+							value={tabValue}
 							onChange={(_, newValue) => setTabValue(newValue)}
 							variant="scrollable"
 							scrollButtons="auto"
 						>
-							<Tab 
+							<Tab
 								label={`Registered Servers (${servers.length})`}
 								icon={<SvgIcon size={20}>lucide:server</SvgIcon>}
 								iconPosition="start"
 							/>
-							<Tab 
+							<Tab
 								label="Available Servers"
 								icon={<SvgIcon size={20}>lucide:search</SvgIcon>}
 								iconPosition="start"
@@ -216,7 +233,7 @@ function ServersView() {
 					</Box>
 
 					{tabValue === 0 && (
-						<DataTable
+						<LazyDataTable
 							columns={columns}
 							data={servers}
 							state={{

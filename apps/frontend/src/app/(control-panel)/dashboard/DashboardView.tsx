@@ -20,7 +20,13 @@ const Root = styled(PageSimple)(({ theme }) => ({
 	}
 }));
 
-const StatCard = ({ title, value, subtitle, icon, color = 'primary' }: {
+const StatCard = ({
+	title,
+	value,
+	subtitle,
+	icon,
+	color = 'primary'
+}: {
 	title: string;
 	value: string | number;
 	subtitle?: string;
@@ -31,20 +37,33 @@ const StatCard = ({ title, value, subtitle, icon, color = 'primary' }: {
 		<CardContent>
 			<Box className="flex items-center justify-between">
 				<Box>
-					<Typography color="textSecondary" gutterBottom variant="overline">
+					<Typography
+						color="textSecondary"
+						gutterBottom
+						variant="overline"
+					>
 						{title}
 					</Typography>
-					<Typography variant="h4" component="h2">
+					<Typography
+						variant="h4"
+						component="h2"
+					>
 						{value}
 					</Typography>
 					{subtitle && (
-						<Typography color="textSecondary" variant="body2">
+						<Typography
+							color="textSecondary"
+							variant="body2"
+						>
 							{subtitle}
 						</Typography>
 					)}
 				</Box>
 				<Box>
-					<SvgIcon className={`text-${color}`} size={48}>
+					<SvgIcon
+						className={`text-${color}`}
+						size={48}
+					>
 						{icon}
 					</SvgIcon>
 				</Box>
@@ -61,7 +80,10 @@ const ServerStatusCard = ({ server }: { server: MCPServer }) => (
 					<SvgIcon size={24}>lucide:server</SvgIcon>
 					<Box>
 						<Typography variant="subtitle2">{server.name}</Typography>
-						<Typography variant="caption" color="textSecondary">
+						<Typography
+							variant="caption"
+							color="textSecondary"
+						>
 							{server.protocol.toUpperCase()}
 						</Typography>
 					</Box>
@@ -70,9 +92,13 @@ const ServerStatusCard = ({ server }: { server: MCPServer }) => (
 					size="small"
 					label={server.status}
 					color={
-						server.status === 'active' ? 'success' :
-						server.status === 'unhealthy' ? 'error' :
-						server.status === 'maintenance' ? 'warning' : 'default'
+						server.status === 'active'
+							? 'success'
+							: server.status === 'unhealthy'
+								? 'error'
+								: server.status === 'maintenance'
+									? 'warning'
+									: 'default'
 					}
 				/>
 			</Box>
@@ -101,14 +127,14 @@ function DashboardView() {
 	const { data: stats, isLoading: statsLoading } = useQuery<SystemStats>({
 		queryKey: ['admin', 'stats'],
 		queryFn: () => adminApi.getStats(),
-		refetchInterval: 30000, // Refresh every 30 seconds
+		refetchInterval: 30000 // Refresh every 30 seconds
 	});
 
 	// Fetch servers
 	const { data: servers, isLoading: serversLoading } = useQuery<MCPServer[]>({
 		queryKey: ['servers'],
 		queryFn: () => serverApi.listServers(),
-		refetchInterval: 15000, // Refresh every 15 seconds
+		refetchInterval: 15000 // Refresh every 15 seconds
 	});
 
 	if (statsLoading) {
@@ -129,7 +155,7 @@ function DashboardView() {
 		);
 	}
 
-	const healthyServers = servers?.filter(s => s.status === 'active').length || 0;
+	const healthyServers = servers?.filter((s) => s.status === 'active').length || 0;
 	const totalServers = servers?.length || 0;
 	const serverHealthRate = totalServers > 0 ? (healthyServers / totalServers) * 100 : 0;
 
@@ -138,14 +164,21 @@ function DashboardView() {
 			header={
 				<div className="p-6">
 					<Typography variant="h4">Dashboard</Typography>
-					<Typography variant="body1" color="textSecondary" className="mt-1">
+					<Typography
+						variant="body1"
+						color="textSecondary"
+						className="mt-1"
+					>
 						Welcome back{user ? `, ${user.email}` : ''}! Here's your MCP Gateway overview.
 					</Typography>
 				</div>
 			}
 			content={
 				<div className="p-6">
-					<Grid container spacing={3}>
+					<Grid
+						container
+						spacing={3}
+					>
 						{/* Stats Cards */}
 						<Grid size={{ xs: 12, sm: 6, md: 3 }}>
 							<StatCard
@@ -188,22 +221,37 @@ function DashboardView() {
 						<Grid size={{ xs: 12, md: 8 }}>
 							<Card>
 								<CardContent>
-									<Typography variant="h6" gutterBottom>
+									<Typography
+										variant="h6"
+										gutterBottom
+									>
 										Server Health Overview
 									</Typography>
 									<Box className="mb-4">
-										<Box className="flex justify-between items-center mb-2">
-											<Typography variant="body2" color="textSecondary">
+										<Box className="mb-2 flex items-center justify-between">
+											<Typography
+												variant="body2"
+												color="textSecondary"
+											>
 												Overall Health: {serverHealthRate.toFixed(1)}%
 											</Typography>
-											<Typography variant="body2" color="textSecondary">
+											<Typography
+												variant="body2"
+												color="textSecondary"
+											>
 												{healthyServers}/{totalServers} servers healthy
 											</Typography>
 										</Box>
 										<LinearProgress
 											variant="determinate"
 											value={serverHealthRate}
-											color={serverHealthRate > 80 ? 'success' : serverHealthRate > 60 ? 'warning' : 'error'}
+											color={
+												serverHealthRate > 80
+													? 'success'
+													: serverHealthRate > 60
+														? 'warning'
+														: 'error'
+											}
 											className="h-2 rounded"
 										/>
 									</Box>
@@ -212,12 +260,23 @@ function DashboardView() {
 											<LinearProgress />
 										) : servers && servers.length > 0 ? (
 											servers.slice(0, 5).map((server) => (
-												<ServerStatusCard key={server.id} server={server} />
+												<ServerStatusCard
+													key={server.id}
+													server={server}
+												/>
 											))
 										) : (
-											<Box className="text-center py-8">
-												<SvgIcon size={64} className="text-gray-300 mb-4">lucide:server</SvgIcon>
-												<Typography variant="body2" color="textSecondary">
+											<Box className="py-8 text-center">
+												<SvgIcon
+													size={64}
+													className="mb-4 text-gray-300"
+												>
+													lucide:server
+												</SvgIcon>
+												<Typography
+													variant="body2"
+													color="textSecondary"
+												>
 													No servers registered yet
 												</Typography>
 											</Box>
@@ -231,13 +290,16 @@ function DashboardView() {
 						<Grid size={{ xs: 12, md: 4 }}>
 							<Card>
 								<CardContent>
-									<Typography variant="h6" gutterBottom>
+									<Typography
+										variant="h6"
+										gutterBottom
+									>
 										Quick Actions
 									</Typography>
 									<Box className="space-y-3">
 										<Card
-											className="cursor-pointer hover:bg-gray-50 border border-gray-200"
-											onClick={() => window.location.href = '/servers'}
+											className="cursor-pointer border border-gray-200 hover:bg-gray-50"
+											onClick={() => (window.location.href = '/servers')}
 										>
 											<CardContent className="py-3">
 												<Box className="flex items-center space-x-3">
@@ -248,8 +310,8 @@ function DashboardView() {
 										</Card>
 
 										<Card
-											className="cursor-pointer hover:bg-gray-50 border border-gray-200"
-											onClick={() => window.location.href = '/namespaces'}
+											className="cursor-pointer border border-gray-200 hover:bg-gray-50"
+											onClick={() => (window.location.href = '/namespaces')}
 										>
 											<CardContent className="py-3">
 												<Box className="flex items-center space-x-3">
@@ -260,8 +322,8 @@ function DashboardView() {
 										</Card>
 
 										<Card
-											className="cursor-pointer hover:bg-gray-50 border border-gray-200"
-											onClick={() => window.location.href = '/logs'}
+											className="cursor-pointer border border-gray-200 hover:bg-gray-50"
+											onClick={() => (window.location.href = '/logs')}
 										>
 											<CardContent className="py-3">
 												<Box className="flex items-center space-x-3">
@@ -272,8 +334,8 @@ function DashboardView() {
 										</Card>
 
 										<Card
-											className="cursor-pointer hover:bg-gray-50 border border-gray-200"
-											onClick={() => window.location.href = '/configuration'}
+											className="cursor-pointer border border-gray-200 hover:bg-gray-50"
+											onClick={() => (window.location.href = '/configuration')}
 										>
 											<CardContent className="py-3">
 												<Box className="flex items-center space-x-3">

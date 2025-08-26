@@ -15,6 +15,7 @@ function Page() {
 			// If user is already authenticated, redirect to dashboard
 			// Check for any saved redirect URL first
 			const redirectUrl = localStorage.getItem('redirectUrl');
+
 			if (redirectUrl && redirectUrl !== '/sign-in') {
 				localStorage.removeItem('redirectUrl');
 				router.replace(redirectUrl);

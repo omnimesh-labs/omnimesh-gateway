@@ -1,6 +1,6 @@
 import { MaterialReactTable, useMaterialReactTable, MaterialReactTableProps, MRT_Icons } from 'material-react-table';
 import _ from 'lodash';
-import { useMemo } from 'react';
+import { useMemo, useEffect, useRef } from 'react';
 import SvgIcon from '@fuse/core/SvgIcon';
 import { Theme } from '@mui/material/styles';
 import DataTableTopToolbar from './DataTableTopToolbar';
@@ -28,24 +28,34 @@ const tableIcons: Partial<MRT_Icons> = {
 };
 
 function DataTable<TData>(props: MaterialReactTableProps<TData>) {
-	const { columns, data, ...rest } = props;
+	const { columns, data, initialState, ...rest } = props;
 	const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
+	const isMountedRef = useRef(false);
+
+	// Merge initial state with defaults, avoiding pagination reset during render
+	const mergedInitialState = useMemo(
+		() => ({
+			density: 'compact',
+			showColumnFilters: false,
+			showGlobalFilter: true,
+			columnPinning: {
+				left: isMobile ? [] : ['mrt-row-expand', 'mrt-row-select'],
+				right: isMobile ? [] : ['mrt-row-actions']
+			},
+			pagination: {
+				pageSize: 15,
+				pageIndex: 0
+			},
+			enableFullScreenToggle: false,
+			...initialState
+		}),
+		[initialState, isMobile]
+	);
+
 	const defaults = useMemo(
 		() =>
 			_.defaults(rest, {
-				initialState: {
-					density: 'compact',
-					showColumnFilters: false,
-					showGlobalFilter: true,
-					columnPinning: {
-						left: isMobile ? [] : ['mrt-row-expand', 'mrt-row-select'],
-						right: isMobile ? [] : ['mrt-row-actions']
-					},
-					pagination: {
-						pageSize: 15
-					},
-					enableFullScreenToggle: false
-				},
+				initialState: mergedInitialState,
 				enableFullScreenToggle: false,
 				enableColumnFilterModes: true,
 				enableColumnOrdering: true,
@@ -159,16 +169,26 @@ function DataTable<TData>(props: MaterialReactTableProps<TData>) {
 				icons: tableIcons,
 				positionActionsColumn: 'last'
 			} as Partial<MaterialReactTableProps<TData>>),
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[rest]
+
+		[rest, mergedInitialState]
 	);
+
+	// Track mount status
+	useEffect(() => {
+		isMountedRef.current = true;
+		return () => {
+			isMountedRef.current = false;
+		};
+	}, []);
 
 	const tableOptions = useMemo(
 		() => ({
 			columns,
 			data,
 			...defaults,
-			...rest
+			...rest,
+			// Override autoResetPageIndex to prevent unwanted resets
+			autoResetPageIndex: false
 		}),
 		[columns, data, defaults, rest]
 	);

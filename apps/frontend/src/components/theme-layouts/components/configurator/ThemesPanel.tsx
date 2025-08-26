@@ -125,7 +125,7 @@ function ThemesPanel(props: ThemesPanelProps) {
 				</Typography>
 
 				<Typography
-					className="text-md mb-6 text-justify italic"
+					className="mb-6 text-justify text-md italic"
 					color="text.secondary"
 				>
 					* Selected option will be applied to all layout elements (navbar, toolbar, etc.). You can also

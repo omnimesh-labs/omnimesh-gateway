@@ -50,7 +50,7 @@ function DataTableTopToolbar<TData extends MRT_RowData>({ table }: MRT_TopToolba
 		table
 	};
 	return (
-		<div className="flex w-full flex-col border-b-1 px-3 py-1">
+		<div className="border-b-1 flex w-full flex-col px-3 py-1">
 			<Box
 				className="flex w-full flex-col items-center"
 				{...toolbarProps}

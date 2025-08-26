@@ -16,7 +16,7 @@ type SectionPreviewProps = {
 function SectionPreview(props: SectionPreviewProps) {
 	const { section, className } = props;
 	return (
-		<div className={clsx('flex h-20 w-32 overflow-hidden rounded-md border-1 hover:opacity-80', className)}>
+		<div className={clsx('border-1 flex h-20 w-32 overflow-hidden rounded-md hover:opacity-80', className)}>
 			<Box
 				sx={[
 					section === 'navbar'
@@ -43,13 +43,13 @@ function SectionPreview(props: SectionPreviewProps) {
 								}
 							}
 				]}
-				className="flex w-8 flex-col gap-0.25 px-1.5 pt-3"
+				className="gap-0.25 flex w-8 flex-col px-1.5 pt-3"
 			>
-				<div className="h-1 rounded-xs" />
-				<div className="h-1 rounded-xs" />
-				<div className="h-1 rounded-xs" />
-				<div className="h-1 rounded-xs" />
-				<div className="h-1 rounded-xs" />
+				<div className="rounded-xs h-1" />
+				<div className="rounded-xs h-1" />
+				<div className="rounded-xs h-1" />
+				<div className="rounded-xs h-1" />
+				<div className="rounded-xs h-1" />
 			</Box>
 			<div className="flex flex-auto flex-col border-l">
 				<Box

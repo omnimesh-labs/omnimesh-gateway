@@ -58,7 +58,7 @@ function ThemePreview(props: ThemePreviewProps) {
 
 				<div className="flex w-2/3 flex-col">
 					<Box
-						className="w-full border-b-1 border-gray-700 px-1 py-1"
+						className="border-b-1 w-full border-gray-700 px-1 py-1"
 						sx={{
 							borderBottom: '1px solid',
 							borderColor: toolbar.palette.divider,
@@ -80,7 +80,7 @@ function ThemePreview(props: ThemePreviewProps) {
 							<span className="text-sm">Header</span>
 
 							<Box
-								className="shadow-1 absolute right-0 bottom-0 z-10 mr-2 mb-2.5 flex h-6 w-6 items-center justify-center rounded-full text-xs"
+								className="shadow-1 absolute bottom-0 right-0 z-10 mb-2.5 mr-2 flex h-6 w-6 items-center justify-center rounded-full text-xs"
 								sx={{
 									backgroundColor: main?.palette.secondary.main,
 									color: main?.palette.secondary.contrastText
@@ -90,7 +90,7 @@ function ThemePreview(props: ThemePreviewProps) {
 							</Box>
 						</div>
 
-						<div className="-mt-6 w-full flex-1 pr-1 pl-1">
+						<div className="-mt-6 w-full flex-1 pl-1 pr-1">
 							<div
 								className="shadow-1 relative h-full w-full rounded-sm p-1"
 								style={{

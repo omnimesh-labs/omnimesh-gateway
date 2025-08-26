@@ -45,7 +45,7 @@ function NavHorizontalLayout1(props: NavigationProps) {
 	return (
 		<Nav
 			className={clsx(
-				'navigation flex p-0 whitespace-nowrap',
+				'navigation flex whitespace-nowrap p-0',
 				`active-${active}-list`,
 				dense && 'dense',
 				className

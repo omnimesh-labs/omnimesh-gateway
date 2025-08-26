@@ -15,15 +15,13 @@ const navigationConfig: NavItemType[] = [
 	{
 		id: 'dashboard',
 		title: 'Dashboard',
-		translate: 'DASHBOARD',
 		type: 'item',
-		icon: 'lucide:home',
+		icon: 'lucide:house',
 		url: '/'
 	},
 	{
 		id: 'servers',
 		title: 'Server Management',
-		translate: 'SERVER_MANAGEMENT',
 		type: 'item',
 		icon: 'lucide:server',
 		url: '/servers'
@@ -31,7 +29,6 @@ const navigationConfig: NavItemType[] = [
 	{
 		id: 'namespaces',
 		title: 'Namespaces',
-		translate: 'NAMESPACES',
 		type: 'item',
 		icon: 'lucide:folder',
 		url: '/namespaces'
@@ -39,7 +36,6 @@ const navigationConfig: NavItemType[] = [
 	{
 		id: 'endpoints',
 		title: 'Endpoints',
-		translate: 'ENDPOINTS',
 		type: 'item',
 		icon: 'lucide:globe',
 		url: '/endpoints'
@@ -47,7 +43,6 @@ const navigationConfig: NavItemType[] = [
 	{
 		id: 'content',
 		title: 'Content Management',
-		translate: 'CONTENT_MANAGEMENT',
 		type: 'collapsible',
 		icon: 'lucide:layers',
 		children: [
@@ -77,7 +72,6 @@ const navigationConfig: NavItemType[] = [
 	{
 		id: 'policies',
 		title: 'Policy Management',
-		translate: 'POLICY_MANAGEMENT',
 		type: 'item',
 		icon: 'lucide:shield',
 		url: '/policies'
@@ -85,7 +79,6 @@ const navigationConfig: NavItemType[] = [
 	{
 		id: 'a2a',
 		title: 'A2A Agents',
-		translate: 'A2A_AGENTS',
 		type: 'item',
 		icon: 'lucide:bot',
 		url: '/a2a'
@@ -93,7 +86,6 @@ const navigationConfig: NavItemType[] = [
 	{
 		id: 'configuration',
 		title: 'Configuration',
-		translate: 'CONFIGURATION',
 		type: 'item',
 		icon: 'lucide:settings',
 		url: '/configuration'
@@ -101,7 +93,6 @@ const navigationConfig: NavItemType[] = [
 	{
 		id: 'logs',
 		title: 'Logging & Audit',
-		translate: 'LOGGING_AUDIT',
 		type: 'item',
 		icon: 'lucide:scroll-text',
 		url: '/logs'
@@ -109,7 +100,6 @@ const navigationConfig: NavItemType[] = [
 	{
 		id: 'profile',
 		title: 'Profile',
-		translate: 'PROFILE',
 		type: 'collapsible',
 		icon: 'lucide:user',
 		children: [

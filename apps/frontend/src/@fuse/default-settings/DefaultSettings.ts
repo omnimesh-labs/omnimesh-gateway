@@ -2,7 +2,7 @@
 import { createTheme, ThemeOptions } from '@mui/material/styles';
 import qs from 'qs';
 import { SettingsConfigType } from '@fuse/core/Settings/Settings';
-import type { } from '@mui/material/themeCssVarsAugmentation';
+import type {} from '@mui/material/themeCssVarsAugmentation';
 
 /**
  * The defaultTheme object defines the default color palette for the application.

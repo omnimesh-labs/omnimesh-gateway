@@ -67,7 +67,7 @@ function Highlight(props: HighlightProps) {
 						onClick={handleCopy}
 						size="small"
 						color="secondary"
-						className="text-md absolute top-0 right-0 z-10 m-1.5 h-auto min-h-0 w-auto min-w-0 rounded-sm p-0 px-2 py-1"
+						className="absolute right-0 top-0 z-10 m-1.5 h-auto min-h-0 w-auto min-w-0 rounded-sm p-0 px-2 py-1 text-md"
 						classes={{ startIcon: 'mr-1' }}
 						sx={{
 							backgroundColor: (theme) => `rgba(${theme.vars.palette.secondary.mainChannel} / 0.6)`,

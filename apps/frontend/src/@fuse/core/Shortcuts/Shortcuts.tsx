@@ -244,9 +244,7 @@ function ShortcutMenuItem(props: {
 						onToggle(item.id);
 					}}
 				>
-					<SvgIcon color="action">
-						{shortcuts.includes(item.id) ? 'lucide:star' : 'lucide:star'}
-					</SvgIcon>
+					<SvgIcon color="action">{shortcuts.includes(item.id) ? 'lucide:star' : 'lucide:star'}</SvgIcon>
 				</IconButton>
 			</MenuItem>
 		</Link>

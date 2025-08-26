@@ -5,11 +5,11 @@ import { useParams, useRouter } from 'next/navigation';
 import { MRT_ColumnDef } from 'material-react-table';
 import PageSimple from '@fuse/core/PageSimple';
 import { styled } from '@mui/material/styles';
-import { 
-	Typography, 
-	Button, 
-	Chip, 
-	IconButton, 
+import {
+	Typography,
+	Button,
+	Chip,
+	IconButton,
 	Tooltip,
 	Box,
 	Card,
@@ -36,10 +36,10 @@ import {
 	Breadcrumbs,
 	Link
 } from '@mui/material';
-import DataTable from '@/components/data-table/DataTable';
+import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
 import { useSnackbar } from 'notistack';
-import { namespaceApi, MCPServer, Namespace } from '@/lib/api';
+import { MCPServer, Namespace } from '@/lib/api';
 
 const Root = styled(PageSimple)(({ theme }) => ({
 	'& .PageSimple-header': {
@@ -68,7 +68,7 @@ function NamespaceDetailView() {
 	const router = useRouter();
 	const namespaceId = params.id as string;
 	const { enqueueSnackbar } = useSnackbar();
-	
+
 	const [namespace, setNamespace] = useState<NamespaceDetails | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [tabValue, setTabValue] = useState(0);
@@ -183,9 +183,9 @@ function NamespaceDetailView() {
 			setLoading(true);
 			// TODO: Replace with actual API call
 			// const data = await namespaceApi.getNamespace(namespaceId);
-			
+
 			// Mock implementation
-			await new Promise(resolve => setTimeout(resolve, 500));
+			await new Promise((resolve) => setTimeout(resolve, 500));
 			setNamespace(mockNamespace);
 			setAvailableServers(mockAvailableServers);
 		} catch (error) {
@@ -203,6 +203,7 @@ function NamespaceDetailView() {
 
 	const handleEditNamespace = () => {
 		if (!namespace) return;
+
 		setEditFormData({
 			name: namespace.name,
 			description: namespace.description || ''
@@ -226,7 +227,7 @@ function NamespaceDetailView() {
 		if (!confirm('Are you sure you want to delete this namespace? This action cannot be undone.')) {
 			return;
 		}
-		
+
 		try {
 			// TODO: Replace with actual API call
 			// await namespaceApi.deleteNamespace(namespaceId);
@@ -254,7 +255,7 @@ function NamespaceDetailView() {
 		if (!confirm('Are you sure you want to remove this server from the namespace?')) {
 			return;
 		}
-		
+
 		try {
 			// TODO: Replace with actual API call
 			// await namespaceApi.removeServer(namespaceId, serverId);
@@ -265,57 +266,81 @@ function NamespaceDetailView() {
 		}
 	};
 
-	const serverColumns = useMemo<MRT_ColumnDef<MCPServer>[]>(() => [
-		{
-			accessorKey: 'name',
-			header: 'Server Name',
-			size: 200,
-			Cell: ({ row }) => (
-				<Box className="flex items-center space-x-2">
-					<SvgIcon size={20}>lucide:server</SvgIcon>
-					<Box>
-						<Typography variant="body2" className="font-medium">
-							{row.original.name}
-						</Typography>
-						{row.original.description && (
-							<Typography variant="caption" color="textSecondary">
-								{row.original.description}
+	const serverColumns = useMemo<MRT_ColumnDef<MCPServer>[]>(
+		() => [
+			{
+				accessorKey: 'name',
+				header: 'Server Name',
+				size: 200,
+				Cell: ({ row }) => (
+					<Box className="flex items-center space-x-2">
+						<SvgIcon size={20}>lucide:server</SvgIcon>
+						<Box>
+							<Typography
+								variant="body2"
+								className="font-medium"
+							>
+								{row.original.name}
 							</Typography>
-						)}
+							{row.original.description && (
+								<Typography
+									variant="caption"
+									color="textSecondary"
+								>
+									{row.original.description}
+								</Typography>
+							)}
+						</Box>
 					</Box>
-				</Box>
-			)
-		},
-		{
-			accessorKey: 'protocol',
-			header: 'Protocol',
-			size: 100,
-			Cell: ({ cell }) => (
-				<Chip size="small" label={cell.getValue<string>()} variant="outlined" />
-			)
-		},
-		{
-			accessorKey: 'status',
-			header: 'Status',
-			size: 100,
-			Cell: ({ cell }) => {
-				const status = cell.getValue<string>();
-				const color = status === 'active' ? 'success' : 
-							 status === 'inactive' ? 'default' : 
-							 status === 'unhealthy' ? 'error' : 'warning';
-				return <Chip size="small" label={status} color={color as any} />;
+				)
+			},
+			{
+				accessorKey: 'protocol',
+				header: 'Protocol',
+				size: 100,
+				Cell: ({ cell }) => (
+					<Chip
+						size="small"
+						label={cell.getValue<string>()}
+						variant="outlined"
+					/>
+				)
+			},
+			{
+				accessorKey: 'status',
+				header: 'Status',
+				size: 100,
+				Cell: ({ cell }) => {
+					const status = cell.getValue<string>();
+					const color =
+						status === 'active'
+							? 'success'
+							: status === 'inactive'
+								? 'default'
+								: status === 'unhealthy'
+									? 'error'
+									: 'warning';
+					return (
+						<Chip
+							size="small"
+							label={status}
+							color={color as any}
+						/>
+					);
+				}
+			},
+			{
+				accessorKey: 'version',
+				header: 'Version',
+				size: 100
 			}
-		},
-		{
-			accessorKey: 'version',
-			header: 'Version',
-			size: 100
-		}
-	], []);
+		],
+		[]
+	);
 
 	if (loading) {
 		return (
-			<Box className="flex justify-center items-center h-screen">
+			<Box className="flex h-screen items-center justify-center">
 				<CircularProgress />
 			</Box>
 		);
@@ -334,8 +359,8 @@ function NamespaceDetailView() {
 			header={
 				<div className="p-6">
 					<Breadcrumbs className="mb-4">
-						<Link 
-							color="inherit" 
+						<Link
+							color="inherit"
 							href="/namespaces"
 							onClick={(e) => {
 								e.preventDefault();
@@ -347,29 +372,33 @@ function NamespaceDetailView() {
 						</Link>
 						<Typography color="text.primary">{namespace.name}</Typography>
 					</Breadcrumbs>
-					
+
 					<div className="flex items-center justify-between">
 						<div>
 							<Typography variant="h4">{namespace.name}</Typography>
-							<Typography variant="body1" color="textSecondary" className="mt-1">
+							<Typography
+								variant="body1"
+								color="textSecondary"
+								className="mt-1"
+							>
 								{namespace.description || 'No description provided'}
 							</Typography>
-							<Box className="flex gap-2 mt-2">
-								<Chip 
-									size="small" 
+							<Box className="mt-2 flex gap-2">
+								<Chip
+									size="small"
 									label={namespace.is_active ? 'Active' : 'Inactive'}
 									color={namespace.is_active ? 'success' : 'default'}
 								/>
 								{namespace.metadata?.environment && (
-									<Chip 
-										size="small" 
+									<Chip
+										size="small"
 										label={`Environment: ${namespace.metadata.environment}`}
 										variant="outlined"
 									/>
 								)}
 								{namespace.metadata?.region && (
-									<Chip 
-										size="small" 
+									<Chip
+										size="small"
 										label={`Region: ${namespace.metadata.region}`}
 										variant="outlined"
 									/>
@@ -400,44 +429,83 @@ function NamespaceDetailView() {
 				<div className="p-6">
 					{/* Stats Cards */}
 					{namespace.stats && (
-						<Grid container spacing={3} className="mb-6">
-							<Grid item xs={12} sm={6} md={3}>
+						<Grid
+							container
+							spacing={3}
+							className="mb-6"
+						>
+							<Grid
+								item
+								xs={12}
+								sm={6}
+								md={3}
+							>
 								<Card>
 									<CardContent>
 										<Typography variant="h6">{namespace.stats.total_servers}</Typography>
-										<Typography variant="body2" color="textSecondary">
+										<Typography
+											variant="body2"
+											color="textSecondary"
+										>
 											Total Servers
 										</Typography>
 									</CardContent>
 								</Card>
 							</Grid>
-							<Grid item xs={12} sm={6} md={3}>
+							<Grid
+								item
+								xs={12}
+								sm={6}
+								md={3}
+							>
 								<Card>
 									<CardContent>
-										<Typography variant="h6" color="success.main">
+										<Typography
+											variant="h6"
+											color="success.main"
+										>
 											{namespace.stats.active_servers}
 										</Typography>
-										<Typography variant="body2" color="textSecondary">
+										<Typography
+											variant="body2"
+											color="textSecondary"
+										>
 											Active Servers
 										</Typography>
 									</CardContent>
 								</Card>
 							</Grid>
-							<Grid item xs={12} sm={6} md={3}>
+							<Grid
+								item
+								xs={12}
+								sm={6}
+								md={3}
+							>
 								<Card>
 									<CardContent>
 										<Typography variant="h6">{namespace.stats.total_sessions}</Typography>
-										<Typography variant="body2" color="textSecondary">
+										<Typography
+											variant="body2"
+											color="textSecondary"
+										>
 											Total Sessions
 										</Typography>
 									</CardContent>
 								</Card>
 							</Grid>
-							<Grid item xs={12} sm={6} md={3}>
+							<Grid
+								item
+								xs={12}
+								sm={6}
+								md={3}
+							>
 								<Card>
 									<CardContent>
 										<Typography variant="h6">{namespace.stats.total_requests}</Typography>
-										<Typography variant="body2" color="textSecondary">
+										<Typography
+											variant="body2"
+											color="textSecondary"
+										>
 											Total Requests
 										</Typography>
 									</CardContent>
@@ -446,8 +514,8 @@ function NamespaceDetailView() {
 						</Grid>
 					)}
 
-					<Tabs 
-						value={tabValue} 
+					<Tabs
+						value={tabValue}
 						onChange={(_, newValue) => setTabValue(newValue)}
 						className="mb-4"
 					>
@@ -459,7 +527,7 @@ function NamespaceDetailView() {
 					{/* Servers Tab */}
 					{tabValue === 0 && (
 						<Box>
-							<Box className="flex justify-between items-center mb-4">
+							<Box className="mb-4 flex items-center justify-between">
 								<Typography variant="h6">Assigned Servers</Typography>
 								<Button
 									variant="contained"
@@ -470,16 +538,16 @@ function NamespaceDetailView() {
 									Assign Servers
 								</Button>
 							</Box>
-							
+
 							{namespace.servers && namespace.servers.length > 0 ? (
-								<DataTable
+								<LazyDataTable
 									columns={serverColumns}
 									data={namespace.servers}
 									enableRowActions
 									renderRowActions={({ row }) => (
 										<Box className="flex items-center space-x-1">
 											<Tooltip title="View Details">
-												<IconButton 
+												<IconButton
 													size="small"
 													onClick={() => router.push(`/servers?id=${row.original.id}`)}
 												>
@@ -510,7 +578,12 @@ function NamespaceDetailView() {
 					{tabValue === 1 && (
 						<Card>
 							<CardContent>
-								<Typography variant="h6" className="mb-3">Namespace Settings</Typography>
+								<Typography
+									variant="h6"
+									className="mb-3"
+								>
+									Namespace Settings
+								</Typography>
 								<List>
 									<ListItem>
 										<ListItemIcon>
@@ -551,20 +624,21 @@ function NamespaceDetailView() {
 											secondary={new Date(namespace.updated_at).toLocaleString()}
 										/>
 									</ListItem>
-									{namespace.metadata && Object.entries(namespace.metadata).map(([key, value]) => (
-										<div key={key}>
-											<Divider />
-											<ListItem>
-												<ListItemIcon>
-													<SvgIcon>lucide:tag</SvgIcon>
-												</ListItemIcon>
-												<ListItemText
-													primary={key.charAt(0).toUpperCase() + key.slice(1)}
-													secondary={String(value)}
-												/>
-											</ListItem>
-										</div>
-									))}
+									{namespace.metadata &&
+										Object.entries(namespace.metadata).map(([key, value]) => (
+											<div key={key}>
+												<Divider />
+												<ListItem>
+													<ListItemIcon>
+														<SvgIcon>lucide:tag</SvgIcon>
+													</ListItemIcon>
+													<ListItemText
+														primary={key.charAt(0).toUpperCase() + key.slice(1)}
+														secondary={String(value)}
+													/>
+												</ListItem>
+											</div>
+										))}
 								</List>
 							</CardContent>
 						</Card>
@@ -574,24 +648,27 @@ function NamespaceDetailView() {
 					{tabValue === 2 && (
 						<Card>
 							<CardContent>
-								<Typography variant="h6" className="mb-3">Recent Activity</Typography>
-								<Alert severity="info">
-									Activity tracking will be available in a future update.
-								</Alert>
+								<Typography
+									variant="h6"
+									className="mb-3"
+								>
+									Recent Activity
+								</Typography>
+								<Alert severity="info">Activity tracking will be available in a future update.</Alert>
 							</CardContent>
 						</Card>
 					)}
 
 					{/* Edit Namespace Dialog */}
-					<Dialog 
-						open={editDialogOpen} 
+					<Dialog
+						open={editDialogOpen}
 						onClose={() => setEditDialogOpen(false)}
 						maxWidth="sm"
 						fullWidth
 					>
 						<DialogTitle>Edit Namespace</DialogTitle>
 						<DialogContent>
-							<Box className="space-y-4 mt-2">
+							<Box className="mt-2 space-y-4">
 								<TextField
 									label="Name"
 									value={editFormData.name}
@@ -611,20 +688,28 @@ function NamespaceDetailView() {
 						</DialogContent>
 						<DialogActions>
 							<Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
-							<Button variant="contained" onClick={handleSaveNamespace}>Save Changes</Button>
+							<Button
+								variant="contained"
+								onClick={handleSaveNamespace}
+							>
+								Save Changes
+							</Button>
 						</DialogActions>
 					</Dialog>
 
 					{/* Assign Servers Dialog */}
-					<Dialog 
-						open={assignServerDialogOpen} 
+					<Dialog
+						open={assignServerDialogOpen}
 						onClose={() => setAssignServerDialogOpen(false)}
 						maxWidth="md"
 						fullWidth
 					>
 						<DialogTitle>Assign Servers to Namespace</DialogTitle>
 						<DialogContent>
-							<Alert severity="info" className="mb-3">
+							<Alert
+								severity="info"
+								className="mb-3"
+							>
 								Select servers to assign to this namespace. Only unassigned servers are shown.
 							</Alert>
 							<FormControl fullWidth>
@@ -635,11 +720,17 @@ function NamespaceDetailView() {
 									onChange={(e) => setSelectedServers(e.target.value as string[])}
 									renderValue={(selected) => `${selected.length} servers selected`}
 								>
-									{availableServers.map(server => (
-										<MenuItem key={server.id} value={server.id}>
+									{availableServers.map((server) => (
+										<MenuItem
+											key={server.id}
+											value={server.id}
+										>
 											<Box>
 												<Typography variant="body2">{server.name}</Typography>
-												<Typography variant="caption" color="textSecondary">
+												<Typography
+													variant="caption"
+													color="textSecondary"
+												>
 													{server.protocol} - {server.status}
 												</Typography>
 											</Box>
@@ -650,8 +741,8 @@ function NamespaceDetailView() {
 						</DialogContent>
 						<DialogActions>
 							<Button onClick={() => setAssignServerDialogOpen(false)}>Cancel</Button>
-							<Button 
-								variant="contained" 
+							<Button
+								variant="contained"
 								onClick={handleAssignServers}
 								disabled={selectedServers.length === 0}
 							>

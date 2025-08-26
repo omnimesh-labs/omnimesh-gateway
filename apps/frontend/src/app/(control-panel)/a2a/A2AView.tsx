@@ -1,20 +1,16 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, lazy } from 'react';
 import { MRT_ColumnDef } from 'material-react-table';
 import PageSimple from '@fuse/core/PageSimple';
 import { styled } from '@mui/material/styles';
-import { 
-	Typography, 
-	Button, 
-	Chip, 
-	IconButton, 
+import {
+	Typography,
+	Button,
+	Chip,
+	IconButton,
 	Tooltip,
 	Box,
-	Dialog,
-	DialogTitle,
-	DialogContent,
-	DialogActions,
 	TextField,
 	FormControlLabel,
 	Switch,
@@ -29,16 +25,16 @@ import {
 	Stack,
 	GridLegacy as Grid
 } from '@mui/material';
-import DataTable from '@/components/data-table/DataTable';
+
+// Lazy load heavy dialog components
+const Dialog = lazy(() => import('@mui/material/Dialog'));
+const DialogTitle = lazy(() => import('@mui/material/DialogTitle'));
+const DialogContent = lazy(() => import('@mui/material/DialogContent'));
+const DialogActions = lazy(() => import('@mui/material/DialogActions'));
+import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
 import { useSnackbar } from 'notistack';
-import { 
-	a2aApi, 
-	A2AAgent, 
-	A2AAgentSpec, 
-	A2AStats,
-	A2ATestRequest
-} from '@/lib/api';
+import { A2AAgent, A2AAgentSpec, A2AStats } from '@/lib/api';
 
 const Root = styled(PageSimple)(({ theme }) => ({
 	'& .PageSimple-header': {
@@ -155,28 +151,26 @@ function A2AView() {
 			//     a2aApi.listAgents({ is_active: showInactive ? undefined : true, tags: tagFilter || undefined }),
 			//     a2aApi.getStats()
 			// ]);
-			
+
 			// Mock implementation
-			await new Promise(resolve => setTimeout(resolve, 500));
+			await new Promise((resolve) => setTimeout(resolve, 500));
 			let filteredAgents = [...mockAgents];
-			
+
 			if (!showInactive) {
-				filteredAgents = filteredAgents.filter(a => a.is_active);
+				filteredAgents = filteredAgents.filter((a) => a.is_active);
 			}
-			
+
 			if (tagFilter) {
-				filteredAgents = filteredAgents.filter(a => 
-					a.tags?.some(tag => tag.includes(tagFilter))
-				);
+				filteredAgents = filteredAgents.filter((a) => a.tags?.some((tag) => tag.includes(tagFilter)));
 			}
-			
+
 			setAgents(filteredAgents);
 			setStats(mockStats);
-			
+
 			// Extract unique tags
 			const tags = new Set<string>();
-			mockAgents.forEach(agent => {
-				agent.tags?.forEach(tag => tags.add(tag));
+			mockAgents.forEach((agent) => {
+				agent.tags?.forEach((tag) => tags.add(tag));
 			});
 			setAvailableTags(Array.from(tags).sort());
 		} catch (error) {
@@ -228,6 +222,7 @@ function A2AView() {
 				// await a2aApi.createAgent(formData as A2AAgentSpec);
 				enqueueSnackbar('Agent created successfully', { variant: 'success' });
 			}
+
 			setCreateDialogOpen(false);
 			loadAgents();
 		} catch (error) {
@@ -252,10 +247,9 @@ function A2AView() {
 		try {
 			// TODO: Replace with actual API call
 			// await a2aApi.toggleAgent(agent.id, !agent.is_active);
-			enqueueSnackbar(
-				`Agent ${!agent.is_active ? 'activated' : 'deactivated'} successfully`, 
-				{ variant: 'success' }
-			);
+			enqueueSnackbar(`Agent ${!agent.is_active ? 'activated' : 'deactivated'} successfully`, {
+				variant: 'success'
+			});
 			loadAgents();
 		} catch (error) {
 			enqueueSnackbar('Failed to toggle agent status', { variant: 'error' });
@@ -272,14 +266,14 @@ function A2AView() {
 
 	const handleRunTest = async () => {
 		if (!selectedAgent || !testMessage) return;
-		
+
 		try {
 			setTestLoading(true);
 			// TODO: Replace with actual API call
 			// const result = await a2aApi.testAgent(selectedAgent.id, { message: testMessage, context: testContext });
-			
+
 			// Mock result
-			await new Promise(resolve => setTimeout(resolve, 1500));
+			await new Promise((resolve) => setTimeout(resolve, 1500));
 			setTestResult({
 				success: true,
 				content: `This is a mock response from ${selectedAgent.name}. In production, this would be the actual agent response to: "${testMessage}"`,
@@ -300,96 +294,118 @@ function A2AView() {
 		}
 	};
 
-	const columns = useMemo<MRT_ColumnDef<A2AAgent>[]>(() => [
-		{
-			accessorKey: 'name',
-			header: 'Agent Name',
-			size: 200,
-			Cell: ({ row }) => (
-				<Box className="flex items-center space-x-2">
-					<SvgIcon size={20}>lucide:bot</SvgIcon>
-					<Box>
-						<Typography variant="body2" className="font-medium">
-							{row.original.name}
-						</Typography>
-						{row.original.description && (
-							<Typography variant="caption" color="textSecondary">
-								{row.original.description}
+	const columns = useMemo<MRT_ColumnDef<A2AAgent>[]>(
+		() => [
+			{
+				accessorKey: 'name',
+				header: 'Agent Name',
+				size: 200,
+				Cell: ({ row }) => (
+					<Box className="flex items-center space-x-2">
+						<SvgIcon size={20}>lucide:bot</SvgIcon>
+						<Box>
+							<Typography
+								variant="body2"
+								className="font-medium"
+							>
+								{row.original.name}
 							</Typography>
+							{row.original.description && (
+								<Typography
+									variant="caption"
+									color="textSecondary"
+								>
+									{row.original.description}
+								</Typography>
+							)}
+						</Box>
+					</Box>
+				)
+			},
+			{
+				accessorKey: 'agent_type',
+				header: 'Type',
+				size: 120,
+				Cell: ({ cell }) => (
+					<Chip
+						size="small"
+						label={cell.getValue<string>()}
+						variant="outlined"
+						sx={{ textTransform: 'capitalize' }}
+					/>
+				)
+			},
+			{
+				accessorKey: 'is_active',
+				header: 'Status',
+				size: 100,
+				Cell: ({ cell }) => (
+					<Chip
+						size="small"
+						label={cell.getValue<boolean>() ? 'Active' : 'Inactive'}
+						color={cell.getValue<boolean>() ? 'success' : 'default'}
+					/>
+				)
+			},
+			{
+				accessorKey: 'capabilities',
+				header: 'Capabilities',
+				size: 200,
+				Cell: ({ cell }) => (
+					<Box className="flex flex-wrap gap-1">
+						{cell
+							.getValue<string[]>()
+							?.slice(0, 2)
+							.map((cap) => (
+								<Chip
+									key={cap}
+									size="small"
+									label={cap}
+									variant="outlined"
+								/>
+							))}
+						{cell.getValue<string[]>()?.length > 2 && (
+							<Chip
+								size="small"
+								label={`+${cell.getValue<string[]>().length - 2}`}
+								variant="outlined"
+							/>
 						)}
 					</Box>
-				</Box>
-			)
-		},
-		{
-			accessorKey: 'agent_type',
-			header: 'Type',
-			size: 120,
-			Cell: ({ cell }) => (
-				<Chip
-					size="small"
-					label={cell.getValue<string>()}
-					variant="outlined"
-					sx={{ textTransform: 'capitalize' }}
-				/>
-			)
-		},
-		{
-			accessorKey: 'is_active',
-			header: 'Status',
-			size: 100,
-			Cell: ({ cell }) => (
-				<Chip
-					size="small"
-					label={cell.getValue<boolean>() ? 'Active' : 'Inactive'}
-					color={cell.getValue<boolean>() ? 'success' : 'default'}
-				/>
-			)
-		},
-		{
-			accessorKey: 'capabilities',
-			header: 'Capabilities',
-			size: 200,
-			Cell: ({ cell }) => (
-				<Box className="flex flex-wrap gap-1">
-					{cell.getValue<string[]>()?.slice(0, 2).map(cap => (
-						<Chip key={cap} size="small" label={cap} variant="outlined" />
-					))}
-					{cell.getValue<string[]>()?.length > 2 && (
-						<Chip size="small" label={`+${cell.getValue<string[]>().length - 2}`} variant="outlined" />
-					)}
-				</Box>
-			)
-		},
-		{
-			id: 'metrics',
-			header: 'Usage',
-			size: 150,
-			Cell: ({ row }) => (
-				<Box>
-					<Typography variant="body2">
-						{row.original.metrics?.request_count || 0} requests
-					</Typography>
-					<Typography variant="caption" color="textSecondary">
-						{row.original.metrics?.avg_response_time || 0}ms avg
-					</Typography>
-				</Box>
-			)
-		},
-		{
-			accessorKey: 'updated_at',
-			header: 'Last Updated',
-			size: 150,
-			Cell: ({ cell }) => {
-				const date = new Date(cell.getValue<string>());
-				return date.toLocaleDateString('en-US', {
-					year: 'numeric',
-					month: 'short',
-					day: 'numeric'
-				});
+				)
+			},
+			{
+				id: 'metrics',
+				header: 'Usage',
+				size: 150,
+				Cell: ({ row }) => (
+					<Box>
+						<Typography variant="body2">{row.original.metrics?.request_count || 0} requests</Typography>
+						<Typography
+							variant="caption"
+							color="textSecondary"
+						>
+							{row.original.metrics?.avg_response_time || 0}ms avg
+						</Typography>
+					</Box>
+				)
+			},
+			{
+				accessorKey: 'updated_at',
+				header: 'Last Updated',
+				size: 150,
+				Cell: ({ cell }) => {
+					const date = new Date(cell.getValue<string>());
+					return date.toLocaleDateString('en-US', {
+						year: 'numeric',
+						month: 'short',
+						day: 'numeric'
+					});
+				}
 			}
-		}
-	], []);
+		],
+		[]
+	);
 
 	return (
 		<Root
@@ -398,7 +414,11 @@ function A2AView() {
 					<div className="flex items-center justify-between">
 						<div>
 							<Typography variant="h4">A2A Agent Management</Typography>
-							<Typography variant="body1" color="textSecondary" className="mt-1">
+							<Typography
+								variant="body1"
+								color="textSecondary"
+								className="mt-1"
+							>
 								Manage app-to-app authentication agents
 							</Typography>
 						</div>
@@ -418,53 +438,89 @@ function A2AView() {
 					{/* Stats Cards */}
 					{stats && (
 						<Box sx={{ flexGrow: 1, mb: 3 }}>
-							<Grid container spacing={3}>
-								<Grid item xs={12} sm={6} md={3}>
-								<Card>
-									<CardContent>
-										<Typography variant="h6">{stats.total}</Typography>
-										<Typography variant="body2" color="textSecondary">
-											Total Agents
-										</Typography>
-									</CardContent>
-								</Card>
-							</Grid>
-							<Grid xs={12} sm={6} md={3}>
-								<Card>
-									<CardContent>
-										<Typography variant="h6" color="success.main">
-											{stats.active}
-										</Typography>
-										<Typography variant="body2" color="textSecondary">
-											Active Agents
-										</Typography>
-									</CardContent>
-								</Card>
-							</Grid>
-							<Grid xs={12} sm={6} md={3}>
-								<Card>
-									<CardContent>
-										<Typography variant="h6" color="text.secondary">
-											{stats.inactive}
-										</Typography>
-										<Typography variant="body2" color="textSecondary">
-											Inactive Agents
-										</Typography>
-									</CardContent>
-								</Card>
-							</Grid>
-							<Grid xs={12} sm={6} md={3}>
-								<Card>
-									<CardContent>
-										<Typography variant="h6">
-											{Object.keys(stats.by_type).length}
-										</Typography>
-										<Typography variant="body2" color="textSecondary">
-											Agent Types
-										</Typography>
-									</CardContent>
-								</Card>
-							</Grid>
+							<Grid
+								container
+								spacing={3}
+							>
+								<Grid
+									item
+									xs={12}
+									sm={6}
+									md={3}
+								>
+									<Card>
+										<CardContent>
+											<Typography variant="h6">{stats.total}</Typography>
+											<Typography
+												variant="body2"
+												color="textSecondary"
+											>
+												Total Agents
+											</Typography>
+										</CardContent>
+									</Card>
+								</Grid>
+								<Grid
+									xs={12}
+									sm={6}
+									md={3}
+								>
+									<Card>
+										<CardContent>
+											<Typography
+												variant="h6"
+												color="success.main"
+											>
+												{stats.active}
+											</Typography>
+											<Typography
+												variant="body2"
+												color="textSecondary"
+											>
+												Active Agents
+											</Typography>
+										</CardContent>
+									</Card>
+								</Grid>
+								<Grid
+									xs={12}
+									sm={6}
+									md={3}
+								>
+									<Card>
+										<CardContent>
+											<Typography
+												variant="h6"
+												color="text.secondary"
+											>
+												{stats.inactive}
+											</Typography>
+											<Typography
+												variant="body2"
+												color="textSecondary"
+											>
+												Inactive Agents
+											</Typography>
+										</CardContent>
+									</Card>
+								</Grid>
+								<Grid
+									xs={12}
+									sm={6}
+									md={3}
+								>
+									<Card>
+										<CardContent>
+											<Typography variant="h6">{Object.keys(stats.by_type).length}</Typography>
+											<Typography
+												variant="body2"
+												color="textSecondary"
+											>
+												Agent Types
+											</Typography>
+										</CardContent>
+									</Card>
+								</Grid>
 							</Grid>
 						</Box>
 					)}
@@ -480,7 +536,10 @@ function A2AView() {
 							}
 							label="Show Inactive"
 						/>
-						<FormControl size="small" sx={{ minWidth: 200 }}>
+						<FormControl
+							size="small"
+							sx={{ minWidth: 200 }}
+						>
 							<InputLabel>Filter by Tag</InputLabel>
 							<Select
 								value={tagFilter}
@@ -488,8 +547,13 @@ function A2AView() {
 								onChange={(e) => setTagFilter(e.target.value)}
 							>
 								<MenuItem value="">All Tags</MenuItem>
-								{availableTags.map(tag => (
-									<MenuItem key={tag} value={tag}>{tag}</MenuItem>
+								{availableTags.map((tag) => (
+									<MenuItem
+										key={tag}
+										value={tag}
+									>
+										{tag}
+									</MenuItem>
 								))}
 							</Select>
 						</FormControl>
@@ -501,24 +565,30 @@ function A2AView() {
 							<CircularProgress />
 						</Box>
 					) : (
-						<DataTable
+						<LazyDataTable
 							columns={columns}
 							data={agents}
 							enableRowActions
 							renderRowActions={({ row }) => (
 								<Box className="flex items-center space-x-1">
 									<Tooltip title="Test Agent">
-										<IconButton size="small" onClick={() => handleTestAgent(row.original)}>
+										<IconButton
+											size="small"
+											onClick={() => handleTestAgent(row.original)}
+										>
 											<SvgIcon size={18}>lucide:play</SvgIcon>
 										</IconButton>
 									</Tooltip>
 									<Tooltip title="Edit">
-										<IconButton size="small" onClick={() => handleEditAgent(row.original)}>
+										<IconButton
+											size="small"
+											onClick={() => handleEditAgent(row.original)}
+										>
 											<SvgIcon size={18}>lucide:edit</SvgIcon>
 										</IconButton>
 									</Tooltip>
 									<Tooltip title={row.original.is_active ? 'Deactivate' : 'Activate'}>
-										<IconButton 
+										<IconButton
 											size="small"
 											onClick={() => handleToggleAgent(row.original)}
 										>
@@ -548,17 +618,18 @@ function A2AView() {
 					)}
 
 					{/* Create/Edit Dialog */}
-					<Dialog 
-						open={createDialogOpen} 
+					<Dialog
+						open={createDialogOpen}
 						onClose={() => setCreateDialogOpen(false)}
 						maxWidth="md"
 						fullWidth
 					>
-						<DialogTitle>
-							{editingAgent ? 'Edit Agent' : 'Create New Agent'}
-						</DialogTitle>
+						<DialogTitle>{editingAgent ? 'Edit Agent' : 'Create New Agent'}</DialogTitle>
 						<DialogContent>
-							<Stack spacing={3} sx={{ mt: 1 }}>
+							<Stack
+								spacing={3}
+								sx={{ mt: 1 }}
+							>
 								<TextField
 									label="Agent Name"
 									value={formData.name}
@@ -601,24 +672,28 @@ function A2AView() {
 						</DialogContent>
 						<DialogActions>
 							<Button onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
-							<Button variant="contained" onClick={handleSaveAgent}>
+							<Button
+								variant="contained"
+								onClick={handleSaveAgent}
+							>
 								{editingAgent ? 'Update' : 'Create'}
 							</Button>
 						</DialogActions>
 					</Dialog>
 
 					{/* Test Agent Dialog */}
-					<Dialog 
-						open={testDialogOpen} 
+					<Dialog
+						open={testDialogOpen}
 						onClose={() => setTestDialogOpen(false)}
 						maxWidth="md"
 						fullWidth
 					>
-						<DialogTitle>
-							Test Agent: {selectedAgent?.name}
-						</DialogTitle>
+						<DialogTitle>Test Agent: {selectedAgent?.name}</DialogTitle>
 						<DialogContent>
-							<Stack spacing={3} sx={{ mt: 1 }}>
+							<Stack
+								spacing={3}
+								sx={{ mt: 1 }}
+							>
 								<TextField
 									label="Test Message"
 									value={testMessage}
@@ -642,12 +717,19 @@ function A2AView() {
 									<Alert severity={testResult.success ? 'success' : 'error'}>
 										{testResult.content || testResult.error}
 										{testResult.execution_time_ms && (
-											<Typography variant="caption" display="block" sx={{ mt: 1 }}>
+											<Typography
+												variant="caption"
+												display="block"
+												sx={{ mt: 1 }}
+											>
 												Execution time: {testResult.execution_time_ms}ms
 											</Typography>
 										)}
 										{testResult.tokens_used && (
-											<Typography variant="caption" display="block">
+											<Typography
+												variant="caption"
+												display="block"
+											>
 												Tokens used: {testResult.tokens_used.total}
 											</Typography>
 										)}
@@ -657,11 +739,13 @@ function A2AView() {
 						</DialogContent>
 						<DialogActions>
 							<Button onClick={() => setTestDialogOpen(false)}>Close</Button>
-							<Button 
-								variant="contained" 
+							<Button
+								variant="contained"
 								onClick={handleRunTest}
 								disabled={!testMessage || testLoading}
-								startIcon={testLoading ? <CircularProgress size={20} /> : <SvgIcon>lucide:play</SvgIcon>}
+								startIcon={
+									testLoading ? <CircularProgress size={20} /> : <SvgIcon>lucide:play</SvgIcon>
+								}
 							>
 								Run Test
 							</Button>

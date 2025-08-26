@@ -70,7 +70,7 @@ function AdjustFontSize(props: AdjustFontSizeProps) {
 			>
 				<div className="px-6 py-3">
 					<Typography
-						className="text-md mb-2 flex items-center justify-center gap-2 font-semibold"
+						className="mb-2 flex items-center justify-center gap-2 text-md font-semibold"
 						color="text.secondary"
 					>
 						<SvgIcon color="action">lucide:a-large-small</SvgIcon>

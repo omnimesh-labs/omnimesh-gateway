@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import PageSimple from '@fuse/core/PageSimple';
 import { styled } from '@mui/material/styles';
-import { 
-	Typography, 
-	Button, 
+import {
+	Typography,
+	Button,
 	Paper,
 	Box,
 	Grid,
@@ -65,9 +65,9 @@ function ProfileSettingsView() {
 		setIsLoading(true);
 		try {
 			// Simulate API call
-			await new Promise(resolve => setTimeout(resolve, 1000));
+			await new Promise((resolve) => setTimeout(resolve, 1000));
 			enqueueSnackbar('Profile updated successfully (demo)', { variant: 'success' });
-			setProfileForm(prev => ({
+			setProfileForm((prev) => ({
 				...prev,
 				current_password: '',
 				new_password: '',
@@ -87,7 +87,11 @@ function ProfileSettingsView() {
 					<div className="flex items-center justify-between">
 						<div>
 							<Typography variant="h4">Profile Settings</Typography>
-							<Typography variant="body1" color="textSecondary" className="mt-1">
+							<Typography
+								variant="body1"
+								color="textSecondary"
+								className="mt-1"
+							>
 								Manage your account settings and preferences
 							</Typography>
 						</div>
@@ -96,40 +100,55 @@ function ProfileSettingsView() {
 			}
 			content={
 				<div className="p-6">
-					<Grid container spacing={4} maxWidth="4xl" className="mx-auto">
+					<Grid
+						container
+						spacing={4}
+						maxWidth="4xl"
+						className="mx-auto"
+					>
 						{/* Account Information */}
 						<Grid size={{ xs: 12, md: 6 }}>
 							<Card>
 								<CardContent>
-									<Typography variant="h6" gutterBottom className="flex items-center gap-2">
+									<Typography
+										variant="h6"
+										gutterBottom
+										className="flex items-center gap-2"
+									>
 										<SvgIcon>lucide:user</SvgIcon>
 										Account Information
 									</Typography>
-									
+
 									<Stack spacing={2}>
 										<Box>
-											<Typography variant="body2" color="textSecondary">
+											<Typography
+												variant="body2"
+												color="textSecondary"
+											>
 												User ID
 											</Typography>
-											<Paper 
-												variant="outlined" 
-												className="p-2 bg-gray-50 font-mono text-sm"
+											<Paper
+												variant="outlined"
+												className="bg-gray-50 p-2 font-mono text-sm"
 											>
 												{mockUser.id}
 											</Paper>
 										</Box>
 
 										<Box>
-											<Typography variant="body2" color="textSecondary">
+											<Typography
+												variant="body2"
+												color="textSecondary"
+											>
 												Role
 											</Typography>
-											<Paper 
-												variant="outlined" 
-												className="p-2 bg-gray-50"
+											<Paper
+												variant="outlined"
+												className="bg-gray-50 p-2"
 											>
-												<Typography 
-													variant="body2" 
-													className="capitalize inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium"
+												<Typography
+													variant="body2"
+													className="inline-block rounded bg-blue-100 px-2 py-1 text-xs font-medium capitalize text-blue-800"
 												>
 													{mockUser.role}
 												</Typography>
@@ -137,24 +156,30 @@ function ProfileSettingsView() {
 										</Box>
 
 										<Box>
-											<Typography variant="body2" color="textSecondary">
+											<Typography
+												variant="body2"
+												color="textSecondary"
+											>
 												Organization ID
 											</Typography>
-											<Paper 
-												variant="outlined" 
-												className="p-2 bg-gray-50 font-mono text-sm"
+											<Paper
+												variant="outlined"
+												className="bg-gray-50 p-2 font-mono text-sm"
 											>
 												{mockUser.organization_id}
 											</Paper>
 										</Box>
 
 										<Box>
-											<Typography variant="body2" color="textSecondary">
+											<Typography
+												variant="body2"
+												color="textSecondary"
+											>
 												Account Created
 											</Typography>
-											<Paper 
-												variant="outlined" 
-												className="p-2 bg-gray-50"
+											<Paper
+												variant="outlined"
+												className="bg-gray-50 p-2"
 											>
 												{new Date(mockUser.created_at).toLocaleDateString()}
 											</Paper>
@@ -169,7 +194,11 @@ function ProfileSettingsView() {
 							<Card>
 								<form onSubmit={handleProfileUpdate}>
 									<CardContent>
-										<Typography variant="h6" gutterBottom className="flex items-center gap-2">
+										<Typography
+											variant="h6"
+											gutterBottom
+											className="flex items-center gap-2"
+										>
 											<SvgIcon>lucide:edit</SvgIcon>
 											Update Profile
 										</Typography>
@@ -178,7 +207,9 @@ function ProfileSettingsView() {
 											<TextField
 												label="Name"
 												value={profileForm.name}
-												onChange={(e) => setProfileForm(prev => ({...prev, name: e.target.value}))}
+												onChange={(e) =>
+													setProfileForm((prev) => ({ ...prev, name: e.target.value }))
+												}
 												fullWidth
 												required
 											/>
@@ -187,14 +218,19 @@ function ProfileSettingsView() {
 												label="Email Address"
 												type="email"
 												value={profileForm.email}
-												onChange={(e) => setProfileForm(prev => ({...prev, email: e.target.value}))}
+												onChange={(e) =>
+													setProfileForm((prev) => ({ ...prev, email: e.target.value }))
+												}
 												fullWidth
 												required
 											/>
 
 											<Divider />
 
-											<Alert severity="info" sx={{ fontSize: '0.875rem' }}>
+											<Alert
+												severity="info"
+												sx={{ fontSize: '0.875rem' }}
+											>
 												Leave password fields empty to keep your current password
 											</Alert>
 
@@ -202,7 +238,12 @@ function ProfileSettingsView() {
 												label="Current Password"
 												type="password"
 												value={profileForm.current_password}
-												onChange={(e) => setProfileForm(prev => ({...prev, current_password: e.target.value}))}
+												onChange={(e) =>
+													setProfileForm((prev) => ({
+														...prev,
+														current_password: e.target.value
+													}))
+												}
 												fullWidth
 												placeholder="Enter current password to make changes"
 											/>
@@ -211,7 +252,12 @@ function ProfileSettingsView() {
 												label="New Password"
 												type="password"
 												value={profileForm.new_password}
-												onChange={(e) => setProfileForm(prev => ({...prev, new_password: e.target.value}))}
+												onChange={(e) =>
+													setProfileForm((prev) => ({
+														...prev,
+														new_password: e.target.value
+													}))
+												}
 												fullWidth
 												placeholder="Leave blank to keep current password"
 											/>
@@ -220,7 +266,12 @@ function ProfileSettingsView() {
 												label="Confirm New Password"
 												type="password"
 												value={profileForm.confirm_password}
-												onChange={(e) => setProfileForm(prev => ({...prev, confirm_password: e.target.value}))}
+												onChange={(e) =>
+													setProfileForm((prev) => ({
+														...prev,
+														confirm_password: e.target.value
+													}))
+												}
 												fullWidth
 												placeholder="Confirm new password"
 											/>

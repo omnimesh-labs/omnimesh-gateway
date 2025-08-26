@@ -49,5 +49,4 @@ function NavVerticalGroup(props: NavItemComponentProps) {
 	return memoizedContent;
 }
 
-
 export default NavVerticalGroup;

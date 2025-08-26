@@ -451,7 +451,7 @@ function Search(props: SearchProps) {
 					{state.opened && (
 						<ClickAwayListener onClickAway={handleClickAway}>
 							<Paper
-								className="shadow-0 absolute inset-x-0 top-0 z-9999 h-full"
+								className="shadow-0 z-9999 absolute inset-x-0 top-0 h-full"
 								square
 							>
 								<div
