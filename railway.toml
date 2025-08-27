@@ -1,0 +1,13 @@
+[build]
+builder = "dockerfile"
+dockerfilePath = "apps/backend/Dockerfile"
+
+[deploy]
+startCommand = "./main"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+
+[environments.production]
+[[environments.production.plugins]]
+type = "postgresql"
