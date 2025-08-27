@@ -138,7 +138,7 @@ function MCPGatewaySignInForm() {
 
 				<Button
 					variant="contained"
-					color="secondary"
+					color="info"
 					className="mt-4 w-full"
 					aria-label="Sign in"
 					disabled={!isValid || isLoading}

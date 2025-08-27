@@ -9,6 +9,7 @@ import (
 
 	"mcp-gateway/apps/backend/internal/a2a"
 	"mcp-gateway/apps/backend/internal/auth"
+	"mcp-gateway/apps/backend/internal/config"
 	"mcp-gateway/apps/backend/internal/database/models"
 	"mcp-gateway/apps/backend/internal/discovery"
 	"mcp-gateway/apps/backend/internal/inspector"
@@ -152,8 +153,11 @@ func (s *Server) RegisterRoutes() http.Handler {
 	namespaceHandler := handlers.NewNamespaceHandler(namespaceService)
 	inspectorHandler := handlers.NewInspectorHandler(inspectorService)
 
+	// Initialize config service
+	configService := config.NewService(s.db.GetDB())
+
 	// Initialize admin handler (for logging and system management)
-	adminHandler := handlers.NewAdminHandler(nil, s.logging.(*logging.Service), nil)
+	adminHandler := handlers.NewAdminHandler(nil, s.logging.(*logging.Service), configService)
 
 	// Initialize policy handler
 	policyHandler := handlers.NewPolicyHandler(s.db.GetDB())
@@ -644,6 +648,29 @@ func (s *Server) RegisterRoutes() http.Handler {
 					authMiddleware.RequirePermission(types.PermissionDelete),
 					loggingMiddleware.AuditLogger("delete", "policy"),
 					policyHandler.DeletePolicy)
+			}
+
+			// Configuration management - requires admin access
+			config := admin.Group("/config")
+			{
+				config.POST("/export",
+					authMiddleware.RequireAdmin(),
+					authMiddleware.RequirePermission(types.PermissionRead),
+					loggingMiddleware.AuditLogger("export", "configuration"),
+					adminHandler.ExportConfiguration)
+				config.POST("/import",
+					authMiddleware.RequireAdmin(),
+					authMiddleware.RequirePermission(types.PermissionWrite),
+					loggingMiddleware.AuditLogger("import", "configuration"),
+					adminHandler.ImportConfiguration)
+				config.POST("/validate-import",
+					authMiddleware.RequireAdmin(),
+					authMiddleware.RequirePermission(types.PermissionRead),
+					adminHandler.ValidateImport)
+				config.GET("/import-history",
+					authMiddleware.RequireAdmin(),
+					authMiddleware.RequirePermission(types.PermissionRead),
+					adminHandler.GetImportHistory)
 			}
 		}
 	}

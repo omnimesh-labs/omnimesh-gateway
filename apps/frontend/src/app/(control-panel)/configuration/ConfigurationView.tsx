@@ -128,7 +128,7 @@ function ConfigurationView() {
 				<div className="p-6">
 					<div className="flex items-center justify-between">
 						<div>
-							<Typography variant="h4">Configuration Management</Typography>
+							<Typography variant="h4">Configuration</Typography>
 							<Typography
 								variant="body1"
 								color="textSecondary"

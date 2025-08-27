@@ -1,5 +1,3 @@
-// API service functions for Janex - Migrated from old frontend
-
 import type {
 	PromptParameter,
 	JSONSchema,
@@ -20,7 +18,7 @@ import type {
 	Session
 } from './types';
 
-// Types for API responses
+
 export interface MCPServer {
 	id: string;
 	organization_id: string;
@@ -95,26 +93,39 @@ export interface CreateServerRequest {
 	metadata?: Record<string, string>;
 }
 
-// Logging and Audit Types
 export interface LogEntry {
 	id: string;
-	organization_id: string;
+	timestamp: string;
+	level: 'debug' | 'info' | 'warn' | 'error';
+	message: string;
+	logger: string;
+	request_id: string;
+	user_id: string;
+	org_id: string;
+	data: {
+		query_params?: string;
+		response_body?: string;
+		response_size?: number;
+		duration_ms?: number;
+		status_code?: number;
+		method?: string;
+		path?: string;
+		remote_ip?: string;
+		[key: string]: unknown;
+	};
+	environment: string;
+	organization_id?: string;
 	server_id?: string;
 	session_id?: string;
 	rpc_method?: string;
-	level: 'debug' | 'info' | 'warn' | 'error';
-	started_at: string;
-	duration_ms?: number;
-	status_code?: number;
-	error_flag: boolean;
-	storage_provider: string;
-	object_uri: string;
+	started_at?: string;
+	error_flag?: boolean;
+	storage_provider?: string;
+	object_uri?: string;
 	byte_offset?: number;
-	user_id: string;
-	remote_ip?: string;
 	client_id?: string;
 	connection_id?: string;
-	created_at: string;
+	created_at?: string;
 }
 
 export interface AuditLogEntry {
@@ -419,7 +430,6 @@ export interface ExecuteToolRequest {
 	parameters?: Record<string, unknown>;
 }
 
-// List Response Types
 export interface ContentListResponse<T> {
 	data: T[];
 	pagination: {
@@ -442,7 +452,6 @@ export interface ContentQueryParams {
 	is_public?: boolean;
 }
 
-// Namespace Management Types
 export interface Namespace {
 	id: string;
 	organization_id: string;
@@ -484,7 +493,6 @@ export interface ExecuteNamespaceToolRequest {
 	parameters?: Record<string, unknown>;
 }
 
-// Endpoint Management Types
 export interface EndpointURLs {
 	sse: string;
 	http: string;
@@ -545,7 +553,6 @@ export interface UpdateEndpointRequest {
 	metadata?: Record<string, unknown>;
 }
 
-// Configuration Management Types
 export interface ConfigurationExport {
 	metadata: ExportMetadata;
 	servers?: ExportedServer[];
@@ -752,7 +759,6 @@ export interface ImportHistoryQuery {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api';
 
-// Get access token from localStorage
 function getAccessToken(): string | null {
 	if (typeof window !== 'undefined') {
 		return localStorage.getItem('access_token');
@@ -761,7 +767,6 @@ function getAccessToken(): string | null {
 	return null;
 }
 
-// Remove tokens from localStorage
 function clearTokens(): void {
 	if (typeof window !== 'undefined') {
 		localStorage.removeItem('access_token');
@@ -769,10 +774,10 @@ function clearTokens(): void {
 	}
 }
 
-// Track if we're currently refreshing to avoid infinite loops
+
 let isRefreshing = false;
 
-// Generic fetch wrapper with error handling and automatic token refresh
+
 async function apiRequest<T>(endpoint: string, options: RequestInit = {}, retryOnAuth = true): Promise<T> {
 	try {
 		const headers: Record<string, string> = {
@@ -780,7 +785,7 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}, retryO
 			...(options.headers as Record<string, string>)
 		};
 
-		// Add Authorization header if token exists
+
 		const token = getAccessToken();
 
 		if (token) {
@@ -803,7 +808,7 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}, retryO
 				}
 			}));
 
-			// If 401 and we haven't tried refreshing yet, attempt token refresh
+
 			if (
 				response.status === 401 &&
 				retryOnAuth &&
@@ -816,7 +821,7 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}, retryO
 				if (refreshToken) {
 					try {
 						isRefreshing = true;
-						// Try to refresh the token
+
 						const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
 							method: 'POST',
 							headers: {
@@ -830,16 +835,16 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}, retryO
 						if (refreshResponse.ok) {
 							const refreshData = await refreshResponse.json();
 
-							// Update tokens in localStorage synchronously
+
 							if (typeof window !== 'undefined') {
 								localStorage.setItem('access_token', refreshData.data.access_token);
 								localStorage.setItem('refresh_token', refreshData.data.refresh_token);
 							}
 
-							// Retry the original request with the new token
+
 							return apiRequest(endpoint, options, false);
 						} else {
-							// Refresh failed, clear tokens and redirect to login
+
 							clearTokens();
 
 							if (typeof window !== 'undefined') {
@@ -851,7 +856,7 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}, retryO
 					} catch (_refreshError) {
 						clearTokens();
 
-						// Redirect to login page when refresh fails
+
 						if (typeof window !== 'undefined') {
 							window.location.href = '/sign-in';
 						}
@@ -861,7 +866,7 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}, retryO
 						isRefreshing = false;
 					}
 				} else {
-					// No refresh token available, redirect to login
+
 					clearTokens();
 
 					if (typeof window !== 'undefined') {
@@ -872,13 +877,13 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}, retryO
 				}
 			}
 
-			// For non-401 errors or when not retrying auth
+
 			throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`);
 		}
 
 		return response.json();
 	} catch (error) {
-		// Handle CORS and network errors
+
 		if (error instanceof TypeError && error.message.includes('fetch')) {
 			throw new Error(
 				'Network error: Unable to connect to the server. Please ensure the backend is running and CORS is configured correctly.'
@@ -889,7 +894,7 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}, retryO
 	}
 }
 
-// Server Management APIs
+
 export const serverApi = {
 	async listServers(): Promise<MCPServer[]> {
 		const response = await apiRequest<ApiResponse<MCPServer[]>>('/gateway/servers');
@@ -929,7 +934,7 @@ export const serverApi = {
 	}
 };
 
-// MCP Discovery APIs
+
 export const discoveryApi = {
 	async searchPackages(query = '', offset = 0, pageSize = 20): Promise<MCPDiscoveryResponse> {
 		const params = new URLSearchParams();
@@ -965,7 +970,7 @@ export const discoveryApi = {
 	}
 };
 
-// Session Management APIs
+
 export const sessionApi = {
 	async createSession(serverId: string): Promise<Session> {
 		const response = await apiRequest<ApiResponse<Session>>('/gateway/sessions', {
@@ -987,7 +992,7 @@ export const sessionApi = {
 	}
 };
 
-// Admin & Logging APIs
+
 export const adminApi = {
 	async getLogs(params?: LogQueryParams): Promise<LogEntry[]> {
 		const queryParams = new URLSearchParams();
@@ -1047,7 +1052,7 @@ export const adminApi = {
 	}
 };
 
-// Authentication APIs
+
 export const authApi = {
 	async login(credentials: LoginRequest): Promise<LoginResponse> {
 		const response = await apiRequest<ApiResponse<LoginResponse>>('/auth/login', {
@@ -1055,11 +1060,11 @@ export const authApi = {
 			body: JSON.stringify(credentials)
 		});
 
-		// Store tokens synchronously to prevent race conditions
+
 		if (typeof window !== 'undefined') {
 			localStorage.setItem('access_token', response.data.access_token);
 			localStorage.setItem('refresh_token', response.data.refresh_token);
-			// Force a small delay to ensure localStorage write is complete
+
 			await new Promise((resolve) => setTimeout(resolve, 10));
 		}
 
@@ -1078,11 +1083,11 @@ export const authApi = {
 			body: JSON.stringify({ refresh_token: refreshToken })
 		});
 
-		// Update tokens in localStorage
+
 		if (typeof window !== 'undefined') {
 			localStorage.setItem('access_token', response.data.access_token);
 			localStorage.setItem('refresh_token', response.data.refresh_token);
-			// Force a small delay to ensure localStorage write is complete
+
 			await new Promise((resolve) => setTimeout(resolve, 10));
 		}
 
@@ -1140,7 +1145,7 @@ export const authApi = {
 	clearTokens
 };
 
-// Policy Management APIs
+
 export const policyApi = {
 	async listPolicies(params?: {
 		type?: string;
@@ -1193,7 +1198,7 @@ export const policyApi = {
 	}
 };
 
-// Resource Management APIs
+
 export const resourceApi = {
 	async listResources(params?: ContentQueryParams): Promise<ContentListResponse<Resource>> {
 		const queryParams = new URLSearchParams();
@@ -1240,7 +1245,7 @@ export const resourceApi = {
 	}
 };
 
-// Prompt Management APIs
+
 export const promptApi = {
 	async listPrompts(params?: ContentQueryParams): Promise<ContentListResponse<Prompt>> {
 		const queryParams = new URLSearchParams();
@@ -1298,7 +1303,7 @@ export const promptApi = {
 	}
 };
 
-// Tool Management APIs
+
 export const toolApi = {
 	async listTools(params?: ContentQueryParams): Promise<ContentListResponse<Tool>> {
 		const queryParams = new URLSearchParams();
@@ -1375,7 +1380,7 @@ export const toolApi = {
 	}
 };
 
-// Configuration Management APIs
+
 export const configApi = {
 	async exportConfiguration(request: ExportRequest): Promise<ConfigurationExport> {
 		const response = await apiRequest<ApiResponse<ConfigurationExport>>('/admin/config/export', {
@@ -1452,7 +1457,7 @@ export const configApi = {
 	}
 };
 
-// Namespace Management APIs
+
 export const namespaceApi = {
 	async listNamespaces(): Promise<Namespace[]> {
 		const response = await apiRequest<{ namespaces: Namespace[]; total: number }>('/namespaces');
@@ -1527,7 +1532,7 @@ export const namespaceApi = {
 	}
 };
 
-// Endpoint Management APIs
+
 export const endpointApi = {
 	async listEndpoints(): Promise<Endpoint[]> {
 		const response = await apiRequest<{ endpoints: Endpoint[]; total: number }>('/endpoints');
@@ -1567,7 +1572,7 @@ export const endpointApi = {
 	}
 };
 
-// A2A Agent Management Types
+
 export interface A2AAgent {
 	id: string;
 	organization_id: string;
@@ -1639,9 +1644,9 @@ export interface A2ATestResponse {
 	metadata?: Record<string, unknown>;
 }
 
-// A2A Agent Management APIs
+
 export const a2aApi = {
-	// List all A2A agents with optional filtering
+
 	async listAgents(filters?: {
 		agent_type?: string;
 		is_active?: boolean;
@@ -1666,13 +1671,13 @@ export const a2aApi = {
 		return response.data;
 	},
 
-	// Get specific A2A agent details
+
 	async getAgent(id: string): Promise<A2AAgent> {
 		const response = await apiRequest<ApiResponse<A2AAgent>>(`/a2a/${id}`);
 		return response.data;
 	},
 
-	// Create new A2A agent
+
 	async createAgent(agentData: A2AAgentSpec): Promise<A2AAgent> {
 		const response = await apiRequest<ApiResponse<A2AAgent>>('/a2a', {
 			method: 'POST',
@@ -1681,7 +1686,7 @@ export const a2aApi = {
 		return response.data;
 	},
 
-	// Update existing A2A agent
+
 	async updateAgent(id: string, agentData: Partial<A2AAgentSpec>): Promise<A2AAgent> {
 		const response = await apiRequest<ApiResponse<A2AAgent>>(`/a2a/${id}`, {
 			method: 'PUT',
@@ -1690,14 +1695,14 @@ export const a2aApi = {
 		return response.data;
 	},
 
-	// Delete A2A agent
+
 	async deleteAgent(id: string): Promise<void> {
 		await apiRequest<ApiResponse<void>>(`/a2a/${id}`, {
 			method: 'DELETE'
 		});
 	},
 
-	// Toggle A2A agent active status
+
 	async toggleAgent(id: string, active: boolean): Promise<A2AAgent> {
 		const response = await apiRequest<ApiResponse<A2AAgent>>(`/a2a/${id}/toggle`, {
 			method: 'POST',
@@ -1706,7 +1711,7 @@ export const a2aApi = {
 		return response.data;
 	},
 
-	// Test A2A agent with a simple chat request
+
 	async testAgent(id: string, testData: A2ATestRequest): Promise<A2ATestResponse> {
 		const response = await apiRequest<ApiResponse<A2ATestResponse>>(`/a2a/${id}/test`, {
 			method: 'POST',
@@ -1715,7 +1720,7 @@ export const a2aApi = {
 		return response.data;
 	},
 
-	// Get A2A agent health check
+
 	async checkAgentHealth(id: string): Promise<A2AHealthCheck> {
 		const response = await apiRequest<ApiResponse<A2AHealthCheck>>(`/a2a/${id}/health`, {
 			method: 'POST'
@@ -1723,20 +1728,20 @@ export const a2aApi = {
 		return response.data;
 	},
 
-	// Get A2A statistics for the organization
+
 	async getStats(): Promise<A2AStats> {
 		const response = await apiRequest<ApiResponse<A2AStats>>('/a2a/stats');
 		return response.data;
 	},
 
-	// Get available agent types and their default configurations
+
 	async getAgentTypes(): Promise<Record<string, unknown>> {
 		const response = await apiRequest<ApiResponse<Record<string, unknown>>>('/a2a/types');
 		return response.data;
 	}
 };
 
-// Health check API
+
 export const healthApi = {
 	async checkHealth(): Promise<{ status: string }> {
 		const response = await fetch(`${API_BASE_URL.replace('/api', '')}/health`, {

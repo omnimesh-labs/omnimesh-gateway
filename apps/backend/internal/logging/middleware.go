@@ -107,15 +107,16 @@ func (m *Middleware) RequestLogger() gin.HandlerFunc {
 		}
 
 		logEntry := &LogEntry{
-			ID:        entry.ID,
-			Timestamp: entry.Timestamp,
-			Level:     LogLevel(entry.Level),
-			Message:   entry.Message,
-			Logger:    "request",
-			RequestID: entry.RequestID,
-			UserID:    entry.UserID,
-			OrgID:     entry.OrganizationID,
-			Data:      entry.Data,
+			ID:         entry.ID,
+			Timestamp:  entry.Timestamp,
+			Level:      LogLevel(entry.Level),
+			Message:    entry.Message,
+			Logger:     "request",
+			RequestID:  entry.RequestID,
+			UserID:     entry.UserID,
+			OrgID:      entry.OrganizationID,
+			StatusCode: entry.StatusCode,
+			Data:       entry.Data,
 		}
 
 		if err := m.service.Log(c.Request.Context(), logEntry); err != nil {

@@ -34,6 +34,7 @@ type LogEntry struct {
 	RequestID   string                 `json:"request_id,omitempty"`
 	UserID      string                 `json:"user_id,omitempty"`
 	OrgID       string                 `json:"org_id,omitempty"`
+	StatusCode  int                    `json:"status_code,omitempty"`
 	Data        map[string]interface{} `json:"data,omitempty"`
 	Source      string                 `json:"source,omitempty"`
 	Environment string                 `json:"environment,omitempty"`

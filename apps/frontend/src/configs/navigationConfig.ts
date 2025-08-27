@@ -113,27 +113,19 @@ const navigationConfig: NavItemType[] = [
 	// 	url: '/a2a'
 	// },
 	{
-		id: 'settings',
-		title: 'Settings',
-		type: 'collapse',
-		icon: 'lucide:computer',
-		children: [
-			{
-				id: 'configuration',
-				title: 'Configuration',
-				type: 'item',
-				icon: 'lucide:settings',
-				url: '/configuration'
-			},
-			{
-				id: 'logs',
-				title: 'Logging & Audit',
-				type: 'item',
-				icon: 'lucide:scroll-text',
-				url: '/logs'
-			}
-		]
-	}
+		id: 'logs',
+		title: 'Logging & Audit',
+		type: 'item',
+		icon: 'lucide:scroll-text',
+		url: '/logs'
+	},
+	{
+		id: 'configuration',
+		title: 'Config',
+		type: 'item',
+		icon: 'lucide:settings',
+		url: '/configuration'
+	},
 ];
 
 export default navigationConfig;

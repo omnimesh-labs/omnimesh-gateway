@@ -38,8 +38,8 @@ migrate
 **/.next/
 **/dist/
 **/build/
-**/logs/*
-!**/logs/.gitkeep
+logs/*
+!logs/.gitkeep
 *.log
 venv/
 todos/
