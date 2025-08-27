@@ -53,39 +53,45 @@ func (m *Middleware) RequestLogger() gin.HandlerFunc {
 		}
 		c.Writer = writer
 
+		// Capture user context before processing (to avoid race conditions)
+		var userID, orgID string
+		if uid, exists := c.Get("user_id"); exists {
+			if u, ok := uid.(string); ok {
+				userID = u
+			}
+		}
+		if oid, exists := c.Get("organization_id"); exists {
+			if o, ok := oid.(string); ok {
+				orgID = o
+			}
+		}
+
 		// Process request
 		c.Next()
 
-		// Calculate duration
+		// Calculate duration and capture errors after processing
 		duration := time.Since(startTime)
+		var errorStr string
+		if len(c.Errors) > 0 {
+			errorStr = c.Errors.String()
+		}
 
 		// Create log entry
 		entry := &types.LogEntry{
-			ID:         requestID,
-			Timestamp:  startTime,
-			Level:      m.getLogLevel(writer.status),
-			Type:       types.LogTypeRequest,
-			RequestID:  requestID,
-			Method:     c.Request.Method,
-			Path:       c.Request.URL.Path,
-			StatusCode: writer.status,
-			Duration:   duration,
-			RemoteIP:   c.ClientIP(),
-			UserAgent:  c.Request.UserAgent(),
-			Message:    "HTTP Request",
-		}
-
-		// Add user context if available
-		if userID, exists := c.Get("user_id"); exists {
-			if uid, ok := userID.(string); ok {
-				entry.UserID = uid
-			}
-		}
-
-		if orgID, exists := c.Get("organization_id"); exists {
-			if oid, ok := orgID.(string); ok {
-				entry.OrganizationID = oid
-			}
+			ID:             requestID,
+			Timestamp:      startTime,
+			Level:          m.getLogLevel(writer.status),
+			Type:           types.LogTypeRequest,
+			RequestID:      requestID,
+			Method:         c.Request.Method,
+			Path:           c.Request.URL.Path,
+			StatusCode:     writer.status,
+			Duration:       duration,
+			RemoteIP:       c.ClientIP(),
+			UserAgent:      c.Request.UserAgent(),
+			Message:        "HTTP Request",
+			UserID:         userID,
+			OrganizationID: orgID,
 		}
 
 		// Add additional data
@@ -102,8 +108,8 @@ func (m *Middleware) RequestLogger() gin.HandlerFunc {
 			entry.Data["response_body"] = writer.body.String()
 		}
 
-		if len(c.Errors) > 0 {
-			entry.Error = c.Errors.String()
+		if errorStr != "" {
+			entry.Error = errorStr
 		}
 
 		logEntry := &LogEntry{

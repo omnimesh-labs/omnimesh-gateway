@@ -7,6 +7,11 @@ const nextConfig = {
 	typescript: {
 		ignoreBuildErrors: true
 	},
+	// output: 'export', // Disabled for dynamic routes compatibility
+	trailingSlash: true,
+	images: {
+		unoptimized: true
+	},
 	experimental: {
 		optimizePackageImports: [
 			'@mui/material',

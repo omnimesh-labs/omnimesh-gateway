@@ -27,45 +27,30 @@ func TimeoutWithConfig(config *TimeoutConfig) gin.HandlerFunc {
 		// Replace request context
 		c.Request = c.Request.WithContext(ctx)
 
-		// Create channel to signal completion
-		finished := make(chan struct{})
+		// Use a simple context check instead of goroutines to avoid races
+		c.Next()
 
-		// Run the request in a goroutine
-		go func() {
-			defer func() {
-				if err := recover(); err != nil {
-					// Handle panic in goroutine
-					if config.PanicHandler != nil {
-						config.PanicHandler(c, err)
-					}
-				}
-			}()
-
-			c.Next()
-			close(finished)
-		}()
-
-		// Wait for completion or timeout
+		// Check if context was cancelled during processing
 		select {
-		case <-finished:
-			// Request completed normally
-			return
 		case <-ctx.Done():
-			// Request timed out - only write response if headers haven't been written yet
-			if !c.Writer.Written() {
-				if config.TimeoutHandler != nil {
-					config.TimeoutHandler(c)
-				} else {
-					// Default timeout response
-					errorResp := &types.ErrorResponse{
-						Error:   types.NewTimeoutError("Request timeout"),
-						Success: false,
+			if ctx.Err() == context.DeadlineExceeded {
+				// Request timed out - only write response if headers haven't been written yet
+				if !c.Writer.Written() {
+					if config.TimeoutHandler != nil {
+						config.TimeoutHandler(c)
+					} else {
+						// Default timeout response
+						errorResp := &types.ErrorResponse{
+							Error:   types.NewTimeoutError("Request timeout"),
+							Success: false,
+						}
+						c.JSON(http.StatusGatewayTimeout, errorResp)
 					}
-					c.JSON(http.StatusGatewayTimeout, errorResp)
 				}
+				c.Abort()
 			}
-			c.Abort()
-			return
+		default:
+			// Request completed normally
 		}
 	}
 }

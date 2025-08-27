@@ -1,5 +1,5 @@
 import Typography from '@mui/material/Typography';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import Link from '@fuse/core/Link';
 import Box from '@mui/material/Box';
 import useUser from '@auth/useUser';
