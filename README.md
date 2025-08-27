@@ -28,14 +28,13 @@ docker compose up --build  # make dev
 - Admin user: `admin@admin.com` / `qwerty123`
 
 
-
 ## Architecture
 
 The Janex Gateway is designed with a modular architecture for scalability and maintainability:
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│    Employees    │    │    AI Agents    │    │     AI Agents   │
+│      Users      │    │    AI Agents    │    │     AI Agents   │
 │   (Web/Mobile)  │    │    (External)   │    │    (Internal)   │
 └─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
           │                      │                      │
@@ -86,7 +85,6 @@ The Janex Gateway is designed with a modular architecture for scalability and ma
     └─────────────┘        └─────────────┘        └─────────────┘
 ```
 
-See [.claude/architecture.md](./.claude/architecture.md) for detailed architectural documentation.
 
 ## Features
 
