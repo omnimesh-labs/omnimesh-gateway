@@ -379,7 +379,7 @@ func TestMCPToolModel_Update(t *testing.T) {
 	mock.ExpectExec(`UPDATE mcp_tools SET (.+) WHERE id = \$1`).
 		WithArgs(toolID, "Updated Tool", driver.Value(nil), "updated_function",
 			sqlmock.AnyArg(), types.ToolCategoryAI, types.ToolImplementationWebhook,
-			"https://webhook.example.com", 60, 5, sqlmock.AnyArg(), true,
+			"https://webhook.example.com", 60, 5, sqlmock.AnyArg(), false, true,
 			sqlmock.AnyArg(), pq.StringArray{"updated", "ai"}, sqlmock.AnyArg(),
 			"Updated documentation").
 		WillReturnResult(sqlmock.NewResult(1, 1))

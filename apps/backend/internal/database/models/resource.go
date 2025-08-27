@@ -314,7 +314,7 @@ func (m *MCPResourceModel) Update(resource *MCPResource) error {
 	query := `
 		UPDATE mcp_resources
 		SET name = $2, description = $3, resource_type = $4, uri = $5, mime_type = $6,
-			size_bytes = $7, access_permissions = $8, is_active = $9, metadata = $10, tags = $11
+			size_bytes = $7, access_permissions = $8, is_active = $9, metadata = $10, tags = $11, updated_at = NOW()
 		WHERE id = $1
 	`
 

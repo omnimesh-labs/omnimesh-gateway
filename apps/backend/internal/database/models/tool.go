@@ -462,7 +462,7 @@ func (m *MCPToolModel) Update(tool *MCPTool) error {
 		SET name = $2, description = $3, function_name = $4, schema = $5, category = $6,
 			implementation_type = $7, endpoint_url = $8, timeout_seconds = $9, max_retries = $10,
 			access_permissions = $11, is_active = $12, is_public = $13, metadata = $14, tags = $15,
-			examples = $16, documentation = $17
+			examples = $16, documentation = $17, updated_at = NOW()
 		WHERE id = $1
 	`
 

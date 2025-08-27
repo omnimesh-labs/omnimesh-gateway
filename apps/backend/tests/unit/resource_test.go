@@ -201,7 +201,7 @@ func TestMCPResourceModel_Update(t *testing.T) {
 	mock.ExpectExec(`UPDATE mcp_resources SET (.+) WHERE id = \$1`).
 		WithArgs(resourceID, "Updated Resource", driver.Value(nil), types.ResourceTypeAPI,
 			"https://api.example.com", driver.Value(nil), driver.Value(nil), sqlmock.AnyArg(),
-			sqlmock.AnyArg(), pq.StringArray{"api", "updated"}).
+			true, sqlmock.AnyArg(), pq.StringArray{"api", "updated"}).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	err := model.Update(resource)

@@ -371,7 +371,7 @@ func (m *MCPPromptModel) Update(prompt *MCPPrompt) error {
 	query := `
 		UPDATE mcp_prompts
 		SET name = $2, description = $3, prompt_template = $4, parameters = $5,
-			category = $6, metadata = $7, tags = $8, is_active = $9
+			category = $6, metadata = $7, tags = $8, is_active = $9, updated_at = NOW()
 		WHERE id = $1
 	`
 

@@ -259,7 +259,7 @@ func TestMCPPromptModel_Update(t *testing.T) {
 	mock.ExpectExec(`UPDATE mcp_prompts SET (.+) WHERE id = \$1`).
 		WithArgs(promptID, "Updated Prompt", driver.Value(nil), "Complete the task: {{task}}",
 			sqlmock.AnyArg(), types.PromptCategoryCoding, sqlmock.AnyArg(),
-			pq.StringArray{"updated", "coding"}).
+			pq.StringArray{"updated", "coding"}, false).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	err := model.Update(prompt)
