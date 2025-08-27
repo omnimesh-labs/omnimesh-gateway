@@ -25,8 +25,8 @@ func TestEndpointService(t *testing.T) {
 	endpointService := services.NewEndpointService(db, "http://localhost:8080")
 
 	ctx := context.Background()
-	orgID := "00000000-0000-0000-0000-000000000000"
-	userID := "test-user-id"
+	orgID := "00000000-0000-0000-0000-000000000001"
+	userID := "00000000-0000-0000-0000-000000000002"
 
 	t.Run("Validate Endpoint Name", func(t *testing.T) {
 		testCases := []struct {
@@ -46,7 +46,7 @@ func TestEndpointService(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
 				req := types.CreateEndpointRequest{
-					NamespaceID: "test-namespace-id",
+					NamespaceID: "00000000-0000-0000-0000-000000000003",
 					Name:        tc.input,
 				}
 
@@ -67,7 +67,7 @@ func TestEndpointService(t *testing.T) {
 	t.Run("Generate URLs", func(t *testing.T) {
 		// Test the public interface
 		req := types.CreateEndpointRequest{
-			NamespaceID:        "test-namespace",
+			NamespaceID:        "00000000-0000-0000-0000-000000000003",
 			Name:               "url-test-endpoint",
 			EnableAPIKeyAuth:   true,
 			EnablePublicAccess: false,
@@ -81,7 +81,7 @@ func TestEndpointService(t *testing.T) {
 
 	t.Run("Default Values", func(t *testing.T) {
 		req := types.CreateEndpointRequest{
-			NamespaceID: "test-namespace",
+			NamespaceID: "00000000-0000-0000-0000-000000000003",
 			Name:        "default-test",
 			// Don't set rate limit values to test defaults
 		}

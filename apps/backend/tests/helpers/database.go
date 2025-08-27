@@ -24,24 +24,24 @@ func SetupTestDatabase(t *testing.T) (*sql.DB, func(), error) {
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to connect to test database: %w", err)
 		}
-		
+
 		// Return a no-op teardown function
 		return db, func() { db.Close() }, nil
 	}
-	
+
 	// Create PostgreSQL container
 	ctx := context.Background()
 	req := testcontainers.ContainerRequest{
 		Image:        "postgres:15-alpine",
 		ExposedPorts: []string{"5432/tcp"},
 		Env: map[string]string{
-			"POSTGRES_USER":     "test",
-			"POSTGRES_PASSWORD": "test",
+			"POSTGRES_USER":     "postgres",
+			"POSTGRES_PASSWORD": "postgres",
 			"POSTGRES_DB":       "testdb",
 		},
 		WaitingFor: wait.ForLog("database system is ready to accept connections").WithOccurrence(2),
 	}
-	
+
 	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: req,
 		Started:          true,
@@ -49,44 +49,44 @@ func SetupTestDatabase(t *testing.T) (*sql.DB, func(), error) {
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to start container: %w", err)
 	}
-	
+
 	// Get container connection details
 	host, err := container.Host(ctx)
 	if err != nil {
 		container.Terminate(ctx)
 		return nil, nil, fmt.Errorf("failed to get container host: %w", err)
 	}
-	
+
 	port, err := container.MappedPort(ctx, "5432")
 	if err != nil {
 		container.Terminate(ctx)
 		return nil, nil, fmt.Errorf("failed to get container port: %w", err)
 	}
-	
+
 	// Build connection string
-	dsn := fmt.Sprintf("postgres://test:test@%s:%s/testdb?sslmode=disable", host, port.Port())
-	
+	dsn := fmt.Sprintf("postgres://postgres:postgres@%s:%s/testdb?sslmode=disable", host, port.Port())
+
 	// Connect to database
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		container.Terminate(ctx)
 		return nil, nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
-	
+
 	// Wait for database to be ready
-	for i := 0; i < 30; i++ {
+	for range 30 {
 		if err := db.Ping(); err == nil {
 			break
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
-	
+
 	// Teardown function
 	teardown := func() {
 		db.Close()
 		container.Terminate(ctx)
 	}
-	
+
 	return db, teardown, nil
 }
 
@@ -96,13 +96,13 @@ func RunMigrations(db *sql.DB) error {
 	if err != nil {
 		return fmt.Errorf("failed to create migration driver: %w", err)
 	}
-	
+
 	// Determine migration path
 	migrationPath := "file://../../migrations"
 	if _, err := os.Stat("migrations"); err == nil {
 		migrationPath = "file://migrations"
 	}
-	
+
 	m, err := migrate.NewWithDatabaseInstance(
 		migrationPath,
 		"postgres",
@@ -111,11 +111,11 @@ func RunMigrations(db *sql.DB) error {
 	if err != nil {
 		return fmt.Errorf("failed to create migration instance: %w", err)
 	}
-	
+
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -132,7 +132,7 @@ func CleanDatabase(t *testing.T, db *sql.DB) {
 		"users",
 		"organizations",
 	}
-	
+
 	for _, table := range tables {
 		_, err := db.Exec(fmt.Sprintf("DELETE FROM %s", table))
 		if err != nil {
@@ -145,49 +145,66 @@ func CleanDatabase(t *testing.T, db *sql.DB) {
 // CreateTestOrganization creates a test organization
 func CreateTestOrganization(db *sql.DB) (string, error) {
 	orgID := "00000000-0000-0000-0000-000000000001"
-	
+
 	_, err := db.Exec(`
 		INSERT INTO organizations (id, name, slug)
 		VALUES ($1, $2, $3)
 		ON CONFLICT (id) DO NOTHING
 	`, orgID, "Test Organization", "test-org")
-	
+
 	if err != nil {
 		return "", fmt.Errorf("failed to create test organization: %w", err)
 	}
-	
+
 	return orgID, nil
 }
 
 // CreateTestUser creates a test user
 func CreateTestUser(db *sql.DB, orgID string) (string, error) {
-	userID := "usr-test-123"
-	
+	userID := "00000000-0000-0000-0000-000000000002"
+
 	_, err := db.Exec(`
 		INSERT INTO users (id, email, name, password_hash, organization_id, role)
 		VALUES ($1, $2, $3, $4, $5, $6)
 		ON CONFLICT (id) DO NOTHING
 	`, userID, "test@example.com", "Test User", "hashed", orgID, "user")
-	
+
 	if err != nil {
 		return "", fmt.Errorf("failed to create test user: %w", err)
 	}
-	
+
 	return userID, nil
+}
+
+// CreateTestNamespace creates a test namespace
+func CreateTestNamespace(db *sql.DB, orgID string) (string, error) {
+	namespaceID := "00000000-0000-0000-0000-000000000003"
+
+	_, err := db.Exec(`
+		INSERT INTO namespaces (id, organization_id, name, slug, description)
+		VALUES ($1, $2, $3, $4, $5)
+		ON CONFLICT (id) DO NOTHING
+	`, namespaceID, orgID, "test-namespace", "test-namespace", "Test namespace")
+
+	if err != nil {
+		return "", fmt.Errorf("failed to create test namespace: %w", err)
+	}
+
+	return namespaceID, nil
 }
 
 // CreateTestMCPServer creates a test MCP server
 func CreateTestMCPServer(db *sql.DB, orgID string, name string) (string, error) {
-	serverID := fmt.Sprintf("srv-%s", name)
-	
+	serverID := fmt.Sprintf("00000000-0000-0000-0000-00000000000%d", len(name))
+
 	_, err := db.Exec(`
 		INSERT INTO mcp_servers (id, organization_id, name, description, protocol, url, is_active)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`, serverID, orgID, name, "Test server", "jsonrpc", "http://localhost:8080", true)
-	
+
 	if err != nil {
 		return "", fmt.Errorf("failed to create test MCP server: %w", err)
 	}
-	
+
 	return serverID, nil
 }

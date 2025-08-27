@@ -12,6 +12,31 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/testdb?sslmode=disable
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: testdb
+      DB_SSL_MODE: disable
+
     steps:
     - uses: actions/checkout@v4
 
@@ -23,6 +48,15 @@ jobs:
 
     - name: Verify dependencies
       run: go mod verify
+
+    - name: Install golang-migrate
+      run: |
+        curl -L https://github.com/golang-migrate/migrate/releases/latest/download/migrate.linux-amd64.tar.gz | tar xvz
+        sudo mv migrate /usr/local/bin/
+        which migrate
+
+    - name: Run database migrations
+      run: migrate -path apps/backend/migrations -database $TEST_DATABASE_URL up
 
     - name: Run tests
       run: go test -race ./...
