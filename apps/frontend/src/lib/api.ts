@@ -464,6 +464,7 @@ export interface Namespace {
 	created_by?: string;
 	is_active: boolean;
 	metadata?: Record<string, unknown>;
+	endpoint?: Endpoint;
 }
 
 export interface CreateNamespaceRequest {

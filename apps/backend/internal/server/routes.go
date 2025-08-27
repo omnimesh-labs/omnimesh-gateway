@@ -139,7 +139,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	a2aAdapter := a2a.NewAdapter(a2aService, a2aClient)
 
 	// Initialize namespace service
-	namespaceService := services.NewNamespaceService(s.db.GetDB())
+	namespaceService := services.NewNamespaceService(s.db.GetDB(), endpointService)
 
 	// Initialize inspector service
 	inspectorService := inspector.NewService(transportManager)

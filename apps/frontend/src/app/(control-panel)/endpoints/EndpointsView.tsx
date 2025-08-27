@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { MRT_ColumnDef } from 'material-react-table';
 import PageSimple from '@fuse/core/PageSimple';
 import { styled } from '@mui/material/styles';
@@ -25,7 +26,7 @@ import AccordionDetails from '@mui/material/AccordionDetails';
 import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
 import { useSnackbar } from 'notistack';
-import { endpointApi } from '@/lib/api';
+import { endpointApi, namespaceApi } from '@/lib/api';
 
 const Root = styled(PageSimple)(({ theme }) => ({
 	'& .PageSimple-header': {
@@ -39,7 +40,7 @@ const Root = styled(PageSimple)(({ theme }) => ({
 	}
 }));
 
-import { Endpoint } from '@/lib/api';
+import { Endpoint, Namespace } from '@/lib/api';
 
 function EndpointsView() {
 	const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -58,9 +59,13 @@ function EndpointsView() {
 		is_active: true
 	});
 	const [endpoints, setEndpoints] = useState<Endpoint[]>([]);
+	const [namespaces, setNamespaces] = useState<Namespace[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
+	const [loadingNamespaces, setLoadingNamespaces] = useState(false);
 	const [togglingEndpointId, setTogglingEndpointId] = useState<string | null>(null);
+	const [highlightedEndpointId, setHighlightedEndpointId] = useState<string | null>(null);
 	const { enqueueSnackbar } = useSnackbar();
+	const searchParams = useSearchParams();
 
 	const fetchEndpoints = useCallback(async () => {
 		setIsLoading(true);
@@ -76,10 +81,46 @@ function EndpointsView() {
 		}
 	}, [enqueueSnackbar]);
 
-	// Fetch endpoints on mount
+	const fetchNamespaces = useCallback(async () => {
+		setLoadingNamespaces(true);
+		try {
+			const data = await namespaceApi.listNamespaces();
+			setNamespaces(data);
+		} catch (error) {
+			enqueueSnackbar('Failed to fetch namespaces', { variant: 'error' });
+			console.error('Error fetching namespaces:', error);
+			setNamespaces([]);
+		} finally {
+			setLoadingNamespaces(false);
+		}
+	}, [enqueueSnackbar]);
+
+	// Fetch endpoints and namespaces on mount
 	useEffect(() => {
 		fetchEndpoints();
-	}, [fetchEndpoints]);
+		fetchNamespaces();
+	}, [fetchEndpoints, fetchNamespaces]);
+
+	// Handle query parameters for auto-opening create modal and highlighting
+	useEffect(() => {
+		const action = searchParams.get('action');
+		const namespaceId = searchParams.get('namespace_id');
+		const highlightId = searchParams.get('highlight');
+		
+		if (action === 'create') {
+			setFormData(prev => ({
+				...prev,
+				namespace_id: namespaceId || ''
+			}));
+			handleCreateEndpoint();
+		}
+		
+		if (highlightId) {
+			setHighlightedEndpointId(highlightId);
+			// Clear highlight after 3 seconds
+			setTimeout(() => setHighlightedEndpointId(null), 3000);
+		}
+	}, [searchParams]);
 
 	const handleCreateEndpoint = () => {
 		setFormData({
@@ -306,6 +347,19 @@ function EndpointsView() {
 						data={endpoints}
 						state={{ isLoading }}
 						enableRowActions
+						muiTableBodyRowProps={({ row }) => ({
+							sx: {
+								backgroundColor: highlightedEndpointId === row.original.id 
+									? 'primary.50' 
+									: 'inherit',
+								transition: 'background-color 0.3s ease',
+								'&:hover': {
+									backgroundColor: highlightedEndpointId === row.original.id
+										? 'primary.100'
+										: 'action.hover'
+								}
+							}
+						})}
 						renderRowActions={({ row }) => (
 							<Box className="flex items-center space-x-1">
 								<Tooltip title="View URLs">
@@ -321,7 +375,7 @@ function EndpointsView() {
 										size="small"
 										onClick={() => handleEditEndpoint(row.original)}
 									>
-										<SvgIcon size={18}>lucide:edit</SvgIcon>
+										<SvgIcon size={18}>lucide:pencil</SvgIcon>
 									</IconButton>
 								</Tooltip>
 								<Tooltip title="Delete Endpoint">
@@ -370,10 +424,29 @@ function EndpointsView() {
 									select
 									fullWidth
 									required
+									disabled={loadingNamespaces}
+									// helperText={loadingNamespaces ? "Loading namespaces..." : "Select the namespace for this endpoint"}
 								>
-									<MenuItem value="ns-dev-001">Development</MenuItem>
-									<MenuItem value="ns-prod-001">Production</MenuItem>
-									<MenuItem value="ns-test-001">Testing</MenuItem>
+									{loadingNamespaces ? (
+										<MenuItem disabled>Loading namespaces...</MenuItem>
+									) : namespaces.length === 0 ? (
+										<MenuItem disabled>No namespaces available</MenuItem>
+									) : (
+										namespaces
+											.filter(namespace => namespace.is_active) // Only show active namespaces
+											.map((namespace) => (
+												<MenuItem key={namespace.id} value={namespace.id}>
+													<Box>
+														<Typography variant="body2">{namespace.name}</Typography>
+														{namespace.description && (
+															<Typography variant="caption" color="textSecondary">
+																{namespace.description}
+															</Typography>
+														)}
+													</Box>
+												</MenuItem>
+											))
+									)}
 								</TextField>
 								<TextField
 									label="Description"

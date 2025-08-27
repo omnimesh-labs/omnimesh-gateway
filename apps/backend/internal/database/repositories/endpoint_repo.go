@@ -217,6 +217,41 @@ func (r *EndpointRepository) List(ctx context.Context, orgID string) ([]*types.E
 	return endpoints, nil
 }
 
+// GetByNamespaceID retrieves the endpoint for a specific namespace
+func (r *EndpointRepository) GetByNamespaceID(ctx context.Context, namespaceID string) (*types.Endpoint, error) {
+	endpoint := &types.Endpoint{}
+
+	query := `
+		SELECT
+			id, organization_id, namespace_id, name, description,
+			enable_api_key_auth, enable_oauth, enable_public_access, use_query_param_auth,
+			rate_limit_requests, rate_limit_window,
+			allowed_origins, allowed_methods,
+			created_at, updated_at, created_by, is_active, metadata
+		FROM endpoints
+		WHERE namespace_id = $1 AND is_active = true
+		LIMIT 1`
+
+	var metadata NullableJSONB
+	err := r.db.QueryRowContext(ctx, query, namespaceID).Scan(
+		&endpoint.ID, &endpoint.OrganizationID, &endpoint.NamespaceID, &endpoint.Name, &endpoint.Description,
+		&endpoint.EnableAPIKeyAuth, &endpoint.EnableOAuth, &endpoint.EnablePublicAccess, &endpoint.UseQueryParamAuth,
+		&endpoint.RateLimitRequests, &endpoint.RateLimitWindow,
+		pq.Array(&endpoint.AllowedOrigins), pq.Array(&endpoint.AllowedMethods),
+		&endpoint.CreatedAt, &endpoint.UpdatedAt, &endpoint.CreatedBy, &endpoint.IsActive, &metadata,
+	)
+	endpoint.Metadata = metadata.Data
+
+	if err == sql.ErrNoRows {
+		return nil, nil // Return nil without error when no endpoint exists for the namespace
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get endpoint by namespace: %w", err)
+	}
+
+	return endpoint, nil
+}
+
 // ListPublic retrieves all public endpoints
 func (r *EndpointRepository) ListPublic(ctx context.Context) ([]*types.Endpoint, error) {
 	query := `

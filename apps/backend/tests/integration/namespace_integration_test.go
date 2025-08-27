@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	
+
 	"mcp-gateway/apps/backend/internal/server/handlers"
 	"mcp-gateway/apps/backend/internal/services"
 	"mcp-gateway/apps/backend/internal/types"
@@ -36,28 +36,29 @@ func (suite *NamespaceIntegrationTestSuite) SetupSuite() {
 	// Use test database helper
 	testDB, teardown, err := helpers.SetupTestDatabase(suite.T())
 	require.NoError(suite.T(), err)
-	
+
 	suite.db = testDB
 	suite.teardown = teardown
-	
+
 	// Run migrations
 	err = helpers.RunMigrations(testDB)
 	require.NoError(suite.T(), err)
-	
+
 	// Initialize service and handler
-	suite.service = services.NewNamespaceService(testDB)
+	endpointService := services.NewEndpointService(testDB, "http://localhost:8080")
+	suite.service = services.NewNamespaceService(testDB, endpointService)
 	suite.handler = handlers.NewNamespaceHandler(suite.service)
-	
+
 	// Setup test router
 	gin.SetMode(gin.TestMode)
 	suite.router = gin.New()
-	
+
 	// Add middleware to set organization ID for tests
 	suite.router.Use(func(c *gin.Context) {
 		c.Set("organization_id", "00000000-0000-0000-0000-000000000001")
 		c.Next()
 	})
-	
+
 	// Register routes
 	api := suite.router.Group("/api")
 	namespaces := api.Group("/namespaces")
@@ -87,7 +88,7 @@ func (suite *NamespaceIntegrationTestSuite) TearDownSuite() {
 func (suite *NamespaceIntegrationTestSuite) SetupTest() {
 	// Clean up database before each test
 	helpers.CleanDatabase(suite.T(), suite.db)
-	
+
 	// Create test organization
 	_, err := helpers.CreateTestOrganization(suite.db)
 	require.NoError(suite.T(), err)
@@ -99,16 +100,16 @@ func (suite *NamespaceIntegrationTestSuite) TestCreateNamespace() {
 		Name:        "test-namespace",
 		Description: "Test namespace description",
 	}
-	
+
 	body, _ := json.Marshal(req)
 	w := httptest.NewRecorder()
 	httpReq, _ := http.NewRequest("POST", "/api/namespaces", bytes.NewBuffer(body))
 	httpReq.Header.Set("Content-Type", "application/json")
-	
+
 	suite.router.ServeHTTP(w, httpReq)
-	
+
 	assert.Equal(suite.T(), http.StatusCreated, w.Code)
-	
+
 	var response types.Namespace
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(suite.T(), err)
@@ -123,34 +124,34 @@ func (suite *NamespaceIntegrationTestSuite) TestListNamespaces() {
 	// Create test namespaces
 	ctx := context.Background()
 	orgID := "00000000-0000-0000-0000-000000000001"
-	
+
 	_, err := suite.service.CreateNamespace(ctx, types.CreateNamespaceRequest{
 		OrganizationID: orgID,
 		Name:           "namespace-1",
 		Description:    "First namespace",
 	})
 	require.NoError(suite.T(), err)
-	
+
 	_, err = suite.service.CreateNamespace(ctx, types.CreateNamespaceRequest{
 		OrganizationID: orgID,
 		Name:           "namespace-2",
 		Description:    "Second namespace",
 	})
 	require.NoError(suite.T(), err)
-	
+
 	// List namespaces
 	w := httptest.NewRecorder()
 	httpReq, _ := http.NewRequest("GET", "/api/namespaces", nil)
-	
+
 	suite.router.ServeHTTP(w, httpReq)
-	
+
 	assert.Equal(suite.T(), http.StatusOK, w.Code)
-	
+
 	var response map[string]interface{}
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), float64(2), response["total"])
-	
+
 	namespaces := response["namespaces"].([]interface{})
 	assert.Len(suite.T(), namespaces, 2)
 }
@@ -165,15 +166,15 @@ func (suite *NamespaceIntegrationTestSuite) TestGetNamespace() {
 		Description:    "Test namespace",
 	})
 	require.NoError(suite.T(), err)
-	
+
 	// Get the namespace
 	w := httptest.NewRecorder()
 	httpReq, _ := http.NewRequest("GET", "/api/namespaces/"+namespace.ID, nil)
-	
+
 	suite.router.ServeHTTP(w, httpReq)
-	
+
 	assert.Equal(suite.T(), http.StatusOK, w.Code)
-	
+
 	var response types.Namespace
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(suite.T(), err)
@@ -191,7 +192,7 @@ func (suite *NamespaceIntegrationTestSuite) TestUpdateNamespace() {
 		Description:    "Old description",
 	})
 	require.NoError(suite.T(), err)
-	
+
 	// Update the namespace
 	isActive := false
 	updateReq := types.UpdateNamespaceRequest{
@@ -199,16 +200,16 @@ func (suite *NamespaceIntegrationTestSuite) TestUpdateNamespace() {
 		Description: "New description",
 		IsActive:    &isActive,
 	}
-	
+
 	body, _ := json.Marshal(updateReq)
 	w := httptest.NewRecorder()
 	httpReq, _ := http.NewRequest("PUT", "/api/namespaces/"+namespace.ID, bytes.NewBuffer(body))
 	httpReq.Header.Set("Content-Type", "application/json")
-	
+
 	suite.router.ServeHTTP(w, httpReq)
-	
+
 	assert.Equal(suite.T(), http.StatusOK, w.Code)
-	
+
 	var response types.Namespace
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(suite.T(), err)
@@ -227,15 +228,15 @@ func (suite *NamespaceIntegrationTestSuite) TestDeleteNamespace() {
 		Description:    "Will be deleted",
 	})
 	require.NoError(suite.T(), err)
-	
+
 	// Delete the namespace
 	w := httptest.NewRecorder()
 	httpReq, _ := http.NewRequest("DELETE", "/api/namespaces/"+namespace.ID, nil)
-	
+
 	suite.router.ServeHTTP(w, httpReq)
-	
+
 	assert.Equal(suite.T(), http.StatusNoContent, w.Code)
-	
+
 	// Verify namespace is deleted
 	_, err = suite.service.GetNamespace(ctx, namespace.ID)
 	assert.Error(suite.T(), err)
@@ -251,7 +252,7 @@ func (suite *NamespaceIntegrationTestSuite) TestNamespaceWithServers() {
 		Description:    "Namespace with servers",
 	})
 	require.NoError(suite.T(), err)
-	
+
 	// Create an MCP server in the database first
 	serverID := "11111111-1111-1111-1111-111111111111"
 	_, err = suite.db.Exec(`
@@ -259,52 +260,52 @@ func (suite *NamespaceIntegrationTestSuite) TestNamespaceWithServers() {
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`, serverID, "00000000-0000-0000-0000-000000000001", "Test Server", "Test server description", "http", "http://localhost:8080", true)
 	require.NoError(suite.T(), err)
-	
+
 	// Add server to namespace
 	addReq := types.AddServerToNamespaceRequest{
 		ServerID: serverID,
 		Priority: 1,
 	}
-	
+
 	body, _ := json.Marshal(addReq)
 	w := httptest.NewRecorder()
 	httpReq, _ := http.NewRequest("POST", "/api/namespaces/"+namespace.ID+"/servers", bytes.NewBuffer(body))
 	httpReq.Header.Set("Content-Type", "application/json")
-	
+
 	suite.router.ServeHTTP(w, httpReq)
-	
+
 	assert.Equal(suite.T(), http.StatusOK, w.Code)
-	
+
 	// Get namespace and verify server is included
 	w = httptest.NewRecorder()
 	httpReq, _ = http.NewRequest("GET", "/api/namespaces/"+namespace.ID, nil)
-	
+
 	suite.router.ServeHTTP(w, httpReq)
-	
+
 	assert.Equal(suite.T(), http.StatusOK, w.Code)
-	
+
 	var nsResponse types.Namespace
 	err = json.Unmarshal(w.Body.Bytes(), &nsResponse)
 	assert.NoError(suite.T(), err)
 	assert.Len(suite.T(), nsResponse.Servers, 1)
 	assert.Equal(suite.T(), serverID, nsResponse.Servers[0].ServerID)
-	
+
 	// Remove server from namespace
 	w = httptest.NewRecorder()
 	httpReq, _ = http.NewRequest("DELETE", "/api/namespaces/"+namespace.ID+"/servers/"+serverID, nil)
-	
+
 	suite.router.ServeHTTP(w, httpReq)
-	
+
 	assert.Equal(suite.T(), http.StatusOK, w.Code)
-	
+
 	// Verify server is removed
 	w = httptest.NewRecorder()
 	httpReq, _ = http.NewRequest("GET", "/api/namespaces/"+namespace.ID, nil)
-	
+
 	suite.router.ServeHTTP(w, httpReq)
-	
+
 	assert.Equal(suite.T(), http.StatusOK, w.Code)
-	
+
 	var nsResponseAfterDelete types.Namespace
 	err = json.Unmarshal(w.Body.Bytes(), &nsResponseAfterDelete)
 	assert.NoError(suite.T(), err)
@@ -321,24 +322,24 @@ func (suite *NamespaceIntegrationTestSuite) TestExecuteNamespaceTool() {
 		Description:    "Namespace with tools",
 	})
 	require.NoError(suite.T(), err)
-	
+
 	// Execute a tool (will return mock response for now)
 	execReq := types.ExecuteNamespaceToolRequest{
 		Tool:      "server1__tool1",
 		Arguments: map[string]interface{}{"arg": "value"},
 	}
-	
+
 	body, _ := json.Marshal(execReq)
 	w := httptest.NewRecorder()
 	httpReq, _ := http.NewRequest("POST", "/api/namespaces/"+namespace.ID+"/execute", bytes.NewBuffer(body))
 	httpReq.Header.Set("Content-Type", "application/json")
-	
+
 	suite.router.ServeHTTP(w, httpReq)
-	
+
 	// The actual execution will fail since we don't have real servers
 	// but we're testing the endpoint exists and handles the request
 	assert.Equal(suite.T(), http.StatusOK, w.Code)
-	
+
 	var response types.NamespaceToolResult
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(suite.T(), err)
@@ -351,7 +352,7 @@ func (suite *NamespaceIntegrationTestSuite) TestConcurrentNamespaceOperations() 
 	ctx := context.Background()
 	numNamespaces := 10
 	done := make(chan bool, numNamespaces)
-	
+
 	for i := 0; i < numNamespaces; i++ {
 		go func(index int) {
 			_, err := suite.service.CreateNamespace(ctx, types.CreateNamespaceRequest{
@@ -363,12 +364,12 @@ func (suite *NamespaceIntegrationTestSuite) TestConcurrentNamespaceOperations() 
 			done <- true
 		}(i)
 	}
-	
+
 	// Wait for all goroutines to complete
 	for i := 0; i < numNamespaces; i++ {
 		<-done
 	}
-	
+
 	// Verify all namespaces were created
 	namespaces, err := suite.service.ListNamespaces(ctx, "00000000-0000-0000-0000-000000000001")
 	assert.NoError(suite.T(), err)
@@ -389,21 +390,21 @@ func (suite *NamespaceIntegrationTestSuite) TestNamespaceNameValidation() {
 		{"with spaces", "invalid namespace", true},
 		{"with special chars", "invalid@namespace!", true},
 	}
-	
+
 	for _, tc := range testCases {
 		suite.T().Run(tc.name, func(t *testing.T) {
 			req := types.CreateNamespaceRequest{
 				Name:        tc.nsName,
 				Description: "Test",
 			}
-			
+
 			body, _ := json.Marshal(req)
 			w := httptest.NewRecorder()
 			httpReq, _ := http.NewRequest("POST", "/api/namespaces", bytes.NewBuffer(body))
 			httpReq.Header.Set("Content-Type", "application/json")
-			
+
 			suite.router.ServeHTTP(w, httpReq)
-			
+
 			if tc.expectError {
 				assert.NotEqual(t, http.StatusCreated, w.Code)
 			} else {

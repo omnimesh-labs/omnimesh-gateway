@@ -19,6 +19,7 @@ type Namespace struct {
 	Servers        []NamespaceServer      `json:"servers,omitempty"`
 	Tools          []NamespaceTool        `json:"tools,omitempty"`
 	ServerCount    int                    `json:"server_count,omitempty" db:"-"`
+	Endpoint       *Endpoint              `json:"endpoint,omitempty" db:"-"`
 }
 
 // NamespaceServer represents a server within a namespace

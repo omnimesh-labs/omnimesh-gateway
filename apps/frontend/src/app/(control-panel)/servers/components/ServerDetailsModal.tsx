@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
 	Dialog,
 	DialogTitle,
@@ -15,10 +17,12 @@ import {
 	Tooltip,
 	List,
 	ListItem,
-	ListItemText
+	ListItemText,
+	Grid,
+	CircularProgress
 } from '@mui/material';
 import SvgIcon from '@fuse/core/SvgIcon';
-import { MCPServer } from '@/lib/api';
+import { MCPServer, Namespace, namespaceApi } from '@/lib/api';
 
 interface ServerDetailsModalProps {
 	server: MCPServer | null;
@@ -40,6 +44,33 @@ const getStatusColor = (status: string): 'success' | 'warning' | 'error' | 'defa
 };
 
 export default function ServerDetailsModal({ server, open, onClose }: ServerDetailsModalProps) {
+	const router = useRouter();
+	const [associatedNamespaces, setAssociatedNamespaces] = useState<Namespace[]>([]);
+	const [loading, setLoading] = useState(false);
+
+	useEffect(() => {
+		if (server && open) {
+			loadAssociatedNamespaces();
+		}
+	}, [server?.id, open]);
+
+	const loadAssociatedNamespaces = async () => {
+		if (!server) return;
+		setLoading(true);
+		try {
+			const allNamespaces = await namespaceApi.listNamespaces();
+			// Filter namespaces that contain this server
+			const serverNamespaces = allNamespaces.filter(ns => 
+				ns.servers && ns.servers.includes(server.id)
+			);
+			setAssociatedNamespaces(serverNamespaces);
+		} catch (error) {
+			console.error('Failed to load associated namespaces:', error);
+		} finally {
+			setLoading(false);
+		}
+	};
+
 	if (!server) return null;
 
 	const formatDate = (dateString: string) => {
@@ -347,6 +378,79 @@ export default function ServerDetailsModal({ server, open, onClose }: ServerDeta
 						</Paper>
 					)}
 
+					{/* Namespace Associations */}
+					<Paper className="p-4">
+						<Typography
+							variant="h6"
+							className="s-center mb-3 flex"
+						>
+							<SvgIcon
+								size={20}
+								className="mr-2"
+							>
+								lucide:layers
+							</SvgIcon>
+							Namespaces
+						</Typography>
+						{loading ? (
+							<Box className="flex items-center justify-center py-4">
+								<CircularProgress size={24} />
+							</Box>
+						) : associatedNamespaces.length > 0 ? (
+							<Box className="space-y-2">
+								{associatedNamespaces.map((namespace) => (
+									<Box
+										key={namespace.id}
+										className="flex items-center justify-between rounded border p-3"
+									>
+										<Box className="flex items-center space-x-2">
+											<SvgIcon size={16}>lucide:folder</SvgIcon>
+											<Box>
+												<Typography variant="body2" className="font-medium">
+													{namespace.name}
+												</Typography>
+												{namespace.description && (
+													<Typography variant="caption" color="textSecondary">
+														{namespace.description}
+													</Typography>
+												)}
+											</Box>
+										</Box>
+										<Button
+											size="small"
+											variant="outlined"
+											startIcon={<SvgIcon size={14}>lucide:external-link</SvgIcon>}
+											onClick={() => {
+												onClose();
+												router.push(`/namespaces/${namespace.id}`);
+											}}
+										>
+											View Details
+										</Button>
+									</Box>
+								))}
+							</Box>
+						) : (
+							<Box className="text-center py-6">
+								<SvgIcon size={48} className="mx-auto mb-2 text-gray-400">lucide:folder-x</SvgIcon>
+								<Typography variant="body2" color="textSecondary" className="mb-3">
+									This server is not assigned to any namespaces yet.
+								</Typography>
+								<Button
+									variant="contained"
+									color="primary"
+									startIcon={<SvgIcon>lucide:plus</SvgIcon>}
+									onClick={() => {
+										onClose();
+										router.push('/namespaces?action=create');
+									}}
+								>
+									Create Namespace
+								</Button>
+							</Box>
+						)}
+					</Paper>
+
 					{/* Health & Configuration */}
 					<Paper className="p-4">
 						<Typography
@@ -407,7 +511,7 @@ export default function ServerDetailsModal({ server, open, onClose }: ServerDeta
 							</Grid>
 						</Grid>
 					</Paper>
-
+					
 					{/* Metadata */}
 					{server.metadata && Object.keys(server.metadata).length > 0 && (
 						<Paper className="p-4">

@@ -34,12 +34,18 @@ import {
 	Alert,
 	CircularProgress,
 	Breadcrumbs,
-	Link
+	Link,
+	Stack,
+	FormControlLabel,
+	Switch,
+	Accordion,
+	AccordionSummary,
+	AccordionDetails
 } from '@mui/material';
 import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
 import { useSnackbar } from 'notistack';
-import { MCPServer, Namespace, namespaceApi, serverApi } from '@/lib/api';
+import { MCPServer, Namespace, Endpoint, namespaceApi, serverApi, endpointApi } from '@/lib/api';
 
 const Root = styled(PageSimple)(({ theme }) => ({
 	'& .PageSimple-header': {
@@ -55,6 +61,7 @@ const Root = styled(PageSimple)(({ theme }) => ({
 
 interface NamespaceDetails extends Omit<Namespace, 'servers'> {
 	servers?: MCPServer[];
+	endpoints?: Endpoint[];
 	stats?: {
 		total_servers: number;
 		active_servers: number;
@@ -80,18 +87,34 @@ function NamespaceDetailView() {
 		name: '',
 		description: ''
 	});
+	const [editEndpointModalOpen, setEditEndpointModalOpen] = useState(false);
+	const [editingEndpoint, setEditingEndpoint] = useState<Endpoint | null>(null);
+	const [endpointFormData, setEndpointFormData] = useState({
+		name: '',
+		description: '',
+		enable_api_key_auth: true,
+		enable_oauth: false,
+		enable_public_access: false,
+		rate_limit_requests: 100,
+		rate_limit_window: 3600,
+		is_active: true
+	});
 
 	const loadNamespaceDetails = async () => {
 		try {
 			setLoading(true);
-			const [namespaceData, allServers] = await Promise.all([
+			const [namespaceData, allServers, allEndpoints] = await Promise.all([
 				namespaceApi.getNamespace(namespaceId),
-				serverApi.listServers()
+				serverApi.listServers(),
+				endpointApi.listEndpoints()
 			]);
 
 			// Get servers assigned to this namespace (assuming they're returned with the namespace data)
 			const assignedServerIds = namespaceData.servers || [];
 			const assignedServers = allServers.filter((s) => assignedServerIds.includes(s.id));
+
+			// Get endpoints for this namespace
+			const namespaceEndpoints = allEndpoints.filter(e => e.namespace_id === namespaceId);
 
 			// Calculate stats
 			const stats = {
@@ -104,13 +127,14 @@ function NamespaceDetailView() {
 			setNamespace({
 				...namespaceData,
 				servers: assignedServers,
+				endpoints: namespaceEndpoints,
 				stats
 			});
 
 			// Available servers are those not assigned to any namespace
 			const unassignedServers = allServers.filter((s) => !assignedServerIds.includes(s.id));
 			setAvailableServers(unassignedServers);
-		} catch (_error) {
+		} catch (error) {
 			console.error('Failed to load namespace:', error);
 			enqueueSnackbar('Failed to load namespace details', { variant: 'error' });
 			router.push('/namespaces');
@@ -153,7 +177,7 @@ function NamespaceDetailView() {
 			await namespaceApi.deleteNamespace(namespaceId);
 			enqueueSnackbar('Namespace deleted successfully', { variant: 'success' });
 			router.push('/namespaces');
-		} catch (error) {
+		} catch (_error) {
 			enqueueSnackbar('Failed to delete namespace', { variant: 'error' });
 		}
 	};
@@ -182,10 +206,140 @@ function NamespaceDetailView() {
 			await namespaceApi.removeServerFromNamespace(namespaceId, serverId);
 			enqueueSnackbar('Server removed successfully', { variant: 'success' });
 			loadNamespaceDetails();
-		} catch (error) {
+		} catch (_error) {
 			enqueueSnackbar('Failed to remove server', { variant: 'error' });
 		}
 	};
+
+	const handleEditEndpoint = (endpoint: Endpoint) => {
+		setEndpointFormData({
+			name: endpoint.name,
+			description: endpoint.description || '',
+			enable_api_key_auth: endpoint.enable_api_key_auth,
+			enable_oauth: endpoint.enable_oauth,
+			enable_public_access: endpoint.enable_public_access,
+			rate_limit_requests: endpoint.rate_limit_requests,
+			rate_limit_window: endpoint.rate_limit_window,
+			is_active: endpoint.is_active
+		});
+		setEditingEndpoint(endpoint);
+		setEditEndpointModalOpen(true);
+	};
+
+	const handleSaveEndpoint = async () => {
+		if (!editingEndpoint) return;
+		
+		try {
+			await endpointApi.updateEndpoint(editingEndpoint.id, endpointFormData);
+			enqueueSnackbar('Endpoint updated successfully', { variant: 'success' });
+			setEditEndpointModalOpen(false);
+			setEditingEndpoint(null);
+			loadNamespaceDetails(); // Refresh the namespace data
+		} catch (error) {
+			enqueueSnackbar('Failed to update endpoint', { variant: 'error' });
+			console.error('Error updating endpoint:', error);
+		}
+	};
+
+	const handleDeleteEndpoint = async (endpoint: Endpoint) => {
+		if (!confirm(`Are you sure you want to delete endpoint "${endpoint.name}"?`)) {
+			return;
+		}
+
+		try {
+			await endpointApi.deleteEndpoint(endpoint.id);
+			enqueueSnackbar(`Endpoint ${endpoint.name} deleted successfully`, { variant: 'success' });
+			loadNamespaceDetails(); // Refresh the namespace data
+		} catch (error) {
+			enqueueSnackbar(`Failed to delete endpoint ${endpoint.name}`, { variant: 'error' });
+			console.error('Error deleting endpoint:', error);
+		}
+	};
+
+	const endpointColumns = useMemo<MRT_ColumnDef<Endpoint>[]>(
+		() => [
+			{
+				accessorKey: 'name',
+				header: 'Endpoint Name',
+				size: 200,
+				Cell: ({ row }) => (
+					<Box className="flex items-center space-x-2">
+						<SvgIcon size={20}>lucide:globe</SvgIcon>
+						<Box>
+							<Typography
+								variant="body2"
+								className="font-medium"
+							>
+								{row.original.name}
+							</Typography>
+							{row.original.description && (
+								<Typography
+									variant="caption"
+									color="textSecondary"
+								>
+									{row.original.description}
+								</Typography>
+							)}
+						</Box>
+					</Box>
+				)
+			},
+			{
+				accessorKey: 'enable_api_key_auth',
+				header: 'Auth Type',
+				size: 150,
+				Cell: ({ row }) => {
+					const endpoint = row.original;
+					const authTypes = [];
+					if (endpoint.enable_api_key_auth) authTypes.push('API Key');
+					if (endpoint.enable_oauth) authTypes.push('OAuth');
+					if (endpoint.enable_public_access) authTypes.push('Public');
+					
+					return (
+						<Box className="flex flex-wrap gap-1">
+							{authTypes.map((type) => (
+								<Chip
+									key={type}
+									size="small"
+									label={type}
+									variant="outlined"
+								/>
+							))}
+						</Box>
+					);
+				}
+			},
+			{
+				accessorKey: 'rate_limit_requests',
+				header: 'Rate Limit',
+				size: 120,
+				Cell: ({ row }) => {
+					const endpoint = row.original;
+					return (
+						<Typography variant="body2">
+							{endpoint.rate_limit_requests}/{endpoint.rate_limit_window}s
+						</Typography>
+					);
+				}
+			},
+			{
+				accessorKey: 'is_active',
+				header: 'Status',
+				size: 100,
+				Cell: ({ cell }) => {
+					const isActive = cell.getValue<boolean>();
+					return (
+						<Chip
+							size="small"
+							label={isActive ? 'Active' : 'Inactive'}
+							color={isActive ? 'success' : 'default'}
+						/>
+					);
+				}
+			}
+		],
+		[]
+	);
 
 	const serverColumns = useMemo<MRT_ColumnDef<MCPServer>[]>(
 		() => [
@@ -443,6 +597,7 @@ function NamespaceDetailView() {
 						className="mb-4"
 					>
 						<Tab label={`Servers (${namespace.servers?.length || 0})`} />
+						<Tab label={`Endpoints (${namespace.endpoints?.length || 0})`} />
 						<Tab label="Settings" />
 						<Tab label="Activity" />
 					</Tabs>
@@ -497,8 +652,58 @@ function NamespaceDetailView() {
 						</Box>
 					)}
 
-					{/* Settings Tab */}
+					{/* Endpoints Tab */}
 					{tabValue === 1 && (
+						<Box>
+							<Box className="mb-4 flex items-center justify-between">
+								<Typography variant="h6">Endpoints</Typography>
+								<Button
+									variant="contained"
+									color="primary"
+									startIcon={<SvgIcon>lucide:plus</SvgIcon>}
+									onClick={() => router.push(`/endpoints?action=create&namespace_id=${namespace.id}`)}
+								>
+									Create Endpoint
+								</Button>
+							</Box>
+
+							{namespace.endpoints && namespace.endpoints.length > 0 ? (
+								<LazyDataTable
+									columns={endpointColumns}
+									data={namespace.endpoints}
+									enableRowActions
+									renderRowActions={({ row }) => (
+										<Box className="flex items-center space-x-1">
+											<Tooltip title="Edit Endpoint">
+												<IconButton
+													size="small"
+													onClick={() => handleEditEndpoint(row.original)}
+												>
+													<SvgIcon size={18}>lucide:pencil</SvgIcon>
+												</IconButton>
+											</Tooltip>
+											<Tooltip title="Delete Endpoint">
+												<IconButton
+													size="small"
+													color="error"
+													onClick={() => handleDeleteEndpoint(row.original)}
+												>
+													<SvgIcon size={18}>lucide:trash-2</SvgIcon>
+												</IconButton>
+											</Tooltip>
+										</Box>
+									)}
+								/>
+							) : (
+								<Alert severity="info">
+									No endpoints configured for this namespace. Click "Create Endpoint" to add your first endpoint.
+								</Alert>
+							)}
+						</Box>
+					)}
+
+					{/* Settings Tab */}
+					{tabValue === 2 && (
 						<Card>
 							<CardContent>
 								<Typography
@@ -568,7 +773,7 @@ function NamespaceDetailView() {
 					)}
 
 					{/* Activity Tab */}
-					{tabValue === 2 && (
+					{tabValue === 3 && (
 						<Card>
 							<CardContent>
 								<Typography
@@ -670,6 +875,146 @@ function NamespaceDetailView() {
 								disabled={selectedServers.length === 0}
 							>
 								Assign {selectedServers.length} Server(s)
+							</Button>
+						</DialogActions>
+					</Dialog>
+
+					{/* Edit Endpoint Dialog */}
+					<Dialog
+						open={editEndpointModalOpen}
+						onClose={() => setEditEndpointModalOpen(false)}
+						maxWidth="md"
+						fullWidth
+					>
+						<DialogTitle>Edit Endpoint - {editingEndpoint?.name}</DialogTitle>
+						<DialogContent>
+							<Stack
+								spacing={3}
+								sx={{ mt: 1 }}
+							>
+								<TextField
+									label="Name"
+									value={endpointFormData.name}
+									onChange={(e) => setEndpointFormData((prev) => ({ ...prev, name: e.target.value }))}
+									fullWidth
+									required
+								/>
+								<TextField
+									label="Description"
+									value={endpointFormData.description}
+									onChange={(e) => setEndpointFormData((prev) => ({ ...prev, description: e.target.value }))}
+									fullWidth
+									multiline
+									rows={2}
+								/>
+
+								<Accordion>
+									<AccordionSummary expandIcon={<SvgIcon>lucide:chevron-down</SvgIcon>}>
+										<Typography>Authentication Settings</Typography>
+									</AccordionSummary>
+									<AccordionDetails>
+										<Stack spacing={2}>
+											<FormControlLabel
+												control={
+													<Switch
+														checked={endpointFormData.enable_api_key_auth}
+														onChange={(e) =>
+															setEndpointFormData((prev) => ({
+																...prev,
+																enable_api_key_auth: e.target.checked
+															}))
+														}
+													/>
+												}
+												label="Enable API Key Authentication"
+											/>
+											<FormControlLabel
+												control={
+													<Switch
+														checked={endpointFormData.enable_oauth}
+														onChange={(e) =>
+															setEndpointFormData((prev) => ({
+																...prev,
+																enable_oauth: e.target.checked
+															}))
+														}
+													/>
+												}
+												label="Enable OAuth Authentication"
+											/>
+											<FormControlLabel
+												control={
+													<Switch
+														checked={endpointFormData.enable_public_access}
+														onChange={(e) =>
+															setEndpointFormData((prev) => ({
+																...prev,
+																enable_public_access: e.target.checked
+															}))
+														}
+													/>
+												}
+												label="Enable Public Access"
+											/>
+										</Stack>
+									</AccordionDetails>
+								</Accordion>
+
+								<Accordion>
+									<AccordionSummary expandIcon={<SvgIcon>lucide:chevron-down</SvgIcon>}>
+										<Typography>Rate Limiting</Typography>
+									</AccordionSummary>
+									<AccordionDetails>
+										<Stack spacing={2}>
+											<TextField
+												label="Requests per Hour"
+												type="number"
+												value={endpointFormData.rate_limit_requests}
+												onChange={(e) =>
+													setEndpointFormData((prev) => ({
+														...prev,
+														rate_limit_requests: parseInt(e.target.value) || 0
+													}))
+												}
+												fullWidth
+											/>
+											<TextField
+												label="Window (seconds)"
+												type="number"
+												value={endpointFormData.rate_limit_window}
+												onChange={(e) =>
+													setEndpointFormData((prev) => ({
+														...prev,
+														rate_limit_window: parseInt(e.target.value) || 3600
+													}))
+												}
+												fullWidth
+											/>
+										</Stack>
+									</AccordionDetails>
+								</Accordion>
+
+								<FormControlLabel
+									control={
+										<Switch
+											checked={endpointFormData.is_active}
+											onChange={(e) =>
+												setEndpointFormData((prev) => ({ ...prev, is_active: e.target.checked }))
+											}
+										/>
+									}
+									label="Active"
+								/>
+							</Stack>
+						</DialogContent>
+						<DialogActions>
+							<Button onClick={() => setEditEndpointModalOpen(false)}>Cancel</Button>
+							<Button
+								variant="contained"
+								onClick={handleSaveEndpoint}
+								disabled={!endpointFormData.name.trim()}
+							>
+								Save Changes
 							</Button>
 						</DialogActions>
 					</Dialog>

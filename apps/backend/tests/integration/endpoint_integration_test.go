@@ -50,8 +50,8 @@ func NewIntegrationTestSuite(t *testing.T) *IntegrationTestSuite {
 	require.NoError(t, err)
 
 	// Initialize services
-	namespaceService := services.NewNamespaceService(testDB)
 	endpointService := services.NewEndpointService(testDB, "http://localhost:8080")
+	namespaceService := services.NewNamespaceService(testDB, endpointService)
 
 	// Initialize handlers
 	namespaceHandler := handlers.NewNamespaceHandler(namespaceService)
@@ -101,10 +101,10 @@ func NewIntegrationTestSuite(t *testing.T) *IntegrationTestSuite {
 	}
 
 	return &IntegrationTestSuite{
-		db:       testDB,
-		Router:   router,
+		db:        testDB,
+		Router:    router,
 		AuthToken: "test-token", // Mock token for tests
-		teardown: teardown,
+		teardown:  teardown,
 	}
 }
 

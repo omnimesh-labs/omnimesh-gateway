@@ -169,6 +169,32 @@ func (s *EndpointService) ListEndpoints(ctx context.Context, orgID string) ([]*t
 	return endpoints, nil
 }
 
+// GetEndpointByNamespace gets the endpoint for a namespace
+func (s *EndpointService) GetEndpointByNamespace(ctx context.Context, namespaceID string) (*types.Endpoint, error) {
+	endpoint, err := s.repo.GetByNamespaceID(ctx, namespaceID)
+	if err != nil {
+		return nil, err
+	}
+	
+	// If no endpoint exists, return nil
+	if endpoint == nil {
+		return nil, nil
+	}
+	
+	// Generate URLs
+	endpoint.URLs = s.generateURLs(endpoint.Name)
+	
+	// Fetch namespace details
+	if endpoint.NamespaceID != "" {
+		namespace, err := s.namespaceRepo.GetByID(ctx, endpoint.NamespaceID)
+		if err == nil {
+			endpoint.Namespace = namespace
+		}
+	}
+	
+	return endpoint, nil
+}
+
 // ListPublicEndpoints lists all public endpoints
 func (s *EndpointService) ListPublicEndpoints(ctx context.Context) ([]*types.Endpoint, error) {
 	endpoints, err := s.repo.ListPublic(ctx)

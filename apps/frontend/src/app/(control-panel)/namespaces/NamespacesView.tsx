@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { MRT_ColumnDef } from 'material-react-table';
 import PageSimple from '@fuse/core/PageSimple';
 import { styled } from '@mui/material/styles';
@@ -25,7 +26,8 @@ import {
 	CardContent,
 	Alert,
 	Tab,
-	Tabs
+	Tabs,
+	CircularProgress
 } from '@mui/material';
 import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
@@ -47,6 +49,8 @@ const Root = styled(PageSimple)(({ theme }) => ({
 
 
 function NamespacesView() {
+	const searchParams = useSearchParams();
+	const router = useRouter();
 	const [createModalOpen, setCreateModalOpen] = useState(false);
 	const [viewModalOpen, setViewModalOpen] = useState(false);
 	const [editingNamespace, setEditingNamespace] = useState<Namespace | null>(null);
@@ -62,6 +66,7 @@ function NamespacesView() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [servers, setServers] = useState<MCPServer[]>([]);
 	const [loadingServers, setLoadingServers] = useState(false);
+	const [loadingNamespaceDetails, setLoadingNamespaceDetails] = useState(false);
 	const [togglingNamespaceId, setTogglingNamespaceId] = useState<string | null>(null);
 	const { enqueueSnackbar } = useSnackbar();
 
@@ -70,6 +75,14 @@ function NamespacesView() {
 		fetchNamespaces();
 		fetchServers();
 	}, []);
+
+	// Check for action query parameter to open create modal
+	useEffect(() => {
+		const action = searchParams.get('action');
+		if (action === 'create') {
+			handleCreateNamespace();
+		}
+	}, [searchParams]);
 
 	const fetchNamespaces = useCallback(async () => {
 		setIsLoading(true);
@@ -105,27 +118,67 @@ function NamespacesView() {
 		setCreateModalOpen(true);
 	};
 
-	const handleViewNamespace = (namespace: Namespace) => {
+	const handleViewNamespace = async (namespace: Namespace) => {
 		setViewingNamespace(namespace);
-		setFormData({
-			name: namespace.name,
-			description: namespace.description || '',
-			is_active: namespace.is_active,
-			servers: namespace.servers || []
-		});
 		setModalTab(0);
 		setViewModalOpen(true);
+		setLoadingNamespaceDetails(true);
+		
+		// Fetch full namespace details including servers
+		try {
+			const fullNamespace = await namespaceApi.getNamespace(namespace.id);
+			setViewingNamespace(fullNamespace);
+			// Extract server IDs from the servers array (which may be objects or strings)
+			const serverIds = fullNamespace.servers 
+				? fullNamespace.servers.map((s: any) => typeof s === 'string' ? s : s.server_id)
+				: [];
+			setFormData({
+				name: fullNamespace.name,
+				description: fullNamespace.description || '',
+				is_active: fullNamespace.is_active,
+				servers: serverIds
+			});
+		} catch (error) {
+			enqueueSnackbar('Failed to fetch namespace details', { variant: 'error' });
+			console.error('Error fetching namespace details:', error);
+		} finally {
+			setLoadingNamespaceDetails(false);
+		}
 	};
 
-	const handleEditNamespace = (namespace: Namespace) => {
+	const handleEditNamespace = async (namespace: Namespace) => {
+		setEditingNamespace(namespace);
+		setCreateModalOpen(true);
+		setLoadingNamespaceDetails(true);
+		
+		// Set initial data from list (servers might not be populated yet)
 		setFormData({
 			name: namespace.name,
 			description: namespace.description || '',
 			is_active: namespace.is_active,
-			servers: namespace.servers || []
+			servers: []
 		});
-		setEditingNamespace(namespace);
-		setCreateModalOpen(true);
+		
+		// Fetch full namespace details including servers
+		try {
+			const fullNamespace = await namespaceApi.getNamespace(namespace.id);
+			setEditingNamespace(fullNamespace);
+			// Extract server IDs from the servers array (which may be objects or strings)
+			const serverIds = fullNamespace.servers 
+				? fullNamespace.servers.map((s: any) => typeof s === 'string' ? s : s.server_id)
+				: [];
+			setFormData({
+				name: fullNamespace.name,
+				description: fullNamespace.description || '',
+				is_active: fullNamespace.is_active,
+				servers: serverIds
+			});
+		} catch (error) {
+			enqueueSnackbar('Failed to fetch namespace details', { variant: 'error' });
+			console.error('Error fetching namespace details:', error);
+		} finally {
+			setLoadingNamespaceDetails(false);
+		}
 	};
 
 	const handleSaveNamespace = async () => {
@@ -346,7 +399,7 @@ function NamespacesView() {
 										size="small"
 										onClick={() => handleEditNamespace(row.original)}
 									>
-										<SvgIcon size={18}>lucide:edit</SvgIcon>
+										<SvgIcon size={18}>lucide:pencil</SvgIcon>
 									</IconButton>
 								</Tooltip>
 								<Tooltip title="Delete Namespace">
@@ -400,13 +453,16 @@ function NamespacesView() {
 									<Typography variant="body2" color="textSecondary" gutterBottom>
 										Select Servers
 									</Typography>
-									{loadingServers ? (
-										<Typography
-											variant="caption"
-											color="textSecondary"
-										>
-											Loading servers...
-										</Typography>
+									{loadingServers || loadingNamespaceDetails ? (
+										<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 2 }}>
+											<CircularProgress size={20} />
+											<Typography
+												variant="caption"
+												color="textSecondary"
+											>
+												Loading servers...
+											</Typography>
+										</Box>
 									) : (
 										<Box
 											sx={{
@@ -539,6 +595,7 @@ function NamespacesView() {
 									<Tab label="Overview" />
 									<Tab label="Settings" />
 									<Tab label="Servers" />
+									<Tab label="Endpoint" />
 								</Tabs>
 							</Box>
 
@@ -634,7 +691,7 @@ function NamespacesView() {
 												color={formData.is_active ? 'success' : 'default'}
 											/>
 										}
-										label={`Namespace is ${formData.is_active ? 'Active' : 'Inactive'}`}
+										label={`${formData.is_active ? 'Active' : 'Inactive'}`}
 									/>
 									{!formData.is_active && (
 										<Alert severity="warning">
@@ -654,13 +711,16 @@ function NamespacesView() {
 										<Typography variant="body2" color="textSecondary" gutterBottom>
 											Select Servers
 										</Typography>
-										{loadingServers ? (
-											<Typography
-												variant="caption"
-												color="textSecondary"
-											>
-												Loading servers...
-											</Typography>
+										{loadingServers || loadingNamespaceDetails ? (
+											<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 2 }}>
+												<CircularProgress size={20} />
+												<Typography
+													variant="caption"
+													color="textSecondary"
+												>
+													Loading servers...
+												</Typography>
+											</Box>
 										) : (
 											<Box
 												sx={{
@@ -742,6 +802,157 @@ function NamespacesView() {
 												})}
 											</Stack>
 										</Box>
+									)}
+								</Stack>
+							)}
+
+							{/* Endpoint Tab */}
+							{modalTab === 3 && (
+								<Stack spacing={3}>
+									<Alert severity="info">
+										Configure public endpoint for this namespace to make it accessible via custom URLs.
+									</Alert>
+									
+									{viewingNamespace?.endpoint ? (
+										<Card variant="outlined">
+											<CardContent>
+												<Box sx={{ display: 'flex', justifyContent: 'between', alignItems: 'center', mb: 2 }}>
+													<Typography 
+														variant="h6"
+														sx={{ 
+															cursor: 'pointer', 
+															color: 'primary.main',
+															'&:hover': { textDecoration: 'underline' }
+														}}
+														onClick={() => {
+															if (viewingNamespace?.endpoint) {
+																handleCloseViewModal();
+																router.push(`/endpoints?highlight=${viewingNamespace.endpoint.id}`);
+															}
+														}}
+													>
+														Endpoint Configuration
+														<SvgIcon size={16} sx={{ ml: 1 }}>lucide:external-link</SvgIcon>
+													</Typography>
+													<Chip
+														size="small"
+														label={viewingNamespace.endpoint.is_active ? 'Active' : 'Inactive'}
+														color={viewingNamespace.endpoint.is_active ? 'success' : 'default'}
+														variant="outlined"
+													/>
+												</Box>
+												
+												<Grid container spacing={2}>
+													<Grid item xs={12}>
+														<Typography variant="body2" color="textSecondary">
+															Endpoint Name
+														</Typography>
+														<Typography variant="body1" sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
+															{viewingNamespace.endpoint.name}
+														</Typography>
+													</Grid>
+													
+													{viewingNamespace.endpoint.description && (
+														<Grid item xs={12}>
+															<Typography variant="body2" color="textSecondary">
+																Description
+															</Typography>
+															<Typography variant="body1">
+																{viewingNamespace.endpoint.description}
+															</Typography>
+														</Grid>
+													)}
+													
+													{viewingNamespace.endpoint.urls && (
+														<Grid item xs={12}>
+															<Typography variant="body2" color="textSecondary" gutterBottom>
+																Endpoint URLs
+															</Typography>
+															<Stack spacing={1}>
+																<Box>
+																	<Typography variant="caption" color="textSecondary">
+																		SSE:
+																	</Typography>
+																	<Typography variant="body2" sx={{ fontFamily: 'monospace', ml: 1 }}>
+																		{viewingNamespace.endpoint.urls.sse}
+																	</Typography>
+																</Box>
+																<Box>
+																	<Typography variant="caption" color="textSecondary">
+																		HTTP:
+																	</Typography>
+																	<Typography variant="body2" sx={{ fontFamily: 'monospace', ml: 1 }}>
+																		{viewingNamespace.endpoint.urls.http}
+																	</Typography>
+																</Box>
+																<Box>
+																	<Typography variant="caption" color="textSecondary">
+																		WebSocket:
+																	</Typography>
+																	<Typography variant="body2" sx={{ fontFamily: 'monospace', ml: 1 }}>
+																		{viewingNamespace.endpoint.urls.websocket}
+																	</Typography>
+																</Box>
+															</Stack>
+														</Grid>
+													)}
+													
+													<Grid item xs={6}>
+														<Typography variant="body2" color="textSecondary">
+															Rate Limit
+														</Typography>
+														<Typography variant="body1">
+															{viewingNamespace.endpoint.rate_limit_requests} requests per {viewingNamespace.endpoint.rate_limit_window}s
+														</Typography>
+													</Grid>
+													
+													<Grid item xs={6}>
+														<Typography variant="body2" color="textSecondary">
+															Authentication Methods
+														</Typography>
+														<Stack direction="row" spacing={1} sx={{ mt: 0.5 }}>
+															{viewingNamespace.endpoint.enable_api_key_auth && (
+																<Chip label="API Key" size="small" variant="outlined" />
+															)}
+															{viewingNamespace.endpoint.enable_oauth && (
+																<Chip label="OAuth" size="small" variant="outlined" />
+															)}
+															{viewingNamespace.endpoint.enable_public_access && (
+																<Chip label="Public Access" size="small" variant="outlined" color="warning" />
+															)}
+															{!viewingNamespace.endpoint.enable_api_key_auth && !viewingNamespace.endpoint.enable_oauth && !viewingNamespace.endpoint.enable_public_access && (
+																<Typography variant="caption" color="textSecondary">
+																	No authentication configured
+																</Typography>
+															)}
+														</Stack>
+													</Grid>
+												</Grid>
+											</CardContent>
+										</Card>
+									) : (
+										<Card variant="outlined">
+											<CardContent sx={{ textAlign: 'center', py: 4 }}>
+												<Typography variant="h6" gutterBottom>
+													No Endpoint Configured
+												</Typography>
+												<Typography variant="body2" color="textSecondary" gutterBottom={true}>
+													Create a public endpoint to make this namespace accessible via custom URLs with authentication and rate limiting.
+												</Typography>
+												<Button
+													variant="contained"
+													size="medium"
+													startIcon={<SvgIcon size={16}>lucide:plus</SvgIcon>}
+													onClick={() => {
+														handleCloseViewModal();
+														enqueueSnackbar('Create endpoint functionality coming soon', { variant: 'info' });
+													}}
+													sx={{ mt: 4 }}
+												>
+													Create Endpoint
+												</Button>
+											</CardContent>
+										</Card>
 									)}
 								</Stack>
 							)}

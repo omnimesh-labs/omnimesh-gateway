@@ -18,16 +18,18 @@ type NamespaceService struct {
 	repo            *repositories.NamespaceRepository
 	serverRepo      *repositories.MCPServerRepository
 	sessionPool     *NamespaceSessionPool
+	endpointService *EndpointService
 	toolPrefixCache sync.Map // Cache for prefixed tool names
 }
 
 // NewNamespaceService creates a new namespace service
-func NewNamespaceService(db *sql.DB) *NamespaceService {
+func NewNamespaceService(db *sql.DB, endpointService *EndpointService) *NamespaceService {
 	// Wrap the sql.DB with sqlx
 	sqlxDB := sqlx.NewDb(db, "postgres")
 
 	return &NamespaceService{
-		repo:        repositories.NewNamespaceRepository(sqlxDB),
+		repo:            repositories.NewNamespaceRepository(sqlxDB),
+		endpointService: endpointService,
 		serverRepo:  repositories.NewMCPServerRepository(sqlxDB),
 		sessionPool: NewNamespaceSessionPool(),
 	}
@@ -84,6 +86,17 @@ func (s *NamespaceService) GetNamespace(ctx context.Context, id string) (*types.
 		fmt.Printf("Warning: failed to aggregate tools for namespace %s: %v\n", id, err)
 	} else {
 		namespace.Tools = tools
+	}
+	
+	// Get endpoint for the namespace if endpoint service is available
+	if s.endpointService != nil {
+		endpoint, err := s.endpointService.GetEndpointByNamespace(ctx, id)
+		if err != nil {
+			// Log error but don't fail namespace retrieval
+			fmt.Printf("Warning: failed to get endpoint for namespace %s: %v\n", id, err)
+		} else {
+			namespace.Endpoint = endpoint
+		}
 	}
 
 	return namespace, nil
