@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { MRT_ColumnDef } from 'material-react-table';
 import { Typography, Button, Chip, Box, IconButton, Tooltip } from '@mui/material';
 import DataTable from '@/components/data-table/DataTable';
@@ -13,6 +13,7 @@ interface AvailableServersTableProps {
 	onRegisterServer: (serverData: CreateServerRequest) => void;
 	registering: boolean;
 	registeredServers: MCPServer[];
+	onRegistrationComplete?: () => void;
 }
 
 export default function AvailableServersTable({
@@ -20,7 +21,8 @@ export default function AvailableServersTable({
 	loading,
 	onRegisterServer,
 	registering,
-	registeredServers
+	registeredServers,
+	onRegistrationComplete
 }: AvailableServersTableProps) {
 	const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
 
@@ -35,7 +37,7 @@ export default function AvailableServersTable({
 		const serverData = {
 			name: pkg.name.replace(/^@.*\//, ''), // Remove scope prefix
 			description: pkg.description,
-			protocol: 'stdio',
+			protocol: 'stdio' as const,
 			command: pkg.command,
 			args: pkg.args,
 			environment: pkg.envs,
@@ -50,6 +52,15 @@ export default function AvailableServersTable({
 
 		onRegisterServer(serverData);
 	};
+
+	// Reset selected package when registration completes
+	useEffect(() => {
+		if (!registering && selectedPackage) {
+			// Clear the selected package after registration completes
+			setTimeout(() => setSelectedPackage(null), 1000);
+			onRegistrationComplete?.();
+		}
+	}, [registering, selectedPackage, onRegistrationComplete]);
 
 	const columns = useMemo<MRT_ColumnDef<MCPPackage>[]>(
 		() => [

@@ -71,11 +71,11 @@ function EndpointsView() {
 		setIsLoading(true);
 		try {
 			const data = await endpointApi.listEndpoints();
-			setEndpoints(data);
+			setEndpoints(Array.isArray(data) ? data : []);
 		} catch (error) {
 			enqueueSnackbar('Failed to fetch endpoints', { variant: 'error' });
 			console.error('Error fetching endpoints:', error);
-			setEndpoints([]); // Set empty array on error
+			setEndpoints([]);
 		} finally {
 			setIsLoading(false);
 		}
@@ -85,7 +85,7 @@ function EndpointsView() {
 		setLoadingNamespaces(true);
 		try {
 			const data = await namespaceApi.listNamespaces();
-			setNamespaces(data);
+			setNamespaces(Array.isArray(data) ? data : []);
 		} catch (error) {
 			enqueueSnackbar('Failed to fetch namespaces', { variant: 'error' });
 			console.error('Error fetching namespaces:', error);
@@ -106,7 +106,7 @@ function EndpointsView() {
 		const action = searchParams.get('action');
 		const namespaceId = searchParams.get('namespace_id');
 		const highlightId = searchParams.get('highlight');
-		
+
 		if (action === 'create') {
 			setFormData(prev => ({
 				...prev,
@@ -114,7 +114,7 @@ function EndpointsView() {
 			}));
 			handleCreateEndpoint();
 		}
-		
+
 		if (highlightId) {
 			setHighlightedEndpointId(highlightId);
 			// Clear highlight after 3 seconds
@@ -160,6 +160,17 @@ function EndpointsView() {
 	};
 
 	const handleSaveEndpoint = async () => {
+		// Validate that the selected namespace exists and is active
+		const selectedNamespace = namespaces.find(ns => ns.id === formData.namespace_id);
+		if (!selectedNamespace) {
+			enqueueSnackbar('Please select a valid namespace.', { variant: 'error' });
+			return;
+		}
+		if (!selectedNamespace.is_active) {
+			enqueueSnackbar('Selected namespace is not active. Please select an active namespace.', { variant: 'error' });
+			return;
+		}
+
 		try {
 			if (editingEndpoint) {
 				await endpointApi.updateEndpoint(editingEndpoint.id, formData);
@@ -174,7 +185,15 @@ function EndpointsView() {
 			fetchEndpoints(); // Refresh the list
 		} catch (error) {
 			const action = editingEndpoint ? 'update' : 'create';
-			enqueueSnackbar(`Failed to ${action} endpoint`, { variant: 'error' });
+
+			// Check for specific error messages
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			if (errorMessage.toLowerCase().includes('namespace not found')) {
+				enqueueSnackbar('Namespace not found. Please select a valid namespace.', { variant: 'error' });
+			} else {
+				enqueueSnackbar(`Failed to ${action} endpoint`, { variant: 'error' });
+			}
+
 			console.error(`Error ${action}ing endpoint:`, error);
 		}
 	};
@@ -311,7 +330,7 @@ function EndpointsView() {
 				Cell: ({ row }) => <Typography variant="body2">{row.original.rate_limit_requests}/hr</Typography>
 			},
 		],
-		[togglingEndpointId]
+		[togglingEndpointId, handleToggleEndpointStatus]
 	);
 
 	return (
@@ -349,8 +368,8 @@ function EndpointsView() {
 						enableRowActions
 						muiTableBodyRowProps={({ row }) => ({
 							sx: {
-								backgroundColor: highlightedEndpointId === row.original.id 
-									? 'primary.50' 
+								backgroundColor: highlightedEndpointId === row.original.id
+									? 'primary.50'
 									: 'inherit',
 								transition: 'background-color 0.3s ease',
 								'&:hover': {
@@ -425,11 +444,17 @@ function EndpointsView() {
 									fullWidth
 									required
 									disabled={loadingNamespaces}
-									// helperText={loadingNamespaces ? "Loading namespaces..." : "Select the namespace for this endpoint"}
+									helperText={
+										loadingNamespaces ? "Loading namespaces..." :
+										!namespaces || namespaces.length === 0 ? "No namespaces available. Please create a namespace first." :
+										namespaces.filter(ns => ns.is_active).length === 0 ? "No active namespaces available." :
+										"Select the namespace for this endpoint"
+									}
+									error={!loadingNamespaces && (!namespaces || namespaces.length === 0)}
 								>
 									{loadingNamespaces ? (
 										<MenuItem disabled>Loading namespaces...</MenuItem>
-									) : namespaces.length === 0 ? (
+									) : !namespaces || namespaces.length === 0 ? (
 										<MenuItem disabled>No namespaces available</MenuItem>
 									) : (
 										namespaces
@@ -561,7 +586,11 @@ function EndpointsView() {
 							<Button
 								variant="contained"
 								onClick={handleSaveEndpoint}
-								disabled={!formData.name.trim() || !formData.namespace_id.trim()}
+								disabled={
+									!formData.name.trim() ||
+									!formData.namespace_id.trim() ||
+									!namespaces.some(ns => ns.id === formData.namespace_id && ns.is_active)
+								}
 							>
 								{editingEndpoint ? 'Update' : 'Create'}
 							</Button>

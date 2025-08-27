@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import {
 	Dialog,
 	DialogContent,
@@ -20,32 +19,21 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { X } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { X, CheckCircle, AlertCircle, Info } from 'lucide-react';
 import { useCreateTool, useUpdateTool } from '../../api/hooks/useTools';
 import { Tool } from '@/lib/api';
-
-const toolSchema = z.object({
-	name: z.string().min(1, 'Name is required').max(255),
-	description: z.string().optional(),
-	function_name: z
-		.string()
-		.min(1, 'Function name is required')
-		.regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/, 'Must be a valid function name'),
-	category: z.enum(['general', 'data', 'file', 'web', 'system', 'ai', 'dev', 'custom']),
-	implementation_type: z.enum(['internal', 'external', 'webhook', 'script']).optional(),
-	endpoint_url: z.string().optional(),
-	timeout_seconds: z.number().min(1).max(300).optional(),
-	max_retries: z.number().min(0).max(10).optional(),
-	is_active: z.boolean().default(true),
-	is_public: z.boolean().default(false),
-	schema: z.string().optional(),
-	examples: z.string().optional(),
-	documentation: z.string().optional(),
-	tags: z.array(z.string()).optional(),
-	metadata: z.string().optional()
-});
-
-type ToolFormData = z.infer<typeof toolSchema>;
+import {
+  toolSchemaWithImplementationValidation,
+  validateToolSchema,
+  validateToolExamples,
+  suggestToolCategory,
+  generateToolSchemaTemplate,
+  type ToolFormData,
+  type CreateToolData,
+  type UpdateToolData
+} from '@/lib/validation/tool';
+import { enums } from '@/lib/validation/common';
 
 interface ToolFormDialogProps {
 	open: boolean;
@@ -58,8 +46,12 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 	const createMutation = useCreateTool();
 	const updateMutation = useUpdateTool();
 
+	// Validation state
+	const [schemaValidation, setSchemaValidation] = useState<{ valid: boolean; error?: string; suggestions?: string[] }>({ valid: true });
+	const [examplesValidation, setExamplesValidation] = useState<{ valid: boolean; error?: string; suggestions?: string[] }>({ valid: true });
+
 	const form = useForm<ToolFormData>({
-		resolver: zodResolver(toolSchema),
+		resolver: zodResolver(toolSchemaWithImplementationValidation),
 		defaultValues: {
 			name: '',
 			description: '',
@@ -132,8 +124,60 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 		}
 	}, [tool, form]);
 
+	// Handle schema validation
+	const handleSchemaChange = (schemaString: string) => {
+		if (schemaString.trim() === '') {
+			setSchemaValidation({ valid: true });
+			return;
+		}
+
+		const validation = validateToolSchema(schemaString);
+		setSchemaValidation(validation);
+	};
+
+	// Handle examples validation
+	const handleExamplesChange = (examplesString: string) => {
+		if (examplesString.trim() === '') {
+			setExamplesValidation({ valid: true });
+			return;
+		}
+
+		const validation = validateToolExamples(examplesString);
+		setExamplesValidation(validation);
+	};
+
+	// Handle category suggestion based on name/description
+	const handleNameChange = (name: string) => {
+		if (name && !isEdit) {
+			const suggestedCategory = suggestToolCategory(name, form.getValues('description'));
+			if (suggestedCategory !== form.getValues('category')) {
+				// Only suggest if different from current
+				form.setValue('category', suggestedCategory);
+			}
+		}
+	};
+
+	// Generate schema template
+	const handleGenerateSchema = () => {
+		const category = form.getValues('category');
+		const template = generateToolSchemaTemplate(category);
+		form.setValue('schema', template);
+		setSchemaValidation({ valid: true });
+	};
+
 	const handleSubmit = async (data: ToolFormData) => {
 		try {
+			// Validate JSON fields before submission
+			if (data.schema && !schemaValidation.valid) {
+				form.setError('schema', { message: schemaValidation.error || 'Invalid schema' });
+				return;
+			}
+
+			if (data.examples && !examplesValidation.valid) {
+				form.setError('examples', { message: examplesValidation.error || 'Invalid examples' });
+				return;
+			}
+
 			const schema = data.schema ? JSON.parse(data.schema) : undefined;
 			const examples = data.examples ? JSON.parse(data.examples) : undefined;
 			const metadata = data.metadata ? JSON.parse(data.metadata) : undefined;
@@ -149,10 +193,10 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 			if (isEdit && tool) {
 				await updateMutation.mutateAsync({
 					id: tool.id,
-					data: payload
+					data: payload as UpdateToolData
 				});
 			} else {
-				await createMutation.mutateAsync(payload);
+				await createMutation.mutateAsync(payload as CreateToolData);
 			}
 
 			onClose();
@@ -221,8 +265,15 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 												<Input
 													placeholder="My Awesome Tool"
 													{...field}
+													onChange={(e) => {
+														field.onChange(e);
+														handleNameChange(e.target.value);
+													}}
 												/>
 											</FormControl>
+											<FormDescription>
+												Tool name will be used for identification and documentation
+											</FormDescription>
 											<FormMessage />
 										</FormItem>
 									)}
@@ -282,16 +333,16 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 													</SelectTrigger>
 												</FormControl>
 												<SelectContent>
-													<SelectItem value="general">General</SelectItem>
-													<SelectItem value="data">Data</SelectItem>
-													<SelectItem value="file">File</SelectItem>
-													<SelectItem value="web">Web</SelectItem>
-													<SelectItem value="system">System</SelectItem>
-													<SelectItem value="ai">AI</SelectItem>
-													<SelectItem value="dev">Dev</SelectItem>
-													<SelectItem value="custom">Custom</SelectItem>
+													{enums.toolCategory.map((category) => (
+														<SelectItem key={category} value={category}>
+															{category.charAt(0).toUpperCase() + category.slice(1)}
+														</SelectItem>
+													))}
 												</SelectContent>
 											</Select>
+											<FormDescription>
+												Category helps organize and discover tools
+											</FormDescription>
 											<FormMessage />
 										</FormItem>
 									)}
@@ -396,16 +447,54 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 									name="schema"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>Schema (JSON)</FormLabel>
+											<div className="flex items-center justify-between">
+												<FormLabel>Schema (JSON)</FormLabel>
+												<Button
+													type="button"
+													variant="outline"
+													size="sm"
+													onClick={handleGenerateSchema}
+													disabled={!form.getValues('category')}
+												>
+													Generate Template
+												</Button>
+											</div>
 											<FormControl>
 												<Textarea
 													placeholder='{"type": "object", "properties": {...}}'
 													{...field}
 													rows={6}
 													className="font-mono text-sm"
+													onChange={(e) => {
+														field.onChange(e);
+														handleSchemaChange(e.target.value);
+													}}
 												/>
 											</FormControl>
-											<FormDescription>JSON Schema for tool parameters</FormDescription>
+											<FormDescription>
+												JSON Schema for tool parameters. Leave empty if no parameters required.
+											</FormDescription>
+											{!schemaValidation.valid && (
+												<Alert className="mt-2">
+													<AlertCircle className="h-4 w-4" />
+													<AlertDescription>
+														{schemaValidation.error}
+														{schemaValidation.suggestions && (
+															<ul className="mt-1 list-disc list-inside text-sm">
+																{schemaValidation.suggestions.map((suggestion, index) => (
+																	<li key={index}>{suggestion}</li>
+																))}
+															</ul>
+														)}
+													</AlertDescription>
+												</Alert>
+											)}
+											{schemaValidation.valid && field.value && (
+												<div className="flex items-center gap-1 text-green-600 text-sm mt-1">
+													<CheckCircle className="h-4 w-4" />
+													<span>Valid JSON Schema</span>
+												</div>
+											)}
 											<FormMessage />
 										</FormItem>
 									)}
@@ -447,9 +536,36 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 													{...field}
 													rows={4}
 													className="font-mono text-sm"
+													onChange={(e) => {
+														field.onChange(e);
+														handleExamplesChange(e.target.value);
+													}}
 												/>
 											</FormControl>
-											<FormDescription>Usage examples as JSON array</FormDescription>
+											<FormDescription>
+												Usage examples as JSON array. Each example should have "input" and "output" properties.
+											</FormDescription>
+											{!examplesValidation.valid && (
+												<Alert className="mt-2">
+													<AlertCircle className="h-4 w-4" />
+													<AlertDescription>
+														{examplesValidation.error}
+														{examplesValidation.suggestions && (
+															<ul className="mt-1 list-disc list-inside text-sm">
+																{examplesValidation.suggestions.map((suggestion, index) => (
+																	<li key={index}>{suggestion}</li>
+																))}
+															</ul>
+														)}
+													</AlertDescription>
+												</Alert>
+											)}
+											{examplesValidation.valid && field.value && (
+												<div className="flex items-center gap-1 text-green-600 text-sm mt-1">
+													<CheckCircle className="h-4 w-4" />
+													<span>Valid examples format</span>
+												</div>
+											)}
 											<FormMessage />
 										</FormItem>
 									)}

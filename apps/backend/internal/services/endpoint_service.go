@@ -45,9 +45,14 @@ func (s *EndpointService) CreateEndpoint(ctx context.Context, req types.CreateEn
 	}
 
 	// Verify namespace exists and user has access
-	namespace, err := s.namespaceRepo.GetByName(ctx, orgID, req.NamespaceID)
+	namespace, err := s.namespaceRepo.GetByID(ctx, req.NamespaceID)
 	if err != nil {
 		return nil, fmt.Errorf("namespace not found: %w", err)
+	}
+
+	// Verify the namespace belongs to the user's organization
+	if namespace.OrganizationID != orgID {
+		return nil, types.NewNotFoundError("namespace not found")
 	}
 
 	// Set defaults
@@ -175,15 +180,15 @@ func (s *EndpointService) GetEndpointByNamespace(ctx context.Context, namespaceI
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// If no endpoint exists, return nil
 	if endpoint == nil {
 		return nil, nil
 	}
-	
+
 	// Generate URLs
 	endpoint.URLs = s.generateURLs(endpoint.Name)
-	
+
 	// Fetch namespace details
 	if endpoint.NamespaceID != "" {
 		namespace, err := s.namespaceRepo.GetByID(ctx, endpoint.NamespaceID)
@@ -191,7 +196,7 @@ func (s *EndpointService) GetEndpointByNamespace(ctx context.Context, namespaceI
 			endpoint.Namespace = namespace
 		}
 	}
-	
+
 	return endpoint, nil
 }
 

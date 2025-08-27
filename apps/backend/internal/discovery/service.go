@@ -527,9 +527,10 @@ func (s *Service) performHealthCheck(serverID uuid.UUID) {
 	status := s.checkServerHealth(server)
 	check.Status = status
 
-	// Update server status if needed
-	if status != server.Status {
-		err = s.models.MCPServer.UpdateStatus(serverID, status)
+	// Update server status if needed (convert health status to server status)
+	serverStatus := s.mapHealthStatusToServerStatus(status)
+	if serverStatus != server.Status {
+		err = s.models.MCPServer.UpdateStatus(serverID, serverStatus)
 		if err != nil {
 			log.Printf("Failed to update server %s status: %v", serverID, err)
 		}
@@ -639,4 +640,21 @@ func (s *Service) checkTCPHealth(server *models.MCPServer) string {
 	// TODO: Implement actual TCP connection test
 	log.Printf("TCP health check not fully implemented for server %s, assuming healthy", server.ID)
 	return types.HealthStatusHealthy
+}
+
+// mapHealthStatusToServerStatus converts health check status to server status enum values
+func (s *Service) mapHealthStatusToServerStatus(healthStatus string) string {
+	switch healthStatus {
+	case types.HealthStatusHealthy:
+		return "active"
+	case types.HealthStatusUnhealthy:
+		return "unhealthy"
+	case types.HealthStatusTimeout:
+		return "unhealthy"  // Consider timeouts as unhealthy
+	case types.HealthStatusError:
+		return "unhealthy"  // Consider errors as unhealthy
+	default:
+		log.Printf("Unknown health status '%s', defaulting to inactive", healthStatus)
+		return "inactive"
+	}
 }

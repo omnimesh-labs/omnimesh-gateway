@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useOptimizedQuery } from '@/hooks/useOptimizedQuery';
 import { MRT_ColumnDef } from 'material-react-table';
 import PageSimple from '@fuse/core/PageSimple';
@@ -51,16 +52,13 @@ function ServersView() {
 	const { enqueueSnackbar } = useSnackbar();
 	const queryClient = useQueryClient();
 
-	// Fetch registered servers with optimized caching
-	const { data: servers = [], isLoading, refetch } = useOptimizedQuery<MCPServer[]>(
-		['servers'],
-		() => serverApi.listServers(),
-		{
-			refetchInterval: false, // Disable auto-refetch to prevent conflicts with manual updates
-			cacheKey: 'servers-list',
-			staleTime: 5 * 60 * 1000, // Consider data stale after 5 minutes
-		}
-	);
+	// Fetch registered servers with real-time updates
+	const { data: servers = [], isLoading, refetch } = useQuery<MCPServer[]>({
+		queryKey: ['servers'],
+		queryFn: () => serverApi.listServers(),
+		staleTime: 30 * 1000, // Consider data stale after 30 seconds for real-time feel
+		refetchOnWindowFocus: true, // Refetch when user returns to tab
+	});
 
 	// Fetch available servers for discovery with optimized caching
 	const { data: discoveryData, isLoading: discoveryLoading } = useOptimizedQuery<MCPDiscoveryResponse>(
@@ -88,8 +86,19 @@ function ServersView() {
 	// Register server mutation
 	const registerMutation = useMutation({
 		mutationFn: (serverData: CreateServerRequest) => serverApi.registerServer(serverData),
-		onSuccess: () => {
+		onSuccess: (newServer) => {
+			// Immediately update the servers list with optimistic update
+			queryClient.setQueryData<MCPServer[]>(['servers'], (oldServers) => {
+				if (!oldServers) return [newServer];
+				return [...oldServers, newServer];
+			});
+
+			// Invalidate to trigger a refetch and ensure data consistency
 			queryClient.invalidateQueries({ queryKey: ['servers'] });
+
+			// Invalidate discovery data to refresh the "Add Server" button states
+			queryClient.invalidateQueries({ queryKey: ['discovery'] });
+
 			enqueueSnackbar('Server registered successfully', { variant: 'success' });
 			setRegisterModalOpen(false);
 		},
@@ -289,7 +298,16 @@ function ServersView() {
 							scrollButtons="auto"
 						>
 							<Tab
-								label={`Registered Servers (${servers.length})`}
+								label={
+									<Box className="flex items-center space-x-1">
+										<span>{`Registered Servers (${servers.length})`}</span>
+										{registerMutation.isPending && (
+											<SvgIcon size={16} className="animate-pulse text-blue-500">
+												lucide:loader-2
+											</SvgIcon>
+										)}
+									</Box>
+								}
 								icon={<SvgIcon size={20}>lucide:server</SvgIcon>}
 								iconPosition="start"
 							/>
@@ -347,6 +365,10 @@ function ServersView() {
 							onRegisterServer={handleRegisterServer}
 							registering={registerMutation.isPending}
 							registeredServers={servers}
+							onRegistrationComplete={() => {
+								// This callback ensures the UI is properly refreshed after server registration
+								queryClient.invalidateQueries({ queryKey: ['discovery'] });
+							}}
 						/>
 					)}
 

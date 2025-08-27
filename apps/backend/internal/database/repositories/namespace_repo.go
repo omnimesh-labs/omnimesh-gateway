@@ -71,7 +71,7 @@ func (r *NamespaceRepository) GetByID(ctx context.Context, id string) (*types.Na
 	)
 
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("namespace not found")
+		return nil, types.NewNotFoundError("namespace not found")
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get namespace: %w", err)
@@ -102,7 +102,7 @@ func (r *NamespaceRepository) GetByName(ctx context.Context, orgID, name string)
 	)
 
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("namespace not found")
+		return nil, types.NewNotFoundError("namespace not found")
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get namespace: %w", err)
@@ -227,7 +227,7 @@ func (r *NamespaceRepository) Update(ctx context.Context, ns *types.Namespace) e
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("namespace not found")
+		return types.NewNotFoundError("namespace not found")
 	}
 
 	return nil
@@ -248,7 +248,7 @@ func (r *NamespaceRepository) Delete(ctx context.Context, id string) error {
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("namespace not found")
+		return types.NewNotFoundError("namespace not found")
 	}
 
 	return nil
@@ -317,7 +317,7 @@ func (r *NamespaceRepository) UpdateServerStatus(ctx context.Context, namespaceI
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("server not found in namespace")
+		return types.NewNotFoundError("server not found in namespace")
 	}
 
 	return nil

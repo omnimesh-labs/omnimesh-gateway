@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import {
 	Dialog,
 	DialogContent,
@@ -19,22 +18,22 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { X } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { X, CheckCircle, AlertCircle, Info, RefreshCw } from 'lucide-react';
 import { useCreatePrompt, useUpdatePrompt } from '../../api/hooks/usePrompts';
 import { Prompt } from '@/lib/api';
-
-const promptSchema = z.object({
-	name: z.string().min(1, 'Name is required').max(255),
-	description: z.string().optional(),
-	prompt_template: z.string().min(1, 'Template is required'),
-	category: z.enum(['general', 'coding', 'analysis', 'creative', 'educational', 'business', 'custom']),
-	is_active: z.boolean().default(true),
-	tags: z.array(z.string()).optional(),
-	parameters: z.string().optional(),
-	metadata: z.string().optional()
-});
-
-type PromptFormData = z.infer<typeof promptSchema>;
+import {
+  promptSchemaWithTemplateValidation,
+  validatePromptParameters,
+  validatePromptTemplate,
+  extractTemplateParameters,
+  suggestPromptCategory,
+  generateParameterTemplate,
+  type PromptFormData,
+  type CreatePromptData,
+  type UpdatePromptData
+} from '@/lib/validation/prompt';
+import { enums } from '@/lib/validation/common';
 
 interface PromptFormDialogProps {
 	open: boolean;
@@ -47,8 +46,22 @@ export default function PromptFormDialog({ open, onClose, prompt }: PromptFormDi
 	const createMutation = useCreatePrompt();
 	const updateMutation = useUpdatePrompt();
 
+	// Validation state
+	const [templateValidation, setTemplateValidation] = useState<{
+		valid: boolean;
+		error?: string;
+		warnings?: string[];
+		parameters?: string[];
+	}>({ valid: true });
+	const [parametersValidation, setParametersValidation] = useState<{
+		valid: boolean;
+		error?: string;
+		suggestions?: string[];
+		parameters?: Array<{ name: string; type?: string; description?: string; required?: boolean }>;
+	}>({ valid: true });
+
 	const form = useForm<PromptFormData>({
-		resolver: zodResolver(promptSchema),
+		resolver: zodResolver(promptSchemaWithTemplateValidation),
 		defaultValues: {
 			name: '',
 			description: '',
@@ -87,8 +100,70 @@ export default function PromptFormDialog({ open, onClose, prompt }: PromptFormDi
 		}
 	}, [prompt, form]);
 
+	// Handle template validation
+	const handleTemplateChange = (template: string) => {
+		const validation = validatePromptTemplate(template);
+		setTemplateValidation(validation);
+
+		// Auto-generate parameters if template has parameters but no parameters defined
+		if (validation.valid && validation.parameters && validation.parameters.length > 0) {
+			const currentParameters = form.getValues('parameters');
+			if (!currentParameters || currentParameters.trim() === '') {
+				const parameterTemplate = generateParameterTemplate(validation.parameters);
+				form.setValue('parameters', parameterTemplate);
+				setParametersValidation({ valid: true });
+			}
+		}
+	};
+
+	// Handle parameters validation
+	const handleParametersChange = (parametersString: string) => {
+		if (parametersString.trim() === '') {
+			setParametersValidation({ valid: true, parameters: [] });
+			return;
+		}
+
+		const validation = validatePromptParameters(parametersString);
+		setParametersValidation(validation);
+	};
+
+	// Handle category suggestion based on template content
+	const handleTemplateBlur = (template: string) => {
+		if (template && !isEdit) {
+			const suggestedCategory = suggestPromptCategory(template, form.getValues('name'));
+			if (suggestedCategory !== form.getValues('category')) {
+				form.setValue('category', suggestedCategory);
+			}
+		}
+	};
+
+	// Generate parameters from template
+	const handleGenerateParameters = () => {
+		const template = form.getValues('prompt_template');
+		if (template) {
+			const templateParams = extractTemplateParameters(template);
+			if (templateParams.length > 0) {
+				const parameterTemplate = generateParameterTemplate(templateParams);
+				form.setValue('parameters', parameterTemplate);
+				setParametersValidation({ valid: true });
+			}
+		}
+	};
+
 	const handleSubmit = async (data: PromptFormData) => {
 		try {
+			// Validate template before submission
+			if (!templateValidation.valid) {
+				form.setError('prompt_template', { message: templateValidation.error || 'Invalid template' });
+				return;
+			}
+
+			// Validate parameters before submission
+			if (data.parameters && !parametersValidation.valid) {
+				form.setError('parameters', { message: parametersValidation.error || 'Invalid parameters' });
+				return;
+			}
+
 			const parameters = data.parameters ? JSON.parse(data.parameters) : undefined;
 			const metadata = data.metadata ? JSON.parse(data.metadata) : undefined;
 
@@ -102,10 +177,10 @@ export default function PromptFormDialog({ open, onClose, prompt }: PromptFormDi
 			if (isEdit && prompt) {
 				await updateMutation.mutateAsync({
 					id: prompt.id,
-					data: payload
+					data: payload as UpdatePromptData
 				});
 			} else {
-				await createMutation.mutateAsync(payload);
+				await createMutation.mutateAsync(payload as CreatePromptData);
 			}
 
 			onClose();
@@ -199,15 +274,16 @@ export default function PromptFormDialog({ open, onClose, prompt }: PromptFormDi
 											</SelectTrigger>
 										</FormControl>
 										<SelectContent>
-											<SelectItem value="general">General</SelectItem>
-											<SelectItem value="coding">Coding</SelectItem>
-											<SelectItem value="analysis">Analysis</SelectItem>
-											<SelectItem value="creative">Creative</SelectItem>
-											<SelectItem value="educational">Educational</SelectItem>
-											<SelectItem value="business">Business</SelectItem>
-											<SelectItem value="custom">Custom</SelectItem>
+											{enums.promptCategory.map((category) => (
+												<SelectItem key={category} value={category}>
+													{category.charAt(0).toUpperCase() + category.slice(1)}
+												</SelectItem>
+											))}
 										</SelectContent>
 									</Select>
+									<FormDescription>
+										Category helps organize and discover prompts
+									</FormDescription>
 									<FormMessage />
 								</FormItem>
 							)}
@@ -225,11 +301,45 @@ export default function PromptFormDialog({ open, onClose, prompt }: PromptFormDi
 											{...field}
 											rows={6}
 											className="font-mono text-sm"
+											onChange={(e) => {
+												field.onChange(e);
+												handleTemplateChange(e.target.value);
+											}}
+											onBlur={(e) => {
+												field.onBlur();
+												handleTemplateBlur(e.target.value);
+											}}
 										/>
 									</FormControl>
 									<FormDescription>
-										Use {'{{variable}}'} syntax for template variables
+										Use {'{{variable}}'} syntax for template variables. Parameters will be auto-detected.
 									</FormDescription>
+									{templateValidation.warnings && templateValidation.warnings.length > 0 && (
+										<Alert className="mt-2">
+											<Info className="h-4 w-4" />
+											<AlertDescription>
+												<ul className="list-disc list-inside text-sm">
+													{templateValidation.warnings.map((warning, index) => (
+														<li key={index}>{warning}</li>
+													))}
+												</ul>
+											</AlertDescription>
+										</Alert>
+									)}
+									{templateValidation.valid && templateValidation.parameters && templateValidation.parameters.length > 0 && (
+										<div className="flex items-center gap-2 text-sm text-blue-600 mt-1">
+											<Info className="h-4 w-4" />
+											<span>
+												Template parameters detected: {templateValidation.parameters.join(', ')}
+											</span>
+										</div>
+									)}
+									{!templateValidation.valid && (
+										<Alert className="mt-2" variant="destructive">
+											<AlertCircle className="h-4 w-4" />
+											<AlertDescription>{templateValidation.error}</AlertDescription>
+										</Alert>
+									)}
 									<FormMessage />
 								</FormItem>
 							)}
@@ -240,16 +350,57 @@ export default function PromptFormDialog({ open, onClose, prompt }: PromptFormDi
 							name="parameters"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>Parameters (JSON)</FormLabel>
+									<div className="flex items-center justify-between">
+										<FormLabel>Parameters (JSON)</FormLabel>
+										<Button
+											type="button"
+											variant="outline"
+											size="sm"
+											onClick={handleGenerateParameters}
+											disabled={!form.getValues('prompt_template')}
+										>
+											<RefreshCw className="h-4 w-4 mr-1" />
+											Generate from Template
+										</Button>
+									</div>
 									<FormControl>
 										<Textarea
 											placeholder='[{"name": "variable", "type": "string", "description": "Description"}]'
 											{...field}
 											rows={3}
 											className="font-mono text-sm"
+											onChange={(e) => {
+												field.onChange(e);
+												handleParametersChange(e.target.value);
+											}}
 										/>
 									</FormControl>
-									<FormDescription>Define parameters as a JSON array</FormDescription>
+									<FormDescription>
+										Define parameters as a JSON array. Leave empty if no parameters needed.
+									</FormDescription>
+									{!parametersValidation.valid && (
+										<Alert className="mt-2" variant="destructive">
+											<AlertCircle className="h-4 w-4" />
+											<AlertDescription>
+												{parametersValidation.error}
+												{parametersValidation.suggestions && (
+													<ul className="mt-1 list-disc list-inside text-sm">
+														{parametersValidation.suggestions.map((suggestion, index) => (
+															<li key={index}>{suggestion}</li>
+														))}
+													</ul>
+												)}
+											</AlertDescription>
+										</Alert>
+									)}
+									{parametersValidation.valid && parametersValidation.parameters && parametersValidation.parameters.length > 0 && (
+										<div className="flex items-center gap-1 text-green-600 text-sm mt-1">
+											<CheckCircle className="h-4 w-4" />
+											<span>
+												{parametersValidation.parameters.length} parameter(s) defined
+											</span>
+										</div>
+									)}
 									<FormMessage />
 								</FormItem>
 							)}

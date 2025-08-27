@@ -882,6 +882,11 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}, retryO
 			throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`);
 		}
 
+		// Handle 204 No Content responses
+		if (response.status === 204) {
+			return undefined as T;
+		}
+
 		return response.json();
 	} catch (error) {
 

@@ -62,6 +62,7 @@ function NamespacesView() {
 		is_active: true,
 		servers: [] as string[]
 	});
+	const [nameError, setNameError] = useState('');
 	const [namespaces, setNamespaces] = useState<Namespace[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const [servers, setServers] = useState<MCPServer[]>([]);
@@ -69,6 +70,28 @@ function NamespacesView() {
 	const [loadingNamespaceDetails, setLoadingNamespaceDetails] = useState(false);
 	const [togglingNamespaceId, setTogglingNamespaceId] = useState<string | null>(null);
 	const { enqueueSnackbar } = useSnackbar();
+
+	// Validate namespace name - only alphanumeric, underscores, and hyphens allowed
+	const validateNamespaceName = (name: string): string => {
+		if (!name.trim()) {
+			return 'Name is required';
+		}
+
+		// Check for invalid characters (anything that's not alphanumeric, underscore, or hyphen)
+		const invalidChars = /[^a-zA-Z0-9_-]/;
+		if (invalidChars.test(name)) {
+			return 'Name can only contain alphanumeric characters, underscores, and hyphens';
+		}
+
+		return '';
+	};
+
+	// Handle name change with validation
+	const handleNameChange = (name: string) => {
+		setFormData(prev => ({ ...prev, name }));
+		const error = validateNamespaceName(name);
+		setNameError(error);
+	};
 
 	// Fetch namespaces and servers on mount
 	useEffect(() => {
@@ -115,6 +138,7 @@ function NamespacesView() {
 	const handleCreateNamespace = () => {
 		setFormData({ name: '', description: '', is_active: true, servers: [] });
 		setEditingNamespace(null);
+		setNameError('');
 		setCreateModalOpen(true);
 	};
 
@@ -123,13 +147,13 @@ function NamespacesView() {
 		setModalTab(0);
 		setViewModalOpen(true);
 		setLoadingNamespaceDetails(true);
-		
+
 		// Fetch full namespace details including servers
 		try {
 			const fullNamespace = await namespaceApi.getNamespace(namespace.id);
 			setViewingNamespace(fullNamespace);
 			// Extract server IDs from the servers array (which may be objects or strings)
-			const serverIds = fullNamespace.servers 
+			const serverIds = fullNamespace.servers
 				? fullNamespace.servers.map((s: any) => typeof s === 'string' ? s : s.server_id)
 				: [];
 			setFormData({
@@ -150,7 +174,8 @@ function NamespacesView() {
 		setEditingNamespace(namespace);
 		setCreateModalOpen(true);
 		setLoadingNamespaceDetails(true);
-		
+		setNameError('');
+
 		// Set initial data from list (servers might not be populated yet)
 		setFormData({
 			name: namespace.name,
@@ -158,13 +183,13 @@ function NamespacesView() {
 			is_active: namespace.is_active,
 			servers: []
 		});
-		
+
 		// Fetch full namespace details including servers
 		try {
 			const fullNamespace = await namespaceApi.getNamespace(namespace.id);
 			setEditingNamespace(fullNamespace);
 			// Extract server IDs from the servers array (which may be objects or strings)
-			const serverIds = fullNamespace.servers 
+			const serverIds = fullNamespace.servers
 				? fullNamespace.servers.map((s: any) => typeof s === 'string' ? s : s.server_id)
 				: [];
 			setFormData({
@@ -182,6 +207,13 @@ function NamespacesView() {
 	};
 
 	const handleSaveNamespace = async () => {
+		// Validate name before saving
+		const error = validateNamespaceName(formData.name);
+		if (error) {
+			setNameError(error);
+			return;
+		}
+
 		try {
 			if (editingNamespace) {
 				// For updates, use server_ids field
@@ -216,6 +248,13 @@ function NamespacesView() {
 
 	const handleUpdateFromView = async () => {
 		if (!viewingNamespace) return;
+
+		// Validate name before saving
+		const error = validateNamespaceName(formData.name);
+		if (error) {
+			setNameError(error);
+			return;
+		}
 
 		try {
 			const { servers: _, ...updateData } = {
@@ -437,9 +476,11 @@ function NamespacesView() {
 								<TextField
 									label="Name"
 									value={formData.name}
-									onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+									onChange={(e) => handleNameChange(e.target.value)}
 									fullWidth
 									required
+									error={!!nameError}
+									helperText={nameError || 'Only alphanumeric characters, underscores, and hyphens are allowed'}
 								/>
 								<TextField
 									label="Description"
@@ -563,7 +604,7 @@ function NamespacesView() {
 							<Button
 								variant="contained"
 								onClick={handleSaveNamespace}
-								disabled={!formData.name.trim()}
+								disabled={!formData.name.trim() || !!nameError}
 							>
 								{editingNamespace ? 'Update' : 'Create'}
 							</Button>
@@ -667,10 +708,11 @@ function NamespacesView() {
 									<TextField
 										label="Name"
 										value={formData.name}
-										onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+										onChange={(e) => handleNameChange(e.target.value)}
 										fullWidth
 										required
-										helperText="The display name for this namespace"
+										error={!!nameError}
+										helperText={nameError || 'Only alphanumeric characters, underscores, and hyphens are allowed'}
 									/>
 									<TextField
 										label="Description"
@@ -812,15 +854,15 @@ function NamespacesView() {
 									<Alert severity="info">
 										Configure public endpoint for this namespace to make it accessible via custom URLs.
 									</Alert>
-									
+
 									{viewingNamespace?.endpoint ? (
 										<Card variant="outlined">
 											<CardContent>
 												<Box sx={{ display: 'flex', justifyContent: 'between', alignItems: 'center', mb: 2 }}>
-													<Typography 
+													<Typography
 														variant="h6"
-														sx={{ 
-															cursor: 'pointer', 
+														sx={{
+															cursor: 'pointer',
 															color: 'primary.main',
 															'&:hover': { textDecoration: 'underline' }
 														}}
@@ -841,7 +883,7 @@ function NamespacesView() {
 														variant="outlined"
 													/>
 												</Box>
-												
+
 												<Grid container spacing={2}>
 													<Grid item xs={12}>
 														<Typography variant="body2" color="textSecondary">
@@ -851,7 +893,7 @@ function NamespacesView() {
 															{viewingNamespace.endpoint.name}
 														</Typography>
 													</Grid>
-													
+
 													{viewingNamespace.endpoint.description && (
 														<Grid item xs={12}>
 															<Typography variant="body2" color="textSecondary">
@@ -862,7 +904,7 @@ function NamespacesView() {
 															</Typography>
 														</Grid>
 													)}
-													
+
 													{viewingNamespace.endpoint.urls && (
 														<Grid item xs={12}>
 															<Typography variant="body2" color="textSecondary" gutterBottom>
@@ -896,7 +938,7 @@ function NamespacesView() {
 															</Stack>
 														</Grid>
 													)}
-													
+
 													<Grid item xs={6}>
 														<Typography variant="body2" color="textSecondary">
 															Rate Limit
@@ -905,7 +947,7 @@ function NamespacesView() {
 															{viewingNamespace.endpoint.rate_limit_requests} requests per {viewingNamespace.endpoint.rate_limit_window}s
 														</Typography>
 													</Grid>
-													
+
 													<Grid item xs={6}>
 														<Typography variant="body2" color="textSecondary">
 															Authentication Methods
@@ -945,7 +987,7 @@ function NamespacesView() {
 													startIcon={<SvgIcon size={16}>lucide:plus</SvgIcon>}
 													onClick={() => {
 														handleCloseViewModal();
-														enqueueSnackbar('Create endpoint functionality coming soon', { variant: 'info' });
+														router.push(`/endpoints?action=create&namespace_id=${viewingNamespace?.id}`);
 													}}
 													sx={{ mt: 4 }}
 												>
@@ -962,7 +1004,7 @@ function NamespacesView() {
 							<Button
 								variant="contained"
 								onClick={handleUpdateFromView}
-								disabled={!formData.name.trim()}
+								disabled={!formData.name.trim() || !!nameError}
 							>
 								Update
 							</Button>

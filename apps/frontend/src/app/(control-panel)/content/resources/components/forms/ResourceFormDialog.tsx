@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import {
 	Dialog,
 	DialogContent,
@@ -19,23 +18,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { X } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { X, CheckCircle, AlertCircle, Info, Lightbulb } from 'lucide-react';
 import { useCreateResource, useUpdateResource } from '../../api/hooks/useResources';
 import { Resource } from '@/lib/api';
-
-const resourceSchema = z.object({
-	name: z.string().min(1, 'Name is required').max(255),
-	description: z.string().optional(),
-	resource_type: z.enum(['file', 'url', 'database', 'api', 'memory', 'custom']),
-	uri: z.string().min(1, 'URI is required'),
-	mime_type: z.string().optional(),
-	size_bytes: z.number().optional(),
-	is_active: z.boolean().default(true),
-	tags: z.array(z.string()).optional(),
-	metadata: z.string().optional()
-});
-
-type ResourceFormData = z.infer<typeof resourceSchema>;
+import {
+  resourceSchemaWithTypeValidation,
+  validateUriForType,
+  suggestMimeType,
+  validateAccessPermissions,
+  type ResourceFormData,
+  type CreateResourceData,
+  type UpdateResourceData
+} from '@/lib/validation/resource';
+import { enums } from '@/lib/validation/common';
 
 interface ResourceFormDialogProps {
 	open: boolean;
@@ -48,8 +44,12 @@ export default function ResourceFormDialog({ open, onClose, resource }: Resource
 	const createMutation = useCreateResource();
 	const updateMutation = useUpdateResource();
 
+	// Validation state
+	const [uriValidation, setUriValidation] = useState<{ valid: boolean; error?: string }>({ valid: true });
+	const [suggestedMimeType, setSuggestedMimeType] = useState<string>('');
+
 	const form = useForm<ResourceFormData>({
-		resolver: zodResolver(resourceSchema),
+		resolver: zodResolver(resourceSchemaWithTypeValidation),
 		defaultValues: {
 			name: '',
 			description: '',
@@ -98,6 +98,39 @@ export default function ResourceFormDialog({ open, onClose, resource }: Resource
 			});
 		}
 	}, [resource, form]);
+
+	// Handle URI validation based on resource type
+	const handleUriChange = (uri: string, resourceType: typeof enums.resourceType[number]) => {
+		const validation = validateUriForType(uri, resourceType);
+		setUriValidation(validation);
+
+		// Suggest MIME type based on URI
+		if (validation.valid) {
+			const suggested = suggestMimeType(uri, resourceType);
+			if (suggested && !form.getValues('mime_type')) {
+				setSuggestedMimeType(suggested);
+			}
+		}
+	};
+
+	// Handle resource type change
+	const handleResourceTypeChange = (resourceType: typeof enums.resourceType[number]) => {
+		const currentUri = form.getValues('uri');
+		if (currentUri) {
+			handleUriChange(currentUri, resourceType);
+		}
+
+		// Clear suggested MIME type when resource type changes
+		setSuggestedMimeType('');
+	};
+
+	// Apply suggested MIME type
+	const applySuggestedMimeType = () => {
+		if (suggestedMimeType) {
+			form.setValue('mime_type', suggestedMimeType);
+			setSuggestedMimeType('');
+		}
+	};
 
 	const handleSubmit = async (data: ResourceFormData) => {
 		try {
@@ -201,7 +234,10 @@ export default function ResourceFormDialog({ open, onClose, resource }: Resource
 									<FormItem>
 										<FormLabel>Resource Type</FormLabel>
 										<Select
-											onValueChange={field.onChange}
+											onValueChange={(value) => {
+												field.onChange(value);
+												handleResourceTypeChange(value as typeof enums.resourceType[number]);
+											}}
 											value={field.value}
 										>
 											<FormControl>
@@ -210,14 +246,16 @@ export default function ResourceFormDialog({ open, onClose, resource }: Resource
 												</SelectTrigger>
 											</FormControl>
 											<SelectContent>
-												<SelectItem value="file">File</SelectItem>
-												<SelectItem value="url">URL</SelectItem>
-												<SelectItem value="database">Database</SelectItem>
-												<SelectItem value="api">API</SelectItem>
-												<SelectItem value="memory">Memory</SelectItem>
-												<SelectItem value="custom">Custom</SelectItem>
+												{enums.resourceType.map((type) => (
+													<SelectItem key={type} value={type}>
+														{type.charAt(0).toUpperCase() + type.slice(1)}
+													</SelectItem>
+												))}
 											</SelectContent>
 										</Select>
+										<FormDescription>
+											Resource type determines validation rules for the URI
+										</FormDescription>
 										<FormMessage />
 									</FormItem>
 								)}
@@ -228,14 +266,30 @@ export default function ResourceFormDialog({ open, onClose, resource }: Resource
 								name="mime_type"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>MIME Type</FormLabel>
+										<div className="flex items-center justify-between">
+											<FormLabel>MIME Type</FormLabel>
+											{suggestedMimeType && (
+												<Button
+													type="button"
+													variant="ghost"
+													size="sm"
+													onClick={applySuggestedMimeType}
+													className="text-blue-600 hover:text-blue-700"
+												>
+													<Lightbulb className="h-4 w-4 mr-1" />
+													Use {suggestedMimeType}
+												</Button>
+											)}
+										</div>
 										<FormControl>
 											<Input
 												placeholder="application/json"
 												{...field}
 											/>
 										</FormControl>
-										<FormDescription>Optional</FormDescription>
+										<FormDescription>
+											Optional MIME type. Will be suggested based on URI extension.
+										</FormDescription>
 										<FormMessage />
 									</FormItem>
 								)}
@@ -252,9 +306,28 @@ export default function ResourceFormDialog({ open, onClose, resource }: Resource
 										<Input
 											placeholder="https://example.com/resource or /path/to/file"
 											{...field}
+											onChange={(e) => {
+												field.onChange(e);
+												const resourceType = form.getValues('resource_type');
+												handleUriChange(e.target.value, resourceType);
+											}}
 										/>
 									</FormControl>
-									<FormDescription>The location of the resource</FormDescription>
+									<FormDescription>
+										The location of the resource. Format depends on resource type.
+									</FormDescription>
+									{!uriValidation.valid && (
+										<Alert className="mt-2" variant="destructive">
+											<AlertCircle className="h-4 w-4" />
+											<AlertDescription>{uriValidation.error}</AlertDescription>
+										</Alert>
+									)}
+									{uriValidation.valid && field.value && (
+										<div className="flex items-center gap-1 text-green-600 text-sm mt-1">
+											<CheckCircle className="h-4 w-4" />
+											<span>Valid URI format</span>
+										</div>
+									)}
 									<FormMessage />
 								</FormItem>
 							)}
