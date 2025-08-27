@@ -102,7 +102,13 @@ export default tseslint.config({
 		'react/jsx-props-no-spreading': 'off',
 		'react/no-array-index-key': 'off',
 		'react/jsx-pascal-case': 'off',
-		'react-refresh/only-export-components': 'warn',
+		'react-refresh/only-export-components': [
+			'warn',
+			{
+				allowConstantExport: true,
+				allowExportNames: ['metadata', 'viewport']
+			}
+		],
 
 		'no-useless-constructor': 'off',
 		'no-underscore-dangle': 'off',

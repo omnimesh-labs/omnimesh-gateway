@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -32,6 +33,11 @@ type SetupFunction struct {
 
 // Available setup functions
 var setupFunctions = map[string]SetupFunction{
+	"all": {
+		Name:        "Complete Setup",
+		Description: "Runs all essential setup tasks (org + admin + namespaces + dummy data)",
+		Execute:     (*SetupManager).completeSetup,
+	},
 	"admin": {
 		Name:        "Create Admin User",
 		Description: "Creates a default admin user (admin@admin.com)",
@@ -51,6 +57,11 @@ var setupFunctions = map[string]SetupFunction{
 		Name:        "Add Default MCP Data",
 		Description: "Adds default resources, tools, and prompts for testing",
 		Execute:     (*SetupManager).addDefaultMCPData,
+	},
+	"namespaces": {
+		Name:        "Add Dummy Namespaces",
+		Description: "Creates default namespaces for testing",
+		Execute:     (*SetupManager).addDummyNamespaces,
 	},
 	"reset": {
 		Name:        "Reset Database",
@@ -193,6 +204,32 @@ func printAvailableFunctions() {
 }
 
 // Setup Functions Implementation
+
+func (s *SetupManager) completeSetup() error {
+	fmt.Println("Running complete setup - all essential tasks...")
+
+	// Run setup tasks in order
+	tasks := []struct {
+		name string
+		fn   func(*SetupManager) error
+	}{
+		{"Create Default Organization", (*SetupManager).createDefaultOrganization},
+		{"Create Admin User", (*SetupManager).createAdminUser},
+		{"Add Dummy Data", (*SetupManager).addDummyData},
+		{"Add Default MCP Data", (*SetupManager).addDefaultMCPData},
+		{"Add Dummy Namespaces", (*SetupManager).addDummyNamespaces},
+	}
+
+	for _, task := range tasks {
+		fmt.Printf("\n🔧 Running: %s\n", task.name)
+		if err := task.fn(s); err != nil {
+			return fmt.Errorf("failed during %s: %w", task.name, err)
+		}
+		fmt.Printf("✅ %s completed\n", task.name)
+	}
+
+	return nil
+}
 
 func (s *SetupManager) createAdminUser() error {
 	fmt.Println("Creating admin user: admin@admin.com")
@@ -628,6 +665,92 @@ func (s *SetupManager) addDefaultPrompts(orgID uuid.UUID) error {
 		}
 	}
 
+	return nil
+}
+
+func (s *SetupManager) addDummyNamespaces() error {
+	fmt.Println("Adding dummy namespaces...")
+
+	// Ensure default org exists
+	orgModel := models.NewOrganizationModel(s.db)
+	org, err := orgModel.GetDefault()
+	if err != nil {
+		fmt.Println("Default organization not found, creating it first...")
+		if err := s.createDefaultOrganization(); err != nil {
+			return fmt.Errorf("failed to create default organization: %w", err)
+		}
+		org, err = orgModel.GetDefault()
+		if err != nil {
+			return fmt.Errorf("failed to get default organization after creation: %w", err)
+		}
+	}
+
+	// Create dummy namespaces using raw SQL (since namespace models don't exist in models package yet)
+	namespaces := []struct {
+		id          string
+		name        string
+		description string
+		metadata    map[string]interface{}
+	}{
+		{
+			id:          "11111111-1111-1111-1111-111111111111",
+			name:        "development",
+			description: "Development namespace for testing and development servers",
+			metadata:    map[string]interface{}{"environment": "dev", "purpose": "testing"},
+		},
+		{
+			id:          "22222222-2222-2222-2222-222222222222",
+			name:        "production",
+			description: "Production namespace for live MCP servers",
+			metadata:    map[string]interface{}{"environment": "prod", "purpose": "live"},
+		},
+		{
+			id:          "33333333-3333-3333-3333-333333333333",
+			name:        "testing",
+			description: "Testing namespace for automated tests and QA",
+			metadata:    map[string]interface{}{"environment": "test", "purpose": "qa"},
+		},
+	}
+
+	for _, ns := range namespaces {
+		// Check if namespace already exists
+		var exists bool
+		checkQuery := `SELECT EXISTS(SELECT 1 FROM namespaces WHERE organization_id = $1 AND name = $2)`
+		err := s.db.QueryRow(checkQuery, org.ID.String(), ns.name).Scan(&exists)
+		if err != nil {
+			fmt.Printf("❌ Failed to check if namespace exists %s: %v\n", ns.name, err)
+			continue
+		}
+
+		if exists {
+			fmt.Printf("⚠️  Namespace already exists: %s\n", ns.name)
+			continue
+		}
+
+		// Insert namespace
+		query := `
+			INSERT INTO namespaces (
+				id, organization_id, name, description, 
+				is_active, metadata, created_at, updated_at
+			) VALUES (
+				$1, $2, $3, $4, $5, $6, NOW(), NOW()
+			)`
+
+		metadataJSON, err := json.Marshal(ns.metadata)
+		if err != nil {
+			fmt.Printf("❌ Failed to marshal metadata for namespace %s: %v\n", ns.name, err)
+			continue
+		}
+
+		_, err = s.db.Exec(query, ns.id, org.ID.String(), ns.name, ns.description, true, metadataJSON)
+		if err != nil {
+			fmt.Printf("❌ Failed to create namespace %s: %v\n", ns.name, err)
+		} else {
+			fmt.Printf("✅ Created namespace: %s (%s)\n", ns.name, ns.description)
+		}
+	}
+
+	fmt.Println("✅ Dummy namespaces created successfully!")
 	return nil
 }
 

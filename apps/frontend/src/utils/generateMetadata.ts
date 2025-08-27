@@ -18,6 +18,7 @@ async function generateMetadata(meta: {
 		publisher: 'Janex Team',
 		robots: meta.robots,
 		icons: { icon: meta.favicon },
+		manifest: '/manifest.json',
 		metadataBase: new URL(meta.url),
 		openGraph: {
 			url: meta.url,
@@ -34,6 +35,9 @@ async function generateMetadata(meta: {
 			title: meta.title,
 			description: meta.description,
 			images: [meta.cardImage]
+		},
+		other: {
+			'emotion-insertion-point': ''
 		}
 	};
 }

@@ -20,7 +20,7 @@ Get the entire Janex Gateway stack running with a single command:
 git clone https://github.com/janex-ai/janex-gateway.git
 cd mcp-gateway
 
-docker compose up --build  # make dev
+docker compose up --build  # or use `make start` cmd
 ```
 
 - Backend: `http://localhost:8080`
@@ -122,11 +122,31 @@ The Janex Gateway is designed with a modular architecture for scalability and ma
 
 ## 🛠️ Development
 
+### Quick Development Setup
 
-### Primary Commands
+Fast development with backend in Docker and frontend running locally:
+
 ```bash
-# Core Development
-make dev              # Start in development mode with hot reload
+# Terminal 1: Start backend services
+make dev
+
+# Terminal 2: Start frontend locally (much faster)
+cd apps/frontend
+bun install
+bun run dev
+```
+
+This approach provides:
+- ⚡ **Fast compilation** (1-3s vs 30s+)
+- 🔄 **Better hot reload** performance  
+- 🛠️ **Native debugging** tools
+
+### Essential Commands
+```bash
+# Development
+make dev              # Start backend services (postgres, redis, backend)
+make setup            # Complete setup (DB + admin + orgs + namespaces)
+make start            # Production-ready local setup with services
 make stop             # Stop all services
 make clean            # Stop and remove all data
 make logs             # View service logs
@@ -147,16 +167,16 @@ make build            # Build containers
 make rebuild          # Rebuild and restart containers
 make shell            # Open shell in backend container
 make bash             # Open bash in backend container
-make setup            # Initial project setup
 ```
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Run `make dev` to start the full stack
-3. Make your changes
-4. Run `make test` and `make lint`
-5. Submit a Pull Request
+2. Run `make dev` to start backend services
+3. Run frontend locally: `cd apps/frontend && bun run dev`
+4. Make your changes
+5. Run `make test` and `make lint`
+6. Submit a Pull Request
 
 Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
 

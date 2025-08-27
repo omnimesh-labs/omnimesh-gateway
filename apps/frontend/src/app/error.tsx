@@ -1,9 +1,6 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Typography, Button, Container } from '@mui/material';
-import Link from '@fuse/core/Link';
-import SvgIcon from '@fuse/core/SvgIcon';
 
 type ErrorProps = {
 	error: Error & { digest?: string };
@@ -16,47 +13,53 @@ export default function Error({ error, reset }: ErrorProps) {
 	}, [error]);
 
 	return (
-		<Container maxWidth="sm">
-			<div className="flex min-h-screen flex-col items-center justify-center text-center">
-				<SvgIcon
-					className="mb-4"
-					color="error"
-					size={64}
+		<div
+			style={{
+				display: 'flex',
+				flexDirection: 'column',
+				alignItems: 'center',
+				justifyContent: 'center',
+				minHeight: '100vh',
+				fontFamily: 'system-ui, -apple-system, sans-serif',
+				textAlign: 'center',
+				padding: '2rem'
+			}}
+		>
+			<h1 style={{ color: '#dc2626', marginBottom: '1rem', fontSize: '2rem' }}>
+				Oops! Something went wrong
+			</h1>
+			<p style={{ color: '#666', marginBottom: '2rem', fontSize: '1rem' }}>
+				{error.message || 'An unexpected error occurred'}
+			</p>
+			<div style={{ display: 'flex', gap: '1rem' }}>
+				<a
+					href="/"
+					style={{
+						padding: '0.5rem 1rem',
+						backgroundColor: '#3b82f6',
+						color: 'white',
+						textDecoration: 'none',
+						borderRadius: '0.25rem',
+						border: 'none',
+						cursor: 'pointer'
+					}}
 				>
-					lucide:info
-				</SvgIcon>
-				<Typography
-					className="mb-4 text-xl lg:text-3xl"
-					color="error.main"
+					Go to homepage
+				</a>
+				<button
+					onClick={() => reset()}
+					style={{
+						padding: '0.5rem 1rem',
+						backgroundColor: 'transparent',
+						color: '#3b82f6',
+						border: '1px solid #3b82f6',
+						borderRadius: '0.25rem',
+						cursor: 'pointer'
+					}}
 				>
-					Oops! Something went wrong
-				</Typography>
-				<Typography
-					className="mb-8"
-					color="text.secondary"
-				>
-					{error.message || 'An unexpected error occurred'}
-				</Typography>
-				<div className="flex gap-2">
-					<Button
-						component={Link}
-						to="/"
-						variant="contained"
-						color="primary"
-						size="small"
-					>
-						Go to homepage
-					</Button>
-					<Button
-						onClick={() => reset()}
-						variant="outlined"
-						color="secondary"
-						size="small"
-					>
-						Try again
-					</Button>
-				</div>
+					Try again
+				</button>
 			</div>
-		</Container>
+		</div>
 	);
 }

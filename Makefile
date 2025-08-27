@@ -2,7 +2,8 @@
 .PHONY: help dev stop clean test migrate lint setup shell bash migrate-down migrate-status setup-admin logs nuclear restart prune docker-prune docker-reset
 
 # Docker compose command
-DOCKER_COMPOSE = docker compose
+DOCKER_COMPOSE = docker compose -f docker-compose.dev.yml
+DOCKER_COMPOSE_PROD = docker compose
 BACKEND = $(DOCKER_COMPOSE) run --rm backend
 GO = $(BACKEND) go
 
@@ -11,7 +12,8 @@ help:
 	@echo "MCP Gateway - Available Commands"
 	@echo ""
 	@echo "Quick Start:"
-	@echo "  make dev          - Start full stack with hot reload"
+	@echo "  make setup        - Production build (frontend built, no hot reload)"
+	@echo "  make dev          - Start backend services, run frontend locally"
 	@echo "  make stop         - Stop all services (clean)"
 	@echo "  make restart      - Clean restart services"
 	@echo "  make clean        - Stop and remove all data"
@@ -42,8 +44,8 @@ help:
 	@echo "  make watch        - Local development with hot reload"
 	@echo ""
 	@echo "Setup:"
-	@echo "  make setup        - Initial project setup"
-	@echo "  make setup-admin  - Create admin user"
+	@echo "  make setup        - Complete setup (DB + admin + orgs + namespaces)"
+	@echo "  make start        - Production-ready local setup with services"
 	@echo ""
 	@echo "Memory/Disk Management:"
 	@echo "  If running out of space, try these in order:"
@@ -54,24 +56,23 @@ help:
 
 # Development mode with hot reload
 dev:
-	@echo "Starting MCP Gateway Stack with hot reload..."
-	@if [ ! -f .env ]; then \
-		echo "Creating .env file from .env.example..."; \
-		cp .env.example .env; \
-		echo ".env file created"; \
-	fi
-	@$(DOCKER_COMPOSE) up
+	@$(DOCKER_COMPOSE) down -v --remove-orphans --rmi local 2>/dev/null || true
+	@if [ ! -f .env ]; then cp .env.example .env; fi
+	@echo "Starting backend services..."
+	@$(DOCKER_COMPOSE) up postgres redis backend
 
 # Stop all services
 stop:
 	@echo "Stopping MCP Gateway Stack..."
 	@$(DOCKER_COMPOSE) down --remove-orphans
+	@$(DOCKER_COMPOSE_PROD) down --remove-orphans
 	@echo "All services stopped"
 
 # Clean everything (including volumes)
 clean:
 	@echo "Cleaning MCP Gateway Stack (removes all data)..."
 	@$(DOCKER_COMPOSE) down -v --remove-orphans --rmi local
+	@$(DOCKER_COMPOSE_PROD) down -v --remove-orphans --rmi local
 	@docker system prune -f
 	@rm -f main api apps/backend/api logs/*.log tmp/main
 	@echo "All services stopped and data removed"
@@ -111,10 +112,10 @@ migrate-status:
 	@echo "Checking migration status..."
 	@$(DOCKER_COMPOSE) run --rm --entrypoint /app/migrate backend status
 
-# Create admin user
-setup-admin:
-	@echo "Setting up admin user..."
-	@$(DOCKER_COMPOSE) run --rm --entrypoint /app/migrate backend setup-admin
+# Complete setup - runs Go setup script for all necessary objects
+setup:
+	@echo "Running complete setup (database + admin user + organizations + namespaces)..."
+	@$(DOCKER_COMPOSE) run --rm --entrypoint="" backend sh -c "cd /app && /scripts/wait-for-it.sh \$${DB_HOST}:\$${DB_PORT} -t 60 && /app/migrate up && go run apps/backend/cmd/setup/main.go all"
 
 # Development helpers
 shell:
@@ -130,12 +131,13 @@ lint:
 	@echo "Running linters..."
 	@$(GO) run github.com/golangci/golangci-lint/cmd/golangci-lint@latest run
 
-# Initial project setup
-setup:
-	@echo "Setting up project..."
+# Production-ready local setup with services
+start:
+	@echo "Setting up MCP Gateway Stack (production build)..."
 	@if [ ! -f .env ]; then \
+		echo "Creating .env file from .env.example..."; \
 		cp .env.example .env; \
-		echo "Created .env file"; \
+		echo ".env file created"; \
 	fi
 	@echo "Installing pre-commit hooks..."
 	@if command -v pre-commit > /dev/null; then \
@@ -143,7 +145,8 @@ setup:
 	else \
 		echo "Warning: pre-commit not installed. Install with: pip install pre-commit"; \
 	fi
-	@echo "Setup complete! Run 'make dev' to start development"
+	@echo "Starting services with production build..."
+	@$(DOCKER_COMPOSE_PROD) up --build
 
 # Build only (no run)
 build:
@@ -177,6 +180,7 @@ prune:
 docker-prune:
 	@echo "Aggressive Docker cleanup (removes all unused resources)..."
 	@$(DOCKER_COMPOSE) down --remove-orphans
+	@$(DOCKER_COMPOSE_PROD) down --remove-orphans
 	@docker system prune -a -f --volumes
 	@echo "Aggressive Docker cleanup complete"
 
@@ -184,6 +188,7 @@ docker-prune:
 docker-reset:
 	@echo "Resetting all project Docker resources..."
 	@$(DOCKER_COMPOSE) down -v --remove-orphans --rmi all
+	@$(DOCKER_COMPOSE_PROD) down -v --remove-orphans --rmi all
 	@docker system prune -a -f --volumes
 	@echo "Docker reset complete - all project images and volumes removed"
 

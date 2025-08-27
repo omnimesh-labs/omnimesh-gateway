@@ -3,18 +3,50 @@ import 'src/styles/splash-screen.css';
 import 'src/styles/index.css';
 import { SessionProvider } from 'next-auth/react';
 import { auth } from '@auth/authJs';
-import generateMetadata from '../utils/generateMetadata';
 import App from './App';
+import StylesheetLoader from '../components/StylesheetLoader';
+import type { Metadata, Viewport } from 'next';
 
-// eslint-disable-next-line react-refresh/only-export-components
-export const metadata = await generateMetadata({
+ 
+export const metadata: Metadata = {
 	title: 'Janex - Dashboard',
 	description: 'Janex - Production-ready API gateway for Model Context Protocol servers',
-	cardImage: '/card.png',
+	referrer: 'origin-when-cross-origin',
+	keywords: ['MCP', 'Model Context Protocol', 'API Gateway', 'Janex'],
+	authors: [{ name: 'Janex Team' }],
+	creator: 'Janex Team',
+	publisher: 'Janex Team',
 	robots: 'follow, index',
-	favicon: '/favicon.ico',
-	url: 'https://janex.example.com'
-});
+	icons: { icon: '/favicon.ico' },
+	manifest: '/manifest.json',
+	metadataBase: new URL('https://janex.example.com'),
+	openGraph: {
+		url: 'https://janex.example.com',
+		title: 'Janex - Dashboard',
+		description: 'Janex - Production-ready API gateway for Model Context Protocol servers',
+		images: ['/card.png'],
+		type: 'website',
+		siteName: 'Janex - Dashboard'
+	},
+	twitter: {
+		card: 'summary_large_image',
+		site: '@Janex',
+		creator: '@Janex',
+		title: 'Janex - Dashboard',
+		description: 'Janex - Production-ready API gateway for Model Context Protocol servers',
+		images: ['/card.png']
+	},
+	other: {
+		'emotion-insertion-point': ''
+	}
+};
+
+ 
+export const viewport: Viewport = {
+	width: 'device-width',
+	initialScale: 1,
+	themeColor: '#000000'
+};
 
 export default async function RootLayout({
 	children
@@ -26,47 +58,13 @@ export default async function RootLayout({
 	return (
 		<html lang="en">
 			<head>
-				<meta charSet="utf-8" />
-				<meta
-					name="viewport"
-					content="width=device-width, initial-scale=1, shrink-to-fit=no"
-				/>
-				<meta
-					name="theme-color"
-					content="#000000"
-				/>
-				<base href="/" />
-				{/*
-					manifest.json provides metadata used when your web app is added to the
-					homescreen on Android. See https://developers.google.com/web/fundamentals/engage-and-retain/web-app-manifest/
-				*/}
-				<link
-					rel="manifest"
-					href="/manifest.json"
-				/>
-				<link
-					rel="shortcut icon"
-					href="/favicon.ico"
-				/>
-				{/* External stylesheets - using link tags for public assets */}
-				<link
-					rel="stylesheet"
-					href="/assets/fonts/Geist/geist.css"
-				/>
-				<link
-					rel="stylesheet"
-					href="/assets/fonts/material-design-icons/MaterialIconsOutlined.css"
-				/>
-				<link
-					rel="stylesheet"
-					href="/assets/styles/prism.css"
-				/>
-				<noscript id="emotion-insertion-point" />
+				<noscript id="emotion-insertion-point"></noscript>
 			</head>
 			<body
 				id="root"
 				className={clsx('loading')}
 			>
+				<StylesheetLoader />
 				<SessionProvider
 					basePath="/auth"
 					session={session}

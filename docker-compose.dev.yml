@@ -36,7 +36,7 @@ services:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
-      target: production
+      target: development
     restart: unless-stopped
     ports:
       - "${SERVER_PORT}:8080"
@@ -45,10 +45,11 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      frontend:
-        condition: service_healthy
+    volumes:
+      - ./:/app
+      - backend_tmp:/app/tmp
     environment:
-      MODE: production
+      MODE: development
       DB_HOST: postgres
       DB_PORT: 5432
       DB_DATABASE: ${DB_DATABASE}
@@ -75,23 +76,7 @@ services:
       timeout: 5s
       retries: 5
 
-  frontend:
-    build:
-      context: apps/frontend
-      dockerfile: Dockerfile
-      target: production
-    restart: unless-stopped
-    ports:
-      - "${FRONTEND_PORT}:3000"
-    environment:
-      NEXT_PUBLIC_API_BASE_URL: http://localhost:8080/api
-      NODE_ENV: production
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
 volumes:
   postgres_volume:
   redis_volume:
+  backend_tmp:

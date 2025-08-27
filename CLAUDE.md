@@ -450,8 +450,8 @@ make watch                  # Live reload with air
 make clean                  # Clean build artifacts
 
 # Local Setup
-make setup                  # Interactive setup menu
-make setup-admin            # Create admin user (admin@admin.com)
+make setup                  # Complete setup (DB + admin + orgs + namespaces)
+make start                  # Production-ready local setup with services
 make setup-reset            # Reset database (WARNING: deletes all data)
 ```
 
@@ -532,7 +532,7 @@ Following the **IMPLEMENTATION_GUIDE.md**, the main areas needing business logic
 1. **Prerequisites**: Go 1.25+, PostgreSQL, Docker (optional)
 2. **Environment Setup**: Create `.env` file with database credentials
 3. **Database Setup**: `make docker-run` and `make migrate`
-4. **Create Admin User**: `make setup-admin` (creates admin@admin.com / qwerty123)
+4. **Complete Setup**: `make setup` (creates admin user, orgs, namespaces)
 5. **Build & Run**: `make build && make run`
 6. **Development**: `make watch` for live reload
 7. **Testing**: `make test` for full test suite
@@ -543,8 +543,8 @@ Following the **IMPLEMENTATION_GUIDE.md**, the main areas needing business logic
 make docker-run
 make migrate
 
-# Create admin user for testing
-make setup-admin
+# Complete setup (creates admin user, orgs, namespaces)
+make setup
 
 # Start the backend server
 make run
