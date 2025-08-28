@@ -26,13 +26,32 @@ import {
 } from '@mui/material';
 import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
-import {
-	useResources,
-	useCreateResource,
-	useUpdateResource,
-	useDeleteResource
-} from '../../api/hooks/useResources';
-import { Resource, CreateResourceRequest, UpdateResourceRequest } from '@/lib/api';
+import { useSnackbar } from 'notistack';
+
+// Mock types
+interface Resource {
+	id: string;
+	name: string;
+	type: string;
+	content_type: string;
+	description: string;
+	uri: string;
+	is_active: boolean;
+	created_at: string;
+	updated_at: string;
+}
+
+interface CreateResourceRequest {
+	name: string;
+	type: string;
+	content_type: string;
+	description: string;
+	uri: string;
+}
+
+interface UpdateResourceRequest extends CreateResourceRequest {
+	id: string;
+}
 
 interface ResourceFormData extends CreateResourceRequest {
 	is_active: boolean;
@@ -83,12 +102,66 @@ function ResourcesView() {
 	});
 
 	// API hooks
-	const { data: resourcesResponse, isLoading, error } = useResources();
-	const createResource = useCreateResource();
-	const updateResource = useUpdateResource();
-	const deleteResource = useDeleteResource();
+	const { enqueueSnackbar } = useSnackbar();
 
-	const resources = resourcesResponse?.data || [];
+	// Mock data
+	const [resources, setResources] = useState<Resource[]>([
+		{
+			id: '1',
+			name: 'API Documentation',
+			type: 'text',
+			content_type: 'text/markdown',
+			description: 'API reference documentation',
+			uri: 'https://api.example.com/docs',
+			is_active: true,
+			created_at: '2024-01-01T00:00:00Z',
+			updated_at: '2024-01-01T00:00:00Z'
+		},
+		{
+			id: '2',
+			name: 'User Guide PDF',
+			type: 'text',
+			content_type: 'application/pdf',
+			description: 'Comprehensive user guide',
+			uri: 'https://docs.example.com/user-guide.pdf',
+			is_active: true,
+			created_at: '2024-01-01T00:00:00Z',
+			updated_at: '2024-01-01T00:00:00Z'
+		}
+	]);
+	const isLoading = false;
+
+	// Mock functions
+	const createResource = {
+		mutate: (data: CreateResourceRequest) => {
+			const newResource: Resource = {
+				id: Date.now().toString(),
+				...data,
+				is_active: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
+			};
+			setResources(prev => [...prev, newResource]);
+			enqueueSnackbar('Resource created successfully', { variant: 'success' });
+		},
+		isPending: false
+	};
+
+	const updateResource = {
+		mutate: (data: UpdateResourceRequest) => {
+			setResources(prev => prev.map(r => r.id === data.id ? { ...r, ...data, updated_at: new Date().toISOString() } : r));
+			enqueueSnackbar('Resource updated successfully', { variant: 'success' });
+		},
+		isPending: false
+	};
+
+	const deleteResource = {
+		mutate: (id: string) => {
+			setResources(prev => prev.filter(r => r.id !== id));
+			enqueueSnackbar('Resource deleted successfully', { variant: 'success' });
+		},
+		isPending: false
+	};
 	const [togglingResourceId, setTogglingResourceId] = useState<string | null>(null);
 
 

@@ -26,13 +26,31 @@ import {
 } from '@mui/material';
 import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
-import {
-	usePrompts,
-	useCreatePrompt,
-	useUpdatePrompt,
-	useDeletePrompt
-} from '../../api/hooks/usePrompts';
-import { Prompt, CreatePromptRequest, UpdatePromptRequest } from '@/lib/api';
+import { useSnackbar } from 'notistack';
+
+// Mock types
+interface Prompt {
+	id: string;
+	name: string;
+	category: string;
+	description: string;
+	prompt_template: string;
+	is_active: boolean;
+	created_at: string;
+	updated_at: string;
+}
+
+interface CreatePromptRequest {
+	name: string;
+	category: string;
+	description: string;
+	prompt_template: string;
+	is_active: boolean;
+}
+
+interface UpdatePromptRequest extends CreatePromptRequest {
+	id: string;
+}
 
 const Root = styled(PageSimple)(({ theme }) => ({
 	'& .PageSimple-header': {
@@ -80,13 +98,64 @@ function PromptsView() {
 		is_active: true
 	});
 
-	// API hooks
-	const { data: promptsResponse, isLoading, error } = usePrompts();
-	const createPrompt = useCreatePrompt();
-	const updatePrompt = useUpdatePrompt();
-	const deletePrompt = useDeletePrompt();
+	const { enqueueSnackbar } = useSnackbar();
 
-	const prompts = promptsResponse?.data || [];
+	// Mock data
+	const [prompts, setPrompts] = useState<Prompt[]>([
+		{
+			id: '1',
+			name: 'Code Review Assistant',
+			category: 'coding',
+			description: 'Helps review code for best practices and issues',
+			prompt_template: 'Please review the following code for:\n- Best practices\n- Potential bugs\n- Performance issues\n- Security concerns\n\n{code}',
+			is_active: true,
+			created_at: '2024-01-01T00:00:00Z',
+			updated_at: '2024-01-01T00:00:00Z'
+		},
+		{
+			id: '2',
+			name: 'Data Analysis Helper',
+			category: 'analysis',
+			description: 'Analyzes data and provides insights',
+			prompt_template: 'Analyze the following data and provide insights:\n\n{data}',
+			is_active: true,
+			created_at: '2024-01-01T00:00:00Z',
+			updated_at: '2024-01-01T00:00:00Z'
+		}
+	]);
+	const isLoading = false;
+	const error = null;
+
+	// Mock functions
+	const createPrompt = {
+		mutate: (data: CreatePromptRequest) => {
+			const newPrompt: Prompt = {
+				id: Date.now().toString(),
+				...data,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
+			};
+			setPrompts(prev => [...prev, newPrompt]);
+			enqueueSnackbar('Prompt created successfully', { variant: 'success' });
+		},
+		isPending: false
+	};
+
+	const updatePrompt = {
+		mutate: (data: UpdatePromptRequest) => {
+			setPrompts(prev => prev.map(p => p.id === data.id ? { ...p, ...data, updated_at: new Date().toISOString() } : p));
+			enqueueSnackbar('Prompt updated successfully', { variant: 'success' });
+		},
+		isPending: false
+	};
+
+	const deletePrompt = {
+		mutate: (id: string) => {
+			setPrompts(prev => prev.filter(p => p.id !== id));
+			enqueueSnackbar('Prompt deleted successfully', { variant: 'success' });
+		},
+		isPending: false
+	};
 	const [togglingPromptId, setTogglingPromptId] = useState<string | null>(null);
 
 

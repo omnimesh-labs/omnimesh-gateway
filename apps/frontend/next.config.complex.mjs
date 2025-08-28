@@ -12,7 +12,6 @@ const withBundleAnalyzer =
 // Conditionally add webpack configuration only when NOT using turbopack
 const baseConfig = {
 	reactStrictMode: false,
-	skipTrailingSlashRedirect: true,
 	skipMiddlewareUrlNormalize: true,
 	output: 'standalone',
 	eslint: {

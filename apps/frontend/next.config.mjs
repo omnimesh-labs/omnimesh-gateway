@@ -1,27 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
 	reactStrictMode: false,
+	output: 'standalone',
 	eslint: {
 		ignoreDuringBuilds: true
 	},
 	typescript: {
 		ignoreBuildErrors: true
 	},
-	// output: 'export', // Disabled for dynamic routes compatibility
-	trailingSlash: true,
+	generateBuildId: async () => {
+		return 'build-' + Date.now()
+	},
 	images: {
 		unoptimized: true
-	},
-	experimental: {
-		optimizePackageImports: [
-			'@mui/material',
-			'@mui/icons-material'
-		]
-	},
-	compiler: {
-		removeConsole: process.env.NODE_ENV === 'production' ? {
-			exclude: ['error', 'warn']
-		} : false
 	}
 };
 

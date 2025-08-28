@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // Define public routes that don't require authentication
-const publicRoutes = ['/sign-in', '/sign-up', '/401', '/404', '/500'];
+const publicRoutes = ['/sign-in', '/sign-up', '/401', '/404'];
 const authRoutes = ['/sign-in', '/sign-up'];
 
 export function middleware(request: NextRequest) {

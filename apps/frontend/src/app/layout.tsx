@@ -1,4 +1,3 @@
-import clsx from 'clsx';
 import 'src/styles/splash-screen.css';
 import 'src/styles/index.css';
 import { SessionProvider } from 'next-auth/react';
@@ -7,7 +6,7 @@ import App from './App';
 import StylesheetLoader from '../components/StylesheetLoader';
 import type { Metadata, Viewport } from 'next';
 
- 
+
 export const metadata: Metadata = {
 	title: 'Janex - Dashboard',
 	description: 'Janex - Production-ready API gateway for Model Context Protocol servers',
@@ -41,7 +40,7 @@ export const metadata: Metadata = {
 	}
 };
 
- 
+
 export const viewport: Viewport = {
 	width: 'device-width',
 	initialScale: 1,
@@ -57,13 +56,7 @@ export default async function RootLayout({
 
 	return (
 		<html lang="en">
-			<head>
-				<noscript id="emotion-insertion-point"></noscript>
-			</head>
-			<body
-				id="root"
-				className={clsx('loading')}
-			>
+			<body>
 				<StylesheetLoader />
 				<SessionProvider
 					basePath="/auth"

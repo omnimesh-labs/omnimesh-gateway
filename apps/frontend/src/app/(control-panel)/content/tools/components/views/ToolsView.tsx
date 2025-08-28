@@ -27,13 +27,28 @@ import {
 } from '@mui/material';
 import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
-import { Tool as ApiTool, UpdateToolRequest } from '@/lib/api';
-import {
-	useTools,
-	useCreateTool,
-	useUpdateTool,
-	useDeleteTool
-} from '../../api/hooks/useTools';
+// Mock types
+interface Tool {
+	id: string;
+	name: string;
+	description: string;
+	function_name: string;
+	parameters: any;
+	is_active: boolean;
+	created_at: string;
+	updated_at: string;
+}
+
+interface CreateToolRequest {
+	name: string;
+	description: string;
+	function_name: string;
+	parameters: any;
+}
+
+interface UpdateToolRequest extends CreateToolRequest {
+	id: string;
+}
 
 const Root = styled(PageSimple)(({ theme }) => ({
 	'& .PageSimple-header': {
@@ -101,12 +116,76 @@ function ToolsView() {
 	});
 
 	// API hooks
-	const { data: toolsResponse, isLoading, error } = useTools();
-	const createTool = useCreateTool();
-	const updateTool = useUpdateTool();
-	const deleteTool = useDeleteTool();
+	// Mock data
+	const [tools, setTools] = useState<Tool[]>([
+		{
+			id: '1',
+			name: 'Get Weather',
+			description: 'Retrieves current weather information for a location',
+			function_name: 'get_weather',
+			parameters: {
+				type: 'object',
+				properties: {
+					location: { type: 'string', description: 'City name' }
+				},
+				required: ['location']
+			},
+			is_active: true,
+			created_at: '2024-01-01T00:00:00Z',
+			updated_at: '2024-01-01T00:00:00Z'
+		},
+		{
+			id: '2',
+			name: 'Send Email',
+			description: 'Sends an email to a recipient',
+			function_name: 'send_email',
+			parameters: {
+				type: 'object',
+				properties: {
+					to: { type: 'string', description: 'Email address' },
+					subject: { type: 'string', description: 'Email subject' },
+					body: { type: 'string', description: 'Email body' }
+				},
+				required: ['to', 'subject', 'body']
+			},
+			is_active: true,
+			created_at: '2024-01-01T00:00:00Z',
+			updated_at: '2024-01-01T00:00:00Z'
+		}
+	]);
+	const isLoading = false;
 
-	const tools = toolsResponse?.data || [];
+	// Mock functions
+	const createTool = {
+		mutate: (data: CreateToolRequest) => {
+			const newTool: Tool = {
+				id: Date.now().toString(),
+				...data,
+				is_active: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
+			};
+			setTools(prev => [...prev, newTool]);
+			enqueueSnackbar('Tool created successfully', { variant: 'success' });
+		},
+		isPending: false
+	};
+
+	const updateTool = {
+		mutate: (data: UpdateToolRequest) => {
+			setTools(prev => prev.map(t => t.id === data.id ? { ...t, ...data, updated_at: new Date().toISOString() } : t));
+			enqueueSnackbar('Tool updated successfully', { variant: 'success' });
+		},
+		isPending: false
+	};
+
+	const deleteTool = {
+		mutate: (id: string) => {
+			setTools(prev => prev.filter(t => t.id !== id));
+			enqueueSnackbar('Tool deleted successfully', { variant: 'success' });
+		},
+		isPending: false
+	};
 	const [togglingToolId, setTogglingToolId] = useState<string | null>(null);
 
 

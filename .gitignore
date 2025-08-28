@@ -25,11 +25,13 @@ tmp/
 .env
 
 # Project build
-main
-api
 bin/
 *templ.go
 migrate
+main
+api
+!*/migrate/
+!*/api/*
 
 # OS X generated file
 .DS_Store

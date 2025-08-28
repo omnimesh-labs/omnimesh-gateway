@@ -88,8 +88,9 @@
 	"scripts": {
 		"dev": "TURBOPACK=1 next dev --turbo --port 3000",
 		"dev:fast": "NODE_ENV=development TURBOPACK=1 next dev --turbo --port 3000 --experimental-https",
-		"build": "NODE_OPTIONS='--max-old-space-size=8192' next build",
-		"build:analyze": "ANALYZE=true NODE_OPTIONS='--max-old-space-size=8192' next build",
+		"build": "node build.js",
+		"build:direct": "next build",
+		"build:analyze": "ANALYZE=true next build",
 		"start": "next start",
 		"lint": "eslint ./src --config ./eslint.config.mjs",
 		"lint:fix": "eslint --fix ./src --config ./eslint.config.mjs",
@@ -98,7 +99,7 @@
 		"audit": "bun audit"
 	},
 	"engines": {
-		"node": "20.11.1",
+		"node": ">=20.0.0",
 		"npm": ">=9.0.0"
 	},
 	"browserslist": {
