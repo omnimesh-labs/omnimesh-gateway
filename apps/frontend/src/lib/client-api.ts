@@ -42,7 +42,7 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 // Admin API
 class AdminAPI {
 	public async getStats(): Promise<SystemStats> {
-		return await apiRequest<SystemStats>('/admin/stats');
+		return await apiRequest<SystemStats>('/api/admin/stats');
 	}
 
 	public async getLogs(params: LogQueryParams = {}): Promise<{ logs: LogEntry[]; total: number }> {
@@ -56,7 +56,7 @@ class AdminAPI {
 		if (params.offset) query.set('offset', String(params.offset));
 
 		const queryString = query.toString();
-		const endpoint = `/admin/logs${queryString ? '?' + queryString : ''}`;
+		const endpoint = `/api/admin/logs${queryString ? '?' + queryString : ''}`;
 		return await apiRequest<{ logs: LogEntry[]; total: number }>(endpoint);
 	}
 
@@ -71,7 +71,7 @@ class AdminAPI {
 		if (params.offset) query.set('offset', String(params.offset));
 
 		const queryString = query.toString();
-		const endpoint = `/admin/audit-logs${queryString ? '?' + queryString : ''}`;
+		const endpoint = `/api/admin/audit${queryString ? '?' + queryString : ''}`;
 		return await apiRequest<{ logs: AuditLogEntry[]; total: number }>(endpoint);
 	}
 }
@@ -79,39 +79,40 @@ class AdminAPI {
 // Server API
 class ServerAPI {
 	public async listServers(): Promise<MCPServer[]> {
-		return await apiRequest<MCPServer[]>('/api/servers');
+		const response = await apiRequest<{data: MCPServer[]; success: boolean}>('/api/gateway/servers');
+		return response.data || [];
 	}
 
 	public async createServer(data: CreateServerRequest): Promise<MCPServer> {
-		return await apiRequest<MCPServer>('/api/servers', {
+		return await apiRequest<MCPServer>('/api/gateway/servers', {
 			method: 'POST',
 			body: JSON.stringify(data)
 		});
 	}
 
 	public async updateServer(id: string, data: Partial<MCPServer>): Promise<MCPServer> {
-		return await apiRequest<MCPServer>(`/api/servers/${id}`, {
+		return await apiRequest<MCPServer>(`/api/gateway/servers/${id}`, {
 			method: 'PUT',
 			body: JSON.stringify(data)
 		});
 	}
 
 	public async deleteServer(id: string): Promise<void> {
-		await apiRequest<void>(`/api/servers/${id}`, {
+		await apiRequest<void>(`/api/gateway/servers/${id}`, {
 			method: 'DELETE'
 		});
 	}
 
 	public async getServer(id: string): Promise<MCPServer> {
-		return await apiRequest<MCPServer>(`/api/servers/${id}`);
+		return await apiRequest<MCPServer>(`/api/gateway/servers/${id}`);
 	}
 
 	public async testConnection(id: string): Promise<{ success: boolean; error?: string }> {
-		return await apiRequest<{ success: boolean; error?: string }>(`/api/servers/${id}/test`);
+		return await apiRequest<{ success: boolean; error?: string }>(`/api/gateway/servers/${id}/test`);
 	}
 
 	public async restartServer(id: string): Promise<void> {
-		await apiRequest<void>(`/api/servers/${id}/restart`, {
+		await apiRequest<void>(`/api/gateway/servers/${id}/restart`, {
 			method: 'POST'
 		});
 	}
@@ -156,45 +157,45 @@ class A2AApi {
 		if (params.tags) query.set('tags', params.tags);
 
 		const queryString = query.toString();
-		const endpoint = `/a2a/agents${queryString ? '?' + queryString : ''}`;
+		const endpoint = `/api/a2a${queryString ? '?' + queryString : ''}`;
 
 		const response = await apiRequest<{ agents: A2AAgent[]; total: number }>(endpoint);
 		return response.agents || [];
 	}
 
 	public async getStats(): Promise<A2AStats> {
-		return await apiRequest<A2AStats>('/a2a/stats');
+		return await apiRequest<A2AStats>('/api/a2a/stats');
 	}
 
 	public async createAgent(agentSpec: A2AAgentSpec): Promise<A2AAgent> {
-		return await apiRequest<A2AAgent>('/a2a/agents', {
+		return await apiRequest<A2AAgent>('/api/a2a', {
 			method: 'POST',
 			body: JSON.stringify(agentSpec)
 		});
 	}
 
 	public async updateAgent(id: string, agentData: Partial<A2AAgentSpec>): Promise<A2AAgent> {
-		return await apiRequest<A2AAgent>(`/a2a/agents/${id}`, {
+		return await apiRequest<A2AAgent>(`/api/a2a/${id}`, {
 			method: 'PUT',
 			body: JSON.stringify(agentData)
 		});
 	}
 
 	public async deleteAgent(id: string): Promise<void> {
-		await apiRequest<void>(`/a2a/agents/${id}`, {
+		await apiRequest<void>(`/api/a2a/${id}`, {
 			method: 'DELETE'
 		});
 	}
 
 	public async toggleAgent(id: string, isActive: boolean): Promise<A2AAgent> {
-		return await apiRequest<A2AAgent>(`/a2a/agents/${id}/toggle`, {
+		return await apiRequest<A2AAgent>(`/api/a2a/${id}/toggle`, {
 			method: 'POST',
 			body: JSON.stringify({ is_active: isActive })
 		});
 	}
 
 	public async testAgent(id: string, testData: { message: string; context?: Record<string, unknown> }): Promise<Record<string, unknown>> {
-		return await apiRequest<Record<string, unknown>>(`/a2a/agents/${id}/test`, {
+		return await apiRequest<Record<string, unknown>>(`/api/a2a/${id}/test`, {
 			method: 'POST',
 			body: JSON.stringify(testData)
 		});

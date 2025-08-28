@@ -42,37 +42,37 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 
 // Endpoint API functions
 export async function listEndpoints(): Promise<Endpoint[]> {
-	const response = await apiRequest<{ endpoints: Endpoint[]; total: number }>('/endpoints');
+	const response = await apiRequest<{ endpoints: Endpoint[]; total: number }>('/api/endpoints');
 	return response.endpoints || [];
 }
 
 export async function getEndpoint(id: string): Promise<Endpoint> {
-	return await apiRequest<Endpoint>(`/endpoints/${id}`);
+	return await apiRequest<Endpoint>(`/api/endpoints/${id}`);
 }
 
 export async function createEndpoint(endpointData: CreateEndpointRequest): Promise<Endpoint> {
-	return await apiRequest<Endpoint>('/endpoints', {
+	return await apiRequest<Endpoint>('/api/endpoints', {
 		method: 'POST',
 		body: JSON.stringify(endpointData)
 	});
 }
 
 export async function updateEndpoint(id: string, endpointData: Partial<UpdateEndpointRequest>): Promise<Endpoint> {
-	return await apiRequest<Endpoint>(`/endpoints/${id}`, {
+	return await apiRequest<Endpoint>(`/api/endpoints/${id}`, {
 		method: 'PUT',
 		body: JSON.stringify(endpointData)
 	});
 }
 
 export async function deleteEndpoint(id: string): Promise<void> {
-	await apiRequest<void>(`/endpoints/${id}`, {
+	await apiRequest<void>(`/api/endpoints/${id}`, {
 		method: 'DELETE'
 	});
 }
 
 // Namespace API functions
 export async function listNamespaces(): Promise<Namespace[]> {
-	const response = await apiRequest<{ namespaces: Namespace[]; total: number }>('/namespaces');
+	const response = await apiRequest<{ namespaces: Namespace[]; total: number }>('/api/namespaces');
 	return response.namespaces || [];
 }
 
@@ -83,45 +83,45 @@ export async function listAgents(params?: { is_active?: boolean; tags?: string }
 	if (params?.tags) query.set('tags', params.tags);
 
 	const queryString = query.toString();
-	const endpoint = `/a2a/agents${queryString ? '?' + queryString : ''}`;
+	const endpoint = `/api/a2a${queryString ? '?' + queryString : ''}`;
 
 	const response = await apiRequest<{ agents: A2AAgent[]; total: number }>(endpoint);
 	return response.agents || [];
 }
 
 export async function getA2AStats(): Promise<A2AStats> {
-	return await apiRequest<A2AStats>('/a2a/stats');
+	return await apiRequest<A2AStats>('/api/a2a/stats');
 }
 
 export async function createAgent(agentSpec: A2AAgentSpec): Promise<A2AAgent> {
-	return await apiRequest<A2AAgent>('/a2a/agents', {
+	return await apiRequest<A2AAgent>('/api/a2a', {
 		method: 'POST',
 		body: JSON.stringify(agentSpec)
 	});
 }
 
 export async function updateAgent(id: string, agentData: Partial<A2AAgentSpec>): Promise<A2AAgent> {
-	return await apiRequest<A2AAgent>(`/a2a/agents/${id}`, {
+	return await apiRequest<A2AAgent>(`/api/a2a/${id}`, {
 		method: 'PUT',
 		body: JSON.stringify(agentData)
 	});
 }
 
 export async function deleteAgent(id: string): Promise<void> {
-	await apiRequest<void>(`/a2a/agents/${id}`, {
+	await apiRequest<void>(`/api/a2a/${id}`, {
 		method: 'DELETE'
 	});
 }
 
 export async function toggleAgent(id: string, isActive: boolean): Promise<A2AAgent> {
-	return await apiRequest<A2AAgent>(`/a2a/agents/${id}/toggle`, {
+	return await apiRequest<A2AAgent>(`/api/a2a/${id}/toggle`, {
 		method: 'POST',
 		body: JSON.stringify({ is_active: isActive })
 	});
 }
 
 export async function testAgent(id: string, testData: { message: string; context?: Record<string, unknown> }): Promise<Record<string, unknown>> {
-	return await apiRequest<Record<string, unknown>>(`/a2a/agents/${id}/test`, {
+	return await apiRequest<Record<string, unknown>>(`/api/a2a/${id}/test`, {
 		method: 'POST',
 		body: JSON.stringify(testData)
 	});
@@ -129,55 +129,55 @@ export async function testAgent(id: string, testData: { message: string; context
 
 // Auth functions
 export async function login(credentials: LoginRequest): Promise<LoginResponse> {
-	return await apiRequest<LoginResponse>('/auth/login', {
+	return await apiRequest<LoginResponse>('/api/auth/login', {
 		method: 'POST',
 		body: JSON.stringify(credentials)
 	});
 }
 
 export async function logout(): Promise<void> {
-	await apiRequest<void>('/auth/logout', {
+	await apiRequest<void>('/api/auth/logout', {
 		method: 'POST'
 	});
 }
 
 export async function refreshToken(): Promise<RefreshResponse> {
-	return await apiRequest<RefreshResponse>('/auth/refresh', {
+	return await apiRequest<RefreshResponse>('/api/auth/refresh', {
 		method: 'POST'
 	});
 }
 
 export async function getProfile(): Promise<User> {
-	return await apiRequest<User>('/auth/profile');
+	return await apiRequest<User>('/api/auth/profile');
 }
 
 export async function updateProfile(data: Partial<User>): Promise<User> {
-	return await apiRequest<User>('/auth/profile', {
+	return await apiRequest<User>('/api/auth/profile', {
 		method: 'PUT',
 		body: JSON.stringify(data)
 	});
 }
 
 export async function getApiKeys(): Promise<ApiKey[]> {
-	return await apiRequest<ApiKey[]>('/auth/api-keys');
+	return await apiRequest<ApiKey[]>('/api/auth/api-keys');
 }
 
 export async function createApiKey(data: CreateApiKeyRequest): Promise<CreateApiKeyResponse> {
-	return await apiRequest<CreateApiKeyResponse>('/auth/api-keys', {
+	return await apiRequest<CreateApiKeyResponse>('/api/auth/api-keys', {
 		method: 'POST',
 		body: JSON.stringify(data)
 	});
 }
 
 export async function deleteApiKey(id: string): Promise<void> {
-	await apiRequest<void>(`/auth/api-keys/${id}`, {
+	await apiRequest<void>(`/api/auth/api-keys/${id}`, {
 		method: 'DELETE'
 	});
 }
 
 // Config functions
 export async function exportConfiguration(options: Record<string, unknown>): Promise<Blob> {
-	const response = await fetch(`${API_BASE_URL}/admin/export`, {
+	const response = await fetch(`${API_BASE_URL}/api/admin/config/export`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify(options)
@@ -191,7 +191,7 @@ export async function exportConfiguration(options: Record<string, unknown>): Pro
 }
 
 export async function importConfiguration(data: FormData): Promise<void> {
-	const response = await fetch(`${API_BASE_URL}/admin/import`, {
+	const response = await fetch(`${API_BASE_URL}/api/admin/config/import`, {
 		method: 'POST',
 		body: data
 	});
@@ -203,10 +203,10 @@ export async function importConfiguration(data: FormData): Promise<void> {
 
 // Admin functions
 export async function getStats(): Promise<SystemStats> {
-	return await apiRequest<SystemStats>('/admin/stats');
+	return await apiRequest<SystemStats>('/api/admin/stats');
 }
 
 // Server functions
 export async function listServers(): Promise<MCPServer[]> {
-	return await apiRequest<MCPServer[]>('/api/servers');
+	return await apiRequest<MCPServer[]>('/api/gateway/servers');
 }

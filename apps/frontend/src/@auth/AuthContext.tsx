@@ -139,8 +139,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
 	const login = useCallback(async (credentials: LoginRequest) => {
 		const response = await authApi.login(credentials);
-		setUser(response.user);
-		setCachedAuth(response.user);
+
+		const user = response.data?.user || response.user;
+		setUser(user);
+		setCachedAuth(user);
 	}, []);
 
 	const logout = useCallback(async () => {

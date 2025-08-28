@@ -65,21 +65,23 @@ class AuthAPI {
 	}
 
 	public async login(credentials: LoginRequest): Promise<LoginResponse> {
-		const response = await this.apiRequest<LoginResponse>('/auth/login', {
+		const response = await this.apiRequest<LoginResponse>('/api/auth/login', {
 			method: 'POST',
 			body: JSON.stringify(credentials)
 		});
 
-		// Store tokens
-		this.setToken(ACCESS_TOKEN_KEY, response.access_token);
-		this.setToken(REFRESH_TOKEN_KEY, response.refresh_token);
+		// Store tokens - fix: tokens are in response.data
+		const accessToken = response.data?.access_token || response.access_token;
+		const refreshToken = response.data?.refresh_token || response.refresh_token;
+		this.setToken(ACCESS_TOKEN_KEY, accessToken);
+		this.setToken(REFRESH_TOKEN_KEY, refreshToken);
 
 		return response;
 	}
 
 	public async logout(): Promise<void> {
 		try {
-			await this.apiRequest<void>('/auth/logout', {
+			await this.apiRequest<void>('/api/auth/logout', {
 				method: 'POST'
 			});
 		} finally {
@@ -93,44 +95,46 @@ class AuthAPI {
 			throw new Error('No refresh token available');
 		}
 
-		const response = await this.apiRequest<RefreshResponse>('/auth/refresh', {
+		const response = await this.apiRequest<RefreshResponse>('/api/auth/refresh', {
 			method: 'POST',
 			headers: {
 				'Authorization': `Bearer ${refreshToken}`
 			}
 		});
 
-		// Update tokens
-		this.setToken(ACCESS_TOKEN_KEY, response.access_token);
-		this.setToken(REFRESH_TOKEN_KEY, response.refresh_token);
+		// Update tokens - fix: tokens might be in response.data
+		const newAccessToken = response.data?.access_token || response.access_token;
+		const newRefreshToken = response.data?.refresh_token || response.refresh_token;
+		this.setToken(ACCESS_TOKEN_KEY, newAccessToken);
+		this.setToken(REFRESH_TOKEN_KEY, newRefreshToken);
 
 		return response;
 	}
 
 	public async getProfile(): Promise<User> {
-		return await this.apiRequest<User>('/auth/profile');
+		return await this.apiRequest<User>('/api/auth/profile');
 	}
 
 	public async updateProfile(data: Partial<User>): Promise<User> {
-		return await this.apiRequest<User>('/auth/profile', {
+		return await this.apiRequest<User>('/api/auth/profile', {
 			method: 'PUT',
 			body: JSON.stringify(data)
 		});
 	}
 
 	public async getApiKeys(): Promise<ApiKey[]> {
-		return await this.apiRequest<ApiKey[]>('/auth/api-keys');
+		return await this.apiRequest<ApiKey[]>('/api/auth/api-keys');
 	}
 
 	public async createApiKey(data: CreateApiKeyRequest): Promise<CreateApiKeyResponse> {
-		return await this.apiRequest<CreateApiKeyResponse>('/auth/api-keys', {
+		return await this.apiRequest<CreateApiKeyResponse>('/api/auth/api-keys', {
 			method: 'POST',
 			body: JSON.stringify(data)
 		});
 	}
 
 	public async deleteApiKey(id: string): Promise<void> {
-		await this.apiRequest<void>(`/auth/api-keys/${id}`, {
+		await this.apiRequest<void>(`/api/auth/api-keys/${id}`, {
 			method: 'DELETE'
 		});
 	}
