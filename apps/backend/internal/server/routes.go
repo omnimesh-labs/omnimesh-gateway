@@ -52,7 +52,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 	var corsConfig cors.Config
 	var allowedOrigins []string
 
-	if s.cfg.Logging.Environment == "development" {
+	environment := os.Getenv("ENVIRONMENT")
+	if environment == "development" {
 		// Development CORS - hardcoded localhost origins
 		allowedOrigins = []string{
 			"http://localhost:3000",
@@ -75,7 +76,6 @@ func (s *Server) RegisterRoutes() http.Handler {
 			}
 		} else {
 			// Fallback for production if env var not set
-			log.Println("WARNING: CORS_ALLOWED_ORIGINS not set in production, using restrictive defaults")
 			allowedOrigins = []string{
 				"http://localhost:3000", // Minimal fallback
 			}
