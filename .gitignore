@@ -46,3 +46,4 @@ logs/*
 venv/
 todos/
 .vercel
+scripts/*.sql

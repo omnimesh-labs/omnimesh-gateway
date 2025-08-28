@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"mcp-gateway/apps/backend/internal/a2a"
@@ -49,32 +50,44 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	// Apply CORS middleware globally to all routes
 	var corsConfig cors.Config
+	var allowedOrigins []string
+
 	if s.cfg.Logging.Environment == "development" {
-		// Development CORS - allow common development origins
-		corsConfig = cors.Config{
-			AllowOrigins: []string{
-				"http://localhost:3000",
-				"http://localhost:3001",
-				"http://localhost:5173",
-				"http://localhost:8080",
-				"http://127.0.0.1:3000",
-				"http://127.0.0.1:8080",
-				"http://backend:8080",
-				"http://frontend:3000",
-			},
-			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
-			AllowHeaders:     []string{"Accept", "Authorization", "Content-Type", "X-Requested-With", "X-API-Key"},
-			AllowCredentials: true,
-			ExposeHeaders:    []string{"Content-Length", "Content-Type"},
+		// Development CORS - hardcoded localhost origins
+		allowedOrigins = []string{
+			"http://localhost:3000",
+			"http://localhost:3001",
+			"http://localhost:5173",
+			"http://localhost:8080",
+			"http://127.0.0.1:3000",
+			"http://127.0.0.1:8080",
+			"http://backend:8080",
+			"http://frontend:3000",
 		}
 	} else {
-		// Strict CORS for production
-		corsConfig = cors.Config{
-			AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173", "http://localhost:8080", "http://backend:8080"},
-			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
-			AllowHeaders:     []string{"Accept", "Authorization", "Content-Type", "X-Requested-With"},
-			AllowCredentials: true,
+		// Production CORS - use environment variable
+		corsOrigins := os.Getenv("CORS_ALLOWED_ORIGINS")
+		if corsOrigins != "" {
+			// Parse comma-separated origins from env var
+			allowedOrigins = strings.Split(corsOrigins, ",")
+			for i, origin := range allowedOrigins {
+				allowedOrigins[i] = strings.TrimSpace(origin)
+			}
+		} else {
+			// Fallback for production if env var not set
+			log.Println("WARNING: CORS_ALLOWED_ORIGINS not set in production, using restrictive defaults")
+			allowedOrigins = []string{
+				"http://localhost:3000", // Minimal fallback
+			}
 		}
+	}
+
+	corsConfig = cors.Config{
+		AllowOrigins:     allowedOrigins,
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
+		AllowHeaders:     []string{"Accept", "Authorization", "Content-Type", "X-Requested-With", "X-API-Key"},
+		AllowCredentials: true,
+		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
 	}
 	r.Use(cors.New(corsConfig))
 
