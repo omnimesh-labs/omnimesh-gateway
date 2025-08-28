@@ -64,3 +64,4 @@ amplifytools.xcconfig
 
 # Local Netlify folder
 .netlify
+.vercel

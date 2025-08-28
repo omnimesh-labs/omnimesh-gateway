@@ -19,7 +19,9 @@
 		"@tanstack/react-query": "^5.85.5",
 		"@tanstack/react-query-devtools": "^5.85.5",
 		"@types/lodash": "^4.17.20",
+		"@vercel/kv": "^3.0.0",
 		"class-variance-authority": "^0.7.1",
+		"client-only": "^0.0.1",
 		"clsx": "^2.1.1",
 		"date-fns": "4.1.0",
 		"framer-motion": "^12.23.12",
@@ -41,6 +43,7 @@
 		"react-hook-form": "^7.62.0",
 		"react-popper": "^2.3.0",
 		"react-swipeable": "^7.0.2",
+		"server-only": "^0.0.1",
 		"sonner": "^2.0.7",
 		"tailwind-merge": "^3.3.1",
 		"type-fest": "4.41.0",
@@ -86,11 +89,10 @@
 		"typescript-eslint": "8.41.0"
 	},
 	"scripts": {
-		"dev": "TURBOPACK=1 next dev --turbo --port 3000",
-		"dev:fast": "NODE_ENV=development TURBOPACK=1 next dev --turbo --port 3000 --experimental-https",
-		"build": "node build.js",
-		"build:direct": "next build",
-		"build:analyze": "ANALYZE=true next build",
+		"dev": "next dev --port 3000",
+		"dev:fast": "NODE_ENV=development next dev --port 3000 --experimental-https",
+		"build": "NODE_ENV=production next build",
+		"build:analyze": "NODE_ENV=production ANALYZE=true next build",
 		"start": "next start",
 		"lint": "eslint ./src --config ./eslint.config.mjs",
 		"lint:fix": "eslint --fix ./src --config ./eslint.config.mjs",
@@ -99,8 +101,8 @@
 		"audit": "bun audit"
 	},
 	"engines": {
-		"node": ">=20.0.0",
-		"npm": ">=9.0.0"
+		"node": "22",
+		"npm": "10.8.2"
 	},
 	"browserslist": {
 		"production": [

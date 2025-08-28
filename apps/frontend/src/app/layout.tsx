@@ -6,6 +6,8 @@ import App from './App';
 import StylesheetLoader from '../components/StylesheetLoader';
 import type { Metadata, Viewport } from 'next';
 
+// Force dynamic rendering for all pages
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
 	title: 'Janex - Dashboard',

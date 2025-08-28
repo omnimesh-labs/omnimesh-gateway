@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
 	reactStrictMode: false,
-	output: 'standalone',
 	eslint: {
 		ignoreDuringBuilds: true
 	},
@@ -11,8 +10,8 @@ const nextConfig = {
 	generateBuildId: async () => {
 		return 'build-' + Date.now()
 	},
-	images: {
-		unoptimized: true
+	experimental: {
+		forceSwcTransforms: true
 	}
 };
 

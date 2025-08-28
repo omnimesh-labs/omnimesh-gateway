@@ -301,3 +301,263 @@ export interface CacheEntry<T> {
 	ttl?: number;
 	tags?: string[];
 }
+
+// A2A Agent types
+export interface A2AAgent {
+	id: string;
+	organization_id: string;
+	name: string;
+	description?: string;
+	agent_type: string;
+	is_active: boolean;
+	capabilities: string[];
+	allowed_namespaces?: string[];
+	api_key_id?: string;
+	configuration?: Record<string, unknown>;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface A2AAgentSpec {
+	name: string;
+	description?: string;
+	agent_type: string;
+	capabilities: string[];
+	allowed_namespaces?: string[];
+	configuration?: Record<string, unknown>;
+}
+
+export interface A2AStats {
+	total_agents: number;
+	active_agents: number;
+	total_requests: number;
+	successful_requests: number;
+	failed_requests: number;
+	average_response_time: number;
+}
+
+// Endpoint types
+export interface Endpoint {
+	id: string;
+	organization_id: string;
+	namespace_id?: string;
+	namespace?: Namespace;
+	name: string;
+	description?: string;
+	enable_api_key_auth: boolean;
+	enable_oauth: boolean;
+	enable_public_access: boolean;
+	rate_limit_requests: number;
+	rate_limit_window: number;
+	is_active: boolean;
+	urls?: Record<string, string>;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface CreateEndpointRequest {
+	name: string;
+	namespace_id: string;
+	description?: string;
+	enable_api_key_auth: boolean;
+	enable_oauth: boolean;
+	enable_public_access: boolean;
+	rate_limit_requests: number;
+	rate_limit_window: number;
+}
+
+export interface UpdateEndpointRequest {
+	name?: string;
+	description?: string;
+	enable_api_key_auth?: boolean;
+	enable_oauth?: boolean;
+	enable_public_access?: boolean;
+	rate_limit_requests?: number;
+	rate_limit_window?: number;
+	is_active?: boolean;
+}
+
+export interface Namespace {
+	id: string;
+	organization_id: string;
+	name: string;
+	slug: string;
+	description?: string;
+	is_active: boolean;
+	metadata?: Record<string, unknown>;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface MCPServer {
+	id: string;
+	organization_id: string;
+	name: string;
+	description: string;
+	url: string;
+	protocol: string;
+	version: string;
+	status: 'active' | 'inactive' | 'unhealthy' | 'maintenance';
+	metadata: Record<string, string>;
+	health_check_url: string;
+	timeout: number;
+	max_retries: number;
+	is_active: boolean;
+	created_at: string;
+	updated_at: string;
+	command?: string;
+	args?: string[];
+	environment?: string[];
+	working_dir?: string;
+}
+
+// Auth types
+export interface User {
+	id: string;
+	email: string;
+	name: string;
+	organization_id: string;
+	role: string;
+	is_active: boolean;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface LoginRequest {
+	email: string;
+	password: string;
+}
+
+export interface LoginResponse {
+	user: User;
+	access_token: string;
+	refresh_token: string;
+}
+
+export interface RefreshResponse {
+	user: User;
+	access_token: string;
+	refresh_token: string;
+}
+
+export interface ApiKey {
+	id: string;
+	name: string;
+	prefix: string;
+	expires_at?: string;
+	last_used_at?: string;
+	is_active: boolean;
+	created_at: string;
+}
+
+export interface CreateApiKeyRequest {
+	name: string;
+	expires_at?: string;
+}
+
+export interface CreateApiKeyResponse {
+	apiKey: ApiKey;
+	key: string;
+}
+
+// Dashboard types
+export interface SystemStats {
+	active_servers: number;
+	total_requests: number;
+	uptime: string;
+	memory_usage: number;
+	cpu_usage: number;
+}
+
+// Logging types
+export interface LogEntry {
+	id: string;
+	timestamp: string;
+	level: string;
+	message: string;
+	server_id?: string;
+	user_id?: string;
+	metadata?: Record<string, unknown>;
+}
+
+export interface AuditLogEntry {
+	id: string;
+	timestamp: string;
+	user_id: string;
+	action: string;
+	resource_type: string;
+	resource_id?: string;
+	details?: Record<string, unknown>;
+}
+
+export interface LogQueryParams {
+	level?: string;
+	server_id?: string;
+	user_id?: string;
+	start_date?: string;
+	end_date?: string;
+	limit?: number;
+	offset?: number;
+}
+
+export interface AuditQueryParams {
+	user_id?: string;
+	action?: string;
+	resource_type?: string;
+	start_date?: string;
+	end_date?: string;
+	limit?: number;
+	offset?: number;
+}
+
+// Policy types (placeholder for now)
+export interface Policy {
+	id: string;
+	name: string;
+	description?: string;
+	type: string;
+	scope: string;
+	priority: number;
+	conditions: PolicyCondition[];
+	actions: PolicyAction[];
+	is_active: boolean;
+	created_at: string;
+	updated_at: string;
+}
+
+// Server management types
+export interface CreateServerRequest {
+	name: string;
+	namespace_id: string;
+	description?: string;
+	url?: string;
+	command?: string;
+	args?: string[];
+	environment?: string[];
+	working_dir?: string;
+	timeout_seconds?: number;
+	max_retries?: number;
+}
+
+export interface MCPDiscoveryResponse {
+	tools: {
+		name: string;
+		description?: string;
+		schema: JSONSchema;
+	}[];
+	resources: {
+		uri: string;
+		name?: string;
+		description?: string;
+		mimeType?: string;
+	}[];
+	prompts: {
+		name: string;
+		description?: string;
+		arguments?: {
+			name: string;
+			description?: string;
+			required?: boolean;
+		}[];
+	}[];
+}

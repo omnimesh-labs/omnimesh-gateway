@@ -13,7 +13,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import IconButton from '@mui/material/IconButton';
 import { useAuth } from '@auth/AuthContext';
 import SvgIcon from '@fuse/core/SvgIcon';
-import { LoginRequest } from '@/lib/api';
+import type { LoginRequest } from '@/lib/types';
 
 const schema = z.object({
 	email: z.string().email('Please enter a valid email address'),

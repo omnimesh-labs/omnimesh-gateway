@@ -1,4 +1,4 @@
-import DashboardView from './(control-panel)/dashboard/DashboardView';
+import DashboardView from './(controlpanel)/dashboard/DashboardView';
 import AuthGuard from '@auth/AuthGuard';
 import MainLayout from 'src/components/MainLayout';
 

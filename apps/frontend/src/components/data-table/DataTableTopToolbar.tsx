@@ -10,7 +10,7 @@ import {
 	MRT_ToolbarDropZone,
 	MRT_ToolbarInternalButtons
 } from 'material-react-table';
-import parseFromValuesOrFunc from 'src/components/data-table/utils/parseFromValuesOrFunc';
+import parseFromValuesOrFunc from './utils/parseFromValuesOrFunc';
 
 export interface MRT_TopToolbarProps<TData extends MRT_RowData> {
 	table: MRT_TableInstance<TData>;

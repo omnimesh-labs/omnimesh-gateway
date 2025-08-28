@@ -84,6 +84,28 @@ When working on app features, follow this folder structure:
 
 Follow this structure for consistent app development.
 
+---
+
+## Next.js / SSR Guidelines
+- **Server vs Client**
+  - `src/server/` → Node-only, secrets, DB, external SDKs (`import 'server-only'`)
+  - `src/client/` → Browser-only (`import 'client-only'`)
+- **Client Components**
+  - Do not import API/services at module scope.
+  - Use **server actions** or `/app/api` routes for mutations.
+  - Use `dynamic = 'force-dynamic'` or `revalidate = 0` if runtime fetch required.
+- **Server Components**
+  - Safe to call API/services at module scope.
+  - Pass data into client components via props.
+- **Circular Imports**
+  - Detect with:
+    ```bash
+    npx madge src --extensions ts,tsx --circular
+    ```
+  - Avoid `index.ts` barrel exports if they introduce cycles.
+
+---
+
 ## FORM FIELD STYLING & ACCESSIBILITY
 
 ### Form Field Background Colors
