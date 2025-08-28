@@ -120,7 +120,11 @@ func (s *Server) RegisterRoutes() http.Handler {
 	transportChain.Apply(transportGroup)
 
 	// Initialize services
-	mcpDiscoveryService := discovery.NewMCPDiscoveryService(s.cfg.MCPDiscovery.BaseURL)
+	mcpDiscoveryURL := os.Getenv("MCP_DISCOVERY_URL")
+	if mcpDiscoveryURL == "" {
+		mcpDiscoveryURL = "https://metatool-service.jczstudio.workers.dev/search"
+	}
+	mcpDiscoveryService := discovery.NewMCPDiscoveryService(mcpDiscoveryURL)
 
 	// Initialize endpoint service
 	baseURL := "http://localhost:8080" // TODO: Get from config

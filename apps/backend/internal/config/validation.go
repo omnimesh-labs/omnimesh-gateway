@@ -363,8 +363,4 @@ func (c *Config) SetDefaults() {
 		c.Redis.PoolSize = 10
 	}
 
-	// MCP Discovery defaults
-	if c.MCPDiscovery.BaseURL == "" {
-		c.MCPDiscovery.BaseURL = "https://metatool-service.jczstudio.workers.dev/search"
-	}
 }
