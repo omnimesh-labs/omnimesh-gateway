@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { MRT_ColumnDef } from 'material-react-table';
 import PageSimple from '@fuse/core/PageSimple';
@@ -23,16 +23,13 @@ import MenuItem from '@mui/material/MenuItem';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
+import CircularProgress from '@mui/material/CircularProgress';
 import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
 import { useSnackbar } from 'notistack';
-// Import types and server actions
+// Import types and client API
 import type { Endpoint, Namespace } from '@/lib/types';
-import {
-	createEndpointAction,
-	updateEndpointAction,
-	deleteEndpointAction
-} from './actions';
+import { endpointApi, namespaceApi } from '@/lib/client-api';
 
 const Root = styled(PageSimple)(({ theme }) => ({
 	'& .PageSimple-header': {
@@ -47,12 +44,7 @@ const Root = styled(PageSimple)(({ theme }) => ({
 }));
 
 
-interface EndpointsViewProps {
-	initialEndpoints: Endpoint[];
-	initialNamespaces: Namespace[];
-}
-
-function EndpointsView({ initialEndpoints, initialNamespaces }: EndpointsViewProps) {
+function EndpointsView() {
 	const [createModalOpen, setCreateModalOpen] = useState(false);
 	const [editingEndpoint, setEditingEndpoint] = useState<Endpoint | null>(null);
 	const [viewingUrls, setViewingUrls] = useState<Endpoint | null>(null);
@@ -68,14 +60,35 @@ function EndpointsView({ initialEndpoints, initialNamespaces }: EndpointsViewPro
 		rate_limit_window: 3600,
 		is_active: true
 	});
-	const [endpoints, setEndpoints] = useState<Endpoint[]>(initialEndpoints);
-	const [namespaces] = useState<Namespace[]>(initialNamespaces);
+	const [endpoints, setEndpoints] = useState<Endpoint[]>([]);
+	const [namespaces, setNamespaces] = useState<Namespace[]>([]);
+	const [loading, setLoading] = useState(true);
 	const [togglingEndpointId, setTogglingEndpointId] = useState<string | null>(null);
 	const [highlightedEndpointId, setHighlightedEndpointId] = useState<string | null>(null);
 	const { enqueueSnackbar } = useSnackbar();
 	const searchParams = useSearchParams();
 
-	// No need for data fetching - data comes from server-side props
+	// Fetch data on client side
+	useEffect(() => {
+		const fetchData = async () => {
+			try {
+				setLoading(true);
+				const [endpointsData, namespacesData] = await Promise.all([
+					endpointApi.listEndpoints(),
+					namespaceApi.listNamespaces()
+				]);
+				setEndpoints(endpointsData);
+				setNamespaces(namespacesData);
+			} catch (error) {
+				console.error('Error fetching data:', error);
+				enqueueSnackbar('Failed to load data', { variant: 'error' });
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		fetchData();
+	}, [enqueueSnackbar]);
 
 	// Handle query parameters for auto-opening create modal and highlighting
 	useEffect(() => {
@@ -150,24 +163,20 @@ function EndpointsView({ initialEndpoints, initialNamespaces }: EndpointsViewPro
 		try {
 			let result;
 			if (editingEndpoint) {
-				result = await updateEndpointAction(editingEndpoint.id, formData);
+				result = await endpointApi.updateEndpoint(editingEndpoint.id, formData);
 			} else {
-				result = await createEndpointAction(formData);
+				result = await endpointApi.createEndpoint(formData);
 			}
 
-			if (result.success) {
-				const action = editingEndpoint ? 'updated' : 'created';
-				enqueueSnackbar(`Endpoint ${action} successfully`, { variant: 'success' });
-				setCreateModalOpen(false);
-				setEditingEndpoint(null);
-				// Update local state with the new/updated endpoint
-				if (editingEndpoint) {
-					setEndpoints(prev => prev.map(ep => ep.id === result.data!.id ? result.data! : ep));
-				} else {
-					setEndpoints(prev => [...prev, result.data!]);
-				}
+			const action = editingEndpoint ? 'updated' : 'created';
+			enqueueSnackbar(`Endpoint ${action} successfully`, { variant: 'success' });
+			setCreateModalOpen(false);
+			setEditingEndpoint(null);
+			// Update local state with the new/updated endpoint
+			if (editingEndpoint) {
+				setEndpoints(prev => prev.map(ep => ep.id === result.id ? result : ep));
 			} else {
-				enqueueSnackbar(result.error || 'Failed to save endpoint', { variant: 'error' });
+				setEndpoints(prev => [...prev, result]);
 			}
 		} catch (error) {
 			console.error('Error saving endpoint:', error);
@@ -181,13 +190,9 @@ function EndpointsView({ initialEndpoints, initialNamespaces }: EndpointsViewPro
 		}
 
 		try {
-			const result = await deleteEndpointAction(endpoint.id);
-			if (result.success) {
-				enqueueSnackbar(`Endpoint ${endpoint.name} deleted successfully`, { variant: 'success' });
-				setEndpoints(prev => prev.filter(ep => ep.id !== endpoint.id));
-			} else {
-				enqueueSnackbar(result.error || 'Failed to delete endpoint', { variant: 'error' });
-			}
+			await endpointApi.deleteEndpoint(endpoint.id);
+			enqueueSnackbar(`Endpoint ${endpoint.name} deleted successfully`, { variant: 'success' });
+			setEndpoints(prev => prev.filter(ep => ep.id !== endpoint.id));
 		} catch (error) {
 			console.error('Error deleting endpoint:', error);
 			enqueueSnackbar('Failed to delete endpoint', { variant: 'error' });
@@ -202,22 +207,18 @@ function EndpointsView({ initialEndpoints, initialNamespaces }: EndpointsViewPro
 	const handleToggleEndpointStatus = useCallback(async (endpoint: Endpoint) => {
 		setTogglingEndpointId(endpoint.id);
 		try {
-			const result = await updateEndpointAction(endpoint.id, {
+			const result = await endpointApi.updateEndpoint(endpoint.id, {
 				is_active: !endpoint.is_active
 			});
 
-			if (result.success) {
-				// Update the local state with the updated endpoint
-				setEndpoints(prev => prev.map(ep =>
-					ep.id === endpoint.id ? result.data! : ep
-				));
+			// Update the local state with the updated endpoint
+			setEndpoints(prev => prev.map(ep =>
+				ep.id === endpoint.id ? result : ep
+			));
 
-				// Show specific toast based on activation/deactivation
-				const action = !endpoint.is_active ? 'activated' : 'deactivated';
-				enqueueSnackbar(`Endpoint ${action} successfully`, { variant: 'success' });
-			} else {
-				enqueueSnackbar(result.error || 'Failed to update endpoint status', { variant: 'error' });
-			}
+			// Show specific toast based on activation/deactivation
+			const action = !endpoint.is_active ? 'activated' : 'deactivated';
+			enqueueSnackbar(`Endpoint ${action} successfully`, { variant: 'success' });
 		} catch (error) {
 			console.error('Error updating endpoint status:', error);
 			enqueueSnackbar('Failed to update endpoint status', { variant: 'error' });
@@ -344,10 +345,15 @@ function EndpointsView({ initialEndpoints, initialNamespaces }: EndpointsViewPro
 			}
 			content={
 				<div className="p-6">
-					<LazyDataTable
+					{loading && endpoints.length === 0 ? (
+						<Box display="flex" justifyContent="center" alignItems="center" minHeight="300px">
+							<CircularProgress />
+						</Box>
+					) : (
+						<LazyDataTable
 						columns={columns}
 						data={endpoints}
-						state={{ isLoading: false }}
+						state={{ isLoading: loading }}
 						enableRowActions
 						muiTableBodyRowProps={({ row }) => ({
 							sx: {
@@ -398,6 +404,7 @@ function EndpointsView({ initialEndpoints, initialNamespaces }: EndpointsViewPro
 							}
 						}}
 					/>
+					)}
 
 					{/* Create/Edit Endpoint Dialog */}
 					<Dialog

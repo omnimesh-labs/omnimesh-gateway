@@ -121,7 +121,8 @@ class ServerAPI {
 // Namespace API
 class NamespaceAPI {
 	public async listNamespaces(): Promise<Namespace[]> {
-		return await apiRequest<Namespace[]>('/api/namespaces');
+		const response = await apiRequest<{ namespaces: Namespace[]; total: number }>('/api/namespaces');
+		return response.namespaces || [];
 	}
 
 	public async getNamespace(id: string): Promise<Namespace> {
@@ -232,7 +233,8 @@ class PolicyAPI {
 // Endpoint API
 class EndpointAPI {
 	public async listEndpoints(): Promise<Endpoint[]> {
-		return await apiRequest<Endpoint[]>('/api/endpoints');
+		const response = await apiRequest<{ endpoints: Endpoint[]; total: number }>('/api/endpoints');
+		return response.endpoints || [];
 	}
 
 	public async getEndpoint(id: string): Promise<Endpoint> {
