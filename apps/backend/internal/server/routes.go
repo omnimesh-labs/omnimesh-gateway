@@ -29,6 +29,8 @@ import (
 
 func (s *Server) RegisterRoutes() http.Handler {
 	r := gin.New()
+	r.Use(gin.Logger())
+	r.Use(gin.Recovery())
 
 	// Initialize logging middleware
 	loggingMiddleware := logging.NewMiddleware(s.logging.(*logging.Service))

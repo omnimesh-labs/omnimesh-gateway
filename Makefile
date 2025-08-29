@@ -58,7 +58,7 @@ help:
 dev:
 	@$(DOCKER_COMPOSE) down -v --remove-orphans --rmi local 2>/dev/null || true
 	@if [ ! -f .env ]; then cp .env.example .env; fi
-	@echo "Starting backend services..."
+	@echo "Starting MCP Gateway in development mode..."
 	@$(DOCKER_COMPOSE) up postgres redis backend
 
 # Stop all services
@@ -201,11 +201,6 @@ db-shell:
 redis-cli:
 	@echo "Opening Redis CLI..."
 	@$(DOCKER_COMPOSE) exec redis redis-cli -a ${REDIS_PASSWORD}
-
-# Watch for file changes (requires air installed locally)
-watch:
-	@echo "Starting local development with hot reload..."
-	@air
 
 # Nuclear strike - destroy everything
 nuclear:

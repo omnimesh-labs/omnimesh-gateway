@@ -11,15 +11,12 @@ RUN apk add --no-cache git gcc musl-dev bash make && \
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy source code for migrate binary
+# Copy source code
 COPY . .
-
-# Build the migrate binary
-RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o migrate apps/backend/cmd/migrate/main.go
 
 # Copy scripts
 COPY scripts/wait-for-it.sh /scripts/
-COPY scripts/entrypoint.sh /scripts/
+COPY scripts/entrypoint-dev.sh /scripts/
 RUN chmod +x /scripts/*.sh
 
 # Copy air config
@@ -31,8 +28,8 @@ ENV MODE=development
 # Expose port
 EXPOSE 8080
 
-# Use entrypoint script
-ENTRYPOINT ["/scripts/entrypoint.sh"]
+# Use development entrypoint script
+ENTRYPOINT ["/scripts/entrypoint-dev.sh"]
 
 # Build stage for production
 FROM golang:1.23-alpine AS builder
@@ -49,10 +46,9 @@ RUN go mod download
 # Copy source code
 COPY . .
 
-# Build main application, migrate tool, and setup tool
+# Build main application and migrate tool only
 RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o main apps/backend/cmd/api/main.go && \
-    CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o migrate apps/backend/cmd/migrate/main.go && \
-    CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o setup apps/backend/cmd/setup/main.go
+    CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o migrate apps/backend/cmd/migrate/main.go
 
 # Production stage
 FROM alpine:latest AS production
@@ -64,13 +60,12 @@ WORKDIR /app
 # Copy the binaries from builder
 COPY --from=builder /app/main .
 COPY --from=builder /app/migrate .
-COPY --from=builder /app/setup .
 COPY --from=builder /app/apps/backend/configs ./apps/backend/configs
 COPY --from=builder /app/apps/backend/migrations ./apps/backend/migrations
 
 # Copy scripts
 COPY scripts/wait-for-it.sh /scripts/
-COPY scripts/entrypoint.sh /scripts/
+COPY scripts/entrypoint-prod.sh /scripts/
 RUN chmod +x /scripts/*.sh
 
 # Environment for production mode
@@ -79,5 +74,5 @@ ENV MODE=production
 # Expose port
 EXPOSE 8080
 
-# Use entrypoint script
-ENTRYPOINT ["/scripts/entrypoint.sh"]
+# Use production entrypoint script
+ENTRYPOINT ["/scripts/entrypoint-prod.sh"]
