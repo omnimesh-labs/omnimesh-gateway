@@ -388,6 +388,9 @@ func (m *MCPPromptModel) Update(prompt *MCPPrompt) error {
 		if err != nil {
 			return err
 		}
+	} else {
+		// Explicitly set to null JSON for empty metadata
+		metadataJSON = []byte("null")
 	}
 
 	// Convert parameters to JSON
@@ -398,6 +401,9 @@ func (m *MCPPromptModel) Update(prompt *MCPPrompt) error {
 		if err != nil {
 			return err
 		}
+	} else {
+		// Explicitly set to null JSON for empty parameters
+		parametersJSON = []byte("null")
 	}
 
 	_, err := m.db.Exec(query,

@@ -44,8 +44,7 @@ func (h *ToolHandler) ListTools(c *gin.Context) {
 		return
 	}
 
-	// Parse query parameters
-	activeOnly := c.Query("active") != "false"
+	activeOnly := c.Query("active") == "true"
 	category := c.Query("category")
 	searchTerm := c.Query("search")
 	popular := c.Query("popular") == "true"

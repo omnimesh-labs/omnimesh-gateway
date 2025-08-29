@@ -92,8 +92,7 @@ function ToolsView() {
 		is_active: true
 	});
 
-	// API hooks
-	const { data: tools = [], isLoading } = useTools({ active: true });
+	const { data: tools = [], isLoading } = useTools();
 	const createTool = useCreateTool();
 	const updateTool = useUpdateTool();
 	const deleteTool = useDeleteTool();
@@ -258,8 +257,9 @@ function ToolsView() {
 				Cell: ({ row }) => {
 					const iconName =
 						CATEGORY_ICONS[row.original.category as keyof typeof CATEGORY_ICONS] || 'lucide:package';
+					const isInactive = !row.original.is_active;
 					return (
-						<Box className="flex items-center space-x-2">
+						<Box className="flex items-center space-x-2" sx={{ opacity: isInactive ? 0.6 : 1 }}>
 							<SvgIcon size={20}>{iconName}</SvgIcon>
 							<Box>
 								<Typography
@@ -284,14 +284,17 @@ function ToolsView() {
 				accessorKey: 'category',
 				header: 'Category',
 				size: 120,
-				Cell: ({ cell }) => {
+				Cell: ({ cell, row }) => {
 					const color = CATEGORY_COLORS[cell.getValue<string>() as keyof typeof CATEGORY_COLORS] || 'default';
+					const isInactive = !row.original.is_active;
 					return (
-						<Chip
-							size="small"
-							label={cell.getValue<string>()}
-							color={color}
-						/>
+						<Box sx={{ opacity: isInactive ? 0.6 : 1 }}>
+							<Chip
+								size="small"
+								label={cell.getValue<string>()}
+								color={color}
+							/>
+						</Box>
 					);
 				}
 			},
@@ -299,67 +302,88 @@ function ToolsView() {
 				accessorKey: 'implementation_type',
 				header: 'Type',
 				size: 120,
-				Cell: ({ cell }) => (
-					<Chip
-						size="small"
-						label={cell.getValue<string>()}
-						variant="outlined"
-					/>
-				)
+				Cell: ({ cell, row }) => {
+					const isInactive = !row.original.is_active;
+					return (
+						<Box sx={{ opacity: isInactive ? 0.6 : 1 }}>
+							<Chip
+								size="small"
+								label={cell.getValue<string>()}
+								variant="outlined"
+							/>
+						</Box>
+					);
+				}
 			},
 			{
 				accessorKey: 'usage_count',
 				header: 'Usage',
 				size: 100,
-				Cell: ({ cell }) => (
-					<Chip
-						size="small"
-						label={cell.getValue<number>() || 0}
-						variant="outlined"
-					/>
-				)
+				Cell: ({ cell, row }) => {
+					const isInactive = !row.original.is_active;
+					return (
+						<Box sx={{ opacity: isInactive ? 0.6 : 1 }}>
+							<Chip
+								size="small"
+								label={cell.getValue<number>() || 0}
+								variant="outlined"
+							/>
+						</Box>
+					);
+				}
 			},
 			{
 				accessorKey: 'is_public',
 				header: 'Access',
 				size: 100,
-				Cell: ({ cell }) => (
-					<Box className="flex items-center">
-						{cell.getValue<boolean>() ? (
-							<SvgIcon
-								size={18}
-								className="text-green-600"
+				Cell: ({ cell, row }) => {
+					const isInactive = !row.original.is_active;
+					return (
+						<Box className="flex items-center" sx={{ opacity: isInactive ? 0.6 : 1 }}>
+							{cell.getValue<boolean>() ? (
+								<SvgIcon
+									size={18}
+									className="text-green-600"
+								>
+									lucide:unlock
+								</SvgIcon>
+							) : (
+								<SvgIcon
+									size={18}
+									className="text-gray-400"
+								>
+									lucide:lock
+								</SvgIcon>
+							)}
+							<Typography
+								variant="caption"
+								className="ml-1"
 							>
-								lucide:unlock
-							</SvgIcon>
-						) : (
-							<SvgIcon
-								size={18}
-								className="text-gray-400"
-							>
-								lucide:lock
-							</SvgIcon>
-						)}
-						<Typography
-							variant="caption"
-							className="ml-1"
-						>
-							{cell.getValue<boolean>() ? 'Public' : 'Private'}
-						</Typography>
-					</Box>
-				)
+								{cell.getValue<boolean>() ? 'Public' : 'Private'}
+							</Typography>
+						</Box>
+					);
+				}
 			},
 			{
 				accessorKey: 'created_at',
 				header: 'Created',
 				size: 150,
-				Cell: ({ cell }) => {
+				Cell: ({ cell, row }) => {
 					const date = new Date(cell.getValue<string>());
-					return date.toLocaleDateString('en-US', {
-						year: 'numeric',
-						month: 'short',
-						day: 'numeric'
-					});
+					const isInactive = !row.original.is_active;
+					return (
+						<Typography
+							variant="body2"
+							sx={{ opacity: isInactive ? 0.6 : 1 }}
+						>
+							{date.toLocaleDateString('en-US', {
+								year: 'numeric',
+								month: 'short',
+								day: 'numeric'
+							})}
+						</Typography>
+					);
 				}
 			}
 		],
@@ -563,8 +587,6 @@ function ToolsView() {
 								disabled={
 									!formData.name.trim() ||
 									!formData.function_name.trim() ||
-									!formData.schema ||
-									Object.keys(formData.schema).length === 0 ||
 									createTool.isPending ||
 									updateTool.isPending
 								}

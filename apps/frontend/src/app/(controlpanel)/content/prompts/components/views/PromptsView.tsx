@@ -87,7 +87,6 @@ function PromptsView() {
 
 	const { enqueueSnackbar } = useSnackbar();
 
-	// API hooks - show all prompts (active and inactive) so users can toggle them
 	const { data: prompts = [], isLoading, error } = usePrompts();
 	const createPrompt = useCreatePrompt();
 	const updatePrompt = useUpdatePrompt();

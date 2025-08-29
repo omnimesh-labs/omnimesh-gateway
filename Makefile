@@ -29,6 +29,7 @@ help:
 	@echo "  make migrate-down - Rollback migrations"
 	@echo "  make migrate-status - Show migration status"
 	@echo "  make db-shell     - Open PostgreSQL shell"
+	@echo "  make db-clean     - Clean database and rerun migrations"
 	@echo ""
 	@echo "Testing:"
 	@echo "  make test         - Run all tests (backend + frontend)"
@@ -208,6 +209,13 @@ docker-reset:
 db-shell:
 	@echo "Opening PostgreSQL shell..."
 	@$(DOCKER_COMPOSE) exec postgres psql -U ${DB_USERNAME} -d ${DB_DATABASE}
+
+# Clean database (drop schema and prepare for setup)
+db-clean:
+	@echo "Cleaning database (dropping schema)..."
+	@$(DOCKER_COMPOSE) exec -e DB_USERNAME -e DB_DATABASE postgres bash -c '\
+		psql -U $$DB_USERNAME $$DB_DATABASE -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"'
+	@echo "Database cleaned - schema dropped and recreated"
 
 # Redis CLI
 redis-cli:
