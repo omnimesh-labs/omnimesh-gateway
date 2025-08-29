@@ -14,6 +14,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // SetupTestDatabase creates a test database using testcontainers
@@ -63,10 +64,8 @@ func SetupTestDatabase(t *testing.T) (*sql.DB, func(), error) {
 		return nil, nil, fmt.Errorf("failed to get container port: %w", err)
 	}
 
-	// Build connection string
 	dsn := fmt.Sprintf("postgres://postgres:postgres@%s:%s/testdb?sslmode=disable", host, port.Port())
 
-	// Connect to database
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		container.Terminate(ctx)
@@ -97,7 +96,6 @@ func RunMigrations(db *sql.DB) error {
 		return fmt.Errorf("failed to create migration driver: %w", err)
 	}
 
-	// Determine migration path
 	migrationPath := "file://../../migrations"
 	if _, err := os.Stat("migrations"); err == nil {
 		migrationPath = "file://migrations"
@@ -176,6 +174,31 @@ func CreateTestUser(db *sql.DB, orgID string) (string, error) {
 	return userID, nil
 }
 
+// CreateTestUserWithCredentials creates a test user with specific email and password
+func CreateTestUserWithCredentials(db *sql.DB, orgID, email, password string) (string, error) {
+	userID := "00000000-0000-0000-0000-000000000002"
+
+	// Hash the password using bcrypt (same as production)
+	passwordHash, err := hashPasswordForTest(password)
+	if err != nil {
+		return "", fmt.Errorf("failed to hash password for test: %w", err)
+	}
+
+	_, err = db.Exec(`
+		INSERT INTO users (id, email, name, password_hash, organization_id, role)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		ON CONFLICT (id) DO UPDATE SET
+		email = EXCLUDED.email,
+		password_hash = EXCLUDED.password_hash
+	`, userID, email, "Test User", passwordHash, orgID, "admin") // admin role for API key creation
+
+	if err != nil {
+		return "", fmt.Errorf("failed to create test user with credentials: %w", err)
+	}
+
+	return userID, nil
+}
+
 // CreateTestNamespace creates a test namespace
 func CreateTestNamespace(db *sql.DB, orgID string) (string, error) {
 	namespaceID := "00000000-0000-0000-0000-000000000003"
@@ -207,4 +230,13 @@ func CreateTestMCPServer(db *sql.DB, orgID string, name string) (string, error) 
 	}
 
 	return serverID, nil
+}
+
+// hashPasswordForTest hashes a password using bcrypt with low cost for faster tests
+func hashPasswordForTest(password string) (string, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), 4) // Use lower cost for faster tests
+	if err != nil {
+		return "", fmt.Errorf("failed to hash password: %w", err)
+	}
+	return string(hash), nil
 }

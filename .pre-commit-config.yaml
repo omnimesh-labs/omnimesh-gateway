@@ -1,5 +1,34 @@
 fail_fast: true
 repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: \.md$
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: check-json
+        exclude: apps/frontend/package\.json$
+
+  - repo: https://github.com/psf/black
+    rev: 22.3.0
+    hooks:
+      - id: black
+        language_version: python3
+        files: scripts/.*\.py$
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        files: scripts/.*\.py$
+        pass_filenames: false
+
   - repo: local
     hooks:
       - id: go-fmt
@@ -46,30 +75,9 @@ repos:
         files: \.go$
         pass_filenames: false
 
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
-    hooks:
-      - id: trailing-whitespace
-        exclude: \.md$
-      - id: end-of-file-fixer
-      - id: check-yaml
-      - id: check-added-large-files
-        args: [--maxkb=1000]
-      - id: check-case-conflict
-      - id: check-merge-conflict
-      - id: debug-statements
-      - id: check-json
-        exclude: apps/frontend/package\.json$
-
-  - repo: https://github.com/psf/black
-    rev: 22.3.0
-    hooks:
-      - id: black
-        language_version: python3
-        files: scripts/.*\.py$
-
-  - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
-    hooks:
-      - id: isort
-        files: scripts/.*\.py$
+      - id: frontend-test
+        name: frontend tests (jest)
+        entry: make
+        args: [test-frontend]
+        language: system
+        files: apps/frontend/.*\.(ts|tsx|js|jsx)$

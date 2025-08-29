@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"strings"
 	"time"
 
 	"mcp-gateway/apps/backend/internal/types"
@@ -68,14 +69,32 @@ func (a *AuditLogger) LogEvent(event *AuditEvent) error {
 	var err error
 
 	if event.OldValues != nil {
-		oldValuesJSON, err = json.Marshal(event.OldValues)
+		// Clean old values
+		cleanedOldValues := make(map[string]interface{})
+		for k, v := range event.OldValues {
+			if str, ok := v.(string); ok {
+				cleanedOldValues[k] = strings.ReplaceAll(str, "\x00", "")
+			} else {
+				cleanedOldValues[k] = v
+			}
+		}
+		oldValuesJSON, err = json.Marshal(cleanedOldValues)
 		if err != nil {
 			return fmt.Errorf("failed to marshal old values: %w", err)
 		}
 	}
 
 	if event.NewValues != nil {
-		newValuesJSON, err = json.Marshal(event.NewValues)
+		// Clean new values
+		cleanedNewValues := make(map[string]interface{})
+		for k, v := range event.NewValues {
+			if str, ok := v.(string); ok {
+				cleanedNewValues[k] = strings.ReplaceAll(str, "\x00", "")
+			} else {
+				cleanedNewValues[k] = v
+			}
+		}
+		newValuesJSON, err = json.Marshal(cleanedNewValues)
 		if err != nil {
 			return fmt.Errorf("failed to marshal new values: %w", err)
 		}
@@ -84,17 +103,33 @@ func (a *AuditLogger) LogEvent(event *AuditEvent) error {
 	// Add success status and error to metadata
 	metadata := make(map[string]interface{})
 	if event.Metadata != nil {
-		metadata = event.Metadata
+		// Copy metadata, cleaning any problematic values
+		for k, v := range event.Metadata {
+			// Ensure string values are UTF-8 safe
+			if str, ok := v.(string); ok {
+				// Replace any null bytes or invalid UTF-8
+				metadata[k] = strings.ReplaceAll(str, "\x00", "")
+			} else {
+				metadata[k] = v
+			}
+		}
 	}
 	metadata["success"] = event.Success
 	if event.ErrorMessage != "" {
-		metadata["error"] = event.ErrorMessage
+		// Clean error message as well
+		metadata["error"] = strings.ReplaceAll(event.ErrorMessage, "\x00", "")
 	}
 	metadata["timestamp"] = time.Now().Unix()
 
 	metadataJSON, err = json.Marshal(metadata)
 	if err != nil {
 		return fmt.Errorf("failed to marshal metadata: %w", err)
+	}
+
+	// Convert net.IP to string for database storage
+	var actorIP interface{}
+	if event.ActorIP != nil {
+		actorIP = event.ActorIP.String()
 	}
 
 	_, err = a.db.Exec(
@@ -104,7 +139,7 @@ func (a *AuditLogger) LogEvent(event *AuditEvent) error {
 		event.ResourceType,
 		event.ResourceID,
 		event.ActorID,
-		event.ActorIP,
+		actorIP,
 		oldValuesJSON,
 		newValuesJSON,
 		metadataJSON,
@@ -259,7 +294,7 @@ func (t *LoginAttemptTracker) RecordLoginAttempt(email string, clientIP net.IP, 
 
 	metadata := map[string]interface{}{
 		"success":   success,
-		"email":     email,
+		"email":     strings.ReplaceAll(email, "\x00", ""), // Clean email
 		"client_ip": clientIP.String(),
 	}
 
@@ -271,13 +306,19 @@ func (t *LoginAttemptTracker) RecordLoginAttempt(email string, clientIP net.IP, 
 	// Use default organization for tracking attempts
 	defaultOrgID := "00000000-0000-0000-0000-000000000000"
 
+	// Convert net.IP to string for database storage
+	var clientIPStr interface{}
+	if clientIP != nil {
+		clientIPStr = clientIP.String()
+	}
+
 	_, err = t.db.Exec(
 		query,
 		defaultOrgID,
 		action,
 		"login_attempt",
 		email,
-		clientIP,
+		clientIPStr,
 		metadataJSON,
 	)
 
@@ -294,12 +335,18 @@ func (t *LoginAttemptTracker) GetRecentFailedAttempts(email string, clientIP net
 		AND created_at > $4
 	`
 
+	// Convert net.IP to string for database query
+	var clientIPStr interface{}
+	if clientIP != nil {
+		clientIPStr = clientIP.String()
+	}
+
 	var count int
 	err := t.db.QueryRow(
 		query,
 		ActionUserLoginFailed,
 		email,
-		clientIP,
+		clientIPStr,
 		time.Now().Add(-since),
 	).Scan(&count)
 

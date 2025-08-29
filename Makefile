@@ -31,7 +31,9 @@ help:
 	@echo "  make db-shell     - Open PostgreSQL shell"
 	@echo ""
 	@echo "Testing:"
-	@echo "  make test         - Run all tests"
+	@echo "  make test         - Run all tests (backend + frontend)"
+	@echo "  make test-backend - Run backend tests only"
+	@echo "  make test-frontend - Run frontend tests only"
 	@echo "  make test-transport - Transport layer tests"
 	@echo "  make test-integration - Integration tests"
 	@echo "  make test-unit    - Unit tests"
@@ -83,10 +85,20 @@ logs:
 
 # Run tests
 test:
-	@echo "Running tests..."
+	@echo "Running all tests..."
 	@$(GO) test -v ./...
+	@echo "Running frontend tests..."
+	@cd apps/frontend && npm test
 
 # Run specific tests
+test-backend:
+	@echo "Running backend tests..."
+	@$(GO) test -v ./...
+
+test-frontend:
+	@echo "Running frontend tests..."
+	@cd apps/frontend && npm test
+
 test-transport:
 	@echo "Running transport tests..."
 	@$(GO) test -v ./apps/backend/tests/transport/...

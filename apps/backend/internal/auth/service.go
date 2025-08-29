@@ -677,7 +677,7 @@ func (s *Service) CreateAPIKey(userID string, req *types.CreateAPIKeyRequest) (*
 	// Create API key record
 	query := `
 		INSERT INTO api_keys (
-			user_id, organization_id, name, key_hash, prefix, 
+			user_id, organization_id, name, key_hash, prefix,
 			key_type, permissions, expires_at, is_active
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		RETURNING id, created_at
@@ -704,7 +704,7 @@ func (s *Service) CreateAPIKey(userID string, req *types.CreateAPIKeyRequest) (*
 		keyHash,
 		prefix,
 		"user",
-		permissions,
+		pq.Array(permissions),
 		expiresAt,
 		true,
 	).Scan(&apiKey.ID, &apiKey.CreatedAt)
@@ -731,7 +731,7 @@ func (s *Service) CreateAPIKey(userID string, req *types.CreateAPIKeyRequest) (*
 // ListAPIKeys lists all API keys for a user
 func (s *Service) ListAPIKeys(userID string) ([]*types.APIKey, error) {
 	query := `
-		SELECT id, name, prefix || '...' as key_hash, permissions, 
+		SELECT id, name, prefix || '...' as key_hash, permissions,
 		       is_active, expires_at, created_at, last_used_at
 		FROM api_keys
 		WHERE user_id = $1
@@ -766,7 +766,7 @@ func (s *Service) ListAPIKeys(userID string) ([]*types.APIKey, error) {
 
 		// Map permissions back to role
 		key.Role = getRoleFromPermissions(permissions)
-		
+
 		if expiresAt.Valid {
 			key.ExpiresAt = &expiresAt.Time
 		}
@@ -783,7 +783,7 @@ func (s *Service) ListAPIKeys(userID string) ([]*types.APIKey, error) {
 // ListAllAPIKeys lists all API keys for an organization (admin only)
 func (s *Service) ListAllAPIKeys(organizationID string) ([]*types.APIKey, error) {
 	query := `
-		SELECT ak.id, ak.name, ak.prefix || '...' as key_hash, ak.permissions, 
+		SELECT ak.id, ak.name, ak.prefix || '...' as key_hash, ak.permissions,
 		       ak.is_active, ak.expires_at, ak.created_at, ak.last_used_at,
 		       ak.user_id, ak.organization_id, u.email as user_email
 		FROM api_keys ak
@@ -918,9 +918,9 @@ func (s *Service) DeleteAPIKeyByAdmin(organizationID, keyID string) error {
 // ValidateAPIKey validates an API key
 func (s *Service) ValidateAPIKey(keyString string) (*types.APIKey, error) {
 	keyHash := hashAPIKey(keyString)
-	
+
 	query := `
-		SELECT id, user_id, organization_id, name, permissions, 
+		SELECT id, user_id, organization_id, name, permissions,
 		       is_active, expires_at, created_at, last_used_at
 		FROM api_keys
 		WHERE key_hash = $1 AND is_active = true
@@ -961,7 +961,7 @@ func (s *Service) ValidateAPIKey(keyString string) (*types.APIKey, error) {
 
 	// Map permissions to role
 	apiKey.Role = getRoleFromPermissions(permissions)
-	
+
 	if expiresAt.Valid {
 		apiKey.ExpiresAt = &expiresAt.Time
 	}
@@ -1014,7 +1014,7 @@ func generateAPIKey() string {
 	if err != nil {
 		panic(fmt.Sprintf("failed to generate random bytes: %v", err))
 	}
-	
+
 	// Return hex-encoded string with "mgw_" prefix for identification
 	return "mgw_" + hex.EncodeToString(b)
 }
@@ -1047,7 +1047,7 @@ func getRoleFromPermissions(permissions []string) string {
 	for _, p := range permissions {
 		permSet[p] = true
 	}
-	
+
 	if permSet["admin"] {
 		return "admin"
 	}
@@ -1057,6 +1057,6 @@ func getRoleFromPermissions(permissions []string) string {
 	if permSet["read"] && !permSet["write"] {
 		return "viewer"
 	}
-	
+
 	return "user" // Default
 }

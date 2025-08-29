@@ -34,10 +34,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	response, err := h.authService.Login(req.Email, req.Password)
 	if err != nil {
-		c.JSON(types.GetStatusCode(err), types.ErrorResponse{
-			Error:   err.(*types.Error),
-			Success: false,
-		})
+		RespondWithError(c, err)
 		return
 	}
 
@@ -60,10 +57,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 
 	response, err := h.authService.RefreshToken(req.RefreshToken)
 	if err != nil {
-		c.JSON(types.GetStatusCode(err), types.ErrorResponse{
-			Error:   err.(*types.Error),
-			Success: false,
-		})
+		RespondWithError(c, err)
 		return
 	}
 
@@ -92,10 +86,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 
 	err := h.authService.Logout(token)
 	if err != nil {
-		c.JSON(types.GetStatusCode(err), types.ErrorResponse{
-			Error:   err.(*types.Error),
-			Success: false,
-		})
+		RespondWithError(c, err)
 		return
 	}
 
@@ -138,10 +129,7 @@ func (h *AuthHandler) CreateAPIKey(c *gin.Context) {
 
 	apiKey, err := h.authService.CreateAPIKey(userID.(string), &req)
 	if err != nil {
-		c.JSON(types.GetStatusCode(err), types.ErrorResponse{
-			Error:   err.(*types.Error),
-			Success: false,
-		})
+		RespondWithError(c, err)
 		return
 	}
 
@@ -164,10 +152,7 @@ func (h *AuthHandler) GetProfile(c *gin.Context) {
 
 	user, err := h.authService.GetUserByID(userID.(string))
 	if err != nil {
-		c.JSON(types.GetStatusCode(err), types.ErrorResponse{
-			Error:   err.(*types.Error),
-			Success: false,
-		})
+		RespondWithError(c, err)
 		return
 	}
 
@@ -199,10 +184,7 @@ func (h *AuthHandler) UpdateProfile(c *gin.Context) {
 
 	user, err := h.authService.UpdateUser(userID.(string), &req)
 	if err != nil {
-		c.JSON(types.GetStatusCode(err), types.ErrorResponse{
-			Error:   err.(*types.Error),
-			Success: false,
-		})
+		RespondWithError(c, err)
 		return
 	}
 
@@ -246,10 +228,7 @@ func (h *AuthHandler) ListAPIKeys(c *gin.Context) {
 	// List all API keys for the organization (admins can see all)
 	keys, err := h.authService.ListAllAPIKeys(orgID.(string))
 	if err != nil {
-		c.JSON(types.GetStatusCode(err), types.ErrorResponse{
-			Error:   err.(*types.Error),
-			Success: false,
-		})
+		RespondWithError(c, err)
 		return
 	}
 
@@ -302,10 +281,7 @@ func (h *AuthHandler) DeleteAPIKey(c *gin.Context) {
 	// Admin can delete any API key in their organization
 	err := h.authService.DeleteAPIKeyByAdmin(orgID.(string), keyID)
 	if err != nil {
-		c.JSON(types.GetStatusCode(err), types.ErrorResponse{
-			Error:   err.(*types.Error),
-			Success: false,
-		})
+		RespondWithError(c, err)
 		return
 	}
 

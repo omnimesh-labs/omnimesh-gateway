@@ -30,15 +30,19 @@ export const commonValidation = {
     .max(255, 'Email must be less than 255 characters')
     .toLowerCase(),
 
-  // URL validation
+  // URL validation - restricted to HTTP/HTTPS for security
   url: z.string()
     .url('Invalid URL format')
-    .max(500, 'URL must be less than 500 characters'),
+    .max(500, 'URL must be less than 500 characters')
+    .refine((url) => url.startsWith('http://') || url.startsWith('https://'),
+      'URL must use HTTP or HTTPS protocol'),
 
   // Optional URL
   optionalUrl: z.string()
     .url('Invalid URL format')
     .max(500, 'URL must be less than 500 characters')
+    .refine((url) => url === '' || url.startsWith('http://') || url.startsWith('https://'),
+      'URL must use HTTP or HTTPS protocol')
     .optional()
     .or(z.literal('')),
 

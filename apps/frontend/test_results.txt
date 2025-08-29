@@ -1,0 +1,388 @@
+bun test v1.2.9 (9a329c04)
+
+src/lib/__tests__/auth-api.test.ts:
+
+# Unhandled error between tests
+-------------------------------
+1 | (function (entry, fetcher)
+              ^
+SyntaxError: Export named 'HTTPParser' not found in module 'node:http'.
+-------------------------------
+
+
+src/lib/__tests__/utils.simple.test.ts:
+(pass) Utils > cn function (className merging) > should merge single class names [3.25ms]
+(pass) Utils > cn function (className merging) > should merge multiple class names [0.11ms]
+(pass) Utils > cn function (className merging) > should handle arrays of class names [0.01ms]
+(pass) Utils > cn function (className merging) > should handle conditional class names with objects [0.14ms]
+(pass) Utils > cn function (className merging) > should handle mixed inputs [0.03ms]
+(pass) Utils > cn function (className merging) > should handle undefined and null values [0.20ms]
+(pass) Utils > cn function (className merging) > should handle empty strings and whitespace [0.10ms]
+(pass) Utils > cn function (className merging) > should handle Tailwind CSS class conflicts [0.18ms]
+(pass) Utils > cn function (className merging) > should handle responsive class conflicts [0.13ms]
+(pass) Utils > cn function (className merging) > should handle hover and state variants [0.04ms]
+(pass) Utils > cn function (className merging) > should handle size class conflicts [0.06ms]
+(pass) Utils > cn function (className merging) > should handle margin and padding conflicts [0.14ms]
+(pass) Utils > cn function (className merging) > should handle border class conflicts [0.06ms]
+(pass) Utils > cn function (className merging) > should handle text alignment conflicts [0.09ms]
+(pass) Utils > cn function (className merging) > should handle display conflicts [0.11ms]
+(pass) Utils > cn function (className merging) > should handle position conflicts [0.02ms]
+(pass) Utils > cn function (className merging) > should handle flex direction conflicts [0.02ms]
+(pass) Utils > cn function (className merging) > should handle justify-content conflicts [0.02ms]
+(pass) Utils > cn function (className merging) > should handle align-items conflicts [0.02ms]
+(pass) Utils > cn function (className merging) > should preserve non-conflicting classes [0.04ms]
+(pass) Utils > cn function (className merging) > should handle complex real-world scenarios [0.25ms]
+(pass) Utils > cn function (className merging) > should handle form input scenarios [0.09ms]
+(pass) Utils > cn function (className merging) > should handle grid layout scenarios [0.04ms]
+(pass) Utils > cn function (className merging) > should handle dark mode variants [0.04ms]
+(pass) Utils > cn function (className merging) > should handle empty and falsy values gracefully [0.04ms]
+(pass) Utils > cn function (className merging) > should handle nested arrays [0.12ms]
+(pass) Utils > cn function (className merging) > should handle arbitrary values [0.08ms]
+(pass) Utils > cn function (className merging) > should preserve important modifiers
+(pass) Utils > cn function (className merging) > should handle performance with many classes [0.26ms]
+
+src/lib/__tests__/auth-api-extended.simple.test.ts:
+(pass) AuthAPI - Extended Tests > Token Management > getToken/setToken/removeToken (private methods tested through public interface) > should handle token operations in browser environment [0.05ms]
+(pass) AuthAPI - Extended Tests > Token Management > getToken/setToken/removeToken (private methods tested through public interface) > should handle missing localStorage gracefully
+(pass) AuthAPI - Extended Tests > Token Management > isAuthenticated > should return false when no access token exists
+(pass) AuthAPI - Extended Tests > Token Management > isAuthenticated > should return true when access token exists
+(pass) AuthAPI - Extended Tests > Token Management > isAuthenticated > should return false when access token is empty string
+(pass) AuthAPI - Extended Tests > Token Management > clearTokens > should remove both access and refresh tokens
+(pass) AuthAPI - Extended Tests > Token Management > clearTokens > should handle non-existent tokens gracefully [0.12ms]
+(pass) AuthAPI - Extended Tests > API Request Helper Function > should make GET request with default headers [0.27ms]
+(pass) AuthAPI - Extended Tests > API Request Helper Function > should make POST request with body [0.15ms]
+(pass) AuthAPI - Extended Tests > API Request Helper Function > should handle authorization header when token exists [0.06ms]
+(pass) AuthAPI - Extended Tests > HTTP Status Code Handling > should handle 401 Unauthorized [0.02ms]
+(pass) AuthAPI - Extended Tests > HTTP Status Code Handling > should handle 403 Forbidden
+(pass) AuthAPI - Extended Tests > HTTP Status Code Handling > should handle 404 Not Found [0.17ms]
+(pass) AuthAPI - Extended Tests > HTTP Status Code Handling > should handle 500 Server Error [0.01ms]
+(pass) AuthAPI - Extended Tests > HTTP Status Code Handling > should handle 204 No Content responses
+(pass) AuthAPI - Extended Tests > Error Parsing > should parse JSON error with message field [0.10ms]
+(pass) AuthAPI - Extended Tests > Error Parsing > should parse JSON error with nested error.message field [0.04ms]
+(pass) AuthAPI - Extended Tests > Error Parsing > should parse JSON error with error string field
+(pass) AuthAPI - Extended Tests > Error Parsing > should fallback to status-based error for invalid JSON [0.06ms]
+(pass) AuthAPI - Extended Tests > Error Parsing > should fallback to generic error for unknown status
+(pass) AuthAPI - Extended Tests > Content-Type Parsing > should parse JSON responses with correct content-type [0.08ms]
+(pass) AuthAPI - Extended Tests > Content-Type Parsing > should handle responses without JSON content-type [0.04ms]
+(pass) AuthAPI - Extended Tests > Content-Type Parsing > should handle responses without content-type header [0.04ms]
+(pass) AuthAPI - Extended Tests > Login Flow > should successfully login and store tokens [0.03ms]
+(pass) AuthAPI - Extended Tests > Login Flow > should handle login response with tokens at root level [0.08ms]
+(pass) AuthAPI - Extended Tests > Logout Flow > should successfully logout and clear tokens [0.05ms]
+(pass) AuthAPI - Extended Tests > Logout Flow > should clear tokens even if logout request fails [0.12ms]
+(pass) AuthAPI - Extended Tests > Token Refresh Mechanism > should successfully refresh tokens [0.19ms]
+(pass) AuthAPI - Extended Tests > Token Refresh Mechanism > should handle refresh response with tokens at root level [0.08ms]
+(pass) AuthAPI - Extended Tests > Token Refresh Mechanism > should throw error when no refresh token is available [0.11ms]
+(pass) AuthAPI - Extended Tests > Token Refresh Mechanism > should throw error when refresh token is empty [0.02ms]
+(pass) AuthAPI - Extended Tests > Edge Cases > should handle expired tokens gracefully [0.07ms]
+(pass) AuthAPI - Extended Tests > Edge Cases > should handle missing tokens for authenticated requests [0.02ms]
+(pass) AuthAPI - Extended Tests > Edge Cases > should handle malformed token responses [0.02ms]
+(pass) AuthAPI - Extended Tests > Edge Cases > should handle network errors [0.03ms]
+(pass) AuthAPI - Extended Tests > Profile Management > should get user profile [0.04ms]
+(pass) AuthAPI - Extended Tests > Profile Management > should update user profile [0.11ms]
+(pass) AuthAPI - Extended Tests > Profile Management > should handle profile responses at root level [0.03ms]
+(pass) AuthAPI - Extended Tests > API Key Management > should get API keys
+(pass) AuthAPI - Extended Tests > API Key Management > should return empty array when no API keys data
+(pass) AuthAPI - Extended Tests > API Key Management > should create API key [0.10ms]
+(pass) AuthAPI - Extended Tests > API Key Management > should delete API key [0.02ms]
+(pass) AuthAPI - Extended Tests > API Key Management > should handle API key responses at root level [0.04ms]
+
+src/lib/__tests__/config-api.simple.test.ts:
+(pass) Configuration API - Simple Tests > ConfigAPI class > should be properly instantiated
+(pass) Configuration API - Simple Tests > exportConfiguration > should make POST request to correct endpoint [0.71ms]
+(pass) Configuration API - Simple Tests > exportConfiguration > should handle empty options object [0.15ms]
+(pass) Configuration API - Simple Tests > exportConfiguration > should handle complex options object [0.07ms]
+(pass) Configuration API - Simple Tests > exportConfiguration > should throw error when export fails with 400 status [0.01ms]
+(pass) Configuration API - Simple Tests > exportConfiguration > should throw error when export fails with 401 status [0.04ms]
+(pass) Configuration API - Simple Tests > exportConfiguration > should throw error when export fails with 403 status [0.02ms]
+(pass) Configuration API - Simple Tests > exportConfiguration > should throw error when export fails with 500 status [0.02ms]
+(pass) Configuration API - Simple Tests > exportConfiguration > should handle network errors [0.05ms]
+(pass) Configuration API - Simple Tests > exportConfiguration > should handle blob() method throwing error [0.04ms]
+(pass) Configuration API - Simple Tests > importConfiguration > should make POST request to correct endpoint with FormData [0.14ms]
+(pass) Configuration API - Simple Tests > importConfiguration > should handle empty FormData [0.03ms]
+(pass) Configuration API - Simple Tests > importConfiguration > should handle FormData with multiple files [0.02ms]
+(pass) Configuration API - Simple Tests > importConfiguration > should not include Content-Type header (let browser set it)
+(pass) Configuration API - Simple Tests > importConfiguration > should throw error when import fails with 400 status [0.04ms]
+(pass) Configuration API - Simple Tests > importConfiguration > should throw error when import fails with 401 status [0.04ms]
+(pass) Configuration API - Simple Tests > importConfiguration > should throw error when import fails with 403 status [0.03ms]
+(pass) Configuration API - Simple Tests > importConfiguration > should throw error when import fails with 413 status [0.01ms]
+(pass) Configuration API - Simple Tests > importConfiguration > should throw error when import fails with 422 status
+(pass) Configuration API - Simple Tests > importConfiguration > should throw error when import fails with 500 status [0.07ms]
+(pass) Configuration API - Simple Tests > importConfiguration > should handle network errors during import [0.03ms]
+(pass) Configuration API - Simple Tests > importConfiguration > should return void on successful import
+(pass) Configuration API - Simple Tests > importConfiguration > should handle 201 status (Created) as success
+(pass) Configuration API - Simple Tests > importConfiguration > should handle 204 status (No Content) as success
+(pass) Configuration API - Simple Tests > API Base URL configuration > should use consistent API base URL for all requests [0.10ms]
+(pass) Configuration API - Simple Tests > Error handling edge cases > should handle fetch returning undefined response [0.07ms]
+(pass) Configuration API - Simple Tests > Error handling edge cases > should handle response without ok property [0.02ms]
+(pass) Configuration API - Simple Tests > Error handling edge cases > should handle response without status property [0.01ms]
+(pass) Configuration API - Simple Tests > Error handling edge cases > should handle response without statusText property [0.04ms]
+
+src/lib/__tests__/client-api.simple.test.ts:
+(pass) Client API - Simple Tests > apiRequest helper function > should make basic API requests with correct headers [0.25ms]
+(pass) Client API - Simple Tests > apiRequest helper function > should not include Authorization header when no access token
+(pass) Client API - Simple Tests > apiRequest helper function > should handle 401 Unauthorized with clean error message [0.25ms]
+(pass) Client API - Simple Tests > apiRequest helper function > should handle 403 Forbidden with clean error message [0.08ms]
+(pass) Client API - Simple Tests > apiRequest helper function > should handle 404 Not Found with clean error message
+(pass) Client API - Simple Tests > apiRequest helper function > should handle 500 Server Error with clean error message
+(pass) Client API - Simple Tests > apiRequest helper function > should handle 204 No Content response
+(pass) Client API - Simple Tests > apiRequest helper function > should parse JSON error responses with error.message
+(pass) Client API - Simple Tests > apiRequest helper function > should parse JSON error responses with message field
+(pass) Client API - Simple Tests > apiRequest helper function > should parse JSON error responses with error string [0.20ms]
+(pass) Client API - Simple Tests > apiRequest helper function > should handle content-type parsing for JSON responses [0.05ms]
+(pass) Client API - Simple Tests > apiRequest helper function > should handle non-JSON responses by returning null
+(pass) Client API - Simple Tests > apiRequest helper function > should fallback to clean error message when JSON parsing fails
+(pass) Client API - Simple Tests > AdminAPI > should call correct endpoint for getStats
+(pass) Client API - Simple Tests > AdminAPI > should build correct query parameters for getLogs
+(pass) Client API - Simple Tests > AdminAPI > should build correct query parameters for getAuditLogs [0.36ms]
+(pass) Client API - Simple Tests > ServerAPI > should handle listServers with data wrapper
+(pass) Client API - Simple Tests > ServerAPI > should handle listServers with empty data
+(pass) Client API - Simple Tests > ServerAPI > should make POST request for createServer [0.12ms]
+(pass) Client API - Simple Tests > ServerAPI > should make PUT request for updateServer
+(pass) Client API - Simple Tests > ServerAPI > should make DELETE request for deleteServer
+(pass) Client API - Simple Tests > ServerAPI > should make POST request for restartServer
+(pass) Client API - Simple Tests > NamespaceAPI > should extract namespaces from response wrapper
+(pass) Client API - Simple Tests > NamespaceAPI > should handle empty namespaces response
+(pass) Client API - Simple Tests > ToolsAPI > should build query parameters correctly for listTools
+(pass) Client API - Simple Tests > ToolsAPI > should extract data from response wrapper [0.39ms]
+(pass) Client API - Simple Tests > ToolsAPI > should handle empty tools data [0.02ms]
+(pass) Client API - Simple Tests > PromptsAPI > should build query parameters correctly for listPrompts [0.03ms]
+(pass) Client API - Simple Tests > A2AApi > should build query parameters for listAgents [0.10ms]
+(pass) Client API - Simple Tests > A2AApi > should extract agents from response
+(pass) Client API - Simple Tests > AuthConfigAPI > should extract data from getAuthConfig response
+(pass) Client API - Simple Tests > AuthConfigAPI > should make PUT request for updateAuthConfig
+(pass) Client API - Simple Tests > Error handling edge cases > should handle network errors
+(pass) Client API - Simple Tests > Error handling edge cases > should handle malformed JSON in error response [0.02ms]
+
+src/lib/__tests__/auth-api-simple.test.ts:
+(pass) AuthAPI - Simple Tests > authentication state > should correctly report authentication status [0.10ms]
+(pass) AuthAPI - Simple Tests > authentication state > should clear both tokens when clearing
+(pass) AuthAPI - Simple Tests > token management > should handle missing tokens gracefully [0.06ms]
+
+src/lib/validation/__tests__/server.simple.test.ts:
+(pass) Server Validation Schemas > serverSchema > should validate basic server data [1.15ms]
+(pass) Server Validation Schemas > serverSchema > should apply defaults for optional fields [0.37ms]
+(pass) Server Validation Schemas > serverSchema > should validate protocol enum [0.14ms]
+(pass) Server Validation Schemas > serverSchema > should reject invalid protocols [0.18ms]
+(pass) Server Validation Schemas > serverSchema > should validate server status enum [0.18ms]
+(pass) Server Validation Schemas > serverSchema > should reject invalid server status [0.07ms]
+(pass) Server Validation Schemas > serverSchema > should validate args array limits [0.14ms]
+(pass) Server Validation Schemas > serverSchema > should validate arg length limits [0.06ms]
+(pass) Server Validation Schemas > serverSchema > should validate environment array limits [0.08ms]
+(pass) Server Validation Schemas > serverSchema > should validate environment variable length
+(pass) Server Validation Schemas > serverSchema > should validate timeout and retry limits [0.16ms]
+(pass) Server Validation Schemas > serverSchemaWithProtocolValidation > HTTP/HTTPS protocol validation > should require URL for HTTP protocols [0.22ms]
+(pass) Server Validation Schemas > serverSchemaWithProtocolValidation > HTTP/HTTPS protocol validation > should accept valid HTTP/HTTPS URLs [0.13ms]
+(pass) Server Validation Schemas > serverSchemaWithProtocolValidation > SSE protocol validation > should require URL for SSE protocol [0.05ms]
+(pass) Server Validation Schemas > serverSchemaWithProtocolValidation > SSE protocol validation > should accept valid SSE URL [0.03ms]
+(pass) Server Validation Schemas > serverSchemaWithProtocolValidation > WebSocket protocol validation > should require WebSocket URL [0.02ms]
+(pass) Server Validation Schemas > serverSchemaWithProtocolValidation > WebSocket protocol validation > should require ws:// or wss:// protocol [0.05ms]
+(pass) Server Validation Schemas > serverSchemaWithProtocolValidation > WebSocket protocol validation > should accept valid WebSocket URLs [0.04ms]
+(pass) Server Validation Schemas > serverSchemaWithProtocolValidation > STDIO protocol validation > should require command for STDIO protocol
+(pass) Server Validation Schemas > serverSchemaWithProtocolValidation > STDIO protocol validation > should accept valid command for STDIO
+(pass) Server Validation Schemas > serverSchemaWithProtocolValidation > Health check URL validation > should validate health check URL matches protocol [0.07ms]
+(pass) Server Validation Schemas > serverSchemaWithProtocolValidation > Health check URL validation > should accept compatible health check URLs [0.16ms]
+(pass) Server Validation Schemas > serverSchemaWithProtocolValidation > Health check URL validation > should allow no health check URL [0.10ms]
+(pass) Server Validation Schemas > Schema compositions > should create server with createServerSchema [0.32ms]
+(pass) Server Validation Schemas > Schema compositions > should allow partial updates with updateServerSchema [0.75ms]
+(pass) Server Validation Schemas > Schema compositions > should validate partial updates [0.11ms]
+(pass) Environment Variable Validation > validateEnvironmentVariable > should validate correct environment variables [0.09ms]
+(pass) Environment Variable Validation > validateEnvironmentVariable > should reject environment variables without equals sign [0.02ms]
+(pass) Environment Variable Validation > validateEnvironmentVariable > should reject empty keys [0.02ms]
+(pass) Environment Variable Validation > validateEnvironmentVariable > should validate key format [0.01ms]
+(pass) Environment Variable Validation > validateEnvironmentVariable > should accept valid key formats [0.03ms]
+(pass) Environment Variable Validation > validateEnvironmentVariable > should handle values with equals signs
+(pass) Environment Variable Validation > validateEnvironmentVariable > should allow empty values [0.02ms]
+(pass) Command Argument Validation > validateCommandArgument > should validate correct command arguments [0.03ms]
+(pass) Command Argument Validation > validateCommandArgument > should reject empty arguments [0.01ms]
+(pass) Command Argument Validation > validateCommandArgument > should reject too long arguments [0.03ms]
+(pass) Command Argument Validation > validateCommandArgument > should accept arguments at the limit [0.03ms]
+(pass) Command Argument Validation > validateCommandArgument > should handle special characters in arguments [0.05ms]
+(pass) Server Schema Edge Cases > Complex validation scenarios > should handle complete server configuration [0.20ms]
+(pass) Server Schema Edge Cases > Complex validation scenarios > should handle minimal STDIO server [0.08ms]
+(pass) Server Schema Edge Cases > Complex validation scenarios > should handle WebSocket server with HTTP health check [0.07ms]
+(pass) Server Schema Edge Cases > Complex validation scenarios > should validate mixed protocol scenarios [0.21ms]
+
+src/lib/validation/__tests__/user.simple.test.ts:
+(pass) User Validation Schemas > userSchema > should validate correct user data [0.21ms]
+(pass) User Validation Schemas > userSchema > should apply defaults for optional fields [0.04ms]
+(pass) User Validation Schemas > userSchema > should convert email to lowercase
+(pass) User Validation Schemas > userSchema > should trim name whitespace
+(pass) User Validation Schemas > userSchema > should reject invalid email formats
+(pass) User Validation Schemas > userSchema > should reject empty names [0.19ms]
+(pass) User Validation Schemas > userSchema > should reject names that are too long [0.03ms]
+(pass) User Validation Schemas > userSchema > should validate user roles [0.06ms]
+(pass) User Validation Schemas > userSchema > should reject invalid user roles [0.02ms]
+(pass) User Validation Schemas > passwordSchema > should validate strong passwords [0.16ms]
+(pass) User Validation Schemas > passwordSchema > should require minimum length [0.05ms]
+(pass) User Validation Schemas > passwordSchema > should require uppercase letter
+(pass) User Validation Schemas > passwordSchema > should require lowercase letter
+(pass) User Validation Schemas > passwordSchema > should require number [0.10ms]
+(pass) User Validation Schemas > passwordSchema > should require special character
+(pass) User Validation Schemas > passwordSchema > should validate password confirmation match
+(pass) User Validation Schemas > passwordSchema > should reject too long passwords [0.02ms]
+(pass) User Validation Schemas > changePasswordSchema > should validate password change [0.12ms]
+(pass) User Validation Schemas > changePasswordSchema > should require current password [0.04ms]
+(pass) User Validation Schemas > changePasswordSchema > should validate new password confirmation
+(pass) User Validation Schemas > changePasswordSchema > should require new password to be different [0.06ms]
+(pass) User Validation Schemas > updateProfileSchema > should validate profile updates [0.13ms]
+(pass) User Validation Schemas > updateProfileSchema > should trim name and lowercase email [0.01ms]
+(pass) User Validation Schemas > loginSchema > should validate login credentials [0.07ms]
+(pass) User Validation Schemas > loginSchema > should default remember to false
+(pass) User Validation Schemas > loginSchema > should require password [0.07ms]
+(pass) User Validation Schemas > passwordResetSchema > should validate password reset [0.07ms]
+(pass) User Validation Schemas > passwordResetSchema > should require reset token [0.03ms]
+(pass) User Validation Schemas > schema compositions > should create user with createUserSchema [0.16ms]
+(pass) User Validation Schemas > schema compositions > should register user with registerUserSchema [0.16ms]
+(pass) User Validation Schemas > schema compositions > should allow partial updates with updateUserSchema [0.16ms]
+(pass) Role Permissions > rolePermissions structure > should define permissions for all roles [0.02ms]
+(pass) Role Permissions > rolePermissions structure > should give admin full permissions
+(pass) Role Permissions > rolePermissions structure > should give viewer minimal permissions
+(pass) Role Permissions > rolePermissions structure > should give user and api_user server permissions
+(pass) Role Assignment Validation > validateRoleAssignment > should allow admin to assign any role
+(pass) Role Assignment Validation > validateRoleAssignment > should not allow non-admin to assign admin role
+(pass) Role Assignment Validation > validateRoleAssignment > should not allow user/viewer/api_user to assign any roles
+(pass) Password Strength Validation > validatePasswordStrength > should rate weak passwords [0.02ms]
+(pass) Password Strength Validation > validatePasswordStrength > should rate strong passwords
+(pass) Password Strength Validation > validatePasswordStrength > should detect common patterns
+(pass) Password Strength Validation > validatePasswordStrength > should provide specific feedback
+(pass) Password Strength Validation > validatePasswordStrength > should rate fair passwords
+(pass) Password Strength Validation > validatePasswordStrength > should rate good passwords
+(pass) Email Domain Validation > validateEmailDomain > should accept valid domains
+(pass) Email Domain Validation > validateEmailDomain > should detect common domain typos
+(pass) Email Domain Validation > validateEmailDomain > should reject invalid domain formats
+(pass) Email Domain Validation > validateEmailDomain > should handle malformed emails
+(pass) Username Generation > generateUsernameFromEmail > should extract username from email [0.02ms]
+(pass) Username Generation > generateUsernameFromEmail > should clean special characters
+(pass) Username Generation > generateUsernameFromEmail > should convert to lowercase [0.02ms]
+(pass) Username Generation > generateUsernameFromEmail > should preserve numbers and underscores [0.02ms]
+
+src/lib/validation/__tests__/common.simple.test.ts:
+(pass) Common Validation > UUID validation > should validate correct UUID format
+(pass) Common Validation > UUID validation > should reject invalid UUID formats [0.24ms]
+(pass) Common Validation > UUID validation > should handle optional UUID
+(pass) Common Validation > Name validation > should accept valid names [0.01ms]
+(pass) Common Validation > Name validation > should trim whitespace
+(pass) Common Validation > Name validation > should reject empty or too long names [0.07ms]
+(pass) Common Validation > Description validation > should accept valid descriptions
+(pass) Common Validation > Description validation > should trim whitespace
+(pass) Common Validation > Description validation > should reject too long descriptions [0.06ms]
+(pass) Common Validation > Description validation > should convert empty string to literal empty [0.03ms]
+(pass) Common Validation > Email validation > should validate correct email formats
+(pass) Common Validation > Email validation > should convert to lowercase
+(pass) Common Validation > Email validation > should reject invalid email formats [0.05ms]
+(pass) Common Validation > Email validation > should reject too long emails [0.03ms]
+(pass) Common Validation > URL validation > should validate correct URL formats [0.02ms]
+(pass) Common Validation > URL validation > should handle optional URLs
+(pass) Common Validation > URL validation > should reject invalid URL formats [0.09ms]
+(pass) Common Validation > URI validation > should validate various URI schemes [0.05ms]
+(pass) Common Validation > URI validation > should reject invalid URI formats [0.03ms]
+(pass) Common Validation > Tags validation > should validate tag arrays [0.02ms]
+(pass) Common Validation > Tags validation > should default to empty array
+(pass) Common Validation > Tags validation > should reject too many tags [0.05ms]
+(pass) Common Validation > Tags validation > should reject invalid tag formats [0.06ms]
+(pass) Common Validation > JSON validation > should validate JSON strings [0.09ms]
+(pass) Common Validation > JSON validation > should accept empty optional JSON [0.01ms]
+(pass) Common Validation > JSON validation > should reject invalid JSON [0.09ms]
+(pass) Common Validation > JSON validation > should require non-empty JSON for requiredJsonString [0.02ms]
+(pass) Common Validation > Slug validation > should validate correct slug formats [0.04ms]
+(pass) Common Validation > Slug validation > should reject invalid slug formats [0.06ms]
+(pass) Common Validation > Function name validation > should validate correct function names [0.02ms]
+(pass) Common Validation > Function name validation > should reject invalid function names [0.02ms]
+(pass) Common Validation > MIME type validation > should validate correct MIME types [0.04ms]
+(pass) Common Validation > MIME type validation > should handle optional MIME types
+(pass) Common Validation > MIME type validation > should reject invalid MIME types [0.07ms]
+(pass) Common Validation > Numeric validations > should validate file sizes [0.03ms]
+(pass) Common Validation > Numeric validations > should reject invalid file sizes
+(pass) Common Validation > Numeric validations > should validate timeout values [0.07ms]
+(pass) Common Validation > Numeric validations > should validate retry counts [0.07ms]
+(pass) Common Validation > Numeric validations > should validate rate limits [0.02ms]
+(pass) Common Validation > Boolean defaults > should handle boolean defaults [0.05ms]
+(pass) Validation Utils > slugify function > should convert strings to valid slugs [0.10ms]
+(pass) Validation Utils > parseJson function > should parse valid JSON [0.02ms]
+(pass) Validation Utils > parseJson function > should handle invalid JSON
+(pass) Validation Utils > validateToolSchema function > should validate correct tool schemas [0.05ms]
+(pass) Validation Utils > validateToolSchema function > should reject invalid tool schemas
+(pass) Validation Utils > validateToolSchema function > should handle invalid JSON
+(pass) Validation Utils > validatePromptParameters function > should validate correct prompt parameters [0.07ms]
+(pass) Validation Utils > validatePromptParameters function > should reject non-array parameters
+(pass) Validation Utils > validatePromptParameters function > should validate parameter structure [0.01ms]
+(pass) Validation Utils > getValidationError function > should return first error message
+(pass) Validation Utils > getValidationError function > should return empty string for no errors
+(pass) Validation Utils > getValidationError function > should handle errors without message
+(pass) Enum definitions > planType enum > should contain expected plan types
+(pass) Enum definitions > protocol enum > should contain expected protocols [0.01ms]
+(pass) Enum definitions > serverStatus enum > should contain expected statuses
+(pass) Enum definitions > userRole enum > should contain expected roles
+(pass) Enum definitions > resourceType enum > should contain expected resource types [0.01ms]
+(pass) Enum definitions > toolCategory enum > should contain expected tool categories
+(pass) Enum definitions > adapterType enum > should contain expected adapter types
+(pass) Enum definitions > all other enums > should have proper enum structures
+
+src/lib/validation/__tests__/tool.simple.test.ts:
+(pass) Tool Validation Schemas > toolSchema > should validate basic tool data [0.51ms]
+(pass) Tool Validation Schemas > toolSchema > should apply defaults for optional fields [0.04ms]
+(pass) Tool Validation Schemas > toolSchema > should validate tool categories [0.03ms]
+(pass) Tool Validation Schemas > toolSchema > should reject invalid tool categories [0.05ms]
+(pass) Tool Validation Schemas > toolSchema > should validate implementation types [0.04ms]
+(pass) Tool Validation Schemas > toolSchema > should reject invalid implementation types
+(pass) Tool Validation Schemas > toolSchema > should validate function names [0.09ms]
+(pass) Tool Validation Schemas > toolSchema > should reject invalid function names [0.11ms]
+(pass) Tool Validation Schemas > toolSchema > should validate documentation length [0.04ms]
+(pass) Tool Validation Schemas > toolSchema > should validate tags array [0.02ms]
+(pass) Tool Validation Schemas > toolSchemaWithImplementationValidation > External implementation validation > should require endpoint URL for external implementation [0.19ms]
+(pass) Tool Validation Schemas > toolSchemaWithImplementationValidation > External implementation validation > should accept valid external tool with endpoint
+(pass) Tool Validation Schemas > toolSchemaWithImplementationValidation > Webhook implementation validation > should require endpoint URL for webhook implementation
+(pass) Tool Validation Schemas > toolSchemaWithImplementationValidation > Webhook implementation validation > should prefer HTTPS for webhook URLs [0.15ms]
+(pass) Tool Validation Schemas > toolSchemaWithImplementationValidation > Webhook implementation validation > should allow HTTP for localhost webhooks [0.03ms]
+(pass) Tool Validation Schemas > toolSchemaWithImplementationValidation > Webhook implementation validation > should accept HTTPS webhook URLs [0.04ms]
+(pass) Tool Validation Schemas > toolSchemaWithImplementationValidation > Internal/Script implementation validation > should not require endpoint URL for internal implementation [0.03ms]
+(pass) Tool Validation Schemas > toolSchemaWithImplementationValidation > Internal/Script implementation validation > should not require endpoint URL for script implementation
+(pass) Tool Validation Schemas > toolSchemaWithImplementationValidation > URL format validation > should reject invalid URL formats [0.04ms]
+(pass) Tool Validation Schemas > toolSchemaWithImplementationValidation > URL format validation > should accept valid HTTP/HTTPS URLs [0.04ms]
+(pass) Tool Validation Schemas > Schema compositions > should create tool with createToolSchema [0.22ms]
+(pass) Tool Validation Schemas > Schema compositions > should exclude usage_count from createToolSchema
+(pass) Tool Validation Schemas > Schema compositions > should allow partial updates with updateToolSchema [0.29ms]
+(pass) Tool Schema Validation > validateToolSchema > should allow empty schema [0.16ms]
+(pass) Tool Schema Validation > validateToolSchema > should validate basic object schema [0.04ms]
+(pass) Tool Schema Validation > validateToolSchema > should validate array schema [0.02ms]
+(pass) Tool Schema Validation > validateToolSchema > should validate primitive type schemas [0.01ms]
+(pass) Tool Schema Validation > validateToolSchema > should reject invalid JSON
+(pass) Tool Schema Validation > validateToolSchema > should reject non-object schemas [0.03ms]
+(pass) Tool Schema Validation > validateToolSchema > should require type property
+(pass) Tool Schema Validation > validateToolSchema > should validate type values
+(pass) Tool Schema Validation > validateToolSchema > should validate object properties structure
+(pass) Tool Schema Validation > validateToolSchema > should validate object property types
+(pass) Tool Schema Validation > validateToolSchema > should validate array items structure
+(pass) Tool Examples Validation > validateToolExamples > should allow empty examples [0.03ms]
+(pass) Tool Examples Validation > validateToolExamples > should validate correct examples format
+(pass) Tool Examples Validation > validateToolExamples > should reject invalid JSON
+(pass) Tool Examples Validation > validateToolExamples > should reject non-array examples [0.02ms]
+(pass) Tool Examples Validation > validateToolExamples > should validate example structure [0.01ms]
+(pass) Tool Examples Validation > validateToolExamples > should require input property
+(pass) Tool Examples Validation > validateToolExamples > should require output property
+(pass) Tool Examples Validation > validateToolExamples > should validate multiple examples
+(pass) Tool Suggestion Functions > suggestToolCategory > should suggest data category for data-related tools [0.11ms]
+(pass) Tool Suggestion Functions > suggestToolCategory > should suggest file category for file-related tools [0.06ms]
+(pass) Tool Suggestion Functions > suggestToolCategory > should suggest web category for web-related tools [0.03ms]
+(pass) Tool Suggestion Functions > suggestToolCategory > should suggest system category for system-related tools [0.03ms]
+(pass) Tool Suggestion Functions > suggestToolCategory > should suggest ai category for AI-related tools [0.02ms]
+(pass) Tool Suggestion Functions > suggestToolCategory > should suggest dev category for development tools [0.01ms]
+(pass) Tool Suggestion Functions > suggestToolCategory > should default to general category [0.04ms]
+(pass) Tool Suggestion Functions > suggestImplementationType > should suggest internal for no endpoint URL
+(pass) Tool Suggestion Functions > suggestImplementationType > should suggest webhook for webhook URLs
+(pass) Tool Suggestion Functions > suggestImplementationType > should suggest external for HTTP URLs
+(pass) Tool Suggestion Functions > suggestImplementationType > should default to internal for non-HTTP URLs
+(pass) Tool Suggestion Functions > generateToolSchemaTemplate > should generate general template [0.08ms]
+(pass) Tool Suggestion Functions > generateToolSchemaTemplate > should generate data template
+(pass) Tool Suggestion Functions > generateToolSchemaTemplate > should generate file template
+(pass) Tool Suggestion Functions > generateToolSchemaTemplate > should generate web template
+(pass) Tool Suggestion Functions > generateToolSchemaTemplate > should default to general template for unknown categories
+(pass) Tool Suggestion Functions > generateToolSchemaTemplate > should generate valid JSON [0.06ms]
+
+1 tests failed:
+
+ 351 pass
+ 1 fail
+ 1 error
+ 748 expect() calls
+Ran 352 tests across 10 files. [103.00ms]

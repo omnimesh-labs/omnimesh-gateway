@@ -195,14 +195,14 @@ export const validateToolExamples = (examplesString: string): { valid: boolean; 
 export const suggestToolCategory = (name: string, description?: string): typeof enums.toolCategory[number] => {
   const text = `${name} ${description || ''}`.toLowerCase();
 
-  // Category keywords
+  // Category keywords - ordered from most specific to least specific
   const categoryKeywords = {
+    ai: ['ai', 'ml', 'model', 'predict', 'nlp', 'gpt', 'openai', 'machine learning', 'artificial intelligence'],
+    dev: ['git', 'deploy', 'build', 'test', 'debug', 'code', 'npm', 'development', 'deployment'],
     data: ['data', 'database', 'query', 'sql', 'analytics', 'csv', 'json'],
     file: ['file', 'upload', 'download', 'storage', 'document', 'pdf', 'image'],
     web: ['http', 'api', 'request', 'web', 'url', 'scrape', 'fetch'],
-    system: ['system', 'os', 'process', 'command', 'shell', 'exec'],
-    ai: ['ai', 'ml', 'model', 'predict', 'nlp', 'gpt', 'openai'],
-    dev: ['git', 'deploy', 'build', 'test', 'debug', 'code', 'npm'],
+    system: ['system', 'os', 'command', 'shell', 'exec', 'process'],
   };
 
   // Check for keyword matches

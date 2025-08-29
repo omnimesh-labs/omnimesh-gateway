@@ -194,8 +194,8 @@ export const validateEmailDomain = (email: string): { valid: boolean; error?: st
     };
   }
 
-  // Basic domain format validation
-  if (!/^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*\.([a-zA-Z]{2,}|xn--[a-zA-Z0-9]+)$/.test(domain)) {
+  // Basic domain format validation - allows subdomains like co.uk
+  if (!/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.([a-zA-Z]{2,}|xn--[a-zA-Z0-9]+)$/.test(domain)) {
     return { valid: false, error: 'Invalid email domain format' };
   }
 
