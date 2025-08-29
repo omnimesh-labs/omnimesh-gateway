@@ -11,6 +11,7 @@ import (
 	"mcp-gateway/apps/backend/internal/middleware"
 	"mcp-gateway/apps/backend/internal/transport"
 	"mcp-gateway/apps/backend/internal/types"
+	"mcp-gateway/apps/backend/internal/virtual"
 
 	"github.com/gin-gonic/gin"
 )
@@ -19,13 +20,15 @@ import (
 type RPCHandler struct {
 	transportManager *transport.Manager
 	discoveryService *discovery.Service
+	virtualService   *virtual.Service
 }
 
 // NewRPCHandler creates a new RPC handler
-func NewRPCHandler(transportManager *transport.Manager, discoveryService *discovery.Service) *RPCHandler {
+func NewRPCHandler(transportManager *transport.Manager, discoveryService *discovery.Service, virtualService *virtual.Service) *RPCHandler {
 	return &RPCHandler{
 		transportManager: transportManager,
 		discoveryService: discoveryService,
+		virtualService:   virtualService,
 	}
 }
 
@@ -470,19 +473,8 @@ func (h *RPCHandler) processRPCMethod(ctx context.Context, method string, params
 			"user_id":   transportCtx.UserID,
 		}, nil
 	case types.MCPMethodListTools:
-		// Return available tools
-		return map[string]interface{}{
-			"tools": []map[string]interface{}{
-				{
-					"name":        "ping",
-					"description": "Simple ping test method",
-					"inputSchema": map[string]interface{}{
-						"type":       "object",
-						"properties": map[string]interface{}{},
-					},
-				},
-			},
-		}, nil
+		// Get available tools from virtual servers and real MCP servers
+		return h.listAvailableTools(transportCtx)
 	case types.MCPMethodCallTool:
 		// Handle tool calls
 		toolName, ok := params["name"].(string)
@@ -675,4 +667,88 @@ func (h *RPCHandler) HandleRPCHealth(c *gin.Context) {
 			"synchronous",
 		},
 	})
+}
+
+// listAvailableTools returns all available tools from virtual servers and real MCP servers
+func (h *RPCHandler) listAvailableTools(transportCtx *types.TransportContext) (map[string]interface{}, error) {
+	allTools := []map[string]interface{}{}
+
+	// Add built-in tools first
+	builtInTools := []map[string]interface{}{
+		{
+			"name":        "ping",
+			"description": "Simple ping test method",
+			"inputSchema": map[string]interface{}{
+				"type":       "object",
+				"properties": map[string]interface{}{},
+			},
+		},
+	}
+	allTools = append(allTools, builtInTools...)
+
+	// Get tools from virtual servers
+	if h.virtualService != nil {
+		virtualServers, err := h.virtualService.List()
+		if err == nil {
+			for _, spec := range virtualServers {
+				// Create virtual server instance to get tools
+				virtualServer := virtual.NewVirtualServer(spec)
+				toolsResult, err := virtualServer.ListTools()
+				if err == nil {
+					// Convert from MCP tool format to JSON-RPC format
+					for _, tool := range toolsResult.Tools {
+						mcpTool := map[string]interface{}{
+							"name":        tool.Name,
+							"description": tool.Description,
+							"inputSchema": tool.InputSchema,
+						}
+						// Add server context for tool routing
+						if tool.Name != "ping" { // Don't add server context for built-in tools
+							mcpTool["server_id"] = spec.ID
+							mcpTool["server_type"] = "virtual"
+						}
+						allTools = append(allTools, mcpTool)
+					}
+				}
+			}
+		}
+	}
+
+	// Get tools from real MCP servers if available
+	if h.discoveryService != nil && transportCtx.OrganizationID != "" {
+		mcpServers, err := h.discoveryService.ListServers(transportCtx.OrganizationID)
+		if err == nil {
+			for _, server := range mcpServers {
+				if server.Status == "active" {
+					// For real MCP servers, we would need to establish a session and query tools
+					// For now, we'll add a placeholder indicating the server is available
+					mcpTool := map[string]interface{}{
+						"name":        fmt.Sprintf("%s_tools", server.Name),
+						"description": fmt.Sprintf("Tools available from MCP server %s", server.Name),
+						"inputSchema": map[string]interface{}{
+							"type": "object",
+							"properties": map[string]interface{}{
+								"method": map[string]interface{}{
+									"type":        "string",
+									"description": "The MCP method to call",
+								},
+								"params": map[string]interface{}{
+									"type":        "object",
+									"description": "Parameters for the MCP method",
+								},
+							},
+							"required": []string{"method"},
+						},
+						"server_id":   server.ID,
+						"server_type": "mcp",
+					}
+					allTools = append(allTools, mcpTool)
+				}
+			}
+		}
+	}
+
+	return map[string]interface{}{
+		"tools": allTools,
+	}, nil
 }

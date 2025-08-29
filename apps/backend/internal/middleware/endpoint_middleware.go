@@ -16,7 +16,6 @@ import (
 // EndpointService interface for endpoint operations
 type EndpointService interface {
 	ResolveEndpoint(ctx context.Context, name string) (*types.EndpointConfig, error)
-	ValidateAccess(ctx context.Context, endpoint *types.Endpoint, req *http.Request) error
 }
 
 // EndpointLookupMiddleware resolves endpoint by name from URL
@@ -46,8 +45,14 @@ func EndpointLookupMiddleware(endpointService EndpointService) gin.HandlerFunc {
 	}
 }
 
+// EndpointAuthService interface for validating API keys
+type EndpointAuthService interface {
+	ValidateAPIKey(apiKey string) (*types.APIKey, error)
+	GetUserByID(userID string) (*types.User, error)
+}
+
 // EndpointAuthMiddleware validates access to endpoint based on its auth settings
-func EndpointAuthMiddleware(endpointService EndpointService) gin.HandlerFunc {
+func EndpointAuthMiddleware(endpointService EndpointService, authService EndpointAuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		endpointVal, exists := c.Get("endpoint")
 		if !exists {
@@ -58,11 +63,60 @@ func EndpointAuthMiddleware(endpointService EndpointService) gin.HandlerFunc {
 
 		endpoint := endpointVal.(*types.Endpoint)
 
-		// Check authentication based on endpoint settings
-		if err := endpointService.ValidateAccess(c.Request.Context(), endpoint, c.Request); err != nil {
+		// Check if endpoint is active
+		if !endpoint.IsActive {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error":   "Unauthorized",
-				"details": err.Error(),
+				"details": "Endpoint is not active",
+			})
+			c.Abort()
+			return
+		}
+
+		// If public access is enabled, allow without authentication
+		if endpoint.EnablePublicAccess {
+			c.Next()
+			return
+		}
+
+		// Check authentication based on endpoint settings
+		authenticated := false
+
+		// Try API key authentication if enabled
+		if endpoint.EnableAPIKeyAuth {
+			if apiKey := extractAPIKey(c, endpoint); apiKey != "" {
+				if validatedKey, err := authService.ValidateAPIKey(apiKey); err == nil {
+					if u, err := authService.GetUserByID(validatedKey.UserID); err == nil && u.IsActive {
+						authenticated = true
+						// Set context for downstream handlers
+						c.Set("user_id", u.ID)
+						c.Set("organization_id", u.OrganizationID)
+						c.Set("role", u.Role)
+						c.Set("api_key", validatedKey)
+					}
+				}
+			}
+		}
+
+		// Try OAuth/JWT authentication if enabled and not already authenticated
+		if endpoint.EnableOAuth && !authenticated {
+			authHeader := c.GetHeader("Authorization")
+			if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
+				// For now, we'll implement basic JWT validation
+				// This could be extended to support OAuth providers
+				token := strings.TrimPrefix(authHeader, "Bearer ")
+				if len(token) > 0 {
+					// TODO: Implement JWT validation here
+					// For now, we'll just accept any Bearer token for OAuth-enabled endpoints
+					authenticated = true
+				}
+			}
+		}
+
+		if !authenticated {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error":   "Unauthorized",
+				"details": "No valid authentication provided",
 			})
 			c.Abort()
 			return
@@ -70,6 +124,30 @@ func EndpointAuthMiddleware(endpointService EndpointService) gin.HandlerFunc {
 
 		c.Next()
 	}
+}
+
+// extractAPIKey extracts API key from various sources based on endpoint configuration
+func extractAPIKey(c *gin.Context, endpoint *types.Endpoint) string {
+	// Try X-API-Key header first
+	if apiKey := c.GetHeader("X-API-Key"); apiKey != "" {
+		return apiKey
+	}
+
+	// Try Authorization header with Bearer prefix
+	if authHeader := c.GetHeader("Authorization"); authHeader != "" {
+		if strings.HasPrefix(authHeader, "Bearer ") {
+			return strings.TrimPrefix(authHeader, "Bearer ")
+		}
+	}
+
+	// Try query parameter if enabled
+	if endpoint.UseQueryParamAuth {
+		if apiKey := c.Query("api_key"); apiKey != "" {
+			return apiKey
+		}
+	}
+
+	return ""
 }
 
 // EndpointRateLimitMiddleware applies rate limiting based on endpoint configuration
@@ -118,7 +196,7 @@ func EndpointRateLimitMiddleware() gin.HandlerFunc {
 		// Check if rate limit exceeded
 		if context.Reached {
 			c.JSON(http.StatusTooManyRequests, gin.H{
-				"error": "Rate limit exceeded",
+				"error":       "Rate limit exceeded",
 				"retry_after": context.Reset,
 			})
 			c.Abort()

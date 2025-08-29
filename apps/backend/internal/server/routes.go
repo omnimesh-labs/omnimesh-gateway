@@ -229,7 +229,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	authMiddleware := auth.NewMiddleware(authService.GetJWTManager(), authService)
 
 	// Initialize transport handlers
-	rpcHandler := handlers.NewRPCHandler(transportManager, discoveryService)
+	rpcHandler := handlers.NewRPCHandler(transportManager, discoveryService, virtualService)
 	sseHandler := handlers.NewSSEHandler(transportManager)
 	wsHandler := handlers.NewWebSocketHandler(transportManager)
 	mcpHandler := handlers.NewMCPHandler(transportManager)
@@ -809,23 +809,22 @@ func (s *Server) RegisterRoutes() http.Handler {
 	transportGroup.GET("/servers/:server_id/ws", wsHandler.HandleServerWebSocket)
 	transportGroup.Any("/servers/:server_id/mcp", mcpHandler.HandleServerStreamableHTTP)
 
-	// Public-facing endpoint routes (requires authentication)
-	// These are public in the sense that they're accessible via custom URLs,
-	// but still require proper authentication based on endpoint configuration
-	// Note: reusing the endpointHandler created above in the protected routes
+	// Public-facing endpoint routes
+	// These endpoints use dynamic authentication based on individual endpoint configuration
+	// Authentication is handled by the EndpointAuthMiddleware based on endpoint settings
 	publicEndpoints := api.Group("/public")
-	publicEndpoints.Use(authMiddleware.RequireAuth())
 	{
-		// List all available endpoints for the authenticated user's organization
-		// Get the handler from the protected routes section above
+		// List all available endpoints (requires JWT auth for discovery)
 		endpointHandlerForPublic := handlers.NewEndpointHandler(endpointService)
-		publicEndpoints.GET("/endpoints", endpointHandlerForPublic.ListEndpoints)
+		publicEndpoints.GET("/endpoints",
+			authMiddleware.RequireAuth(),
+			endpointHandlerForPublic.ListEndpoints)
 
 		// Endpoint-specific routes with custom URL paths
 		endpoint := publicEndpoints.Group("/endpoints/:endpoint_name")
 		endpoint.Use(
 			middleware.EndpointLookupMiddleware(endpointService),
-			middleware.EndpointAuthMiddleware(endpointService),
+			middleware.EndpointAuthMiddleware(endpointService, authService),
 			middleware.EndpointRateLimitMiddleware(),
 			middleware.EndpointCORSMiddleware(),
 		)

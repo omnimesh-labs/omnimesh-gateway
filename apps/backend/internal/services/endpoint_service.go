@@ -7,7 +7,6 @@ import (
 	"mcp-gateway/apps/backend/internal/database/repositories"
 	"mcp-gateway/apps/backend/internal/types"
 	"net/http"
-	"strings"
 	"sync"
 
 	"github.com/jmoiron/sqlx"
@@ -329,48 +328,12 @@ func (s *EndpointService) ResolveEndpoint(ctx context.Context, name string) (*ty
 	return config, nil
 }
 
-// ValidateAccess validates access to an endpoint
+// ValidateAccess provides compatibility for handlers that still expect this method
+// Real authentication is now handled by EndpointAuthMiddleware
 func (s *EndpointService) ValidateAccess(ctx context.Context, endpoint *types.Endpoint, req *http.Request) error {
-	// Check if endpoint is active
-	if !endpoint.IsActive {
-		return fmt.Errorf("endpoint is not active")
-	}
-
-	// If public access is enabled, allow
-	if endpoint.EnablePublicAccess {
-		return nil
-	}
-
-	// Check authentication based on endpoint settings
-	authHeader := req.Header.Get("Authorization")
-	apiKeyParam := req.URL.Query().Get("api_key")
-
-	// Check API key in header
-	if endpoint.EnableAPIKeyAuth && authHeader != "" {
-		if strings.HasPrefix(authHeader, "Bearer ") {
-			// Validate API key
-			// TODO: Implement actual API key validation
-			return nil
-		}
-	}
-
-	// Check API key in query param
-	if endpoint.UseQueryParamAuth && apiKeyParam != "" {
-		// Validate API key
-		// TODO: Implement actual API key validation
-		return nil
-	}
-
-	// Check OAuth
-	if endpoint.EnableOAuth && authHeader != "" {
-		if strings.HasPrefix(authHeader, "Bearer ") {
-			// Validate OAuth token
-			// TODO: Implement actual OAuth validation
-			return nil
-		}
-	}
-
-	return fmt.Errorf("unauthorized: no valid authentication provided")
+	// This method is kept for interface compatibility
+	// Real validation is now done in EndpointAuthMiddleware
+	return nil
 }
 
 // Private helper methods

@@ -935,7 +935,7 @@ func (s *Service) ValidateAPIKey(keyString string) (*types.APIKey, error) {
 		&apiKey.UserID,
 		&apiKey.OrganizationID,
 		&apiKey.Name,
-		&permissions,
+		pq.Array(&permissions),
 		&apiKey.IsActive,
 		&expiresAt,
 		&apiKey.CreatedAt,
