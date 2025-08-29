@@ -16,17 +16,19 @@ import (
 
 // AdminHandler handles administrative endpoints
 type AdminHandler struct {
-	authService    *auth.Service
-	loggingService *logging.Service
-	configService  *config.Service
+	authService       *auth.Service
+	loggingService    *logging.Service
+	configService     *config.Service
+	authConfigService *auth.ConfigService
 }
 
 // NewAdminHandler creates a new admin handler
-func NewAdminHandler(authService *auth.Service, loggingService *logging.Service, configService *config.Service) *AdminHandler {
+func NewAdminHandler(authService *auth.Service, loggingService *logging.Service, configService *config.Service, authConfigService *auth.ConfigService) *AdminHandler {
 	return &AdminHandler{
-		authService:    authService,
-		loggingService: loggingService,
-		configService:  configService,
+		authService:       authService,
+		loggingService:    loggingService,
+		configService:     configService,
+		authConfigService: authConfigService,
 	}
 }
 
@@ -526,6 +528,124 @@ func (h *AdminHandler) ValidateImport(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"data":    validation,
+	})
+}
+
+// GetAuthConfig returns the current authentication configuration
+func (h *AdminHandler) GetAuthConfig(c *gin.Context) {
+	orgIDStr, exists := c.Get("organization_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
+			Error:   types.NewUnauthorizedError("Organization ID not found"),
+			Success: false,
+		})
+		return
+	}
+
+	orgID, err := uuid.Parse(orgIDStr.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   types.NewValidationError("Invalid organization ID"),
+			Success: false,
+		})
+		return
+	}
+
+	config, err := h.authConfigService.GetConfiguration(orgID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			Error:   types.NewInternalError("Failed to get auth configuration: " + err.Error()),
+			Success: false,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    config,
+	})
+}
+
+// UpdateAuthConfig updates the authentication configuration
+func (h *AdminHandler) UpdateAuthConfig(c *gin.Context) {
+	orgIDStr, exists := c.Get("organization_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
+			Error:   types.NewUnauthorizedError("Organization ID not found"),
+			Success: false,
+		})
+		return
+	}
+
+	userIDStr, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
+			Error:   types.NewUnauthorizedError("User ID not found"),
+			Success: false,
+		})
+		return
+	}
+
+	orgID, err := uuid.Parse(orgIDStr.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   types.NewValidationError("Invalid organization ID"),
+			Success: false,
+		})
+		return
+	}
+
+	userID, err := uuid.Parse(userIDStr.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   types.NewValidationError("Invalid user ID"),
+			Success: false,
+		})
+		return
+	}
+
+	var req types.CompleteAuthConfigurationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   types.NewValidationError(err.Error()),
+			Success: false,
+		})
+		return
+	}
+
+	// Validate the configuration
+	if err := h.authConfigService.ValidateConfiguration(&req); err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   types.NewValidationError(err.Error()),
+			Success: false,
+		})
+		return
+	}
+
+	// Update the configuration
+	updatedConfig, err := h.authConfigService.UpdateConfiguration(orgID, &req, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			Error:   types.NewInternalError("Failed to update auth configuration: " + err.Error()),
+			Success: false,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Authentication configuration updated successfully",
+		"data":    updatedConfig,
+	})
+}
+
+// GetAuthConfigDefaults returns the default authentication configuration values
+func (h *AdminHandler) GetAuthConfigDefaults(c *gin.Context) {
+	defaults := h.authConfigService.GetDefaults()
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    defaults,
 	})
 }
 

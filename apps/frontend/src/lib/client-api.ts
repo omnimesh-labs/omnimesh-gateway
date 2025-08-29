@@ -47,8 +47,23 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 	});
 
 	if (!response.ok) {
-		const error = await response.text();
-		throw new Error(`API request failed: ${response.status} ${response.statusText} - ${error}`);
+		const errorText = await response.text();
+
+		// Try to parse JSON error response to get clean error message
+		try {
+			const errorObj = JSON.parse(errorText);
+			if (errorObj.error) {
+				throw new Error(errorObj.error);
+			}
+			if (errorObj.message) {
+				throw new Error(errorObj.message);
+			}
+		} catch (_parseError) {
+			// If JSON parsing fails, it's not a JSON response
+		}
+
+		// Fallback to original error format if not JSON
+		throw new Error(`API request failed: ${response.status} ${response.statusText} - ${errorText}`);
 	}
 
 	// Handle 204 No Content responses (common for DELETE operations)
@@ -63,7 +78,7 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 	}
 
 	// For non-JSON responses or empty responses, return null
-	return null;
+	return null as unknown as T;
 }
 
 // Admin API

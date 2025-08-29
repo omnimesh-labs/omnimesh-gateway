@@ -173,11 +173,17 @@ func (s *Server) RegisterRoutes() http.Handler {
 	// Initialize config service
 	configService := config.NewService(s.db.GetDB())
 
+	// Initialize auth config service
+	authConfigService := auth.NewConfigService(s.db.GetDB())
+
 	// Initialize admin handler (for logging and system management)
-	adminHandler := handlers.NewAdminHandler(nil, s.logging.(*logging.Service), configService)
+	adminHandler := handlers.NewAdminHandler(nil, s.logging.(*logging.Service), configService, authConfigService)
 
 	// Initialize policy handler
 	policyHandler := handlers.NewPolicyHandler(s.db.GetDB())
+
+	// Initialize filters handler
+	filtersHandler := handlers.NewFiltersHandler(s.db.GetDB(), pluginService)
 
 	// Initialize resource, prompt, and tool models and handlers
 	resourceModel := models.NewMCPResourceModel(s.db.GetDB())
@@ -665,6 +671,71 @@ func (s *Server) RegisterRoutes() http.Handler {
 					authMiddleware.RequirePermission(types.PermissionDelete),
 					loggingMiddleware.AuditLogger("delete", "policy"),
 					policyHandler.DeletePolicy)
+			}
+
+			// Content Filters management - requires admin access and filter permissions
+			filters := admin.Group("/filters")
+			{
+				filters.GET("",
+					authMiddleware.RequireAdmin(),
+					authMiddleware.RequirePermission(types.PermissionRead),
+					filtersHandler.ListFilters)
+
+				filters.POST("",
+					authMiddleware.RequireAdmin(),
+					authMiddleware.RequirePermission(types.PermissionWrite),
+					loggingMiddleware.AuditLogger("create", "content_filter"),
+					filtersHandler.CreateFilter)
+
+				filters.GET("/:id",
+					authMiddleware.RequireAdmin(),
+					authMiddleware.RequirePermission(types.PermissionRead),
+					filtersHandler.GetFilter)
+
+				filters.PUT("/:id",
+					authMiddleware.RequireAdmin(),
+					authMiddleware.RequirePermission(types.PermissionWrite),
+					loggingMiddleware.AuditLogger("update", "content_filter"),
+					filtersHandler.UpdateFilter)
+
+				filters.DELETE("/:id",
+					authMiddleware.RequireAdmin(),
+					authMiddleware.RequirePermission(types.PermissionDelete),
+					loggingMiddleware.AuditLogger("delete", "content_filter"),
+					filtersHandler.DeleteFilter)
+
+				filters.GET("/types",
+					authMiddleware.RequireAdmin(),
+					authMiddleware.RequirePermission(types.PermissionRead),
+					filtersHandler.GetFilterTypes)
+
+				filters.GET("/violations",
+					authMiddleware.RequireAdmin(),
+					authMiddleware.RequirePermission(types.PermissionRead),
+					filtersHandler.GetFilterViolations)
+
+				filters.GET("/metrics",
+					authMiddleware.RequireAdmin(),
+					authMiddleware.RequirePermission(types.PermissionRead),
+					filtersHandler.GetFilterMetrics)
+			}
+
+			// Authentication configuration management - requires admin access
+			authConfig := admin.Group("/auth-config")
+			{
+				authConfig.GET("",
+					authMiddleware.RequireAdmin(),
+					authMiddleware.RequirePermission(types.PermissionRead),
+					adminHandler.GetAuthConfig)
+				authConfig.PUT("",
+					authMiddleware.RequireAdmin(),
+					authMiddleware.RequirePermission(types.PermissionWrite),
+					loggingMiddleware.AuditLogger("update", "auth-config"),
+					adminHandler.UpdateAuthConfig)
+				authConfig.GET("/defaults",
+					authMiddleware.RequireAdmin(),
+					authMiddleware.RequirePermission(types.PermissionRead),
+					adminHandler.GetAuthConfigDefaults)
 			}
 
 			// Configuration management - requires admin access

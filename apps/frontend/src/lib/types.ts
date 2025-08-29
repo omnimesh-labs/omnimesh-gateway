@@ -1,5 +1,97 @@
 // Proper TypeScript types to replace 'any' usages
 
+// Authentication Configuration Types
+export interface OAuth2ProviderConfig {
+	name: string;
+	client_id: string;
+	client_secret?: string;
+	auth_url: string;
+	token_url: string;
+	user_info_url: string;
+	scopes: string[];
+	enabled: boolean;
+}
+
+export interface AuthMethodsConfiguration {
+	jwt_enabled: boolean;
+	jwt_access_token_expiry: number;
+	jwt_refresh_token_expiry: number;
+	api_keys_enabled: boolean;
+	max_api_keys_per_user: number;
+	api_key_default_expiry?: number;
+	oauth2_enabled: boolean;
+	oauth2_providers: OAuth2ProviderConfig[];
+	mfa_required: boolean;
+	mfa_methods: string[];
+}
+
+export interface SessionConfiguration {
+	session_timeout_seconds: number;
+	refresh_strategy: 'sliding' | 'fixed' | 'none';
+	max_concurrent_sessions: number;
+	cookie_secure: boolean;
+	cookie_http_only: boolean;
+	cookie_same_site: 'strict' | 'lax' | 'none';
+	remember_me_enabled: boolean;
+	remember_me_duration_days: number;
+}
+
+export interface PasswordRequirements {
+	min_length: number;
+	require_uppercase: boolean;
+	require_lowercase: boolean;
+	require_numbers: boolean;
+	require_special: boolean;
+	max_age_days?: number;
+	history_count: number;
+}
+
+export interface AccountSecurity {
+	lockout_enabled: boolean;
+	lockout_threshold: number;
+	lockout_duration_minutes: number;
+}
+
+export interface EmailVerification {
+	required: boolean;
+	expiry_hours: number;
+}
+
+export interface IPRestrictions {
+	whitelist: string[];
+	geo_blocking_enabled: boolean;
+	allowed_countries: string[];
+}
+
+export interface SecurityPolicyConfiguration {
+	password_requirements: PasswordRequirements;
+	account_security: AccountSecurity;
+	email_verification: EmailVerification;
+	ip_restrictions: IPRestrictions;
+	compliance_mode: 'standard' | 'strict' | 'pci' | 'hipaa';
+	password_change_required: boolean;
+}
+
+export interface AuthConfiguration {
+	methods: AuthMethodsConfiguration;
+	session: SessionConfiguration;
+	security: SecurityPolicyConfiguration;
+	last_updated: string;
+	updated_by?: string;
+}
+
+export interface AuthConfigurationRequest {
+	methods?: Partial<AuthMethodsConfiguration>;
+	session?: Partial<SessionConfiguration>;
+	security?: Partial<SecurityPolicyConfiguration>;
+}
+
+export interface AuthConfigDefaults {
+	methods: AuthMethodsConfiguration;
+	session: SessionConfiguration;
+	security: SecurityPolicyConfiguration;
+}
+
 // Parameter types for prompts and tools
 export interface PromptParameter {
 	name: string;
@@ -513,16 +605,66 @@ export interface AuditQueryParams {
 // Policy types (placeholder for now)
 export interface Policy {
 	id: string;
+	organization_id: string;
 	name: string;
 	description?: string;
-	type: string;
-	scope: string;
+	type: 'access' | 'rate_limit' | 'security';
 	priority: number;
-	conditions: PolicyCondition[];
-	actions: PolicyAction[];
+	conditions: Record<string, any>;
+	actions: Record<string, any>;
 	is_active: boolean;
 	created_at: string;
 	updated_at: string;
+}
+
+export interface CreatePolicyRequest {
+	name: string;
+	description?: string;
+	type: 'access' | 'rate_limit' | 'security';
+	priority?: number;
+	conditions: Record<string, any>;
+	actions: Record<string, any>;
+}
+
+export interface UpdatePolicyRequest {
+	name?: string;
+	description?: string;
+	priority?: number;
+	conditions?: Record<string, any>;
+	actions?: Record<string, any>;
+	is_active?: boolean;
+}
+
+// Content Filter types
+export interface ContentFilter {
+	id: string;
+	organization_id: string;
+	name: string;
+	description?: string;
+	type: 'pii' | 'resource' | 'deny' | 'regex';
+	enabled: boolean;
+	priority: number;
+	config: Record<string, any>;
+	created_at: string;
+	updated_at: string;
+	created_by?: string;
+}
+
+export interface CreateContentFilterRequest {
+	name: string;
+	description?: string;
+	type: 'pii' | 'resource' | 'deny' | 'regex';
+	enabled: boolean;
+	priority: number;
+	config: Record<string, any>;
+}
+
+export interface UpdateContentFilterRequest {
+	name?: string;
+	description?: string;
+	priority?: number;
+	config?: Record<string, any>;
+	enabled?: boolean;
 }
 
 // Server management types
