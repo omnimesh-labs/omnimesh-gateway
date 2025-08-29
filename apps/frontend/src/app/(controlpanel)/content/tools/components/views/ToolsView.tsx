@@ -27,28 +27,8 @@ import {
 } from '@mui/material';
 import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
-// Mock types
-interface Tool {
-	id: string;
-	name: string;
-	description: string;
-	function_name: string;
-	parameters: any;
-	is_active: boolean;
-	created_at: string;
-	updated_at: string;
-}
-
-interface CreateToolRequest {
-	name: string;
-	description: string;
-	function_name: string;
-	parameters: any;
-}
-
-interface UpdateToolRequest extends CreateToolRequest {
-	id: string;
-}
+import { useTools, useCreateTool, useUpdateTool, useDeleteTool, useExecuteTool } from '../../api/hooks/useTools';
+import type { Tool, CreateToolRequest, UpdateToolRequest } from '@/lib/types';
 
 const Root = styled(PageSimple)(({ theme }) => ({
 	'& .PageSimple-header': {
@@ -61,9 +41,6 @@ const Root = styled(PageSimple)(({ theme }) => ({
 		backgroundColor: theme.vars.palette.background.default
 	}
 }));
-
-// Use the ApiTool type from the API
-type Tool = ApiTool;
 
 // Form data type that includes both create and edit fields
 interface ToolFormData {
@@ -116,76 +93,12 @@ function ToolsView() {
 	});
 
 	// API hooks
-	// Mock data
-	const [tools, setTools] = useState<Tool[]>([
-		{
-			id: '1',
-			name: 'Get Weather',
-			description: 'Retrieves current weather information for a location',
-			function_name: 'get_weather',
-			parameters: {
-				type: 'object',
-				properties: {
-					location: { type: 'string', description: 'City name' }
-				},
-				required: ['location']
-			},
-			is_active: true,
-			created_at: '2024-01-01T00:00:00Z',
-			updated_at: '2024-01-01T00:00:00Z'
-		},
-		{
-			id: '2',
-			name: 'Send Email',
-			description: 'Sends an email to a recipient',
-			function_name: 'send_email',
-			parameters: {
-				type: 'object',
-				properties: {
-					to: { type: 'string', description: 'Email address' },
-					subject: { type: 'string', description: 'Email subject' },
-					body: { type: 'string', description: 'Email body' }
-				},
-				required: ['to', 'subject', 'body']
-			},
-			is_active: true,
-			created_at: '2024-01-01T00:00:00Z',
-			updated_at: '2024-01-01T00:00:00Z'
-		}
-	]);
-	const isLoading = false;
+	const { data: tools = [], isLoading } = useTools({ active: true });
+	const createTool = useCreateTool();
+	const updateTool = useUpdateTool();
+	const deleteTool = useDeleteTool();
+	const executeTool = useExecuteTool();
 
-	// Mock functions
-	const createTool = {
-		mutate: (data: CreateToolRequest) => {
-			const newTool: Tool = {
-				id: Date.now().toString(),
-				...data,
-				is_active: true,
-				created_at: new Date().toISOString(),
-				updated_at: new Date().toISOString()
-			};
-			setTools(prev => [...prev, newTool]);
-			enqueueSnackbar('Tool created successfully', { variant: 'success' });
-		},
-		isPending: false
-	};
-
-	const updateTool = {
-		mutate: (data: UpdateToolRequest) => {
-			setTools(prev => prev.map(t => t.id === data.id ? { ...t, ...data, updated_at: new Date().toISOString() } : t));
-			enqueueSnackbar('Tool updated successfully', { variant: 'success' });
-		},
-		isPending: false
-	};
-
-	const deleteTool = {
-		mutate: (id: string) => {
-			setTools(prev => prev.filter(t => t.id !== id));
-			enqueueSnackbar('Tool deleted successfully', { variant: 'success' });
-		},
-		isPending: false
-	};
 	const [togglingToolId, setTogglingToolId] = useState<string | null>(null);
 
 
@@ -217,6 +130,7 @@ function ToolsView() {
 			category: tool.category,
 			description: tool.description || '',
 			implementation_type: tool.implementation_type,
+			schema: tool.schema || {},
 			is_public: Boolean(tool.is_public),
 			is_active: Boolean(tool.is_active)
 		});
@@ -225,43 +139,99 @@ function ToolsView() {
 	};
 
 	const handleSaveTool = () => {
-		const action = editingTool ? 'updated' : 'created';
-		enqueueSnackbar(`Tool ${action} successfully (demo)`, { variant: 'success' });
-		setCreateModalOpen(false);
-		setEditingTool(null);
+		if (editingTool) {
+			// Update existing tool
+			const updateData: UpdateToolRequest = {
+				name: formData.name,
+				function_name: formData.function_name,
+				category: formData.category,
+				description: formData.description,
+				implementation_type: formData.implementation_type,
+				schema: formData.schema,
+				is_public: formData.is_public,
+				is_active: formData.is_active
+			};
+			updateTool.mutate({
+				id: editingTool.id,
+				data: updateData
+			}, {
+				onSuccess: () => {
+					enqueueSnackbar('Tool updated successfully', { variant: 'success' });
+					setCreateModalOpen(false);
+					setEditingTool(null);
+				},
+				onError: (error) => {
+					enqueueSnackbar(`Failed to update tool: ${error.message}`, { variant: 'error' });
+				}
+			});
+		} else {
+			// Create new tool
+			const createData: CreateToolRequest = {
+				name: formData.name,
+				function_name: formData.function_name,
+				category: formData.category,
+				description: formData.description,
+				implementation_type: formData.implementation_type,
+				schema: formData.schema || {},
+				is_public: formData.is_public
+			};
+			createTool.mutate(createData, {
+				onSuccess: () => {
+					enqueueSnackbar('Tool created successfully', { variant: 'success' });
+					setCreateModalOpen(false);
+					setEditingTool(null);
+				},
+				onError: (error) => {
+					enqueueSnackbar(`Failed to create tool: ${error.message}`, { variant: 'error' });
+				}
+			});
+		}
 	};
 
 	const handleDeleteTool = async (tool: Tool) => {
 		if (confirm(`Are you sure you want to delete "${tool.name}"? This action cannot be undone.`)) {
-			try {
-				await deleteTool.mutateAsync(tool.id);
-			} catch (error) {
-				// Error handling is done in the mutation hook
-				console.error('Failed to delete tool:', error);
-			}
+			deleteTool.mutate(tool.id, {
+				onSuccess: () => {
+					enqueueSnackbar('Tool deleted successfully', { variant: 'success' });
+				},
+				onError: (error) => {
+					enqueueSnackbar(`Failed to delete tool: ${error.message}`, { variant: 'error' });
+				}
+			});
 		}
 	};
 
 	const handleExecuteTool = (tool: Tool) => {
-		enqueueSnackbar(`Execute functionality coming soon for ${tool.name}`, { variant: 'info' });
+		executeTool.mutate(tool.id, {
+			onSuccess: () => {
+				enqueueSnackbar(`Tool "${tool.name}" executed successfully`, { variant: 'success' });
+			},
+			onError: (error) => {
+				enqueueSnackbar(`Failed to execute tool: ${error.message}`, { variant: 'error' });
+			}
+		});
 	};
 
 	const handleToggleStatus = useCallback(async (tool: Tool) => {
 		setTogglingToolId(tool.id);
-		try {
-			const updateData: UpdateToolRequest = {
-				is_active: !tool.is_active
-			};
-			await updateTool.mutateAsync({
-				id: tool.id,
-				data: updateData
-			});
-		} catch (error) {
-			console.error('Failed to update tool status:', error);
-		} finally {
-			setTogglingToolId(null);
-		}
-	}, [updateTool, enqueueSnackbar]);
+		const updateData: UpdateToolRequest = {
+			is_active: !tool.is_active
+		};
+		updateTool.mutate({
+			id: tool.id,
+			data: updateData
+		}, {
+			onSuccess: () => {
+				enqueueSnackbar(`Tool ${tool.is_active ? 'deactivated' : 'activated'} successfully`, { variant: 'success' });
+			},
+			onError: (error) => {
+				enqueueSnackbar(`Failed to update tool status: ${error.message}`, { variant: 'error' });
+			},
+			onSettled: () => {
+				setTogglingToolId(null);
+			}
+		});
+	}, [updateTool]);
 
 	const columns = useMemo<MRT_ColumnDef<Tool>[]>(
 		() => [
@@ -344,7 +314,7 @@ function ToolsView() {
 				Cell: ({ cell }) => (
 					<Chip
 						size="small"
-						label={cell.getValue<number>()}
+						label={cell.getValue<number>() || 0}
 						variant="outlined"
 					/>
 				)
@@ -544,6 +514,23 @@ function ToolsView() {
 									multiline
 									rows={3}
 								/>
+								<TextField
+									label="Schema (JSON)"
+									value={JSON.stringify(formData.schema || {}, null, 2)}
+									onChange={(e) => {
+										try {
+											const schema = JSON.parse(e.target.value);
+											setFormData((prev) => ({ ...prev, schema }));
+										} catch {
+											// Invalid JSON, don't update
+										}
+									}}
+									fullWidth
+									multiline
+									rows={6}
+									placeholder='{"type": "object", "properties": {...}, "required": [...]}'
+									helperText="Define the JSON schema for tool parameters"
+								/>
 								<FormControlLabel
 									control={
 										<Switch
@@ -573,7 +560,14 @@ function ToolsView() {
 							<Button
 								variant="contained"
 								onClick={handleSaveTool}
-								disabled={!formData.name.trim() || !formData.function_name.trim()}
+								disabled={
+									!formData.name.trim() ||
+									!formData.function_name.trim() ||
+									!formData.schema ||
+									Object.keys(formData.schema).length === 0 ||
+									createTool.isPending ||
+									updateTool.isPending
+								}
 							>
 								{editingTool ? 'Update' : 'Create'}
 							</Button>

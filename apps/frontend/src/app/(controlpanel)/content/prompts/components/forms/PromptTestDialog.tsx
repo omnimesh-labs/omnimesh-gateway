@@ -48,18 +48,13 @@ export default function PromptTestDialog({ promptId, onClose }: PromptTestDialog
 		}
 	}, [prompt, form]);
 
-	const handleTest = async (data: { parameters: Record<string, unknown> }) => {
+	const handleTest = (data: { parameters: Record<string, unknown> }) => {
 		if (!promptId) return;
 
-		try {
-			const response = await testMutation.mutateAsync({
-				id: promptId,
-				data: { parameters: data.parameters }
-			});
-			setResult(response.rendered_prompt);
-		} catch (_error) {
-			// Error is handled by the mutation hook
-		}
+		testMutation.mutate({
+			id: promptId,
+			data: { parameters: data.parameters }
+		});
 	};
 
 	const handleCopy = () => {

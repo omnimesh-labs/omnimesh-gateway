@@ -135,7 +135,7 @@ func (m *MCPPromptModel) GetByName(orgID uuid.UUID, name string) (*MCPPrompt, er
 			   category, usage_count, is_active, metadata, tags,
 			   created_at, updated_at, created_by
 		FROM mcp_prompts
-		WHERE organization_id = $1 AND name = $2 AND is_active = true
+		WHERE organization_id = $1 AND name = $2
 	`
 
 	prompt := &MCPPrompt{}
@@ -306,18 +306,23 @@ func (m *MCPPromptModel) ListByCategory(orgID uuid.UUID, category string, active
 }
 
 // GetPopularPrompts gets the most popular prompts for an organization
-func (m *MCPPromptModel) GetPopularPrompts(orgID uuid.UUID, limit int) ([]*MCPPrompt, error) {
+func (m *MCPPromptModel) GetPopularPrompts(orgID uuid.UUID, activeOnly bool, limit int) ([]*MCPPrompt, error) {
 	query := `
 		SELECT id, organization_id, name, description, prompt_template, parameters,
 			   category, usage_count, is_active, metadata, tags,
 			   created_at, updated_at, created_by
 		FROM mcp_prompts
-		WHERE organization_id = $1 AND is_active = true
-		ORDER BY usage_count DESC, created_at DESC
-		LIMIT $2
+		WHERE organization_id = $1
 	`
 
-	rows, err := m.db.Query(query, orgID, limit)
+	args := []interface{}{orgID}
+	if activeOnly {
+		query += " AND is_active = true"
+	}
+	query += " ORDER BY usage_count DESC, created_at DESC LIMIT $2"
+	args = append(args, limit)
+
+	rows, err := m.db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -416,25 +421,29 @@ func (m *MCPPromptModel) Delete(id uuid.UUID) error {
 }
 
 // SearchPrompts searches prompts by name, description, or tags
-func (m *MCPPromptModel) SearchPrompts(orgID uuid.UUID, searchTerm string, limit int, offset int) ([]*MCPPrompt, error) {
+func (m *MCPPromptModel) SearchPrompts(orgID uuid.UUID, searchTerm string, activeOnly bool, limit int, offset int) ([]*MCPPrompt, error) {
 	query := `
 		SELECT id, organization_id, name, description, prompt_template, parameters,
 			   category, usage_count, is_active, metadata, tags,
 			   created_at, updated_at, created_by
 		FROM mcp_prompts
-		WHERE organization_id = $1 AND is_active = true
+		WHERE organization_id = $1
 		AND (
 			name ILIKE $2 OR
 			description ILIKE $2 OR
 			prompt_template ILIKE $2 OR
 			$3 = ANY(tags)
 		)
-		ORDER BY usage_count DESC, created_at DESC
-		LIMIT $4 OFFSET $5
 	`
 
-	searchPattern := "%" + searchTerm + "%"
-	rows, err := m.db.Query(query, orgID, searchPattern, searchTerm, limit, offset)
+	args := []interface{}{orgID, "%" + searchTerm + "%", searchTerm}
+	if activeOnly {
+		query += " AND is_active = true"
+	}
+	query += " ORDER BY usage_count DESC, created_at DESC LIMIT $4 OFFSET $5"
+	args = append(args, limit, offset)
+
+	rows, err := m.db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}

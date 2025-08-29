@@ -132,29 +132,25 @@ export default function ResourceFormDialog({ open, onClose, resource }: Resource
 		}
 	};
 
-	const handleSubmit = async (data: ResourceFormData) => {
-		try {
-			const metadata = data.metadata ? JSON.parse(data.metadata) : undefined;
+	const handleSubmit = (data: ResourceFormData) => {
+		const metadata = data.metadata ? JSON.parse(data.metadata) : undefined;
 
-			const payload = {
-				...data,
-				metadata,
-				tags: data.tags?.filter((tag) => tag.trim() !== '')
-			};
+		const payload = {
+			...data,
+			metadata,
+			tags: data.tags?.filter((tag) => tag.trim() !== '')
+		};
 
-			if (isEdit && resource) {
-				await updateMutation.mutateAsync({
-					id: resource.id,
-					data: payload
-				});
-			} else {
-				await createMutation.mutateAsync(payload);
-			}
-
-			onClose();
-		} catch (_error) {
-			// Error is handled by the mutation hooks
+		if (isEdit && resource) {
+			updateMutation.mutate({
+				id: resource.id,
+				data: payload
+			});
+		} else {
+			createMutation.mutate(payload);
 		}
+
+		onClose();
 	};
 
 	const handleAddTag = (tag: string) => {

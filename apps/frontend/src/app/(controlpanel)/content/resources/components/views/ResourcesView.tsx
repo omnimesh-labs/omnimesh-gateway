@@ -49,11 +49,21 @@ interface CreateResourceRequest {
 	uri: string;
 }
 
-interface UpdateResourceRequest extends CreateResourceRequest {
-	id: string;
+interface UpdateResourceRequest {
+	name?: string;
+	type?: string;
+	content_type?: string;
+	description?: string;
+	uri?: string;
+	is_active?: boolean;
 }
 
-interface ResourceFormData extends CreateResourceRequest {
+interface ResourceFormData {
+	name: string;
+	type: string;
+	content_type: string;
+	description: string;
+	uri: string;
 	is_active: boolean;
 }
 
@@ -95,7 +105,8 @@ function ResourcesView() {
 	const [viewingResource, setViewingResource] = useState<Resource | null>(null);
 	const [formData, setFormData] = useState<ResourceFormData>({
 		name: '',
-		resource_type: 'file',
+		type: 'text',
+		content_type: 'text/plain',
 		uri: '',
 		description: '',
 		is_active: true
@@ -148,8 +159,8 @@ function ResourcesView() {
 	};
 
 	const updateResource = {
-		mutate: (data: UpdateResourceRequest) => {
-			setResources(prev => prev.map(r => r.id === data.id ? { ...r, ...data, updated_at: new Date().toISOString() } : r));
+		mutate: (data: { id: string; data: Partial<UpdateResourceRequest> }) => {
+			setResources(prev => prev.map(r => r.id === data.id ? { ...r, ...data.data, updated_at: new Date().toISOString() } : r));
 			enqueueSnackbar('Resource updated successfully', { variant: 'success' });
 		},
 		isPending: false
@@ -168,7 +179,8 @@ function ResourcesView() {
 	const handleCreateResource = () => {
 		setFormData({
 			name: '',
-			resource_type: 'file',
+			type: 'text',
+			content_type: 'text/plain',
 			uri: '',
 			description: '',
 			is_active: true
@@ -185,7 +197,8 @@ function ResourcesView() {
 	const handleEditResource = (resource: Resource) => {
 		setFormData({
 			name: resource.name,
-			resource_type: resource.resource_type,
+			type: resource.type,
+			content_type: resource.content_type,
 			uri: resource.uri,
 			description: resource.description || '',
 			is_active: resource.is_active
@@ -194,62 +207,49 @@ function ResourcesView() {
 		setCreateModalOpen(true);
 	};
 
-	const handleSaveResource = async () => {
-		try {
-			if (editingResource) {
-				const updateData: UpdateResourceRequest = {
-					name: formData.name,
-					resource_type: formData.resource_type,
-					uri: formData.uri,
-					description: formData.description
-				};
-				await updateResource.mutateAsync({
-					id: editingResource.id,
-					data: updateData
-				});
-			} else {
-				const createData: CreateResourceRequest = {
-					name: formData.name,
-					resource_type: formData.resource_type,
-					uri: formData.uri,
-					description: formData.description
-				};
-				await createResource.mutateAsync(createData);
-			}
-			setCreateModalOpen(false);
-			setEditingResource(null);
-		} catch (error) {
-			// Error handling is done in the mutation hooks
-			console.error('Failed to save resource:', error);
-		}
-	};
-
-	const handleDeleteResource = async (resource: Resource) => {
-		if (confirm(`Are you sure you want to delete "${resource.name}"? This action cannot be undone.`)) {
-			try {
-				await deleteResource.mutateAsync(resource.id);
-			} catch (error) {
-				// Error handling is done in the mutation hook
-				console.error('Failed to delete resource:', error);
-			}
-		}
-	};
-
-	const handleToggleResourceStatus = useCallback(async (resource: Resource) => {
-		setTogglingResourceId(resource.id);
-		try {
+	const handleSaveResource = () => {
+		if (editingResource) {
 			const updateData: UpdateResourceRequest = {
-				is_active: !resource.is_active
+				name: formData.name,
+				type: formData.type,
+				content_type: formData.content_type,
+				uri: formData.uri,
+				description: formData.description
 			};
-			await updateResource.mutateAsync({
-				id: resource.id,
+			updateResource.mutate({
+				id: editingResource.id,
 				data: updateData
 			});
-		} catch (error) {
-			console.error('Failed to update resource status:', error);
-		} finally {
-			setTogglingResourceId(null);
+		} else {
+			const createData: CreateResourceRequest = {
+				name: formData.name,
+				type: formData.type,
+				content_type: formData.content_type,
+				uri: formData.uri,
+				description: formData.description
+			};
+			createResource.mutate(createData);
 		}
+		setCreateModalOpen(false);
+		setEditingResource(null);
+	};
+
+	const handleDeleteResource = (resource: Resource) => {
+		if (confirm(`Are you sure you want to delete "${resource.name}"? This action cannot be undone.`)) {
+			deleteResource.mutate(resource.id);
+		}
+	};
+
+	const handleToggleResourceStatus = useCallback((resource: Resource) => {
+		setTogglingResourceId(resource.id);
+		const updateData: UpdateResourceRequest = {
+			is_active: !resource.is_active
+		};
+		updateResource.mutate({
+			id: resource.id,
+			data: updateData
+		});
+		setTogglingResourceId(null);
 	}, [updateResource]);
 
 	const formatFileSize = (bytes?: number) => {
@@ -284,7 +284,7 @@ function ResourcesView() {
 				size: 200,
 				Cell: ({ row }) => {
 					const iconName =
-						RESOURCE_TYPE_ICONS[row.original.resource_type as keyof typeof RESOURCE_TYPE_ICONS] ||
+						RESOURCE_TYPE_ICONS[row.original.type as keyof typeof RESOURCE_TYPE_ICONS] ||
 						'lucide:code';
 					return (
 						<Box className="flex items-center space-x-2">
@@ -310,7 +310,7 @@ function ResourcesView() {
 				}
 			},
 			{
-				accessorKey: 'resource_type',
+				accessorKey: 'type',
 				header: 'Type',
 				size: 120,
 				Cell: ({ cell }) => {
@@ -454,15 +454,17 @@ function ResourcesView() {
 									required
 								/>
 								<TextField
-									label="Resource Type"
-									value={formData.resource_type}
+									label="Type"
+									value={formData.type}
 									onChange={(e) =>
-										setFormData((prev) => ({ ...prev, resource_type: e.target.value }))
+										setFormData((prev) => ({ ...prev, type: e.target.value }))
 									}
 									select
 									fullWidth
 									required
 								>
+									<MenuItem value="text">Text</MenuItem>
+									<MenuItem value="image">Image</MenuItem>
 									<MenuItem value="file">File</MenuItem>
 									<MenuItem value="url">URL</MenuItem>
 									<MenuItem value="database">Database</MenuItem>
@@ -470,6 +472,16 @@ function ResourcesView() {
 									<MenuItem value="memory">Memory</MenuItem>
 									<MenuItem value="custom">Custom</MenuItem>
 								</TextField>
+								<TextField
+									label="Content Type"
+									value={formData.content_type}
+									onChange={(e) =>
+										setFormData((prev) => ({ ...prev, content_type: e.target.value }))
+									}
+									fullWidth
+									required
+									helperText="MIME type (e.g., text/plain, application/json)"
+								/>
 								<TextField
 									label="URI"
 									value={formData.uri}
@@ -538,9 +550,16 @@ function ResourcesView() {
 													</Typography>
 													<Chip
 														size="small"
-														label={viewingResource.resource_type}
-														color={RESOURCE_TYPE_COLORS[viewingResource.resource_type as keyof typeof RESOURCE_TYPE_COLORS] || 'default'}
+														label={viewingResource.type}
+														color={RESOURCE_TYPE_COLORS[viewingResource.type as keyof typeof RESOURCE_TYPE_COLORS] || 'default'}
 													/>
+												</Box>
+
+												<Box>
+													<Typography variant="subtitle2" color="textSecondary">
+														Content Type
+													</Typography>
+													<Typography variant="body1">{viewingResource.content_type}</Typography>
 												</Box>
 
 												<Box>

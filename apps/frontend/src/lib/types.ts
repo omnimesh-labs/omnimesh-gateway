@@ -561,3 +561,105 @@ export interface MCPDiscoveryResponse {
 		}[];
 	}[];
 }
+
+// Tool types
+export interface Tool {
+	id: string;
+	organization_id: string;
+	name: string;
+	description?: string;
+	function_name: string;
+	schema: JSONSchema;
+	category: string;
+	implementation_type: string;
+	endpoint_url?: string;
+	timeout_seconds: number;
+	max_retries: number;
+	usage_count: number;
+	access_permissions?: AccessPermissions;
+	is_active: boolean;
+	is_public: boolean;
+	metadata?: ToolMetadata;
+	tags?: string[];
+	examples?: ToolExample[];
+	documentation?: string;
+	created_at: string;
+	updated_at: string;
+	created_by?: string;
+}
+
+export interface CreateToolRequest {
+	name: string;
+	description?: string;
+	function_name: string;
+	schema: JSONSchema;
+	category: string;
+	implementation_type?: string;
+	endpoint_url?: string;
+	timeout_seconds?: number;
+	max_retries?: number;
+	access_permissions?: AccessPermissions;
+	is_public?: boolean;
+	metadata?: ToolMetadata;
+	tags?: string[];
+	examples?: ToolExample[];
+	documentation?: string;
+}
+
+export interface UpdateToolRequest {
+	name?: string;
+	description?: string;
+	function_name?: string;
+	schema?: JSONSchema;
+	category?: string;
+	implementation_type?: string;
+	endpoint_url?: string;
+	timeout_seconds?: number;
+	max_retries?: number;
+	access_permissions?: AccessPermissions;
+	is_active?: boolean;
+	is_public?: boolean;
+	metadata?: ToolMetadata;
+	tags?: string[];
+	examples?: ToolExample[];
+	documentation?: string;
+}
+
+// Prompt types
+export interface Prompt {
+	id: string;
+	organization_id: string;
+	name: string;
+	description?: string;
+	prompt_template: string;
+	parameters?: PromptParameter[];
+	category: string;
+	usage_count: number;
+	is_active: boolean;
+	metadata?: PromptMetadata;
+	tags?: string[];
+	created_at: string;
+	updated_at: string;
+	created_by?: string;
+}
+
+export interface CreatePromptRequest {
+	name: string;
+	description?: string;
+	prompt_template: string;
+	parameters?: PromptParameter[];
+	category: string;
+	metadata?: PromptMetadata;
+	tags?: string[];
+}
+
+export interface UpdatePromptRequest {
+	name?: string;
+	description?: string;
+	prompt_template?: string;
+	parameters?: PromptParameter[];
+	category?: string;
+	is_active?: boolean;
+	metadata?: PromptMetadata;
+	tags?: string[];
+}

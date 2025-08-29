@@ -150,43 +150,39 @@ export default function PromptFormDialog({ open, onClose, prompt }: PromptFormDi
 		}
 	};
 
-	const handleSubmit = async (data: PromptFormData) => {
-		try {
-			// Validate template before submission
-			if (!templateValidation.valid) {
-				form.setError('prompt_template', { message: templateValidation.error || 'Invalid template' });
-				return;
-			}
-
-			// Validate parameters before submission
-			if (data.parameters && !parametersValidation.valid) {
-				form.setError('parameters', { message: parametersValidation.error || 'Invalid parameters' });
-				return;
-			}
-
-			const parameters = data.parameters ? JSON.parse(data.parameters) : undefined;
-			const metadata = data.metadata ? JSON.parse(data.metadata) : undefined;
-
-			const payload = {
-				...data,
-				parameters,
-				metadata,
-				tags: data.tags?.filter((tag) => tag.trim() !== '')
-			};
-
-			if (isEdit && prompt) {
-				await updateMutation.mutateAsync({
-					id: prompt.id,
-					data: payload as UpdatePromptData
-				});
-			} else {
-				await createMutation.mutateAsync(payload as CreatePromptData);
-			}
-
-			onClose();
-		} catch (_error) {
-			// Error is handled by the mutation hooks
+	const handleSubmit = (data: PromptFormData) => {
+		// Validate template before submission
+		if (!templateValidation.valid) {
+			form.setError('prompt_template', { message: templateValidation.error || 'Invalid template' });
+			return;
 		}
+
+		// Validate parameters before submission
+		if (data.parameters && !parametersValidation.valid) {
+			form.setError('parameters', { message: parametersValidation.error || 'Invalid parameters' });
+			return;
+		}
+
+		const parameters = data.parameters ? JSON.parse(data.parameters) : undefined;
+		const metadata = data.metadata ? JSON.parse(data.metadata) : undefined;
+
+		const payload = {
+			...data,
+			parameters,
+			metadata,
+			tags: data.tags?.filter((tag) => tag.trim() !== '')
+		};
+
+		if (isEdit && prompt) {
+			updateMutation.mutate({
+				id: prompt.id,
+				data: payload as UpdatePromptData
+			});
+		} else {
+			createMutation.mutate(payload as CreatePromptData);
+		}
+
+		onClose();
 	};
 
 	const handleAddTag = (tag: string) => {

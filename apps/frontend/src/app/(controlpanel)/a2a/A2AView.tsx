@@ -153,7 +153,7 @@ function A2AView() {
 
 			setCreateDialogOpen(false);
 			loadAgents();
-		} catch (error) {
+		} catch (_error) {
 			enqueueSnackbar('Failed to save agent', { variant: 'error' });
 		}
 	};
@@ -164,7 +164,7 @@ function A2AView() {
 				await a2aApi.deleteAgent(id);
 				enqueueSnackbar('Agent deleted successfully', { variant: 'success' });
 				loadAgents();
-			} catch (error) {
+			} catch (_error) {
 				enqueueSnackbar('Failed to delete agent', { variant: 'error' });
 			}
 		}

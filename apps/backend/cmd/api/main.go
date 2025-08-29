@@ -82,9 +82,8 @@ func main() {
 	// Set defaults if config loading is not fully implemented
 	if cfg == nil {
 		cfg = &config.Config{
-			MCPDiscovery: config.MCPDiscoveryConfig{
+			Discovery: config.DiscoveryConfig{
 				Enabled: true,
-				BaseURL: "https://metatool-service.jczstudio.workers.dev/search",
 			},
 			Server: config.ServerConfig{
 				Port: 8080,

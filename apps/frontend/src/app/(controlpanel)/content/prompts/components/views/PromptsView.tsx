@@ -27,29 +27,16 @@ import {
 import LazyDataTable from '@/components/data-table/LazyDataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
 import { useSnackbar } from 'notistack';
+import { usePrompts, useCreatePrompt, useUpdatePrompt, useDeletePrompt } from '../../api/hooks/usePrompts';
+import type { Prompt, CreatePromptRequest, UpdatePromptRequest } from '@/lib/types';
 
-// Mock types
-interface Prompt {
-	id: string;
+// Form data type that includes both create and edit fields
+interface PromptFormData {
 	name: string;
 	category: string;
 	description: string;
 	prompt_template: string;
 	is_active: boolean;
-	created_at: string;
-	updated_at: string;
-}
-
-interface CreatePromptRequest {
-	name: string;
-	category: string;
-	description: string;
-	prompt_template: string;
-	is_active: boolean;
-}
-
-interface UpdatePromptRequest extends CreatePromptRequest {
-	id: string;
 }
 
 const Root = styled(PageSimple)(({ theme }) => ({
@@ -90,7 +77,7 @@ function PromptsView() {
 	const [viewModalOpen, setViewModalOpen] = useState(false);
 	const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
 	const [viewingPrompt, setViewingPrompt] = useState<Prompt | null>(null);
-	const [formData, setFormData] = useState<CreatePromptRequest>({
+	const [formData, setFormData] = useState<PromptFormData>({
 		name: '',
 		category: 'general',
 		description: '',
@@ -100,62 +87,11 @@ function PromptsView() {
 
 	const { enqueueSnackbar } = useSnackbar();
 
-	// Mock data
-	const [prompts, setPrompts] = useState<Prompt[]>([
-		{
-			id: '1',
-			name: 'Code Review Assistant',
-			category: 'coding',
-			description: 'Helps review code for best practices and issues',
-			prompt_template: 'Please review the following code for:\n- Best practices\n- Potential bugs\n- Performance issues\n- Security concerns\n\n{code}',
-			is_active: true,
-			created_at: '2024-01-01T00:00:00Z',
-			updated_at: '2024-01-01T00:00:00Z'
-		},
-		{
-			id: '2',
-			name: 'Data Analysis Helper',
-			category: 'analysis',
-			description: 'Analyzes data and provides insights',
-			prompt_template: 'Analyze the following data and provide insights:\n\n{data}',
-			is_active: true,
-			created_at: '2024-01-01T00:00:00Z',
-			updated_at: '2024-01-01T00:00:00Z'
-		}
-	]);
-	const isLoading = false;
-	const error = null;
-
-	// Mock functions
-	const createPrompt = {
-		mutate: (data: CreatePromptRequest) => {
-			const newPrompt: Prompt = {
-				id: Date.now().toString(),
-				...data,
-				created_at: new Date().toISOString(),
-				updated_at: new Date().toISOString()
-			};
-			setPrompts(prev => [...prev, newPrompt]);
-			enqueueSnackbar('Prompt created successfully', { variant: 'success' });
-		},
-		isPending: false
-	};
-
-	const updatePrompt = {
-		mutate: (data: UpdatePromptRequest) => {
-			setPrompts(prev => prev.map(p => p.id === data.id ? { ...p, ...data, updated_at: new Date().toISOString() } : p));
-			enqueueSnackbar('Prompt updated successfully', { variant: 'success' });
-		},
-		isPending: false
-	};
-
-	const deletePrompt = {
-		mutate: (id: string) => {
-			setPrompts(prev => prev.filter(p => p.id !== id));
-			enqueueSnackbar('Prompt deleted successfully', { variant: 'success' });
-		},
-		isPending: false
-	};
+	// API hooks - show all prompts (active and inactive) so users can toggle them
+	const { data: prompts = [], isLoading, error } = usePrompts();
+	const createPrompt = useCreatePrompt();
+	const updatePrompt = useUpdatePrompt();
+	const deletePrompt = useDeletePrompt();
 	const [togglingPromptId, setTogglingPromptId] = useState<string | null>(null);
 
 
@@ -188,56 +124,82 @@ function PromptsView() {
 		setCreateModalOpen(true);
 	};
 
-	const handleSavePrompt = async () => {
-		try {
-			if (editingPrompt) {
-				const updateData: UpdatePromptRequest = {
-					name: formData.name,
-					category: formData.category,
-					description: formData.description,
-					prompt_template: formData.prompt_template
-				};
-				await updatePrompt.mutateAsync({
-					id: editingPrompt.id,
-					data: updateData
-				});
-			} else {
-				await createPrompt.mutateAsync(formData);
-			}
-			setCreateModalOpen(false);
-			setEditingPrompt(null);
-		} catch (error) {
-			// Error handling is done in the mutation hooks
-			console.error('Failed to save prompt:', error);
-		}
-	};
-
-	const handleDeletePrompt = async (prompt: Prompt) => {
-		if (confirm(`Are you sure you want to delete "${prompt.name}"? This action cannot be undone.`)) {
-			try {
-				await deletePrompt.mutateAsync(prompt.id);
-			} catch (error) {
-				// Error handling is done in the mutation hook
-				console.error('Failed to delete prompt:', error);
-			}
-		}
-	};
-
-	const handleTogglePromptStatus = useCallback(async (prompt: Prompt) => {
-		setTogglingPromptId(prompt.id);
-		try {
+	const handleSavePrompt = () => {
+		if (editingPrompt) {
+			// Update existing prompt
 			const updateData: UpdatePromptRequest = {
-				is_active: !prompt.is_active
+				name: formData.name,
+				category: formData.category,
+				description: formData.description,
+				prompt_template: formData.prompt_template,
+				is_active: formData.is_active
 			};
-			const updatedPrompt = await updatePrompt.mutateAsync({
-				id: prompt.id,
+			updatePrompt.mutate({
+				id: editingPrompt.id,
 				data: updateData
+			}, {
+				onSuccess: () => {
+					enqueueSnackbar('Prompt updated successfully', { variant: 'success' });
+					setCreateModalOpen(false);
+					setEditingPrompt(null);
+				},
+				onError: (error) => {
+					enqueueSnackbar(`Failed to update prompt: ${error.message}`, { variant: 'error' });
+				}
 			});
-		} catch (error) {
-			console.error('Failed to update prompt status:', error);
-		} finally {
-			setTogglingPromptId(null);
+		} else {
+			// Create new prompt
+			const createData: CreatePromptRequest = {
+				name: formData.name,
+				category: formData.category,
+				description: formData.description,
+				prompt_template: formData.prompt_template
+			};
+			createPrompt.mutate(createData, {
+				onSuccess: () => {
+					enqueueSnackbar('Prompt created successfully', { variant: 'success' });
+					setCreateModalOpen(false);
+					setEditingPrompt(null);
+				},
+				onError: (error) => {
+					enqueueSnackbar(`Failed to create prompt: ${error.message}`, { variant: 'error' });
+				}
+			});
 		}
+	};
+
+	const handleDeletePrompt = (prompt: Prompt) => {
+		if (confirm(`Are you sure you want to delete "${prompt.name}"? This action cannot be undone.`)) {
+			deletePrompt.mutate(prompt.id, {
+				onSuccess: () => {
+					enqueueSnackbar('Prompt deleted successfully', { variant: 'success' });
+				},
+				onError: (error) => {
+					enqueueSnackbar(`Failed to delete prompt: ${error.message}`, { variant: 'error' });
+				}
+			});
+		}
+	};
+
+	const handleTogglePromptStatus = useCallback((prompt: Prompt) => {
+		setTogglingPromptId(prompt.id);
+		const updateData: UpdatePromptRequest = {
+			is_active: !prompt.is_active
+		};
+		updatePrompt.mutate({
+			id: prompt.id,
+			data: updateData
+		}, {
+			onSuccess: () => {
+				enqueueSnackbar(`Prompt ${prompt.is_active ? 'deactivated' : 'activated'} successfully`, { variant: 'success' });
+			},
+			onError: (error) => {
+				enqueueSnackbar(`Failed to update prompt status: ${error.message}`, { variant: 'error' });
+			},
+			onSettled: () => {
+				setTogglingPromptId(null);
+			}
+		});
 	}, [updatePrompt]);
 
 
@@ -266,8 +228,9 @@ function PromptsView() {
 				Cell: ({ row }) => {
 					const iconName =
 						CATEGORY_ICONS[row.original.category as keyof typeof CATEGORY_ICONS] || 'lucide:message-square';
+					const isInactive = !row.original.is_active;
 					return (
-						<Box className="flex items-center space-x-2">
+						<Box className="flex items-center space-x-2" sx={{ opacity: isInactive ? 0.6 : 1 }}>
 							<SvgIcon size={20}>{iconName}</SvgIcon>
 							<Box>
 								<Typography
@@ -293,14 +256,17 @@ function PromptsView() {
 				accessorKey: 'category',
 				header: 'Category',
 				size: 150,
-				Cell: ({ cell }) => {
+				Cell: ({ cell, row }) => {
 					const color = CATEGORY_COLORS[cell.getValue<string>() as keyof typeof CATEGORY_COLORS] || 'default';
+					const isInactive = !row.original.is_active;
 					return (
-						<Chip
-							size="small"
-							label={cell.getValue<string>()}
-							color={color}
-						/>
+						<Box sx={{ opacity: isInactive ? 0.6 : 1 }}>
+							<Chip
+								size="small"
+								label={cell.getValue<string>()}
+								color={color}
+							/>
+						</Box>
 					);
 				}
 			},
@@ -308,14 +274,16 @@ function PromptsView() {
 				accessorKey: 'prompt_template',
 				header: 'Template',
 				size: 300,
-				Cell: ({ cell }) => {
+				Cell: ({ cell, row }) => {
 					const template = cell.getValue<string>();
 					const truncated = template.length > 100 ? template.substring(0, 100) + '...' : template;
+					const isInactive = !row.original.is_active;
 					return (
 						<Typography
 							variant="body2"
 							color="textSecondary"
 							title={template}
+							sx={{ opacity: isInactive ? 0.6 : 1 }}
 						>
 							{truncated}
 						</Typography>
@@ -326,13 +294,21 @@ function PromptsView() {
 				accessorKey: 'created_at',
 				header: 'Created',
 				size: 150,
-				Cell: ({ cell }) => {
+				Cell: ({ cell, row }) => {
 					const date = new Date(cell.getValue<string>());
-					return date.toLocaleDateString('en-US', {
-						year: 'numeric',
-						month: 'short',
-						day: 'numeric'
-					});
+					const isInactive = !row.original.is_active;
+					return (
+						<Typography
+							variant="body2"
+							sx={{ opacity: isInactive ? 0.6 : 1 }}
+						>
+							{date.toLocaleDateString('en-US', {
+								year: 'numeric',
+								month: 'short',
+								day: 'numeric'
+							})}
+						</Typography>
+					);
 				}
 			}
 		],
@@ -482,7 +458,12 @@ function PromptsView() {
 							<Button
 								variant="contained"
 								onClick={handleSavePrompt}
-								disabled={!formData.name.trim() || !formData.prompt_template.trim()}
+								disabled={
+									!formData.name.trim() ||
+									!formData.prompt_template.trim() ||
+									createPrompt.isPending ||
+									updatePrompt.isPending
+								}
 							>
 								{editingPrompt ? 'Update' : 'Create'}
 							</Button>

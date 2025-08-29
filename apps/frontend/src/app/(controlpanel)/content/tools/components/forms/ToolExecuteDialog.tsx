@@ -88,7 +88,7 @@ export default function ToolExecuteDialog({ toolId, onClose }: ToolExecuteDialog
 		return example;
 	};
 
-	const handleExecute = async (data: { parameters: string }) => {
+	const handleExecute = (data: { parameters: string }) => {
 		if (!toolId) return;
 
 		setError('');
@@ -96,13 +96,12 @@ export default function ToolExecuteDialog({ toolId, onClose }: ToolExecuteDialog
 
 		try {
 			const parameters = JSON.parse(data.parameters);
-			const response = await executeMutation.mutateAsync({
+			executeMutation.mutate({
 				id: toolId,
 				data: { parameters }
 			});
-			setResult(response.result);
 		} catch (error) {
-			const message = error instanceof Error ? error.message : 'Failed to execute tool';
+			const message = error instanceof Error ? error.message : 'Failed to parse parameters';
 			setError(message);
 		}
 	};

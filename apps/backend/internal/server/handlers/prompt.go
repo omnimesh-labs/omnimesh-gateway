@@ -44,8 +44,8 @@ func (h *PromptHandler) ListPrompts(c *gin.Context) {
 		return
 	}
 
-	// Parse query parameters
-	activeOnly := c.Query("active") != "false"
+	// Parse query parameters - show all prompts by default so UI can toggle active/inactive
+	activeOnly := c.Query("active") == "true"
 	category := c.Query("category")
 	searchTerm := c.Query("search")
 	popular := c.Query("popular") == "true"
@@ -59,7 +59,7 @@ func (h *PromptHandler) ListPrompts(c *gin.Context) {
 				limit = parsed
 			}
 		}
-		prompts, err = h.promptModel.GetPopularPrompts(orgUUID, limit)
+		prompts, err = h.promptModel.GetPopularPrompts(orgUUID, activeOnly, limit)
 	} else if searchTerm != "" {
 		limit := 50
 		offset := 0
@@ -74,7 +74,7 @@ func (h *PromptHandler) ListPrompts(c *gin.Context) {
 			}
 		}
 
-		prompts, err = h.promptModel.SearchPrompts(orgUUID, searchTerm, limit, offset)
+		prompts, err = h.promptModel.SearchPrompts(orgUUID, searchTerm, activeOnly, limit, offset)
 	} else if category != "" {
 		prompts, err = h.promptModel.ListByCategory(orgUUID, category, activeOnly)
 	} else {
@@ -87,6 +87,11 @@ func (h *PromptHandler) ListPrompts(c *gin.Context) {
 			Success: false,
 		})
 		return
+	}
+
+	// Ensure data is always an array, never null
+	if prompts == nil {
+		prompts = []*models.MCPPrompt{}
 	}
 
 	c.JSON(http.StatusOK, gin.H{

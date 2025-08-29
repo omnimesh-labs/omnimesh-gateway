@@ -14,7 +14,13 @@ import type {
 	Policy,
 	Endpoint,
 	CreateServerRequest,
-	MCPDiscoveryResponse
+	MCPDiscoveryResponse,
+	Tool,
+	CreateToolRequest,
+	UpdateToolRequest,
+	Prompt,
+	CreatePromptRequest,
+	UpdatePromptRequest
 } from '@/lib/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
@@ -295,6 +301,137 @@ class DiscoveryAPI {
 	}
 }
 
+// Tools API
+class ToolsAPI {
+	public async listTools(params: {
+		active?: boolean;
+		category?: string;
+		search?: string;
+		popular?: boolean;
+		include_public?: boolean;
+		limit?: number;
+		offset?: number;
+	} = {}): Promise<Tool[]> {
+		const query = new URLSearchParams();
+		if (params.active !== undefined) query.set('active', String(params.active));
+		if (params.category) query.set('category', params.category);
+		if (params.search) query.set('search', params.search);
+		if (params.popular) query.set('popular', String(params.popular));
+		if (params.include_public) query.set('include_public', String(params.include_public));
+		if (params.limit) query.set('limit', String(params.limit));
+		if (params.offset) query.set('offset', String(params.offset));
+
+		const queryString = query.toString();
+		const endpoint = `/api/gateway/tools${queryString ? '?' + queryString : ''}`;
+		const response = await apiRequest<{ success: boolean; data: Tool[]; count: number }>(endpoint);
+		return response.data || [];
+	}
+
+	public async getTool(id: string): Promise<Tool> {
+		const response = await apiRequest<{ success: boolean; data: Tool }>(`/api/gateway/tools/${id}`);
+		return response.data;
+	}
+
+	public async createTool(data: CreateToolRequest): Promise<Tool> {
+		const response = await apiRequest<{ success: boolean; data: Tool }>('/api/gateway/tools', {
+			method: 'POST',
+			body: JSON.stringify(data)
+		});
+		return response.data;
+	}
+
+	public async updateTool(id: string, data: UpdateToolRequest): Promise<Tool> {
+		const response = await apiRequest<{ success: boolean; data: Tool }>(`/api/gateway/tools/${id}`, {
+			method: 'PUT',
+			body: JSON.stringify(data)
+		});
+		return response.data;
+	}
+
+	public async deleteTool(id: string): Promise<void> {
+		await apiRequest<{ success: boolean; message: string }>(`/api/gateway/tools/${id}`, {
+			method: 'DELETE'
+		});
+	}
+
+	public async executeTool(id: string): Promise<Tool> {
+		const response = await apiRequest<{ success: boolean; data: Tool; message: string }>(`/api/gateway/tools/${id}/execute`, {
+			method: 'POST'
+		});
+		return response.data;
+	}
+
+	public async getPublicTools(params: { limit?: number; offset?: number } = {}): Promise<Tool[]> {
+		const query = new URLSearchParams();
+		if (params.limit) query.set('limit', String(params.limit));
+		if (params.offset) query.set('offset', String(params.offset));
+
+		const queryString = query.toString();
+		const endpoint = `/api/mcp/tools/public${queryString ? '?' + queryString : ''}`;
+		const response = await apiRequest<{ success: boolean; data: Tool[]; count: number }>(endpoint);
+		return response.data || [];
+	}
+}
+
+// Prompts API
+class PromptsAPI {
+	public async listPrompts(params: {
+		active?: boolean;
+		category?: string;
+		search?: string;
+		popular?: boolean;
+		limit?: number;
+		offset?: number;
+	} = {}): Promise<Prompt[]> {
+		const query = new URLSearchParams();
+		if (params.active !== undefined) query.set('active', String(params.active));
+		if (params.category) query.set('category', params.category);
+		if (params.search) query.set('search', params.search);
+		if (params.popular) query.set('popular', String(params.popular));
+		if (params.limit) query.set('limit', String(params.limit));
+		if (params.offset) query.set('offset', String(params.offset));
+
+		const queryString = query.toString();
+		const endpoint = `/api/gateway/prompts${queryString ? '?' + queryString : ''}`;
+		const response = await apiRequest<{ success: boolean; data: Prompt[]; count: number }>(endpoint);
+		return response.data || [];
+	}
+
+	public async getPrompt(id: string): Promise<Prompt> {
+		const response = await apiRequest<{ success: boolean; data: Prompt }>(`/api/gateway/prompts/${id}`);
+		return response.data;
+	}
+
+	public async createPrompt(data: CreatePromptRequest): Promise<Prompt> {
+		const response = await apiRequest<{ success: boolean; data: Prompt }>('/api/gateway/prompts', {
+			method: 'POST',
+			body: JSON.stringify(data)
+		});
+		return response.data;
+	}
+
+	public async updatePrompt(id: string, data: UpdatePromptRequest): Promise<Prompt> {
+		const response = await apiRequest<{ success: boolean; data: Prompt }>(`/api/gateway/prompts/${id}`, {
+			method: 'PUT',
+			body: JSON.stringify(data)
+		});
+		return response.data;
+	}
+
+	public async deletePrompt(id: string): Promise<void> {
+		await apiRequest<{ success: boolean; message: string }>(`/api/gateway/prompts/${id}`, {
+			method: 'DELETE'
+		});
+	}
+
+	public async usePrompt(id: string): Promise<Prompt> {
+		const response = await apiRequest<{ success: boolean; data: Prompt; message: string }>(`/api/gateway/prompts/${id}/use`, {
+			method: 'POST'
+		});
+		return response.data;
+	}
+}
+
 export const adminApi = new AdminAPI();
 export const serverApi = new ServerAPI();
 export const namespaceApi = new NamespaceAPI();
@@ -302,3 +439,5 @@ export const a2aApi = new A2AApi();
 export const policyApi = new PolicyAPI();
 export const endpointApi = new EndpointAPI();
 export const discoveryApi = new DiscoveryAPI();
+export const toolsApi = new ToolsAPI();
+export const promptsApi = new PromptsAPI();

@@ -165,44 +165,40 @@ export default function ToolFormDialog({ open, onClose, tool }: ToolFormDialogPr
 		setSchemaValidation({ valid: true });
 	};
 
-	const handleSubmit = async (data: ToolFormData) => {
-		try {
-			// Validate JSON fields before submission
-			if (data.schema && !schemaValidation.valid) {
-				form.setError('schema', { message: schemaValidation.error || 'Invalid schema' });
-				return;
-			}
-
-			if (data.examples && !examplesValidation.valid) {
-				form.setError('examples', { message: examplesValidation.error || 'Invalid examples' });
-				return;
-			}
-
-			const schema = data.schema ? JSON.parse(data.schema) : undefined;
-			const examples = data.examples ? JSON.parse(data.examples) : undefined;
-			const metadata = data.metadata ? JSON.parse(data.metadata) : undefined;
-
-			const payload = {
-				...data,
-				schema,
-				examples,
-				metadata,
-				tags: data.tags?.filter((tag) => tag.trim() !== '')
-			};
-
-			if (isEdit && tool) {
-				await updateMutation.mutateAsync({
-					id: tool.id,
-					data: payload as UpdateToolData
-				});
-			} else {
-				await createMutation.mutateAsync(payload as CreateToolData);
-			}
-
-			onClose();
-		} catch (_error) {
-			// Error is handled by the mutation hooks
+	const handleSubmit = (data: ToolFormData) => {
+		// Validate JSON fields before submission
+		if (data.schema && !schemaValidation.valid) {
+			form.setError('schema', { message: schemaValidation.error || 'Invalid schema' });
+			return;
 		}
+
+		if (data.examples && !examplesValidation.valid) {
+			form.setError('examples', { message: examplesValidation.error || 'Invalid examples' });
+			return;
+		}
+
+		const schema = data.schema ? JSON.parse(data.schema) : undefined;
+		const examples = data.examples ? JSON.parse(data.examples) : undefined;
+		const metadata = data.metadata ? JSON.parse(data.metadata) : undefined;
+
+		const payload = {
+			...data,
+			schema,
+			examples,
+			metadata,
+			tags: data.tags?.filter((tag) => tag.trim() !== '')
+		};
+
+		if (isEdit && tool) {
+			updateMutation.mutate({
+				id: tool.id,
+				data: payload as UpdateToolData
+			});
+		} else {
+			createMutation.mutate(payload as CreateToolData);
+		}
+
+		onClose();
 	};
 
 	const handleAddTag = (tag: string) => {
