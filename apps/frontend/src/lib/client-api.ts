@@ -68,7 +68,7 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 
 	// Handle 204 No Content responses (common for DELETE operations)
 	if (response.status === 204) {
-		return null;
+		return null as unknown as T;
 	}
 
 	// Check if response has content before parsing JSON
