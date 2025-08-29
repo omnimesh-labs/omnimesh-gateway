@@ -12,6 +12,11 @@ import type {
 	A2AAgentSpec,
 	A2AStats,
 	Policy,
+	CreatePolicyRequest,
+	UpdatePolicyRequest,
+	ContentFilter,
+	CreateContentFilterRequest,
+	UpdateContentFilterRequest,
 	Endpoint,
 	CreateServerRequest,
 	MCPDiscoveryResponse,
@@ -20,10 +25,14 @@ import type {
 	UpdateToolRequest,
 	Prompt,
 	CreatePromptRequest,
-	UpdatePromptRequest
+	UpdatePromptRequest,
+	AuthConfiguration,
+	AuthConfigurationRequest,
+	AuthConfigDefaults
 } from '@/lib/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+
 
 async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
 	const accessToken = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
@@ -224,27 +233,80 @@ class A2AApi {
 // Policy API
 class PolicyAPI {
 	public async listPolicies(): Promise<Policy[]> {
-		return await apiRequest<Policy[]>('/admin/policies');
+		const response = await apiRequest<{ policies: Policy[] }>('/api/admin/policies');
+		return response.policies;
 	}
 
-	public async createPolicy(data: Partial<Policy>): Promise<Policy> {
-		return await apiRequest<Policy>('/admin/policies', {
+	public async getPolicy(id: string): Promise<Policy> {
+		const response = await apiRequest<{ policy: Policy }>(`/api/admin/policies/${id}`);
+		return response.policy;
+	}
+
+	public async createPolicy(data: CreatePolicyRequest): Promise<Policy> {
+		const response = await apiRequest<{ policy: Policy }>('/api/admin/policies', {
 			method: 'POST',
 			body: JSON.stringify(data)
 		});
+		return response.policy;
 	}
 
-	public async updatePolicy(id: string, data: Partial<Policy>): Promise<Policy> {
-		return await apiRequest<Policy>(`/admin/policies/${id}`, {
+	public async updatePolicy(id: string, data: UpdatePolicyRequest): Promise<void> {
+		await apiRequest<void>(`/api/admin/policies/${id}`, {
 			method: 'PUT',
 			body: JSON.stringify(data)
 		});
 	}
 
 	public async deletePolicy(id: string): Promise<void> {
-		await apiRequest<void>(`/admin/policies/${id}`, {
+		await apiRequest<void>(`/api/admin/policies/${id}`, {
 			method: 'DELETE'
 		});
+	}
+
+	public async togglePolicy(id: string, isActive: boolean): Promise<Policy> {
+		const response = await apiRequest<{ policy: Policy }>(`/api/admin/policies/${id}`, {
+			method: 'PUT',
+			body: JSON.stringify({ is_active: isActive })
+		});
+		return response.policy;
+	}
+}
+
+// Content Filter API
+class ContentFilterAPI {
+	public async listFilters(): Promise<ContentFilter[]> {
+		const response = await apiRequest<{ filters: ContentFilter[] }>('/api/admin/filters');
+		return response.filters;
+	}
+
+	public async getFilter(id: string): Promise<ContentFilter> {
+		const response = await apiRequest<{ filter: ContentFilter }>(`/api/admin/filters/${id}`);
+		return response.filter;
+	}
+
+	public async createFilter(data: CreateContentFilterRequest): Promise<ContentFilter> {
+		const response = await apiRequest<{ filter: ContentFilter }>('/api/admin/filters', {
+			method: 'POST',
+			body: JSON.stringify(data)
+		});
+		return response.filter;
+	}
+
+	public async updateFilter(id: string, data: UpdateContentFilterRequest): Promise<void> {
+		await apiRequest<void>(`/api/admin/filters/${id}`, {
+			method: 'PUT',
+			body: JSON.stringify(data)
+		});
+	}
+
+	public async deleteFilter(id: string): Promise<void> {
+		await apiRequest<void>(`/api/admin/filters/${id}`, {
+			method: 'DELETE'
+		});
+	}
+
+	public async getFilterTypes(): Promise<any> {
+		return await apiRequest<any>('/api/admin/filters/types');
 	}
 }
 
@@ -432,12 +494,35 @@ class PromptsAPI {
 	}
 }
 
+// Auth Configuration API
+class AuthConfigAPI {
+	public async getAuthConfig(): Promise<AuthConfiguration> {
+		const response = await apiRequest<{ success: boolean; data: AuthConfiguration }>('/api/admin/auth-config');
+		return response.data;
+	}
+
+	public async updateAuthConfig(config: AuthConfigurationRequest): Promise<AuthConfiguration> {
+		const response = await apiRequest<{ success: boolean; data: AuthConfiguration; message: string }>('/api/admin/auth-config', {
+			method: 'PUT',
+			body: JSON.stringify(config)
+		});
+		return response.data;
+	}
+
+	public async getAuthConfigDefaults(): Promise<AuthConfigDefaults> {
+		const response = await apiRequest<{ success: boolean; data: AuthConfigDefaults }>('/api/admin/auth-config/defaults');
+		return response.data;
+	}
+}
+
 export const adminApi = new AdminAPI();
 export const serverApi = new ServerAPI();
 export const namespaceApi = new NamespaceAPI();
 export const a2aApi = new A2AApi();
 export const policyApi = new PolicyAPI();
+export const contentFilterApi = new ContentFilterAPI();
 export const endpointApi = new EndpointAPI();
 export const discoveryApi = new DiscoveryAPI();
 export const toolsApi = new ToolsAPI();
 export const promptsApi = new PromptsAPI();
+export const authConfigApi = new AuthConfigAPI();

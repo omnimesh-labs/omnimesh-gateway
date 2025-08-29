@@ -28,6 +28,7 @@ import DataTable from '@/components/data-table/DataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
 import { useSnackbar } from 'notistack';
 import { policyApi } from '@/lib/client-api';
+import type { Policy, CreatePolicyRequest, UpdatePolicyRequest } from '@/lib/types';
 
 const Root = styled(PageSimple)(({ theme }) => ({
 	'& .PageSimple-header': {
@@ -41,26 +42,14 @@ const Root = styled(PageSimple)(({ theme }) => ({
 	}
 }));
 
-interface Policy {
-	id: string;
-	name: string;
-	description?: string;
-	type: 'rate_limit' | 'access_control' | 'content_filter';
-	scope: 'global' | 'namespace' | 'user';
-	is_active: boolean;
-	priority: number;
-	created_at: string;
-	updated_at: string;
-	rules: unknown;
-}
 
 const getPolicyTypeColor = (type: string): 'primary' | 'warning' | 'error' => {
 	switch (type) {
 		case 'rate_limit':
 			return 'warning';
-		case 'access_control':
+		case 'access':
 			return 'primary';
-		case 'content_filter':
+		case 'security':
 			return 'error';
 		default:
 			return 'primary';
@@ -73,13 +62,14 @@ function PoliciesView() {
 	const [formData, setFormData] = useState({
 		name: '',
 		description: '',
-		type: 'rate_limit' as 'rate_limit' | 'access_control' | 'content_filter',
-		scope: 'namespace' as 'global' | 'namespace' | 'user',
-		is_active: true,
-		priority: 100
+		type: 'access',
+		priority: 100,
+		conditions: {} as Record<string, any>,
+		actions: {} as Record<string, any>
 	});
 	const [policies, setPolicies] = useState<Policy[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
+	const [togglingPolicyId, setTogglingPolicyId] = useState<string | null>(null);
 	const { enqueueSnackbar } = useSnackbar();
 
 	// Fetch policies on mount
@@ -93,7 +83,8 @@ function PoliciesView() {
 			const data = await policyApi.listPolicies();
 			setPolicies(data);
 		} catch (error) {
-			enqueueSnackbar('Failed to fetch policies', { variant: 'error' });
+			const errorMessage = error instanceof Error ? error.message : 'Failed to fetch policies';
+			enqueueSnackbar(errorMessage, { variant: 'error' });
 			console.error('Error fetching policies:', error);
 			setPolicies([]); // Set empty array on error
 		} finally {
@@ -105,10 +96,10 @@ function PoliciesView() {
 		setFormData({
 			name: '',
 			description: '',
-			type: 'rate_limit',
-			scope: 'namespace',
-			is_active: true,
-			priority: 100
+			type: 'access',
+			priority: 100,
+			conditions: {},
+			actions: {}
 		});
 		setEditingPolicy(null);
 		setCreateModalOpen(true);
@@ -119,9 +110,9 @@ function PoliciesView() {
 			name: policy.name,
 			description: policy.description || '',
 			type: policy.type,
-			scope: policy.scope,
-			is_active: policy.is_active,
-			priority: policy.priority
+			priority: policy.priority,
+			conditions: policy.conditions,
+			actions: policy.actions
 		});
 		setEditingPolicy(policy);
 		setCreateModalOpen(true);
@@ -130,10 +121,25 @@ function PoliciesView() {
 	const handleSavePolicy = useCallback(async () => {
 		try {
 			if (editingPolicy) {
-				await policyApi.updatePolicy(editingPolicy.id, formData);
+				const updateData: UpdatePolicyRequest = {
+					name: formData.name,
+					description: formData.description,
+					priority: formData.priority,
+					conditions: formData.conditions,
+					actions: formData.actions
+				};
+				await policyApi.updatePolicy(editingPolicy.id, updateData);
 				enqueueSnackbar('Policy updated successfully', { variant: 'success' });
 			} else {
-				await policyApi.createPolicy(formData);
+				const createData: CreatePolicyRequest = {
+					name: formData.name,
+					description: formData.description,
+					type: formData.type,
+					priority: formData.priority,
+					conditions: formData.conditions,
+					actions: formData.actions
+				};
+				await policyApi.createPolicy(createData);
 				enqueueSnackbar('Policy created successfully', { variant: 'success' });
 			}
 
@@ -142,7 +148,8 @@ function PoliciesView() {
 			fetchPolicies(); // Refresh the list
 		} catch (error) {
 			const action = editingPolicy ? 'update' : 'create';
-			enqueueSnackbar(`Failed to ${action} policy`, { variant: 'error' });
+			const errorMessage = error instanceof Error ? error.message : `Failed to ${action} policy`;
+			enqueueSnackbar(errorMessage, { variant: 'error' });
 			console.error(`Error ${action}ing policy:`, error);
 		}
 	}, [editingPolicy, formData, enqueueSnackbar]);
@@ -154,8 +161,31 @@ function PoliciesView() {
 				enqueueSnackbar(`Policy ${policy.name} deleted successfully`, { variant: 'success' });
 				fetchPolicies(); // Refresh the list
 			} catch (error) {
-				enqueueSnackbar(`Failed to delete policy ${policy.name}`, { variant: 'error' });
+				const errorMessage = error instanceof Error ? error.message : `Failed to delete policy ${policy.name}`;
+				enqueueSnackbar(errorMessage, { variant: 'error' });
 				console.error('Error deleting policy:', error);
+			}
+		},
+		[enqueueSnackbar]
+	);
+
+	const handleTogglePolicy = useCallback(
+		async (policy: Policy) => {
+			setTogglingPolicyId(policy.id);
+			try {
+				const newStatus = !policy.is_active;
+				await policyApi.togglePolicy(policy.id, newStatus);
+				enqueueSnackbar(
+					`Policy ${policy.name} ${newStatus ? 'activated' : 'deactivated'} successfully`,
+					{ variant: 'success' }
+				);
+				fetchPolicies(); // Refresh the list
+			} catch (error) {
+				const errorMessage = error instanceof Error ? error.message : `Failed to toggle policy ${policy.name}`;
+				enqueueSnackbar(errorMessage, { variant: 'error' });
+				console.error('Error toggling policy:', error);
+			} finally {
+				setTogglingPolicyId(null);
 			}
 		},
 		[enqueueSnackbar]
@@ -163,6 +193,22 @@ function PoliciesView() {
 
 	const columns = useMemo<MRT_ColumnDef<Policy>[]>(
 		() => [
+			{
+				accessorKey: 'is_active',
+				header: 'Active',
+				size: 80,
+				Cell: ({ row }) => (
+					<Tooltip title={row.original.is_active ? 'Deactivate policy' : 'Activate policy'}>
+						<Switch
+							checked={!!row.original.is_active}
+							onChange={() => handleTogglePolicy(row.original)}
+							disabled={togglingPolicyId === row.original.id}
+							size="small"
+							color="success"
+						/>
+					</Tooltip>
+				)
+			},
 			{
 				accessorKey: 'name',
 				header: 'Name',
@@ -203,34 +249,9 @@ function PoliciesView() {
 				)
 			},
 			{
-				accessorKey: 'scope',
-				header: 'Scope',
-				size: 100,
-				Cell: ({ cell }) => (
-					<Chip
-						size="small"
-						label={cell.getValue<string>()}
-						variant="outlined"
-						sx={{ textTransform: 'capitalize' }}
-					/>
-				)
-			},
-			{
 				accessorKey: 'priority',
 				header: 'Priority',
 				size: 100
-			},
-			{
-				accessorKey: 'is_active',
-				header: 'Status',
-				size: 120,
-				Cell: ({ cell }) => (
-					<Chip
-						size="small"
-						label={cell.getValue<boolean>() ? 'Active' : 'Inactive'}
-						color={cell.getValue<boolean>() ? 'success' : 'default'}
-					/>
-				)
 			},
 			{
 				accessorKey: 'updated_at',
@@ -246,7 +267,7 @@ function PoliciesView() {
 				}
 			}
 		],
-		[]
+		[handleTogglePolicy, togglingPolicyId]
 	);
 
 	return (
@@ -282,35 +303,39 @@ function PoliciesView() {
 						data={policies}
 						state={{ isLoading }}
 						enableRowActions
-						renderRowActions={useCallback(
-							({ row }: { row: MRT_Row<Policy> }) => (
-								<Box className="flex items-center space-x-1">
-									<Tooltip title="View Rules">
-										<IconButton size="small">
-											<SvgIcon size={18}>lucide:eye</SvgIcon>
-										</IconButton>
-									</Tooltip>
-									<Tooltip title="Edit Policy">
-										<IconButton
-											size="small"
-											onClick={() => handleEditPolicy(row.original)}
-										>
-											<SvgIcon size={18}>lucide:edit</SvgIcon>
-										</IconButton>
-									</Tooltip>
-									<Tooltip title="Delete Policy">
-										<IconButton
-											size="small"
-											color="error"
-											onClick={() => handleDeletePolicy(row.original)}
-										>
-											<SvgIcon size={18}>lucide:trash-2</SvgIcon>
-										</IconButton>
-									</Tooltip>
-								</Box>
-							),
-							[handleEditPolicy, handleDeletePolicy]
-						)}
+						renderRowActionMenuItems={({ row, closeMenu }) => [
+							<MenuItem
+								key="view"
+								onClick={() => {
+									// TODO: Implement view rules functionality
+									closeMenu();
+								}}
+							>
+								<SvgIcon size={16}>lucide:eye</SvgIcon>
+								<span className="ml-2">View Rules</span>
+							</MenuItem>,
+							<MenuItem
+								key="edit"
+								onClick={() => {
+									handleEditPolicy(row.original);
+									closeMenu();
+								}}
+							>
+								<SvgIcon size={16}>lucide:edit</SvgIcon>
+								<span className="ml-2">Edit Policy</span>
+							</MenuItem>,
+							<MenuItem
+								key="delete"
+								onClick={() => {
+									handleDeletePolicy(row.original);
+									closeMenu();
+								}}
+								sx={{ color: 'error.main' }}
+							>
+								<SvgIcon size={16}>lucide:trash-2</SvgIcon>
+								<span className="ml-2">Delete</span>
+							</MenuItem>
+						]}
 					/>
 
 					{/* Create/Edit Policy Dialog */}
@@ -343,46 +368,24 @@ function PoliciesView() {
 									rows={2}
 								/>
 
-								<Box className="grid grid-cols-2 gap-3">
-									<TextField
-										label="Policy Type"
-										value={formData.type}
-										onChange={(e) =>
-											setFormData((prev) => ({
-												...prev,
-												type: e.target.value as
-													| 'rate_limit'
-													| 'access_control'
-													| 'content_filter'
-											}))
-										}
-										select
-										fullWidth
-										required
-									>
-										<MenuItem value="rate_limit">Rate Limit</MenuItem>
-										<MenuItem value="access_control">Access Control</MenuItem>
-										<MenuItem value="content_filter">Content Filter</MenuItem>
-									</TextField>
-
-									<TextField
-										label="Scope"
-										value={formData.scope}
-										onChange={(e) =>
-											setFormData((prev) => ({
-												...prev,
-												scope: e.target.value as 'global' | 'namespace' | 'user'
-											}))
-										}
-										select
-										fullWidth
-										required
-									>
-										<MenuItem value="global">Global</MenuItem>
-										<MenuItem value="namespace">Namespace</MenuItem>
-										<MenuItem value="user">User</MenuItem>
-									</TextField>
-								</Box>
+								<TextField
+									label="Policy Type"
+									value={formData.type}
+									onChange={(e) =>
+										setFormData((prev) => ({
+											...prev,
+											type: e.target.value
+										}))
+									}
+									select
+									fullWidth
+									required
+									disabled={editingPolicy !== null} // Don't allow changing type when editing
+								>
+									<MenuItem value="access">Access Control</MenuItem>
+									<MenuItem value="rate_limit">Rate Limiting</MenuItem>
+									<MenuItem value="security">Security & Content Filter</MenuItem>
+								</TextField>
 
 								<TextField
 									label="Priority"
@@ -394,6 +397,28 @@ function PoliciesView() {
 									fullWidth
 									helperText="Higher numbers = higher priority"
 								/>
+
+								{editingPolicy && (
+									<Box className="p-4 bg-gray-50 dark:bg-gray-800 rounded-md">
+										<Typography variant="subtitle2" className="mb-2">
+											Current Status
+										</Typography>
+										<FormControlLabel
+											control={
+												<Switch
+													checked={editingPolicy.is_active}
+													readOnly
+													color={editingPolicy.is_active ? 'success' : 'default'}
+												/>
+											}
+											label={`Policy is currently ${editingPolicy.is_active ? 'active' : 'inactive'}`}
+											disabled
+										/>
+										<Typography variant="body2" color="textSecondary" className="mt-2">
+											Use the toggle button in the table or dropdown menu to activate/deactivate this policy.
+										</Typography>
+									</Box>
+								)}
 
 								<Accordion>
 									<AccordionSummary expandIcon={<SvgIcon>lucide:chevron-down</SvgIcon>}>
@@ -410,17 +435,6 @@ function PoliciesView() {
 									</AccordionDetails>
 								</Accordion>
 
-								<FormControlLabel
-									control={
-										<Switch
-											checked={formData.is_active}
-											onChange={(e) =>
-												setFormData((prev) => ({ ...prev, is_active: e.target.checked }))
-											}
-										/>
-									}
-									label="Active"
-								/>
 							</Stack>
 						</DialogContent>
 						<DialogActions>
@@ -428,9 +442,9 @@ function PoliciesView() {
 							<Button
 								variant="contained"
 								onClick={handleSavePolicy}
-								disabled={!formData.name.trim()}
+								disabled={!formData.name.trim() || formData.priority < 0}
 							>
-								{editingPolicy ? 'Update' : 'Create'}
+								{editingPolicy ? 'Update Policy' : 'Create Policy'}
 							</Button>
 						</DialogActions>
 					</Dialog>

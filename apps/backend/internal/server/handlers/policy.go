@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"mcp-gateway/apps/backend/internal/types"
 
@@ -77,18 +78,35 @@ func (h *PolicyHandler) CreatePolicy(c *gin.Context) {
 	_, err = h.db.Exec(query, policy.ID, policy.OrganizationID, policy.Name, policy.Description,
 		policy.Type, policy.Priority, conditionsJSON, actionsJSON, policy.IsActive, userID.(string))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create policy", "details": err.Error()})
+		// Handle specific database constraint violations
+		errorMsg := "Failed to create policy"
+		statusCode := http.StatusInternalServerError
+
+		if strings.Contains(err.Error(), "duplicate key") && strings.Contains(err.Error(), "policies_organization_id_name_key") {
+			errorMsg = "A policy with this name already exists"
+			statusCode = http.StatusConflict
+		} else if strings.Contains(err.Error(), "check constraint") && strings.Contains(err.Error(), "policies_type_check") {
+			errorMsg = "Invalid policy type"
+			statusCode = http.StatusBadRequest
+		}
+
+		c.JSON(statusCode, gin.H{"error": errorMsg})
 		return
 	}
 
 	// Parse back the JSON for response
-	json.Unmarshal(conditionsJSON, &policy.Conditions)
-	json.Unmarshal(actionsJSON, &policy.Actions)
+	if err = json.Unmarshal(conditionsJSON, &policy.Conditions); err != nil {
+		// Log the error but continue, as this is for response formatting only
+		policy.Conditions = make(map[string]interface{})
+	}
+	if err = json.Unmarshal(actionsJSON, &policy.Actions); err != nil {
+		// Log the error but continue, as this is for response formatting only
+		policy.Actions = make(map[string]interface{})
+	}
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Policy created successfully",
 		"policy":  policy,
-		"user_id": userID,
 	})
 }
 
@@ -322,7 +340,19 @@ func (h *PolicyHandler) UpdatePolicy(c *gin.Context) {
 
 	_, err = h.db.Exec(query, args...)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update policy", "details": err.Error()})
+		// Handle specific database constraint violations
+		errorMsg := "Failed to update policy"
+		statusCode := http.StatusInternalServerError
+
+		if strings.Contains(err.Error(), "duplicate key") && strings.Contains(err.Error(), "policies_organization_id_name_key") {
+			errorMsg = "A policy with this name already exists"
+			statusCode = http.StatusConflict
+		} else if strings.Contains(err.Error(), "check constraint") && strings.Contains(err.Error(), "policies_type_check") {
+			errorMsg = "Invalid policy type"
+			statusCode = http.StatusBadRequest
+		}
+
+		c.JSON(statusCode, gin.H{"error": errorMsg})
 		return
 	}
 
