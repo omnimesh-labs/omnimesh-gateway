@@ -52,7 +52,19 @@ class AuthAPI {
 			throw new Error(`API request failed: ${response.status} ${response.statusText} - ${error}`);
 		}
 
-		return response.json();
+		// Handle 204 No Content responses (common for DELETE operations)
+		if (response.status === 204) {
+			return null;
+		}
+
+		// Check if response has content before parsing JSON
+		const contentType = response.headers.get('content-type');
+		if (contentType && contentType.includes('application/json')) {
+			return response.json();
+		}
+
+		// For non-JSON responses or empty responses, return null
+		return null;
 	}
 
 	public isAuthenticated(): boolean {
@@ -123,7 +135,8 @@ class AuthAPI {
 	}
 
 	public async getApiKeys(): Promise<ApiKey[]> {
-		return await this.apiRequest<ApiKey[]>('/api/auth/api-keys');
+		const response = await this.apiRequest<{data: ApiKey[], success: boolean}>('/api/auth/api-keys');
+		return response.data || [];
 	}
 
 	public async createApiKey(data: CreateApiKeyRequest): Promise<CreateApiKeyResponse> {

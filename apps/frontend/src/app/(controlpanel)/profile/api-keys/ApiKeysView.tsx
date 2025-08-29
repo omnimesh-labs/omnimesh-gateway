@@ -74,7 +74,7 @@ function ApiKeysView() {
 	const fetchApiKeys = async () => {
 		try {
 			setLoading(true);
-			const keys = await authApi.listApiKeys();
+			const keys = await authApi.getApiKeys();
 			setApiKeys(keys);
 		} catch (error) {
 			console.error('Failed to fetch API keys:', error);
@@ -96,7 +96,7 @@ function ApiKeysView() {
 			};
 
 			const response = await authApi.createApiKey(request);
-			setCreatedKey(response.key); // The actual key is only returned on creation
+			setCreatedKey(response.data?.key || response.key); // The actual key is only returned on creation
 			setCreateModalOpen(false);
 			setKeyCreatedModalOpen(true);
 
