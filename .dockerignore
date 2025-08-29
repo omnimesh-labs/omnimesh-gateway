@@ -31,6 +31,9 @@ vendor/
 .env.production.local
 .vscode/
 .idea/
+todos/
+venv/
+scripts/venv/
 
 # Logs
 logs/
@@ -97,5 +100,3 @@ config/*.example.*
 *.bak
 *.swp
 *.swo
-
-metamcp/

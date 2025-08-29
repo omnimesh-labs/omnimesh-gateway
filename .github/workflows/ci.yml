@@ -1,13 +1,5 @@
 name: CI
-
-on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
-
-env:
-  GO_VERSION: '1.23.x'
+on: [push, pull_request]
 
 jobs:
   test:
@@ -15,51 +7,71 @@ jobs:
 
     services:
       postgres:
-        image: postgres:15-alpine
+        image: postgres:16
+        ports: ["5432:5432"]
         env:
-          POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
-          POSTGRES_DB: testdb
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: app_test
         options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
+          --health-cmd="pg_isready -U postgres -d app_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
 
     env:
-      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/testdb?sslmode=disable
+      # Database connection for tests
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/app_test?sslmode=disable
       DB_HOST: localhost
       DB_PORT: 5432
-      DB_USER: postgres
+      DB_USERNAME: postgres
       DB_PASSWORD: postgres
-      DB_NAME: testdb
-      DB_SSL_MODE: disable
+      DB_DATABASE: app_test
+      DB_SCHEMA: public
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: ${{ env.GO_VERSION }}
-        cache: true
+      # Set up Go
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
 
-    - name: Verify dependencies
-      run: go mod verify
+      # Set up Node.js for frontend tests
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-    - name: Install golang-migrate
-      run: |
-        curl -L https://github.com/golang-migrate/migrate/releases/latest/download/migrate.linux-amd64.tar.gz | tar xvz
-        sudo mv migrate /usr/local/bin/
-        which migrate
+      # Wait until healthy (extra guard)
+      - name: Wait for Postgres
+        run: |
+          for i in {1..60}; do
+            pg_isready -h localhost -p 5432 -U postgres -d app_test && break
+            sleep 1
+          done
 
-    - name: Run database migrations
-      run: migrate -path apps/backend/migrations -database $TEST_DATABASE_URL up
+      # Run migrations
+      - name: Run migrations
+        run: |
+          cd apps/backend
+          go run cmd/migrate/main.go up
 
-    - name: Run tests
-      run: go test -race ./...
+      # Run backend tests
+      - name: Test Backend
+        run: |
+          cd apps/backend
+          go test ./... -count=1 -v
+
+      # Install frontend dependencies and run tests
+      - name: Install frontend dependencies
+        run: |
+          cd apps/frontend
+          npm ci
+
+      - name: Test Frontend
+        run: |
+          cd apps/frontend
+          npm test
 
   build:
     runs-on: ubuntu-latest

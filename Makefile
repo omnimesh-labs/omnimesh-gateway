@@ -13,7 +13,8 @@ help:
 	@echo ""
 	@echo "Quick Start:"
 	@echo "  make setup        - Production build (frontend built, no hot reload)"
-	@echo "  make dev          - Start backend services, run frontend locally"
+	@echo "  make dev          - Start services (backend with hot reload via air)"
+	@echo "  make watch        - Same as dev (hot reload for backend development)"
 	@echo "  make stop         - Stop all services (clean)"
 	@echo "  make restart      - Clean restart services"
 	@echo "  make clean        - Stop and remove all data"
@@ -38,6 +39,7 @@ help:
 	@echo "  make test-transport - Transport layer tests"
 	@echo "  make test-integration - Integration tests"
 	@echo "  make test-unit    - Unit tests"
+	@echo "  make test-coverage - Run tests with coverage report"
 	@echo ""
 	@echo "Development:"
 	@echo "  make shell        - Open shell in backend container"
@@ -84,33 +86,43 @@ clean:
 logs:
 	@$(DOCKER_COMPOSE) logs -f
 
-# Run tests
+# Test commands - use --entrypoint="" to bypass air hot reload and run tests directly
 test:
 	@echo "Running all tests..."
-	@$(GO) test -v ./...
+	@$(DOCKER_COMPOSE) run --rm --entrypoint="" -e TEST_DATABASE_URL=postgres://postgres:changeme123@postgres:5432/postgres?sslmode=disable backend sh -c "cd /app && go test -v ./..."
 	@echo "Running frontend tests..."
 	@cd apps/frontend && npm test
 
-# Run specific tests
 test-backend:
 	@echo "Running backend tests..."
-	@$(GO) test -v ./...
+	@$(DOCKER_COMPOSE) run --rm --entrypoint="" -e TEST_DATABASE_URL=postgres://postgres:changeme123@postgres:5432/postgres?sslmode=disable backend sh -c "cd /app && go test -v ./..."
 
 test-frontend:
 	@echo "Running frontend tests..."
 	@cd apps/frontend && npm test
 
+# Specific test suites - bypass air entrypoint to run tests directly
 test-transport:
 	@echo "Running transport tests..."
-	@$(GO) test -v ./apps/backend/tests/transport/...
+	@$(DOCKER_COMPOSE) run --rm --entrypoint="" -e TEST_DATABASE_URL=postgres://postgres:changeme123@postgres:5432/postgres?sslmode=disable backend sh -c "cd /app && go test -v ./apps/backend/tests/transport/..."
 
 test-integration:
 	@echo "Running integration tests..."
-	@$(GO) test -v ./apps/backend/tests/integration/...
+	@$(DOCKER_COMPOSE) run --rm --entrypoint="" -e TEST_DATABASE_URL=postgres://postgres:changeme123@postgres:5432/postgres?sslmode=disable backend sh -c "cd /app && go test -v ./apps/backend/tests/integration/..."
 
 test-unit:
 	@echo "Running unit tests..."
-	@$(GO) test -v ./apps/backend/tests/unit/...
+	@$(DOCKER_COMPOSE) run --rm --entrypoint="" -e TEST_DATABASE_URL=postgres://postgres:changeme123@postgres:5432/postgres?sslmode=disable backend sh -c "cd /app && go test -v ./apps/backend/tests/unit/..."
+
+test-coverage:
+	@echo "Running tests with coverage..."
+	@$(DOCKER_COMPOSE) run --rm --entrypoint="" -e TEST_DATABASE_URL=postgres://postgres:changeme123@postgres:5432/postgres?sslmode=disable backend sh -c "cd /app && go test -v -coverprofile=coverage.out ./... && go tool cover -html=coverage.out -o coverage.html"
+	@echo "Coverage report generated: coverage.html"
+
+# Local development with hot reload (preserves air functionality)
+watch:
+	@echo "Starting development with hot reload..."
+	@$(DOCKER_COMPOSE) up --remove-orphans backend postgres redis
 
 # Database operations
 migrate:
