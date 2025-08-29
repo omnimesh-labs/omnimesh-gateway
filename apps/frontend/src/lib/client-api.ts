@@ -20,6 +20,7 @@ import type {
 	Endpoint,
 	CreateServerRequest,
 	MCPDiscoveryResponse,
+	MCPPackage,
 	Tool,
 	CreateToolRequest,
 	UpdateToolRequest,
@@ -61,7 +62,7 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 			if (errorObj.error) {
 				throw new Error(errorObj.error);
 			}
-		} catch (parseError) {
+		} catch (_parseError) {
 			// If JSON parsing fails, provide clean error messages based on status code
 			if (response.status === 401) {
 				throw new Error('Authentication required');
@@ -140,28 +141,39 @@ class ServerAPI {
 		return response.data || [];
 	}
 
-	public async createServer(data: CreateServerRequest): Promise<MCPServer> {
-		return await apiRequest<MCPServer>('/api/gateway/servers', {
+	public async registerServer(data: CreateServerRequest): Promise<MCPServer> {
+		const response = await apiRequest<{data: MCPServer; success: boolean}>('/api/gateway/servers', {
 			method: 'POST',
 			body: JSON.stringify(data)
 		});
+		return response.data;
+	}
+
+	public async createServer(data: CreateServerRequest): Promise<MCPServer> {
+		return this.registerServer(data);
 	}
 
 	public async updateServer(id: string, data: Partial<MCPServer>): Promise<MCPServer> {
-		return await apiRequest<MCPServer>(`/api/gateway/servers/${id}`, {
+		const response = await apiRequest<{data: MCPServer; success: boolean}>(`/api/gateway/servers/${id}`, {
 			method: 'PUT',
 			body: JSON.stringify(data)
 		});
+		return response.data;
 	}
 
-	public async deleteServer(id: string): Promise<void> {
+	public async unregisterServer(id: string): Promise<void> {
 		await apiRequest<void>(`/api/gateway/servers/${id}`, {
 			method: 'DELETE'
 		});
 	}
 
+	public async deleteServer(id: string): Promise<void> {
+		return this.unregisterServer(id);
+	}
+
 	public async getServer(id: string): Promise<MCPServer> {
-		return await apiRequest<MCPServer>(`/api/gateway/servers/${id}`);
+		const response = await apiRequest<{data: MCPServer; success: boolean}>(`/api/gateway/servers/${id}`);
+		return response.data;
 	}
 
 	public async testConnection(id: string): Promise<{ success: boolean; error?: string }> {
@@ -335,8 +347,8 @@ class ContentFilterAPI {
 		});
 	}
 
-	public async getFilterTypes(): Promise<any> {
-		return await apiRequest<any>('/api/admin/filters/types');
+	public async getFilterTypes(): Promise<Record<string, unknown>> {
+		return await apiRequest<Record<string, unknown>>('/api/admin/filters/types');
 	}
 }
 
@@ -372,24 +384,34 @@ class EndpointAPI {
 	}
 }
 
-// Discovery API
+// Discovery API - External MCP Package Discovery
 class DiscoveryAPI {
-	public async discoverServer(id: string): Promise<MCPDiscoveryResponse> {
-		return await apiRequest<MCPDiscoveryResponse>(`/api/discovery/servers/${id}`);
+	public async searchPackages(query?: string, offset?: number, pageSize?: number): Promise<MCPDiscoveryResponse> {
+		const params = new URLSearchParams();
+		if (query) params.set('query', query);
+		if (offset !== undefined) params.set('offset', String(offset));
+		if (pageSize !== undefined) params.set('pageSize', String(pageSize));
+
+		const queryString = params.toString();
+		const endpoint = `/api/mcp/search${queryString ? '?' + queryString : ''}`;
+		const response = await apiRequest<{ success: boolean; data: MCPDiscoveryResponse; message: string }>(endpoint);
+		return response.data;
 	}
 
-	public async discoverByUrl(url: string): Promise<MCPDiscoveryResponse> {
-		return await apiRequest<MCPDiscoveryResponse>('/api/discovery/url', {
-			method: 'POST',
-			body: JSON.stringify({ url })
-		});
+	public async listPackages(offset?: number, pageSize?: number): Promise<MCPDiscoveryResponse> {
+		const params = new URLSearchParams();
+		if (offset !== undefined) params.set('offset', String(offset));
+		if (pageSize !== undefined) params.set('pageSize', String(pageSize));
+
+		const queryString = params.toString();
+		const endpoint = `/api/mcp/packages${queryString ? '?' + queryString : ''}`;
+		const response = await apiRequest<{ success: boolean; data: MCPDiscoveryResponse; message: string }>(endpoint);
+		return response.data;
 	}
 
-	public async discoverByCommand(command: string, args?: string[]): Promise<MCPDiscoveryResponse> {
-		return await apiRequest<MCPDiscoveryResponse>('/api/discovery/command', {
-			method: 'POST',
-			body: JSON.stringify({ command, args })
-		});
+	public async getPackageDetails(packageName: string): Promise<MCPPackage> {
+		const response = await apiRequest<{ success: boolean; data: MCPPackage; message: string }>(`/api/mcp/packages/${packageName}`);
+		return response.data;
 	}
 }
 

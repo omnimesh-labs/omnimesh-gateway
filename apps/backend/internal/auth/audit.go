@@ -132,6 +132,19 @@ func (a *AuditLogger) LogEvent(event *AuditEvent) error {
 		actorIP = event.ActorIP.String()
 	}
 
+	// Convert JSON byte slices to strings for PostgreSQL JSONB columns
+	var oldValuesStr, newValuesStr, metadataStr interface{}
+
+	if oldValuesJSON != nil {
+		oldValuesStr = string(oldValuesJSON)
+	}
+	if newValuesJSON != nil {
+		newValuesStr = string(newValuesJSON)
+	}
+	if metadataJSON != nil {
+		metadataStr = string(metadataJSON)
+	}
+
 	_, err = a.db.Exec(
 		query,
 		event.OrganizationID,
@@ -140,9 +153,9 @@ func (a *AuditLogger) LogEvent(event *AuditEvent) error {
 		event.ResourceID,
 		event.ActorID,
 		actorIP,
-		oldValuesJSON,
-		newValuesJSON,
-		metadataJSON,
+		oldValuesStr,
+		newValuesStr,
+		metadataStr,
 	)
 
 	if err != nil {
@@ -312,6 +325,12 @@ func (t *LoginAttemptTracker) RecordLoginAttempt(email string, clientIP net.IP, 
 		clientIPStr = clientIP.String()
 	}
 
+	// Convert JSON byte slice to string for PostgreSQL JSONB column
+	var metadataStr interface{}
+	if metadataJSON != nil {
+		metadataStr = string(metadataJSON)
+	}
+
 	_, err = t.db.Exec(
 		query,
 		defaultOrgID,
@@ -319,7 +338,7 @@ func (t *LoginAttemptTracker) RecordLoginAttempt(email string, clientIP net.IP, 
 		"login_attempt",
 		email,
 		clientIPStr,
-		metadataJSON,
+		metadataStr,
 	)
 
 	return err

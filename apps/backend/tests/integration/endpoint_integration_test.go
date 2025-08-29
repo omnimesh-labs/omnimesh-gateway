@@ -226,8 +226,8 @@ func TestEndpointIntegration(t *testing.T) {
 		w = httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
-		// Should NOT be accessible without auth (requires authentication)
-		assert.Equal(t, http.StatusUnauthorized, w.Code)
+		// Should be accessible without auth since it's a health endpoint
+		assert.Equal(t, http.StatusOK, w.Code)
 	})
 
 	t.Run("List Public Endpoints", func(t *testing.T) {

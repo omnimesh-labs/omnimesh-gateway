@@ -28,6 +28,17 @@ func NewMCPDiscoveryService(baseURL string) *MCPDiscoveryService {
 
 // SearchPackages searches for MCP packages using the external discovery service
 func (s *MCPDiscoveryService) SearchPackages(req *types.MCPDiscoveryRequest) (*types.MCPDiscoveryResponse, error) {
+	// Check if base URL is configured
+	if s.baseURL == "" {
+		return &types.MCPDiscoveryResponse{
+			Results:  make(map[string]types.MCPPackage),
+			Total:    0,
+			Offset:   req.Offset,
+			PageSize: req.PageSize,
+			HasMore:  false,
+		}, nil
+	}
+
 	// Build URL with query parameters
 	searchURL, err := url.Parse(s.baseURL)
 	if err != nil {

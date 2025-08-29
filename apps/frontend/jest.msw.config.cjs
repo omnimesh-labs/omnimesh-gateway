@@ -5,7 +5,7 @@ module.exports = {
 
   // Setup files
   setupFiles: ['whatwg-fetch', '<rootDir>/src/test/polyfills.ts'],
-  setupFilesAfterEnv: ['<rootDir>/src/test/setup-simple.ts'],
+  setupFilesAfterEnv: ['<rootDir>/src/test/setup.ts'],
 
   // Module name mapping for TypeScript path aliases
   moduleNameMapper: {
@@ -16,15 +16,26 @@ module.exports = {
     '\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$': '<rootDir>/src/test/__mocks__/fileMock.ts',
   },
 
-  // Test patterns - only run simple tests
+  // Test patterns
   testMatch: [
-    '<rootDir>/src/**/*simple.test.{js,jsx,ts,tsx}'
+    '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
+    '<rootDir>/src/**/*.{test,spec}.{js,jsx,ts,tsx}',
+    '<rootDir>/src/test/integration/*.{test,spec}.{js,jsx,ts,tsx}'
   ],
 
   // Transform configuration
   transform: {
     '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest'
   },
+
+  // Coverage configuration
+  collectCoverageFrom: [
+    'src/**/*.{js,jsx,ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/test/**',
+    '!src/**/__tests__/**',
+    '!src/**/*.stories.{js,jsx,ts,tsx}',
+  ],
 
   // Module file extensions
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],

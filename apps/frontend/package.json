@@ -109,11 +109,11 @@
 		"lint:fix": "eslint --fix ./src --config ./eslint.config.mjs",
 		"format": "prettier --write .",
 		"format:check": "prettier --check .",
-		"test": "jest --config jest.simple.config.cjs",
-		"test:watch": "jest --config jest.simple.config.cjs --watch",
-		"test:coverage": "jest --config jest.simple.config.cjs --coverage",
-		"test:msw": "jest",
-		"test:all": "jest --config jest.simple.config.cjs && jest",
+		"test": "jest",
+		"test:watch": "jest --watch",
+		"test:coverage": "jest --coverage",
+		"test:msw": "jest --config jest.msw.config.cjs",
+		"test:all": "jest && jest --config jest.msw.config.cjs",
 		"audit": "bun audit"
 	},
 	"engines": {

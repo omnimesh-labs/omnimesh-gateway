@@ -29,11 +29,37 @@ type Config struct {
 // ServerConfig holds HTTP server configuration
 type ServerConfig struct {
 	Host         string        `yaml:"host" env:"SERVER_HOST"`
-	TLS          TLSConfig     `yaml:"tls"`
 	Port         int           `yaml:"port" env:"SERVER_PORT"`
+	BaseURL      string        `yaml:"base_url" env:"SERVER_BASE_URL"`
+	TLS          TLSConfig     `yaml:"tls"`
 	ReadTimeout  time.Duration `yaml:"read_timeout"`
 	WriteTimeout time.Duration `yaml:"write_timeout"`
 	IdleTimeout  time.Duration `yaml:"idle_timeout"`
+}
+
+// GetBaseURL returns the base URL for the server, generating it if not explicitly set
+func (s *ServerConfig) GetBaseURL() string {
+	if s.BaseURL != "" {
+		return s.BaseURL
+	}
+
+	// Generate base URL from host and port
+	scheme := "http"
+	if s.TLS.Enabled {
+		scheme = "https"
+	}
+
+	host := s.Host
+	if host == "0.0.0.0" {
+		host = "localhost"
+	}
+
+	// Don't include port in URL if it's the default port
+	if (scheme == "http" && s.Port == 80) || (scheme == "https" && s.Port == 443) {
+		return fmt.Sprintf("%s://%s", scheme, host)
+	}
+
+	return fmt.Sprintf("%s://%s:%d", scheme, host, s.Port)
 }
 
 // TLSConfig holds TLS configuration
@@ -109,6 +135,7 @@ type DiscoveryConfig struct {
 	HealthInterval   time.Duration `yaml:"health_interval"`
 	FailureThreshold int           `yaml:"failure_threshold"`
 	RecoveryTimeout  time.Duration `yaml:"recovery_timeout"`
+	MCPURL          string        `yaml:"mcp_discovery_url" env:"MCP_DISCOVERY_URL"`
 }
 
 // GatewayConfig holds core gateway configuration

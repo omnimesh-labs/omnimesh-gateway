@@ -89,13 +89,13 @@ logs:
 # Test commands - use --entrypoint="" to bypass air hot reload and run tests directly
 test:
 	@echo "Running all tests..."
-	@$(DOCKER_COMPOSE) run --rm --entrypoint="" -e TEST_DATABASE_URL=postgres://postgres:changeme123@postgres:5432/postgres?sslmode=disable backend sh -c "cd /app && go test -v ./..."
+	@$(DOCKER_COMPOSE) run --rm --entrypoint="" -e TEST_DATABASE_URL=postgres://postgres:changeme123@postgres:5432/postgres?sslmode=disable -e DOCKER_ENV=1 backend sh -c "cd /app && go test -v ./..."
 	@echo "Running frontend tests..."
 	@cd apps/frontend && npm test
 
 test-backend:
 	@echo "Running backend tests..."
-	@$(DOCKER_COMPOSE) run --rm --entrypoint="" -e TEST_DATABASE_URL=postgres://postgres:changeme123@postgres:5432/postgres?sslmode=disable backend sh -c "cd /app && go test -v ./..."
+	@$(DOCKER_COMPOSE) run --rm --entrypoint="" -e TEST_DATABASE_URL=postgres://postgres:changeme123@postgres:5432/postgres?sslmode=disable -e DOCKER_ENV=1 backend sh -c "cd /app && go test -v ./..."
 
 test-frontend:
 	@echo "Running frontend tests..."
@@ -104,19 +104,19 @@ test-frontend:
 # Specific test suites - bypass air entrypoint to run tests directly
 test-transport:
 	@echo "Running transport tests..."
-	@$(DOCKER_COMPOSE) run --rm --entrypoint="" -e TEST_DATABASE_URL=postgres://postgres:changeme123@postgres:5432/postgres?sslmode=disable backend sh -c "cd /app && go test -v ./apps/backend/tests/transport/..."
+	@$(DOCKER_COMPOSE) run --rm --entrypoint="" -e TEST_DATABASE_URL=postgres://postgres:changeme123@postgres:5432/postgres?sslmode=disable -e DOCKER_ENV=1 backend sh -c "cd /app && go test -v ./apps/backend/tests/transport/..."
 
 test-integration:
 	@echo "Running integration tests..."
-	@$(DOCKER_COMPOSE) run --rm --entrypoint="" -e TEST_DATABASE_URL=postgres://postgres:changeme123@postgres:5432/postgres?sslmode=disable backend sh -c "cd /app && go test -v ./apps/backend/tests/integration/..."
+	@$(DOCKER_COMPOSE) run --rm --entrypoint="" -e TEST_DATABASE_URL=postgres://postgres:changeme123@postgres:5432/postgres?sslmode=disable -e DOCKER_ENV=1 backend sh -c "cd /app && go test -v ./apps/backend/tests/integration/..."
 
 test-unit:
 	@echo "Running unit tests..."
-	@$(DOCKER_COMPOSE) run --rm --entrypoint="" -e TEST_DATABASE_URL=postgres://postgres:changeme123@postgres:5432/postgres?sslmode=disable backend sh -c "cd /app && go test -v ./apps/backend/tests/unit/..."
+	@$(DOCKER_COMPOSE) run --rm --entrypoint="" -e TEST_DATABASE_URL=postgres://postgres:changeme123@postgres:5432/postgres?sslmode=disable -e DOCKER_ENV=1 backend sh -c "cd /app && go test -v ./apps/backend/tests/unit/..."
 
 test-coverage:
 	@echo "Running tests with coverage..."
-	@$(DOCKER_COMPOSE) run --rm --entrypoint="" -e TEST_DATABASE_URL=postgres://postgres:changeme123@postgres:5432/postgres?sslmode=disable backend sh -c "cd /app && go test -v -coverprofile=coverage.out ./... && go tool cover -html=coverage.out -o coverage.html"
+	@$(DOCKER_COMPOSE) run --rm --entrypoint="" -e TEST_DATABASE_URL=postgres://postgres:changeme123@postgres:5432/postgres?sslmode=disable -e DOCKER_ENV=1 backend sh -c "cd /app && go test -v -coverprofile=coverage.out ./... && go tool cover -html=coverage.out -o coverage.html"
 	@echo "Coverage report generated: coverage.html"
 
 # Local development with hot reload (preserves air functionality)

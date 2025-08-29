@@ -375,7 +375,6 @@ func (s *SetupManager) addDummyData() error {
 		}
 	}
 
-	// TODO: Add dummy MCP servers, sessions, etc.
 	fmt.Println("📝 Note: Additional dummy data (servers, sessions) can be added in future iterations")
 
 	return nil
@@ -730,7 +729,7 @@ func (s *SetupManager) addDummyNamespaces() error {
 		// Insert namespace
 		query := `
 			INSERT INTO namespaces (
-				id, organization_id, name, description, 
+				id, organization_id, name, description,
 				is_active, metadata, created_at, updated_at
 			) VALUES (
 				$1, $2, $3, $4, $5, $6, NOW(), NOW()

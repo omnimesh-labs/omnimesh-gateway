@@ -681,27 +681,26 @@ export interface CreateServerRequest {
 	max_retries?: number;
 }
 
+// External MCP Package Discovery types (from discovery service)
+export interface MCPPackage {
+	name: string;
+	description: string;
+	githubUrl: string;
+	package_registry: string;
+	package_name: string;
+	command: string;
+	args: string[];
+	envs: string[];
+	github_stars: number;
+	package_download_count: number;
+}
+
 export interface MCPDiscoveryResponse {
-	tools: {
-		name: string;
-		description?: string;
-		schema: JSONSchema;
-	}[];
-	resources: {
-		uri: string;
-		name?: string;
-		description?: string;
-		mimeType?: string;
-	}[];
-	prompts: {
-		name: string;
-		description?: string;
-		arguments?: {
-			name: string;
-			description?: string;
-			required?: boolean;
-		}[];
-	}[];
+	results: Record<string, MCPPackage>;
+	total: number;
+	offset: number;
+	pageSize: number;
+	hasMore: boolean;
 }
 
 // Tool types

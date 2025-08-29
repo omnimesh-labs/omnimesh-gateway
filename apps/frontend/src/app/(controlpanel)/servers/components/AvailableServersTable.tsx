@@ -5,7 +5,7 @@ import { MRT_ColumnDef } from 'material-react-table';
 import { Typography, Button, Chip, Box, IconButton, Tooltip } from '@mui/material';
 import DataTable from '@/components/data-table/DataTable';
 import SvgIcon from '@fuse/core/SvgIcon';
-import { MCPPackage, CreateServerRequest, MCPServer } from '@/lib/client-api'; import type { MCPServer, CreateServerRequest, MCPDiscoveryResponse, Namespace } from '@/lib/types';
+import type { MCPPackage, MCPServer, CreateServerRequest } from '@/lib/types';
 
 interface AvailableServersTableProps {
 	servers: MCPPackage[];

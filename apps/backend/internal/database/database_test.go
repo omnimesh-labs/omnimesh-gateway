@@ -56,6 +56,13 @@ func mustStartPostgresContainer() (func(context.Context, ...testcontainers.Termi
 }
 
 func TestMain(m *testing.M) {
+	// Skip testcontainers when running in Docker (CI/CD environment)
+	if os.Getenv("DOCKER_ENV") != "" || os.Getenv("CI") != "" {
+		log.Println("Skipping testcontainers setup in Docker environment")
+		os.Exit(m.Run())
+		return
+	}
+
 	teardown, err := mustStartPostgresContainer()
 	if err != nil {
 		log.Fatalf("could not start postgres container: %v", err)

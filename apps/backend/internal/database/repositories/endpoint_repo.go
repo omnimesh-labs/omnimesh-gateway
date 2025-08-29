@@ -76,12 +76,22 @@ func (r *EndpointRepository) Create(ctx context.Context, endpoint *types.Endpoin
 			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
 		) RETURNING id, created_at, updated_at`
 
+	// Convert metadata to JSONB
+	var metadataValue interface{}
+	if endpoint.Metadata != nil {
+		metadataJSON, err := json.Marshal(endpoint.Metadata)
+		if err != nil {
+			return fmt.Errorf("failed to marshal metadata: %w", err)
+		}
+		metadataValue = string(metadataJSON)
+	}
+
 	err := r.db.QueryRowContext(ctx, query,
 		endpoint.OrganizationID, endpoint.NamespaceID, endpoint.Name, endpoint.Description,
 		endpoint.EnableAPIKeyAuth, endpoint.EnableOAuth, endpoint.EnablePublicAccess, endpoint.UseQueryParamAuth,
 		endpoint.RateLimitRequests, endpoint.RateLimitWindow,
 		pq.Array(endpoint.AllowedOrigins), pq.Array(endpoint.AllowedMethods),
-		endpoint.CreatedBy, endpoint.IsActive, endpoint.Metadata,
+		endpoint.CreatedBy, endpoint.IsActive, metadataValue,
 	).Scan(&endpoint.ID, &endpoint.CreatedAt, &endpoint.UpdatedAt)
 
 	if err != nil {
@@ -310,12 +320,22 @@ func (r *EndpointRepository) Update(ctx context.Context, endpoint *types.Endpoin
 			updated_at = NOW()
 		WHERE id = $1`
 
+	// Convert metadata to JSONB
+	var metadataValue interface{}
+	if endpoint.Metadata != nil {
+		metadataJSON, err := json.Marshal(endpoint.Metadata)
+		if err != nil {
+			return fmt.Errorf("failed to marshal metadata: %w", err)
+		}
+		metadataValue = string(metadataJSON)
+	}
+
 	result, err := r.db.ExecContext(ctx, query,
 		endpoint.ID, endpoint.Description,
 		endpoint.EnableAPIKeyAuth, endpoint.EnableOAuth, endpoint.EnablePublicAccess, endpoint.UseQueryParamAuth,
 		endpoint.RateLimitRequests, endpoint.RateLimitWindow,
 		pq.Array(endpoint.AllowedOrigins), pq.Array(endpoint.AllowedMethods),
-		endpoint.IsActive, endpoint.Metadata,
+		endpoint.IsActive, metadataValue,
 	)
 
 	if err != nil {

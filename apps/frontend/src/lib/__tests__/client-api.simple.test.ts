@@ -1,4 +1,4 @@
-import { adminApi, serverApi, namespaceApi, a2aApi, policyApi, contentFilterApi, endpointApi, discoveryApi, toolsApi, promptsApi, authConfigApi } from '../client-api';
+import { adminApi, serverApi, namespaceApi, a2aApi, toolsApi, promptsApi, authConfigApi } from '../client-api';
 
 // Mock fetch globally
 const mockFetch = jest.fn();
@@ -278,13 +278,13 @@ describe('Client API - Simple Tests', () => {
 
     it('should make POST request for createServer', async () => {
       const mockServer = { id: '1', name: 'New Server' };
-      const createData = { name: 'New Server', url: 'http://example.com' };
+      const createData = { name: 'New Server', url: 'http://example.com', namespace_id: 'test-namespace' };
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
         headers: { get: jest.fn().mockReturnValue('application/json') },
-        json: jest.fn().mockResolvedValueOnce(mockServer)
+        json: jest.fn().mockResolvedValueOnce({ data: mockServer, success: true })
       });
 
       const result = await serverApi.createServer(createData);
@@ -307,7 +307,7 @@ describe('Client API - Simple Tests', () => {
         ok: true,
         status: 200,
         headers: { get: jest.fn().mockReturnValue('application/json') },
-        json: jest.fn().mockResolvedValueOnce(mockServer)
+        json: jest.fn().mockResolvedValueOnce({ data: mockServer, success: true })
       });
 
       const result = await serverApi.updateServer('1', updateData);
@@ -508,7 +508,7 @@ describe('Client API - Simple Tests', () => {
 
     it('should make PUT request for updateAuthConfig', async () => {
       const mockConfig = { enabled: false };
-      const updateData = { enabled: false, providers: ['google'] };
+      const updateData = { methods: { oauth2_enabled: false, oauth2_providers: [{ name: 'google', enabled: true, client_id: 'test-id', auth_url: 'https://auth.test', token_url: 'https://token.test', user_info_url: 'https://userinfo.test', scopes: ['email'] }] } };
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
