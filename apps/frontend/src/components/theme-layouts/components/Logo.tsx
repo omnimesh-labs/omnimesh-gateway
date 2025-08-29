@@ -35,7 +35,7 @@ function Logo(props: LogoProps) {
 					alt="logo"
 				/>
 				<div className="logo-text flex flex-auto flex-col gap-0.5">
-					<Typography className="tracking-light text-lg font-semibold leading-none">JANEX</Typography>
+					<Typography className="tracking-light text-lg font-semibold leading-none">JANEX GATEWAY</Typography>
 				</div>
 			</div>
 			{/* <MainProjectSelection /> */}

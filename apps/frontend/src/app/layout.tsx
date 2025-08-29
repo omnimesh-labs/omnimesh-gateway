@@ -20,9 +20,9 @@ export const metadata: Metadata = {
 	robots: 'follow, index',
 	icons: { icon: '/favicon.ico' },
 	manifest: '/manifest.json',
-	metadataBase: new URL('https://janex.example.com'),
+	metadataBase: new URL('https://janex.ai'),
 	openGraph: {
-		url: 'https://janex.example.com',
+		url: 'https://janex.ai',
 		title: 'Janex - Dashboard',
 		description: 'Janex - Production-ready API gateway for Model Context Protocol servers',
 		images: ['/card.png'],

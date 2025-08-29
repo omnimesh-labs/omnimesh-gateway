@@ -52,18 +52,33 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 		// Try to parse JSON error response to get clean error message
 		try {
 			const errorObj = JSON.parse(errorText);
-			if (errorObj.error) {
-				throw new Error(errorObj.error);
+			if (errorObj.error?.message) {
+				throw new Error(errorObj.error.message);
 			}
 			if (errorObj.message) {
 				throw new Error(errorObj.message);
 			}
-		} catch (_parseError) {
-			// If JSON parsing fails, it's not a JSON response
+			if (errorObj.error) {
+				throw new Error(errorObj.error);
+			}
+		} catch (parseError) {
+			// If JSON parsing fails, provide clean error messages based on status code
+			if (response.status === 401) {
+				throw new Error('Authentication required');
+			}
+			if (response.status === 403) {
+				throw new Error('Access denied');
+			}
+			if (response.status === 404) {
+				throw new Error('Resource not found');
+			}
+			if (response.status >= 500) {
+				throw new Error('Server error occurred');
+			}
 		}
 
-		// Fallback to original error format if not JSON
-		throw new Error(`API request failed: ${response.status} ${response.statusText} - ${errorText}`);
+		// Fallback to clean error message
+		throw new Error(`Request failed: ${response.statusText}`);
 	}
 
 	// Handle 204 No Content responses (common for DELETE operations)

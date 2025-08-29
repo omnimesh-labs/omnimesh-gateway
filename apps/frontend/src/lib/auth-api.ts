@@ -48,13 +48,43 @@ class AuthAPI {
 		});
 
 		if (!response.ok) {
-			const error = await response.text();
-			throw new Error(`API request failed: ${response.status} ${response.statusText} - ${error}`);
+			const errorText = await response.text();
+
+			// Try to parse JSON error response to get clean error message
+			try {
+				const errorObj = JSON.parse(errorText);
+				if (errorObj.error?.message) {
+					throw new Error(errorObj.error.message);
+				}
+				if (errorObj.message) {
+					throw new Error(errorObj.message);
+				}
+				if (errorObj.error) {
+					throw new Error(errorObj.error);
+				}
+			} catch (parseError) {
+				// If JSON parsing fails, use a clean fallback message
+				if (response.status === 401) {
+					throw new Error('Invalid credentials');
+				}
+				if (response.status === 403) {
+					throw new Error('Access denied');
+				}
+				if (response.status === 404) {
+					throw new Error('Resource not found');
+				}
+				if (response.status >= 500) {
+					throw new Error('Server error occurred');
+				}
+			}
+
+			// Fallback to original error format if nothing else worked
+			throw new Error(`Request failed: ${response.statusText}`);
 		}
 
 		// Handle 204 No Content responses (common for DELETE operations)
 		if (response.status === 204) {
-			return null;
+			return null as unknown as T;
 		}
 
 		// Check if response has content before parsing JSON
@@ -64,7 +94,7 @@ class AuthAPI {
 		}
 
 		// For non-JSON responses or empty responses, return null
-		return null;
+		return null as unknown as T;
 	}
 
 	public isAuthenticated(): boolean {
@@ -82,7 +112,7 @@ class AuthAPI {
 			body: JSON.stringify(credentials)
 		});
 
-		// Store tokens - fix: tokens are in response.data
+		// Store tokens - tokens are nested under response.data
 		const accessToken = response.data?.access_token || response.access_token;
 		const refreshToken = response.data?.refresh_token || response.refresh_token;
 		this.setToken(ACCESS_TOKEN_KEY, accessToken);
@@ -114,7 +144,7 @@ class AuthAPI {
 			}
 		});
 
-		// Update tokens - fix: tokens might be in response.data
+		// Update tokens - tokens are nested under response.data
 		const newAccessToken = response.data?.access_token || response.access_token;
 		const newRefreshToken = response.data?.refresh_token || response.refresh_token;
 		this.setToken(ACCESS_TOKEN_KEY, newAccessToken);
@@ -124,14 +154,16 @@ class AuthAPI {
 	}
 
 	public async getProfile(): Promise<User> {
-		return await this.apiRequest<User>('/api/auth/profile');
+		const response = await this.apiRequest<{data: User; success: boolean}>('/api/auth/profile');
+		return response.data || response as unknown as User;
 	}
 
 	public async updateProfile(data: Partial<User>): Promise<User> {
-		return await this.apiRequest<User>('/api/auth/profile', {
+		const response = await this.apiRequest<{data: User; success: boolean}>('/api/auth/profile', {
 			method: 'PUT',
 			body: JSON.stringify(data)
 		});
+		return response.data || response as unknown as User;
 	}
 
 	public async getApiKeys(): Promise<ApiKey[]> {
@@ -140,10 +172,11 @@ class AuthAPI {
 	}
 
 	public async createApiKey(data: CreateApiKeyRequest): Promise<CreateApiKeyResponse> {
-		return await this.apiRequest<CreateApiKeyResponse>('/api/auth/api-keys', {
+		const response = await this.apiRequest<{data: CreateApiKeyResponse; success: boolean}>('/api/auth/api-keys', {
 			method: 'POST',
 			body: JSON.stringify(data)
 		});
+		return response.data || response as unknown as CreateApiKeyResponse;
 	}
 
 	public async deleteApiKey(id: string): Promise<void> {
