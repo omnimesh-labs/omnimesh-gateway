@@ -671,6 +671,11 @@ func (h *RPCHandler) HandleRPCHealth(c *gin.Context) {
 
 // listAvailableTools returns all available tools from virtual servers and real MCP servers
 func (h *RPCHandler) listAvailableTools(transportCtx *types.TransportContext) (map[string]interface{}, error) {
+	return h.ListAvailableTools(transportCtx)
+}
+
+// ListAvailableTools returns all available tools from virtual servers and real MCP servers (exported for testing)
+func (h *RPCHandler) ListAvailableTools(transportCtx *types.TransportContext) (map[string]interface{}, error) {
 	allTools := []map[string]interface{}{}
 
 	// Add built-in tools first

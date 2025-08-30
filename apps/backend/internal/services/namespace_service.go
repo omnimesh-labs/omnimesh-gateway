@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"mcp-gateway/apps/backend/internal/database/repositories"
+	"mcp-gateway/apps/backend/internal/mcp"
 	"mcp-gateway/apps/backend/internal/types"
 
 	"github.com/jmoiron/sqlx"
@@ -30,8 +31,8 @@ func NewNamespaceService(db *sql.DB, endpointService *EndpointService) *Namespac
 	return &NamespaceService{
 		repo:            repositories.NewNamespaceRepository(sqlxDB),
 		endpointService: endpointService,
-		serverRepo:  repositories.NewMCPServerRepository(sqlxDB),
-		sessionPool: NewNamespaceSessionPool(),
+		serverRepo:      repositories.NewMCPServerRepository(sqlxDB),
+		sessionPool:     NewNamespaceSessionPool(),
 	}
 }
 
@@ -87,7 +88,7 @@ func (s *NamespaceService) GetNamespace(ctx context.Context, id string) (*types.
 	} else {
 		namespace.Tools = tools
 	}
-	
+
 	// Get endpoint for the namespace if endpoint service is available
 	if s.endpointService != nil {
 		endpoint, err := s.endpointService.GetEndpointByNamespace(ctx, id)
@@ -454,19 +455,162 @@ func (s *NamespaceService) clearToolCache(namespaceID string) {
 	s.toolPrefixCache.Delete(namespaceID)
 }
 
+// ensureMCPConnection establishes an MCP connection for the session if needed
+func (s *NamespaceService) ensureMCPConnection(ctx context.Context, session *Session, serverID string) error {
+	session.mu.Lock()
+	defer session.mu.Unlock()
+
+	// Check if we already have a working connection
+	if session.Connection != nil && session.Connection.IsConnected() {
+		return nil
+	}
+
+	// Get server configuration from database
+	server, err := s.serverRepo.GetByID(ctx, serverID)
+	if err != nil {
+		return fmt.Errorf("failed to get server config: %w", err)
+	}
+
+	// Create transport configuration based on server protocol
+	var transportConfig mcp.TransportConfig
+	switch server.Protocol {
+	case "stdio":
+		if server.Command == nil {
+			return fmt.Errorf("stdio server requires command")
+		}
+
+		// Convert environment array to map
+		envMap := make(map[string]string)
+		for _, env := range server.Environment {
+			// Parse environment variables in format KEY=VALUE
+			parts := strings.SplitN(env, "=", 2)
+			if len(parts) == 2 {
+				envMap[parts[0]] = parts[1]
+			}
+		}
+
+		transportConfig = mcp.TransportConfig{
+			Type:        "stdio",
+			Command:     *server.Command,
+			Args:        server.Args,
+			Environment: envMap,
+			WorkingDir:  func() string {
+				if server.WorkingDir != nil {
+					return *server.WorkingDir
+				}
+				return ""
+			}(),
+		}
+	default:
+		return fmt.Errorf("unsupported protocol: %s", server.Protocol)
+	}
+
+	// Create MCP client
+	transport := &mcp.StdioTransport{}
+	client := mcp.NewMCPClient(transport)
+
+	// Connect to the server
+	clientInfo := mcp.ClientInfo{
+		Name:    "mcp-gateway",
+		Version: "1.0.0",
+		Capabilities: map[string]interface{}{
+			"tools": map[string]interface{}{
+				"listChanged": true,
+			},
+		},
+	}
+
+	if err := client.Connect(ctx, transportConfig, clientInfo); err != nil {
+		return fmt.Errorf("failed to connect to MCP server: %w", err)
+	}
+
+	// Store connection in session
+	session.Connection = client
+	session.Status = "connected"
+
+	return nil
+}
+
 func (s *NamespaceService) getServerTools(ctx context.Context, session *Session, serverID string) ([]types.Tool, error) {
-	// This would normally call the transport layer to get tools from the server
-	// For now, returning empty list as transport implementation is pending
-	return []types.Tool{}, nil
+	// Check if we have cached tools
+	session.mu.RLock()
+	if len(session.Tools) > 0 && session.Connection != nil && session.Connection.IsConnected() {
+		tools := session.Tools
+		session.mu.RUnlock()
+		session.UpdateLastUsed()
+		return tools, nil
+	}
+	session.mu.RUnlock()
+
+	// Need to establish or re-establish MCP connection
+	if err := s.ensureMCPConnection(ctx, session, serverID); err != nil {
+		return nil, fmt.Errorf("failed to establish MCP connection: %w", err)
+	}
+
+	// Get tools from the MCP server
+	session.mu.RLock()
+	client := session.Connection
+	session.mu.RUnlock()
+
+	if client == nil || !client.IsConnected() {
+		return nil, fmt.Errorf("MCP connection not available")
+	}
+
+	tools, err := client.ListTools(ctx)
+	if err != nil {
+		// Connection failed, clear it and return error
+		session.mu.Lock()
+		session.Connection = nil
+		session.Status = "disconnected"
+		session.mu.Unlock()
+		return nil, fmt.Errorf("failed to list tools from MCP server: %w", err)
+	}
+
+	// Cache tools in session
+	session.mu.Lock()
+	session.Tools = tools
+	session.Status = "connected"
+	session.mu.Unlock()
+	session.UpdateLastUsed()
+
+	return tools, nil
 }
 
 func (s *NamespaceService) executeToolOnServer(ctx context.Context, session *Session, toolName string, args map[string]interface{}) (interface{}, error) {
-	// This would normally call the transport layer to execute the tool
-	// For now, returning a mock response
-	return map[string]interface{}{
-		"message": fmt.Sprintf("Executed tool %s", toolName),
-		"args":    args,
-	}, nil
+	// Ensure we have an active connection
+	session.mu.RLock()
+	client := session.Connection
+	session.mu.RUnlock()
+
+	if client == nil || !client.IsConnected() {
+		// Try to re-establish connection
+		if err := s.ensureMCPConnection(ctx, session, session.ServerID); err != nil {
+			return nil, fmt.Errorf("no active connection to server and failed to reconnect: %w", err)
+		}
+		session.mu.RLock()
+		client = session.Connection
+		session.mu.RUnlock()
+	}
+
+	if client == nil {
+		return nil, fmt.Errorf("MCP connection not available")
+	}
+
+	// Execute tool via MCP protocol
+	result, err := client.CallTool(ctx, toolName, args)
+	if err != nil {
+		// Check if it's a connection error and mark session as disconnected
+		session.mu.Lock()
+		if !client.IsConnected() {
+			session.Status = "disconnected"
+			session.Connection = nil
+		}
+		session.mu.Unlock()
+		return nil, fmt.Errorf("tool execution failed: %w", err)
+	}
+
+	session.UpdateLastUsed()
+	return result, nil
 }
 
 // SanitizeServerName sanitizes a server name for use in tool prefixing

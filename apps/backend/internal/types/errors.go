@@ -42,6 +42,7 @@ func (e *JSONRPCError) Error() string {
 	return fmt.Sprintf("JSON-RPC error %d: %s", e.Code, e.Message)
 }
 
+
 // Predefined error codes
 const (
 	// Authentication errors

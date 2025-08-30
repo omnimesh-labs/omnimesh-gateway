@@ -1,6 +1,9 @@
 package types
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 // MCPMessage represents a Model Context Protocol message
 type MCPMessage struct {
@@ -18,6 +21,14 @@ type MCPError struct {
 	Data    interface{} `json:"data,omitempty"`
 	Message string      `json:"message"`
 	Code    int         `json:"code"`
+}
+
+// Error implements the error interface for MCPError
+func (e *MCPError) Error() string {
+	if e.Data != nil {
+		return fmt.Sprintf("MCP error %d: %s (%v)", e.Code, e.Message, e.Data)
+	}
+	return fmt.Sprintf("MCP error %d: %s", e.Code, e.Message)
 }
 
 // MCPCapability represents server capabilities

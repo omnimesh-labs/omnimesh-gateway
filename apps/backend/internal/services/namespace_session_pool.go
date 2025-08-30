@@ -2,27 +2,66 @@ package services
 
 import (
 	"sync"
-	
+	"time"
+
+	"mcp-gateway/apps/backend/internal/mcp"
+	"mcp-gateway/apps/backend/internal/types"
+
 	"github.com/google/uuid"
 )
 
-// Session represents a namespace session (placeholder for now)
+// Session represents a namespace session with real MCP connection
 type Session struct {
-	ID       string
-	ServerID string
-	Status   string
+	ID          string
+	ServerID    string
+	NamespaceID string
+	Status      string
+	Connection  *mcp.MCPClient
+	LastUsed    time.Time
+	Tools       []types.Tool
+	Capabilities map[string]interface{}
+	mu          sync.RWMutex
+}
+
+// Close closes the session and cleans up resources
+func (s *Session) Close() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.Status = "closed"
+	if s.Connection != nil {
+		return s.Connection.Close()
+	}
+	return nil
+}
+
+// IsConnected returns whether the session has an active connection
+func (s *Session) IsConnected() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return s.Connection != nil && s.Connection.IsConnected()
+}
+
+// UpdateLastUsed updates the last used timestamp
+func (s *Session) UpdateLastUsed() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.LastUsed = time.Now()
 }
 
 // NamespaceSessionPool manages sessions for namespace servers
 type NamespaceSessionPool struct {
-	sessions map[string]map[string]*Session // namespace -> server -> session
-	mu       sync.RWMutex
+	sessions        map[string]map[string]*Session // namespace -> server -> session
+	transportManager *mcp.TransportManager
+	mu              sync.RWMutex
 }
 
 // NewNamespaceSessionPool creates a new namespace session pool
 func NewNamespaceSessionPool() *NamespaceSessionPool {
 	return &NamespaceSessionPool{
-		sessions: make(map[string]map[string]*Session),
+		sessions:         make(map[string]map[string]*Session),
+		transportManager: mcp.NewTransportManager(),
 	}
 }
 
@@ -54,13 +93,15 @@ func (p *NamespaceSessionPool) GetSession(namespaceID, serverID string) (*Sessio
 		p.sessions[namespaceID] = make(map[string]*Session)
 	}
 
-	// Create new session
-	// This would normally create a real transport session
-	// For now, creating a placeholder
+	// Create new session placeholder (real MCP connection will be established by namespace service)
 	session := &Session{
-		ID:       uuid.New().String(),
-		ServerID: serverID,
-		Status:   "active",
+		ID:          uuid.New().String(),
+		ServerID:    serverID,
+		NamespaceID: namespaceID,
+		Status:      "created",
+		LastUsed:    time.Now(),
+		Tools:       make([]types.Tool, 0),
+		Capabilities: make(map[string]interface{}),
 	}
 
 	p.sessions[namespaceID][serverID] = session
@@ -76,7 +117,7 @@ func (p *NamespaceSessionPool) RemoveSession(namespaceID, serverID string) {
 		if session, ok := nsMap[serverID]; ok {
 			// Close the session if needed
 			if session != nil {
-				// session.Close() // Would be called when transport is implemented
+				session.Close()
 			}
 			delete(nsMap, serverID)
 		}
@@ -97,7 +138,7 @@ func (p *NamespaceSessionPool) ClearNamespace(namespaceID string) {
 		// Close all sessions
 		for _, session := range nsMap {
 			if session != nil {
-				// session.Close() // Would be called when transport is implemented
+				session.Close()
 			}
 		}
 		delete(p.sessions, namespaceID)
