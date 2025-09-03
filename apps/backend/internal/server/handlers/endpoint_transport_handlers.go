@@ -133,7 +133,62 @@ func HandleEndpointHTTP(namespaceService NamespaceService) gin.HandlerFunc {
 		}
 		namespace := namespaceVal.(*types.Namespace)
 
-		// Parse MCP request
+		// Handle different HTTP methods
+		switch c.Request.Method {
+		case "HEAD":
+			// Handle HEAD requests for OAuth discovery
+			c.Header("Content-Type", "application/json")
+			c.Status(http.StatusOK)
+			return
+			
+		case "GET":
+			// Handle GET requests - return server capabilities
+			c.JSON(http.StatusOK, gin.H{
+				"jsonrpc": "2.0",
+				"result": gin.H{
+					"capabilities": gin.H{
+						"tools": gin.H{
+							"listChanged": true,
+						},
+						"resources": gin.H{
+							"subscribe":   true,
+							"listChanged": true,
+						},
+					},
+					"serverInfo": gin.H{
+						"name":    "MCP Gateway",
+						"version": "1.0.0",
+					},
+					"protocolVersion": "2024-11-05",
+				},
+				"id": nil,
+			})
+			return
+			
+		case "POST":
+			// Handle POST requests with JSON-RPC payload
+			break
+			
+		case "OPTIONS":
+			// Handle preflight requests
+			c.Header("Access-Control-Allow-Methods", "GET, POST, HEAD, OPTIONS")
+			c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-API-Key")
+			c.Status(http.StatusNoContent)
+			return
+			
+		default:
+			c.JSON(http.StatusMethodNotAllowed, gin.H{
+				"jsonrpc": "2.0",
+				"error": gin.H{
+					"code":    -32601,
+					"message": "Method not allowed",
+				},
+				"id": nil,
+			})
+			return
+		}
+
+		// Parse MCP request for POST requests
 		var request map[string]interface{}
 		if err := c.ShouldBindJSON(&request); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -153,26 +208,135 @@ func HandleEndpointHTTP(namespaceService NamespaceService) gin.HandlerFunc {
 
 		// Route based on method
 		switch method {
-		case "tools/list":
-			// Get tools from namespace
-			tools, err := namespaceService.AggregateTools(c.Request.Context(), namespace.ID)
-			if err != nil {
-				c.JSON(http.StatusOK, gin.H{
-					"jsonrpc": "2.0",
-					"error": map[string]interface{}{
-						"code":    -32603,
-						"message": "Internal error",
-						"data":    err.Error(),
+		case "initialize":
+			// Handle MCP initialize request
+			c.JSON(http.StatusOK, gin.H{
+				"jsonrpc": "2.0",
+				"result": gin.H{
+					"capabilities": gin.H{
+						"tools": gin.H{
+							"listChanged": true,
+						},
+						"resources": gin.H{
+							"subscribe":   true,
+							"listChanged": true,
+						},
+						"prompts": gin.H{
+							"listChanged": true,
+						},
+						"logging": gin.H{},
+						"roots": gin.H{
+							"listChanged": true,
+						},
 					},
-					"id": id,
+					"serverInfo": gin.H{
+						"name":    "MCP Gateway",
+						"version": "1.0.0",
+					},
+					"protocolVersion": "2024-11-05",
+				},
+				"id": id,
+			})
+			return
+
+		case "notifications/initialized":
+			// Handle MCP initialized notification (no response expected)
+			c.Status(http.StatusOK)
+			return
+
+		case "tools/list":
+			// Get tools from namespace (real MCP servers)
+			namespacedTools, err := namespaceService.AggregateTools(c.Request.Context(), namespace.ID)
+			if err != nil {
+				// Log error but continue - we'll try to get virtual server tools
+				fmt.Printf("Warning: failed to get namespaced tools: %v\n", err)
+			}
+
+			// Get tools from virtual servers (temporary hardcode approach for demo)
+			virtualTools := []map[string]interface{}{
+				{
+					"name": "get_figma_files",
+					"description": "Get list of Figma files in a team",
+					"inputSchema": map[string]interface{}{
+						"type": "object",
+						"properties": map[string]interface{}{
+							"team_id": map[string]interface{}{
+								"type": "string",
+								"description": "The Figma team ID",
+							},
+						},
+						"required": []string{"team_id"},
+					},
+				},
+				{
+					"name": "get_figma_file",
+					"description": "Get a specific Figma file details",
+					"inputSchema": map[string]interface{}{
+						"type": "object",
+						"properties": map[string]interface{}{
+							"file_key": map[string]interface{}{
+								"type": "string",
+								"description": "The Figma file key",
+							},
+						},
+						"required": []string{"file_key"},
+					},
+				},
+				{
+					"name": "list_repositories",
+					"description": "List repositories for an organization or user",
+					"inputSchema": map[string]interface{}{
+						"type": "object",
+						"properties": map[string]interface{}{
+							"owner": map[string]interface{}{
+								"type": "string",
+								"description": "The organization or user name",
+							},
+							"type": map[string]interface{}{
+								"type": "string",
+								"enum": []string{"all", "public", "private"},
+								"default": "public",
+								"description": "Repository visibility filter",
+							},
+						},
+						"required": []string{"owner"},
+					},
+				},
+				{
+					"name": "get_current_time",
+					"description": "Get the current time in various formats",
+					"inputSchema": map[string]interface{}{
+						"type": "object",
+						"properties": map[string]interface{}{
+							"timezone": map[string]interface{}{
+								"type": "string",
+								"default": "UTC",
+								"description": "Timezone for the time (e.g., UTC, America/New_York)",
+							},
+							"format": map[string]interface{}{
+								"type": "string",
+								"default": "iso",
+								"enum": []string{"iso", "unix", "human"},
+								"description": "Output format",
+							},
+						},
+					},
+				},
+			}
+
+			// Combine namespace tools and virtual tools
+			allTools := virtualTools
+			for _, tool := range namespacedTools {
+				allTools = append(allTools, map[string]interface{}{
+					"name": tool.PrefixedName,
+					"description": fmt.Sprintf("%s (from %s)", tool.ToolName, tool.ServerName),
 				})
-				return
 			}
 
 			c.JSON(http.StatusOK, gin.H{
 				"jsonrpc": "2.0",
 				"result": map[string]interface{}{
-					"tools": tools,
+					"tools": allTools,
 				},
 				"id": id,
 			})

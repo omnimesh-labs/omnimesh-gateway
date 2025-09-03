@@ -73,13 +73,6 @@ type LoginResponse struct {
 	ExpiresIn    int64  `json:"expires_in"`
 }
 
-// TokenResponse represents a token response
-type TokenResponse struct {
-	AccessToken string `json:"access_token"`
-	TokenType   string `json:"token_type"`
-	ExpiresIn   int64  `json:"expires_in"`
-}
-
 // RefreshTokenRequest represents a refresh token request
 type RefreshTokenRequest struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`

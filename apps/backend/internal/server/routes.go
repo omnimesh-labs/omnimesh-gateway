@@ -25,6 +25,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/jmoiron/sqlx"
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
@@ -225,6 +226,18 @@ func (s *Server) RegisterRoutes() http.Handler {
 	authService := auth.NewService(s.db.GetDB(), authConfig)
 	authHandler := handlers.NewAuthHandler(authService)
 
+	// Initialize OAuth service
+	oauthConfig := auth.DefaultOAuthConfig()
+	oauthConfig.Issuer = baseURL
+	oauthService := auth.NewOAuthService(sqlx.NewDb(s.db.GetDB(), "postgres"), s.cfg.Auth.JWTSecret, baseURL, oauthConfig)
+	oauthHandler := handlers.NewOAuthHandler(oauthService)
+
+	// OAuth 2.0 Discovery endpoints (no authentication required)
+	r.GET("/.well-known/oauth-authorization-server", oauthHandler.DiscoverAuthorizationServer)
+	r.GET("/.well-known/oauth-protected-resource", oauthHandler.DiscoverProtectedResource)
+	r.GET("/.well-known/oauth-authorization-server/*path", oauthHandler.DiscoverAuthorizationServer) // Handle path variations
+	r.GET("/.well-known/oauth-protected-resource/*path", oauthHandler.DiscoverProtectedResource)     // Handle path variations
+
 	// Initialize auth middleware
 	authMiddleware := auth.NewMiddleware(authService.GetJWTManager(), authService)
 
@@ -237,6 +250,22 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	// Virtual MCP JSON-RPC endpoint
 	r.POST("/mcp/rpc", virtualMCPHandler.HandleMCPRPC)
+
+	// OAuth 2.0 endpoints
+	oauth := r.Group("/oauth")
+	{
+		// Client registration (dynamic registration)
+		oauth.POST("/register", oauthHandler.RegisterClient)
+		oauth.POST("/token", oauthHandler.IssueToken)
+		oauth.POST("/introspect", oauthHandler.IntrospectToken)
+		oauth.POST("/revoke", oauthHandler.RevokeToken)
+		oauth.GET("/jwks", oauthHandler.GetJWKS)
+		oauth.GET("/authorize", oauthHandler.AuthorizeEndpoint)
+		oauth.POST("/authorize", oauthHandler.AuthorizeEndpoint)
+	}
+
+	// Dynamic client registration endpoint (also accessible outside /oauth path)
+	r.POST("/register", oauthHandler.RegisterClient)
 
 	// API routes
 	api := r.Group("/api")
@@ -271,14 +300,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 		{
 			// Search for MCP packages
 			mcp.GET("/search", mcpDiscoveryHandler.SearchPackages)
-
-			// List all MCP packages
 			mcp.GET("/packages", mcpDiscoveryHandler.ListPackages)
-
-			// Get specific package details
 			mcp.GET("/packages/:packageName", mcpDiscoveryHandler.GetPackageDetails)
-
-			// Public tools available to all organizations
 			mcp.GET("/tools/public", toolHandler.ListPublicTools)
 		}
 
@@ -824,7 +847,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 		endpoint := publicEndpoints.Group("/endpoints/:endpoint_name")
 		endpoint.Use(
 			middleware.EndpointLookupMiddleware(endpointService),
-			middleware.EndpointAuthMiddleware(endpointService, authService),
+			middleware.EndpointAuthMiddleware(endpointService, authService, oauthService),
 			middleware.EndpointRateLimitMiddleware(),
 			middleware.EndpointCORSMiddleware(),
 		)

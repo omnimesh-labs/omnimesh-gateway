@@ -36,7 +36,6 @@ func EndpointLookupMiddleware(endpointService EndpointService) gin.HandlerFunc {
 			return
 		}
 
-		// Store in context
 		c.Set("endpoint", config.Endpoint)
 		c.Set("namespace", config.Namespace)
 		c.Set("endpoint_config", config)
@@ -45,14 +44,19 @@ func EndpointLookupMiddleware(endpointService EndpointService) gin.HandlerFunc {
 	}
 }
 
-// EndpointAuthService interface for validating API keys
+// EndpointAuthService interface for validating API keys and OAuth tokens
 type EndpointAuthService interface {
 	ValidateAPIKey(apiKey string) (*types.APIKey, error)
 	GetUserByID(userID string) (*types.User, error)
 }
 
+// OAuthService interface for OAuth token validation
+type OAuthService interface {
+	ValidateToken(ctx context.Context, bearerToken string) (*types.OAuthToken, error)
+}
+
 // EndpointAuthMiddleware validates access to endpoint based on its auth settings
-func EndpointAuthMiddleware(endpointService EndpointService, authService EndpointAuthService) gin.HandlerFunc {
+func EndpointAuthMiddleware(endpointService EndpointService, authService EndpointAuthService, oauthService OAuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		endpointVal, exists := c.Get("endpoint")
 		if !exists {
@@ -88,7 +92,6 @@ func EndpointAuthMiddleware(endpointService EndpointService, authService Endpoin
 				if validatedKey, err := authService.ValidateAPIKey(apiKey); err == nil {
 					if u, err := authService.GetUserByID(validatedKey.UserID); err == nil && u.IsActive {
 						authenticated = true
-						// Set context for downstream handlers
 						c.Set("user_id", u.ID)
 						c.Set("organization_id", u.OrganizationID)
 						c.Set("role", u.Role)
@@ -99,16 +102,26 @@ func EndpointAuthMiddleware(endpointService EndpointService, authService Endpoin
 		}
 
 		// Try OAuth/JWT authentication if enabled and not already authenticated
-		if endpoint.EnableOAuth && !authenticated {
+		if endpoint.EnableOAuth && !authenticated && oauthService != nil {
 			authHeader := c.GetHeader("Authorization")
 			if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
-				// For now, we'll implement basic JWT validation
-				// This could be extended to support OAuth providers
-				token := strings.TrimPrefix(authHeader, "Bearer ")
-				if len(token) > 0 {
-					// TODO: Implement JWT validation here
-					// For now, we'll just accept any Bearer token for OAuth-enabled endpoints
+				// Validate OAuth token
+				oauthToken, err := oauthService.ValidateToken(c.Request.Context(), authHeader)
+				if err == nil && oauthToken != nil {
 					authenticated = true
+					// Set context for downstream handlers
+					c.Set("oauth_token", oauthToken)
+					c.Set("client_id", oauthToken.ClientID)
+					c.Set("organization_id", oauthToken.OrganizationID)
+					c.Set("token_scope", oauthToken.Scope)
+
+					// Set user context if token has user info
+					if oauthToken.UserID != nil {
+						c.Set("user_id", *oauthToken.UserID)
+						if oauthToken.UserRole != nil {
+							c.Set("role", *oauthToken.UserRole)
+						}
+					}
 				}
 			}
 		}
@@ -128,19 +141,16 @@ func EndpointAuthMiddleware(endpointService EndpointService, authService Endpoin
 
 // extractAPIKey extracts API key from various sources based on endpoint configuration
 func extractAPIKey(c *gin.Context, endpoint *types.Endpoint) string {
-	// Try X-API-Key header first
 	if apiKey := c.GetHeader("X-API-Key"); apiKey != "" {
 		return apiKey
 	}
 
-	// Try Authorization header with Bearer prefix
 	if authHeader := c.GetHeader("Authorization"); authHeader != "" {
 		if strings.HasPrefix(authHeader, "Bearer ") {
 			return strings.TrimPrefix(authHeader, "Bearer ")
 		}
 	}
 
-	// Try query parameter if enabled
 	if endpoint.UseQueryParamAuth {
 		if apiKey := c.Query("api_key"); apiKey != "" {
 			return apiKey
@@ -152,7 +162,6 @@ func extractAPIKey(c *gin.Context, endpoint *types.Endpoint) string {
 
 // EndpointRateLimitMiddleware applies rate limiting based on endpoint configuration
 func EndpointRateLimitMiddleware() gin.HandlerFunc {
-	// Create a map to store limiters per endpoint
 	limiters := make(map[string]*limiter.Limiter)
 
 	return func(c *gin.Context) {
@@ -165,7 +174,6 @@ func EndpointRateLimitMiddleware() gin.HandlerFunc {
 
 		endpoint := endpointVal.(*types.Endpoint)
 
-		// Get or create limiter for this endpoint
 		limiterKey := endpoint.ID
 		lim, exists := limiters[limiterKey]
 		if !exists {
@@ -212,18 +220,15 @@ func EndpointCORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		endpointVal, exists := c.Get("endpoint")
 		if !exists {
-			// If no endpoint in context, skip CORS handling
 			c.Next()
 			return
 		}
 
 		endpoint := endpointVal.(*types.Endpoint)
 
-		// Get allowed origins
 		origin := c.Request.Header.Get("Origin")
 		allowed := false
 
-		// Check if origin is allowed
 		for _, allowedOrigin := range endpoint.AllowedOrigins {
 			if allowedOrigin == "*" || allowedOrigin == origin {
 				allowed = true
