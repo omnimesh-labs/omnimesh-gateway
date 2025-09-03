@@ -338,14 +338,261 @@ func (s *OAuthService) handleClientCredentialsGrant(ctx context.Context, req *ty
 
 // handleAuthorizationCodeGrant handles authorization_code grant
 func (s *OAuthService) handleAuthorizationCodeGrant(ctx context.Context, req *types.TokenRequest) (*types.TokenResponse, error) {
-	// TODO: Implement authorization code grant
-	return nil, fmt.Errorf("authorization_code grant not yet implemented")
+	// Authenticate client
+	client, err := s.authenticateClient(ctx, req.ClientID, req.ClientSecret)
+	if err != nil {
+		return nil, fmt.Errorf("client authentication failed: %w", err)
+	}
+
+	// Check if client is authorized for this grant type
+	if !contains(client.GrantTypes, types.GrantTypeAuthorizationCode) {
+		return nil, fmt.Errorf("client not authorized for authorization_code grant")
+	}
+
+	// Validate required parameters
+	if req.Code == "" {
+		return nil, fmt.Errorf("code is required")
+	}
+
+	if req.RedirectURI == "" {
+		return nil, fmt.Errorf("redirect_uri is required")
+	}
+
+	// Verify authorization code
+	authCode, err := s.verifyAuthorizationCode(ctx, req.Code, req.ClientID, req.RedirectURI)
+	if err != nil {
+		return nil, fmt.Errorf("invalid authorization code: %w", err)
+	}
+
+	// Verify PKCE if code challenge was used
+	if authCode.CodeChallenge != nil {
+		if req.CodeVerifier == "" {
+			return nil, fmt.Errorf("code_verifier is required for PKCE")
+		}
+
+		if !s.verifyPKCE(*authCode.CodeChallenge, *authCode.CodeChallengeMethod, req.CodeVerifier) {
+			return nil, fmt.Errorf("invalid code verifier")
+		}
+	}
+
+	// Mark authorization code as used
+	if err := s.markAuthorizationCodeAsUsed(ctx, req.Code); err != nil {
+		return nil, fmt.Errorf("failed to mark code as used: %w", err)
+	}
+
+	// Validate scope
+	scope := authCode.Scope
+	if !types.ValidateScope(scope, types.ParseScope(client.Scope)) {
+		return nil, fmt.Errorf("invalid scope")
+	}
+
+	// Generate access token
+	expiresAt := time.Now().Add(s.config.TokenExpiry)
+	accessToken, err := s.generateAccessToken(client.ClientID, authCode.UserID, scope, expiresAt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate access token: %w", err)
+	}
+
+	// Generate refresh token if offline_access scope is present
+	var refreshToken string
+	var refreshExpiresAt *time.Time
+	if strings.Contains(scope, types.ScopeOffline) {
+		refreshExp := time.Now().Add(s.config.RefreshTokenExpiry)
+		refreshExpiresAt = &refreshExp
+		refreshToken, err = s.generateRefreshToken(client.ClientID, authCode.UserID, scope, *refreshExpiresAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate refresh token: %w", err)
+		}
+	}
+
+	// Store access token in database
+	accessTokenHash := hashToken(accessToken)
+	accessTokenRecord := &types.OAuthToken{
+		ID:        uuid.New().String(),
+		TokenHash: accessTokenHash,
+		TokenType: types.TokenTypeAccess,
+		ClientID:  client.ClientID,
+		UserID:    &authCode.UserID,
+		Scope:     scope,
+		ExpiresAt: expiresAt,
+		CreatedAt: time.Now(),
+	}
+
+	query := `
+		INSERT INTO oauth_tokens (
+			id, token_hash, token_type, client_id, user_id, scope, expires_at, created_at
+		) VALUES (
+			$1, $2, $3, $4, $5, $6, $7, $8
+		)`
+
+	_, err = s.db.ExecContext(ctx, query,
+		accessTokenRecord.ID, accessTokenRecord.TokenHash, accessTokenRecord.TokenType, accessTokenRecord.ClientID,
+		accessTokenRecord.UserID, accessTokenRecord.Scope, accessTokenRecord.ExpiresAt, accessTokenRecord.CreatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to store access token: %w", err)
+	}
+
+	// Store refresh token if generated
+	var refreshTokenRecord *types.OAuthToken
+	if refreshToken != "" {
+		refreshTokenHash := hashToken(refreshToken)
+		refreshTokenRecord = &types.OAuthToken{
+			ID:            uuid.New().String(),
+			TokenHash:     refreshTokenHash,
+			TokenType:     types.TokenTypeRefresh,
+			ClientID:      client.ClientID,
+			UserID:        &authCode.UserID,
+			Scope:         scope,
+			ExpiresAt:     *refreshExpiresAt,
+			ParentTokenID: &accessTokenRecord.ID,
+			CreatedAt:     time.Now(),
+		}
+
+		_, err = s.db.ExecContext(ctx, query,
+			refreshTokenRecord.ID, refreshTokenRecord.TokenHash, refreshTokenRecord.TokenType, refreshTokenRecord.ClientID,
+			refreshTokenRecord.UserID, refreshTokenRecord.Scope, refreshTokenRecord.ExpiresAt, refreshTokenRecord.CreatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to store refresh token: %w", err)
+		}
+	}
+
+	response := &types.TokenResponse{
+		AccessToken: accessToken,
+		TokenType:   "Bearer",
+		ExpiresIn:   int64(s.config.TokenExpiry.Seconds()),
+		Scope:       scope,
+	}
+
+	if refreshToken != "" {
+		response.RefreshToken = refreshToken
+	}
+
+	return response, nil
 }
 
 // handleRefreshTokenGrant handles refresh_token grant
 func (s *OAuthService) handleRefreshTokenGrant(ctx context.Context, req *types.TokenRequest) (*types.TokenResponse, error) {
-	// TODO: Implement refresh token grant
-	return nil, fmt.Errorf("refresh_token grant not yet implemented")
+	// Authenticate client
+	client, err := s.authenticateClient(ctx, req.ClientID, req.ClientSecret)
+	if err != nil {
+		return nil, fmt.Errorf("client authentication failed: %w", err)
+	}
+
+	// Check if client is authorized for this grant type
+	if !contains(client.GrantTypes, types.GrantTypeRefreshToken) {
+		return nil, fmt.Errorf("client not authorized for refresh_token grant")
+	}
+
+	// Validate required parameters
+	if req.RefreshToken == "" {
+		return nil, fmt.Errorf("refresh_token is required")
+	}
+
+	// Verify refresh token
+	refreshTokenRecord, err := s.verifyRefreshToken(ctx, req.RefreshToken, req.ClientID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid refresh token: %w", err)
+	}
+
+	// Validate scope (can only request same or narrower scope)
+	scope := refreshTokenRecord.Scope
+	if req.Scope != "" {
+		if !types.ValidateScope(req.Scope, types.ParseScope(refreshTokenRecord.Scope)) {
+			return nil, fmt.Errorf("invalid scope - cannot exceed original scope")
+		}
+		scope = req.Scope
+	}
+
+	// Generate new access token
+	expiresAt := time.Now().Add(s.config.TokenExpiry)
+	accessToken, err := s.generateAccessToken(client.ClientID, *refreshTokenRecord.UserID, scope, expiresAt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate access token: %w", err)
+	}
+
+	// Generate new refresh token (rotate refresh tokens for security)
+	newRefreshToken := ""
+	if strings.Contains(scope, types.ScopeOffline) {
+		refreshExpiresAt := time.Now().Add(s.config.RefreshTokenExpiry)
+		newRefreshToken, err = s.generateRefreshToken(client.ClientID, *refreshTokenRecord.UserID, scope, refreshExpiresAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate refresh token: %w", err)
+		}
+
+		// Store new refresh token
+		refreshTokenHash := hashToken(newRefreshToken)
+		newRefreshTokenRecord := &types.OAuthToken{
+			ID:            uuid.New().String(),
+			TokenHash:     refreshTokenHash,
+			TokenType:     types.TokenTypeRefresh,
+			ClientID:      client.ClientID,
+			UserID:        refreshTokenRecord.UserID,
+			Scope:         scope,
+			ExpiresAt:     refreshExpiresAt,
+			ParentTokenID: &refreshTokenRecord.ID,
+			CreatedAt:     time.Now(),
+		}
+
+		query := `
+			INSERT INTO oauth_tokens (
+				id, token_hash, token_type, client_id, user_id, scope, expires_at, parent_token_id, created_at
+			) VALUES (
+				$1, $2, $3, $4, $5, $6, $7, $8, $9
+			)`
+
+		_, err = s.db.ExecContext(ctx, query,
+			newRefreshTokenRecord.ID, newRefreshTokenRecord.TokenHash, newRefreshTokenRecord.TokenType,
+			newRefreshTokenRecord.ClientID, newRefreshTokenRecord.UserID, newRefreshTokenRecord.Scope,
+			newRefreshTokenRecord.ExpiresAt, newRefreshTokenRecord.ParentTokenID, newRefreshTokenRecord.CreatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to store new refresh token: %w", err)
+		}
+
+		// Revoke old refresh token
+		if err := s.revokeTokenByHash(ctx, refreshTokenRecord.TokenHash); err != nil {
+			return nil, fmt.Errorf("failed to revoke old refresh token: %w", err)
+		}
+	}
+
+	// Store new access token
+	accessTokenHash := hashToken(accessToken)
+	accessTokenRecord := &types.OAuthToken{
+		ID:        uuid.New().String(),
+		TokenHash: accessTokenHash,
+		TokenType: types.TokenTypeAccess,
+		ClientID:  client.ClientID,
+		UserID:    refreshTokenRecord.UserID,
+		Scope:     scope,
+		ExpiresAt: expiresAt,
+		CreatedAt: time.Now(),
+	}
+
+	query := `
+		INSERT INTO oauth_tokens (
+			id, token_hash, token_type, client_id, user_id, scope, expires_at, created_at
+		) VALUES (
+			$1, $2, $3, $4, $5, $6, $7, $8
+		)`
+
+	_, err = s.db.ExecContext(ctx, query,
+		accessTokenRecord.ID, accessTokenRecord.TokenHash, accessTokenRecord.TokenType, accessTokenRecord.ClientID,
+		accessTokenRecord.UserID, accessTokenRecord.Scope, accessTokenRecord.ExpiresAt, accessTokenRecord.CreatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to store access token: %w", err)
+	}
+
+	response := &types.TokenResponse{
+		AccessToken: accessToken,
+		TokenType:   "Bearer",
+		ExpiresIn:   int64(s.config.TokenExpiry.Seconds()),
+		Scope:       scope,
+	}
+
+	if newRefreshToken != "" {
+		response.RefreshToken = newRefreshToken
+	}
+
+	return response, nil
 }
 
 // IntrospectToken introspects an OAuth token
@@ -354,7 +601,7 @@ func (s *OAuthService) IntrospectToken(ctx context.Context, token string) (*type
 
 	var tokenRecord types.OAuthToken
 	query := `
-		SELECT t.id, t.token_hash, t.token_type, t.client_id, t.user_id, t.scope, 
+		SELECT t.id, t.token_hash, t.token_type, t.client_id, t.user_id, t.scope,
 			   t.expires_at, t.revoked_at, t.parent_token_id, t.created_at,
 			   c.client_name, c.organization_id, u.email as user_email, u.role as user_role
 		FROM oauth_tokens t
@@ -410,8 +657,8 @@ func (s *OAuthService) RevokeToken(ctx context.Context, token string, clientID s
 
 	// Revoke the token
 	query := `
-		UPDATE oauth_tokens 
-		SET revoked_at = NOW() 
+		UPDATE oauth_tokens
+		SET revoked_at = NOW()
 		WHERE token_hash = $1 AND client_id = $2 AND revoked_at IS NULL`
 
 	result, err := s.db.ExecContext(ctx, query, tokenHash, clientID)
@@ -441,7 +688,7 @@ func (s *OAuthService) ValidateToken(ctx context.Context, bearerToken string) (*
 
 	var tokenRecord types.OAuthToken
 	query := `
-		SELECT t.id, t.token_hash, t.token_type, t.client_id, t.user_id, t.scope, 
+		SELECT t.id, t.token_hash, t.token_type, t.client_id, t.user_id, t.scope,
 			   t.expires_at, t.revoked_at, t.parent_token_id, t.created_at,
 			   c.client_name, c.organization_id, u.email as user_email, u.role as user_role
 		FROM oauth_tokens t
@@ -473,7 +720,7 @@ func (s *OAuthService) GetClient(ctx context.Context, clientID string) (*types.O
 			   logo_uri, client_uri, policy_uri, tos_uri, jwks_uri,
 			   token_endpoint_auth_method, organization_id, is_active,
 			   created_at, updated_at
-		FROM oauth_clients 
+		FROM oauth_clients
 		WHERE client_id = $1 AND is_active = true`
 
 	err := s.db.QueryRowContext(ctx, query, clientID).Scan(
@@ -596,4 +843,278 @@ func contains(slice []string, item string) bool {
 		}
 	}
 	return false
+}
+
+// Authorization Code and PKCE Helper Methods
+
+// CreateAuthorizationCode creates a new authorization code
+func (s *OAuthService) CreateAuthorizationCode(ctx context.Context, clientID, userID, redirectURI, scope string, codeChallenge, codeChallengeMethod *string) (string, error) {
+	// Generate authorization code
+	code := generateAuthorizationCode()
+	codeHash := hashToken(code)
+
+	// Set expiry
+	expiresAt := time.Now().Add(s.config.AuthCodeExpiry)
+
+	// Create record
+	authCode := &types.OAuthAuthorizationCode{
+		ID:                  uuid.New().String(),
+		CodeHash:            codeHash,
+		ClientID:            clientID,
+		UserID:              userID,
+		RedirectURI:         redirectURI,
+		Scope:               scope,
+		CodeChallenge:       codeChallenge,
+		CodeChallengeMethod: codeChallengeMethod,
+		ExpiresAt:           expiresAt,
+		CreatedAt:           time.Now(),
+	}
+
+	query := `
+		INSERT INTO oauth_authorization_codes (
+			id, code_hash, client_id, user_id, redirect_uri, scope,
+			code_challenge, code_challenge_method, expires_at, created_at
+		) VALUES (
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+		)`
+
+	_, err := s.db.ExecContext(ctx, query,
+		authCode.ID, authCode.CodeHash, authCode.ClientID, authCode.UserID, authCode.RedirectURI,
+		authCode.Scope, authCode.CodeChallenge, authCode.CodeChallengeMethod,
+		authCode.ExpiresAt, authCode.CreatedAt)
+	if err != nil {
+		return "", fmt.Errorf("failed to store authorization code: %w", err)
+	}
+
+	return code, nil
+}
+
+// verifyAuthorizationCode verifies and retrieves an authorization code
+func (s *OAuthService) verifyAuthorizationCode(ctx context.Context, code, clientID, redirectURI string) (*types.OAuthAuthorizationCode, error) {
+	codeHash := hashToken(code)
+
+	var authCode types.OAuthAuthorizationCode
+	query := `
+		SELECT id, code_hash, client_id, user_id, redirect_uri, scope,
+			   code_challenge, code_challenge_method, expires_at, used_at, created_at
+		FROM oauth_authorization_codes
+		WHERE code_hash = $1 AND client_id = $2 AND redirect_uri = $3 AND used_at IS NULL`
+
+	err := s.db.QueryRowContext(ctx, query, codeHash, clientID, redirectURI).Scan(
+		&authCode.ID, &authCode.CodeHash, &authCode.ClientID, &authCode.UserID,
+		&authCode.RedirectURI, &authCode.Scope, &authCode.CodeChallenge,
+		&authCode.CodeChallengeMethod, &authCode.ExpiresAt, &authCode.UsedAt, &authCode.CreatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("authorization code not found or already used")
+		}
+		return nil, fmt.Errorf("failed to query authorization code: %w", err)
+	}
+
+	// Check if code is expired
+	if authCode.IsExpired() {
+		return nil, fmt.Errorf("authorization code expired")
+	}
+
+	return &authCode, nil
+}
+
+// markAuthorizationCodeAsUsed marks an authorization code as used
+func (s *OAuthService) markAuthorizationCodeAsUsed(ctx context.Context, code string) error {
+	codeHash := hashToken(code)
+
+	query := `
+		UPDATE oauth_authorization_codes
+		SET used_at = NOW()
+		WHERE code_hash = $1 AND used_at IS NULL`
+
+	result, err := s.db.ExecContext(ctx, query, codeHash)
+	if err != nil {
+		return fmt.Errorf("failed to mark code as used: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("authorization code not found or already used")
+	}
+
+	return nil
+}
+
+// verifyPKCE verifies a PKCE code challenge
+func (s *OAuthService) verifyPKCE(codeChallenge, codeChallengeMethod, codeVerifier string) bool {
+	switch codeChallengeMethod {
+	case types.CodeChallengeMethodPlain:
+		return codeChallenge == codeVerifier
+	case types.CodeChallengeMethodS256:
+		hash := sha256.Sum256([]byte(codeVerifier))
+		encoded := base64.URLEncoding.WithPadding(base64.NoPadding).EncodeToString(hash[:])
+		return codeChallenge == encoded
+	default:
+		return false
+	}
+}
+
+// generateRefreshToken creates a JWT refresh token
+func (s *OAuthService) generateRefreshToken(clientID, userID, scope string, expiresAt time.Time) (string, error) {
+	claims := jwt.MapClaims{
+		"iss":       s.issuer,
+		"aud":       s.issuer,
+		"sub":       userID,
+		"client_id": clientID,
+		"scope":     scope,
+		"iat":       time.Now().Unix(),
+		"exp":       expiresAt.Unix(),
+		"token_use": "refresh",
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(s.jwtSecret))
+}
+
+// verifyRefreshToken verifies and retrieves a refresh token
+func (s *OAuthService) verifyRefreshToken(ctx context.Context, refreshToken, clientID string) (*types.OAuthToken, error) {
+	refreshTokenHash := hashToken(refreshToken)
+
+	var tokenRecord types.OAuthToken
+	query := `
+		SELECT t.id, t.token_hash, t.token_type, t.client_id, t.user_id, t.scope,
+			   t.expires_at, t.revoked_at, t.parent_token_id, t.created_at
+		FROM oauth_tokens t
+		WHERE t.token_hash = $1 AND t.client_id = $2 AND t.token_type = $3
+		  AND t.revoked_at IS NULL AND t.expires_at > NOW()`
+
+	err := s.db.QueryRowContext(ctx, query, refreshTokenHash, clientID, types.TokenTypeRefresh).Scan(
+		&tokenRecord.ID, &tokenRecord.TokenHash, &tokenRecord.TokenType, &tokenRecord.ClientID,
+		&tokenRecord.UserID, &tokenRecord.Scope, &tokenRecord.ExpiresAt, &tokenRecord.RevokedAt,
+		&tokenRecord.ParentTokenID, &tokenRecord.CreatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("invalid or expired refresh token")
+		}
+		return nil, fmt.Errorf("failed to validate refresh token: %w", err)
+	}
+
+	return &tokenRecord, nil
+}
+
+// revokeTokenByHash revokes a token by its hash
+func (s *OAuthService) revokeTokenByHash(ctx context.Context, tokenHash string) error {
+	query := `
+		UPDATE oauth_tokens
+		SET revoked_at = NOW()
+		WHERE token_hash = $1 AND revoked_at IS NULL`
+
+	_, err := s.db.ExecContext(ctx, query, tokenHash)
+	return err
+}
+
+// generateAuthorizationCode generates a secure authorization code
+func generateAuthorizationCode() string {
+	return "ac_" + generateRandomString(32)
+}
+
+// GetDB returns the database connection for use by handlers
+func (s *OAuthService) GetDB() *sqlx.DB {
+	return s.db
+}
+
+// CheckUserConsent checks if user has already consented to the requested scope
+func (s *OAuthService) CheckUserConsent(ctx context.Context, userID, clientID, scope string) (bool, error) {
+	var consentExists bool
+	query := `
+		SELECT EXISTS(
+			SELECT 1 FROM oauth_user_consents
+			WHERE user_id = $1 AND client_id = $2 AND scope = $3
+			AND (expires_at IS NULL OR expires_at > NOW())
+			AND revoked_at IS NULL
+		)`
+
+	err := s.db.QueryRowContext(ctx, query, userID, clientID, scope).Scan(&consentExists)
+	if err != nil {
+		return false, fmt.Errorf("failed to check user consent: %w", err)
+	}
+
+	return consentExists, nil
+}
+
+// CreateUserConsent creates a user consent record
+func (s *OAuthService) CreateUserConsent(ctx context.Context, userID, clientID, scope string) error {
+	consent := &types.OAuthUserConsent{
+		ID:        uuid.New().String(),
+		UserID:    userID,
+		ClientID:  clientID,
+		Scope:     scope,
+		GrantedAt: time.Now(),
+	}
+
+	query := `
+		INSERT INTO oauth_user_consents (id, user_id, client_id, scope, granted_at)
+		VALUES ($1, $2, $3, $4, $5)
+		ON CONFLICT (user_id, client_id, scope) DO UPDATE SET
+		granted_at = EXCLUDED.granted_at,
+		revoked_at = NULL`
+
+	_, err := s.db.ExecContext(ctx, query, consent.ID, consent.UserID, consent.ClientID, consent.Scope, consent.GrantedAt)
+	if err != nil {
+		return fmt.Errorf("failed to create user consent: %w", err)
+	}
+
+	return nil
+}
+
+// JWKS represents a JSON Web Key Set
+type JWKS struct {
+	Keys []JWK `json:"keys"`
+}
+
+// JWK represents a JSON Web Key
+type JWK struct {
+	KeyType   string `json:"kty"`
+	KeyID     string `json:"kid,omitempty"`
+	Use       string `json:"use,omitempty"`
+	Algorithm string `json:"alg,omitempty"`
+	N         string `json:"n,omitempty"`         // RSA modulus
+	E         string `json:"e,omitempty"`         // RSA exponent
+	K         string `json:"k,omitempty"`         // Symmetric key value
+	X         string `json:"x,omitempty"`         // EC x coordinate
+	Y         string `json:"y,omitempty"`         // EC y coordinate
+	Curve     string `json:"crv,omitempty"`       // EC curve
+	D         string `json:"d,omitempty"`         // EC private value
+}
+
+// GetJWKS returns the JSON Web Key Set for token verification
+func (s *OAuthService) GetJWKS() (*JWKS, error) {
+	// For HMAC signing (HS256), we don't expose the key in JWKS
+	// This is a simplified implementation. In production, you'd want RSA keys
+
+	// Generate a key ID based on the JWT secret (for caching/rotation purposes)
+	keyID := generateKeyID(s.jwtSecret)
+
+	// For demonstration purposes, return a symmetric key representation
+	// NOTE: In production, you should use RSA or EC keys for better security
+	jwks := &JWKS{
+		Keys: []JWK{
+			{
+				KeyType:   "oct",     // Octet string for symmetric keys
+				KeyID:     keyID,
+				Use:       "sig",     // For signing
+				Algorithm: "HS256",   // HMAC with SHA-256
+				// Note: We don't include the actual key value (K) for security
+				// Clients should use the token introspection endpoint instead
+			},
+		},
+	}
+
+	return jwks, nil
+}
+
+// generateKeyID generates a stable key ID from the JWT secret
+func generateKeyID(secret string) string {
+	hash := sha256.Sum256([]byte(secret))
+	return hex.EncodeToString(hash[:])[:16] // Use first 16 chars as key ID
 }

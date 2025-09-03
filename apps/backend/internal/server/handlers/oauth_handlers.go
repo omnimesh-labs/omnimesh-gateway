@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/base64"
 	"mcp-gateway/apps/backend/internal/auth"
 	"mcp-gateway/apps/backend/internal/types"
@@ -261,20 +262,154 @@ func (h *OAuthHandler) RevokeToken(c *gin.Context) {
 
 // GetJWKS handles GET /oauth/jwks (JSON Web Key Set)
 func (h *OAuthHandler) GetJWKS(c *gin.Context) {
-	// TODO: Implement JWKS endpoint for JWT signature verification
-	// For now, return empty key set
-	c.JSON(http.StatusOK, gin.H{
-		"keys": []gin.H{},
-	})
+	// Get the JWKS from the OAuth service
+	jwks, err := h.oauthService.GetJWKS()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, types.OAuthError{
+			Error:            types.ErrorServerError,
+			ErrorDescription: "Failed to retrieve JWKS",
+		})
+		return
+	}
+
+	// Set appropriate headers for JWKS
+	c.Header("Content-Type", "application/jwk-set+json")
+	c.Header("Cache-Control", "public, max-age=3600") // Cache for 1 hour
+	c.JSON(http.StatusOK, jwks)
 }
 
 // AuthorizeEndpoint handles GET/POST /oauth/authorize
 func (h *OAuthHandler) AuthorizeEndpoint(c *gin.Context) {
-	// TODO: Implement authorization endpoint for authorization code flow
-	c.JSON(http.StatusNotImplemented, types.OAuthError{
-		Error:            types.ErrorServerError,
-		ErrorDescription: "Authorization endpoint not yet implemented",
-	})
+	var req types.AuthorizationRequest
+
+	// Parse authorization request (supports both GET and POST)
+	if c.Request.Method == "GET" {
+		if err := c.ShouldBindQuery(&req); err != nil {
+			c.JSON(http.StatusBadRequest, types.OAuthError{
+				Error:            types.ErrorInvalidRequest,
+				ErrorDescription: "Invalid authorization request parameters",
+			})
+			return
+		}
+	} else {
+		if err := c.ShouldBind(&req); err != nil {
+			c.JSON(http.StatusBadRequest, types.OAuthError{
+				Error:            types.ErrorInvalidRequest,
+				ErrorDescription: "Invalid authorization request format",
+			})
+			return
+		}
+	}
+
+	// Validate required parameters
+	if req.ResponseType == "" {
+		h.redirectWithError(c, req.RedirectURI, req.State, types.ErrorInvalidRequest, "response_type is required")
+		return
+	}
+
+	if req.ClientID == "" {
+		c.JSON(http.StatusBadRequest, types.OAuthError{
+			Error:            types.ErrorInvalidRequest,
+			ErrorDescription: "client_id is required",
+		})
+		return
+	}
+
+	// Verify client exists and is active
+	client, err := h.oauthService.GetClient(c.Request.Context(), req.ClientID)
+	if err != nil {
+		h.redirectWithError(c, req.RedirectURI, req.State, types.ErrorInvalidClient, "Invalid client")
+		return
+	}
+
+	// Validate redirect URI
+	if req.RedirectURI == "" {
+		// Use first registered redirect URI if not provided
+		if len(client.RedirectURIs) == 0 {
+			c.JSON(http.StatusBadRequest, types.OAuthError{
+				Error:            types.ErrorInvalidRequest,
+				ErrorDescription: "redirect_uri is required",
+			})
+			return
+		}
+		req.RedirectURI = client.RedirectURIs[0]
+	} else {
+		// Verify redirect URI is registered
+		if !h.isValidRedirectURI(req.RedirectURI, client.RedirectURIs) {
+			c.JSON(http.StatusBadRequest, types.OAuthError{
+				Error:            types.ErrorInvalidRequest,
+				ErrorDescription: "Invalid redirect_uri",
+			})
+			return
+		}
+	}
+
+	// Validate response type
+	if !contains(client.ResponseTypes, req.ResponseType) {
+		h.redirectWithError(c, req.RedirectURI, req.State, types.ErrorUnsupportedResponseType, "Unsupported response type")
+		return
+	}
+
+	// Currently only support "code" response type
+	if req.ResponseType != types.ResponseTypeCode {
+		h.redirectWithError(c, req.RedirectURI, req.State, types.ErrorUnsupportedResponseType, "Only 'code' response type is supported")
+		return
+	}
+
+	// Validate scope
+	scope := req.Scope
+	if scope == "" {
+		scope = client.Scope
+	}
+	if !types.ValidateScope(scope, types.ParseScope(client.Scope)) {
+		h.redirectWithError(c, req.RedirectURI, req.State, types.ErrorInvalidScope, "Invalid scope")
+		return
+	}
+
+	// Validate PKCE if present
+	if req.CodeChallenge != "" {
+		if req.CodeChallengeMethod == "" {
+			req.CodeChallengeMethod = types.CodeChallengeMethodPlain
+		}
+		if req.CodeChallengeMethod != types.CodeChallengeMethodPlain && req.CodeChallengeMethod != types.CodeChallengeMethodS256 {
+			h.redirectWithError(c, req.RedirectURI, req.State, types.ErrorInvalidRequest, "Invalid code_challenge_method")
+			return
+		}
+	}
+
+	// Check if user is authenticated
+	userID, authenticated := h.getUserFromSession(c)
+	if !authenticated {
+		// Redirect to login with return URL
+		loginURL := h.buildLoginURL(c.Request.URL.String())
+		c.Redirect(http.StatusFound, loginURL)
+		return
+	}
+
+	// Check if user has already consented
+	if h.needsUserConsent(c.Request.Context(), userID, req.ClientID, scope) {
+		// Render consent page
+		h.renderConsentPage(c, &req, client, scope)
+		return
+	}
+
+	// User has consented, generate authorization code
+	var codeChallenge, codeChallengeMethod *string
+	if req.CodeChallenge != "" {
+		codeChallenge = &req.CodeChallenge
+		codeChallengeMethod = &req.CodeChallengeMethod
+	}
+
+	code, err := h.oauthService.CreateAuthorizationCode(
+		c.Request.Context(), req.ClientID, userID, req.RedirectURI, scope, codeChallenge, codeChallengeMethod)
+	if err != nil {
+		h.redirectWithError(c, req.RedirectURI, req.State, types.ErrorServerError, "Failed to generate authorization code")
+		return
+	}
+
+	// Redirect back to client with authorization code
+	redirectURL := h.buildAuthorizationResponse(req.RedirectURI, code, req.State)
+	c.Redirect(http.StatusFound, redirectURL)
 }
 
 // Helper functions
@@ -332,4 +467,141 @@ func parseBasicAuth(auth string) (username, password string, ok bool) {
 	}
 
 	return username, password, true
+}
+
+// Authorization endpoint helper functions
+
+// redirectWithError redirects to client with OAuth error
+func (h *OAuthHandler) redirectWithError(c *gin.Context, redirectURI, state, errorCode, errorDescription string) {
+	if redirectURI == "" {
+		// Can't redirect, return JSON error
+		c.JSON(http.StatusBadRequest, types.OAuthError{
+			Error:            errorCode,
+			ErrorDescription: errorDescription,
+		})
+		return
+	}
+
+	// Build error redirect URL
+	redirectURL := h.buildErrorResponse(redirectURI, errorCode, errorDescription, state)
+	c.Redirect(http.StatusFound, redirectURL)
+}
+
+// isValidRedirectURI checks if redirect URI is registered for the client
+func (h *OAuthHandler) isValidRedirectURI(redirectURI string, registeredURIs []string) bool {
+	for _, uri := range registeredURIs {
+		if uri == redirectURI {
+			return true
+		}
+	}
+	return false
+}
+
+// getUserFromSession gets user ID from session (simplified - you'd implement proper session handling)
+func (h *OAuthHandler) getUserFromSession(c *gin.Context) (string, bool) {
+	// TODO: Implement proper session management
+	// For now, check if user is authenticated via existing auth middleware
+	if userID, exists := c.Get("user_id"); exists {
+		if userIDStr, ok := userID.(string); ok {
+			return userIDStr, true
+		}
+	}
+
+	// For development/testing, you might want to allow a test user
+	// Remove this in production
+	if testUser := c.Query("test_user_id"); testUser != "" {
+		return testUser, true
+	}
+
+	return "", false
+}
+
+// buildLoginURL constructs login URL with return parameter
+func (h *OAuthHandler) buildLoginURL(returnURL string) string {
+	// TODO: Implement proper login URL construction
+	// This depends on your authentication system
+	return "/auth/login?return_to=" + strings.ReplaceAll(returnURL, "&", "%26")
+}
+
+// needsUserConsent checks if user consent is required
+func (h *OAuthHandler) needsUserConsent(ctx context.Context, userID, clientID, scope string) bool {
+	// Check if consent already exists using the service method
+	consentExists, err := h.oauthService.CheckUserConsent(ctx, userID, clientID, scope)
+	if err != nil {
+		// If error, require consent for safety
+		return true
+	}
+
+	return !consentExists
+}
+
+// renderConsentPage renders the OAuth consent page
+func (h *OAuthHandler) renderConsentPage(c *gin.Context, req *types.AuthorizationRequest, client *types.OAuthClient, scope string) {
+	// TODO: Implement proper consent page rendering
+	// For now, return a simple JSON response that would be replaced with an HTML page
+
+	scopes := strings.Split(scope, " ")
+	c.JSON(http.StatusOK, gin.H{
+		"consent_required": true,
+		"client_name":      client.ClientName,
+		"client_id":        client.ClientID,
+		"scopes":          scopes,
+		"redirect_uri":     req.RedirectURI,
+		"state":           req.State,
+		"code_challenge":   req.CodeChallenge,
+		"code_challenge_method": req.CodeChallengeMethod,
+		"message": "This is a placeholder for the consent page. In a real implementation, this would render an HTML form where the user can approve or deny the authorization request.",
+	})
+
+	// In a real implementation, you would render an HTML template like:
+	// c.HTML(http.StatusOK, "oauth_consent.html", gin.H{
+	//     "client": client,
+	//     "scopes": scopes,
+	//     "request": req,
+	// })
+}
+
+// buildAuthorizationResponse builds the authorization response redirect URL
+func (h *OAuthHandler) buildAuthorizationResponse(redirectURI, code, state string) string {
+	u := redirectURI
+	separator := "?"
+	if strings.Contains(redirectURI, "?") {
+		separator = "&"
+	}
+
+	u += separator + "code=" + code
+	if state != "" {
+		u += "&state=" + state
+	}
+
+	return u
+}
+
+// buildErrorResponse builds the error response redirect URL
+func (h *OAuthHandler) buildErrorResponse(redirectURI, errorCode, errorDescription, state string) string {
+	u := redirectURI
+	separator := "?"
+	if strings.Contains(redirectURI, "?") {
+		separator = "&"
+	}
+
+	u += separator + "error=" + errorCode
+	if errorDescription != "" {
+		u += "&error_description=" + strings.ReplaceAll(errorDescription, " ", "+")
+	}
+	if state != "" {
+		u += "&state=" + state
+	}
+
+	return u
+}
+
+// contains checks if a slice contains a string (helper function)
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
 }
