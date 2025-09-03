@@ -120,6 +120,10 @@ func RunMigrations(db *sql.DB) error {
 // CleanDatabase removes all data from tables but keeps the schema
 func CleanDatabase(t *testing.T, db *sql.DB) {
 	tables := []string{
+		"oauth_user_consents",
+		"oauth_authorization_codes",
+		"oauth_tokens",
+		"oauth_clients",
 		"namespace_tool_mappings",
 		"namespace_server_mappings",
 		"namespaces",

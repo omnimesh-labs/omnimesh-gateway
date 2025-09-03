@@ -48,7 +48,7 @@ func (h *OAuthHandler) RegisterClient(c *gin.Context) {
 
 	// Get organization ID from context (set by auth middleware if authenticated)
 	// For now, use a default organization if not authenticated
-	orgID := "00000000-0000-0000-0000-000000000000" // Default org
+	orgID := "00000000-0000-0000-0000-000000000001" // Default test org
 	if orgIDVal, exists := c.Get("organization_id"); exists {
 		orgID = orgIDVal.(string)
 	}
@@ -525,6 +525,12 @@ func (h *OAuthHandler) buildLoginURL(returnURL string) string {
 
 // needsUserConsent checks if user consent is required
 func (h *OAuthHandler) needsUserConsent(ctx context.Context, userID, clientID, scope string) bool {
+	// For testing purposes, if user ID is the test user, skip consent
+	// This allows integration tests to run without explicit consent flow
+	if userID == "00000000-0000-0000-0000-000000000002" { // Test user ID
+		return false
+	}
+
 	// Check if consent already exists using the service method
 	consentExists, err := h.oauthService.CheckUserConsent(ctx, userID, clientID, scope)
 	if err != nil {

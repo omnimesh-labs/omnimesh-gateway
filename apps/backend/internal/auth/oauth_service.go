@@ -512,9 +512,11 @@ func (s *OAuthService) handleRefreshTokenGrant(ctx context.Context, req *types.T
 
 	// Generate new refresh token (rotate refresh tokens for security)
 	newRefreshToken := ""
-	if strings.Contains(scope, types.ScopeOffline) {
+	// Always generate a new refresh token if the original token had offline access
+	if strings.Contains(refreshTokenRecord.Scope, types.ScopeOffline) {
 		refreshExpiresAt := time.Now().Add(s.config.RefreshTokenExpiry)
-		newRefreshToken, err = s.generateRefreshToken(client.ClientID, *refreshTokenRecord.UserID, scope, refreshExpiresAt)
+		// Keep the original scope for the refresh token to preserve offline_access
+		newRefreshToken, err = s.generateRefreshToken(client.ClientID, *refreshTokenRecord.UserID, refreshTokenRecord.Scope, refreshExpiresAt)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate refresh token: %w", err)
 		}
@@ -527,7 +529,7 @@ func (s *OAuthService) handleRefreshTokenGrant(ctx context.Context, req *types.T
 			TokenType:     types.TokenTypeRefresh,
 			ClientID:      client.ClientID,
 			UserID:        refreshTokenRecord.UserID,
-			Scope:         scope,
+			Scope:         refreshTokenRecord.Scope, // Keep original scope for refresh token
 			ExpiresAt:     refreshExpiresAt,
 			ParentTokenID: &refreshTokenRecord.ID,
 			CreatedAt:     time.Now(),
@@ -774,14 +776,16 @@ func (s *OAuthService) authenticateClient(ctx context.Context, clientID, clientS
 
 // generateAccessToken creates a JWT access token
 func (s *OAuthService) generateAccessToken(clientID, userID, scope string, expiresAt time.Time) (string, error) {
+	now := time.Now()
 	claims := jwt.MapClaims{
 		"iss":       s.issuer,
 		"aud":       s.issuer,
 		"sub":       clientID,
 		"client_id": clientID,
 		"scope":     scope,
-		"iat":       time.Now().Unix(),
+		"iat":       now.Unix(),
 		"exp":       expiresAt.Unix(),
+		"jti":       uuid.New().String(), // Unique JWT ID to prevent duplicates
 		"token_use": "access",
 	}
 
@@ -961,14 +965,16 @@ func (s *OAuthService) verifyPKCE(codeChallenge, codeChallengeMethod, codeVerifi
 
 // generateRefreshToken creates a JWT refresh token
 func (s *OAuthService) generateRefreshToken(clientID, userID, scope string, expiresAt time.Time) (string, error) {
+	now := time.Now()
 	claims := jwt.MapClaims{
 		"iss":       s.issuer,
 		"aud":       s.issuer,
 		"sub":       userID,
 		"client_id": clientID,
 		"scope":     scope,
-		"iat":       time.Now().Unix(),
+		"iat":       now.Unix(),
 		"exp":       expiresAt.Unix(),
+		"jti":       uuid.New().String(), // Unique JWT ID to prevent duplicates
 		"token_use": "refresh",
 	}
 
