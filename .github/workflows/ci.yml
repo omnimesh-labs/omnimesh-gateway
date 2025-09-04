@@ -67,9 +67,10 @@ jobs:
       - name: Test Backend
         env:
           CONFIG_PATH: configs/development.yaml
+          DOCKER_ENV: 1
         run: |
           cd apps/backend
-          go test ./... -count=1 -v
+          go test ./... -count=1 -v -timeout=10m
 
       # Install frontend dependencies and run tests
       - name: Install frontend dependencies
