@@ -30,7 +30,7 @@ jobs:
       DB_SCHEMA: public
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Set up Go
       - uses: actions/setup-go@v5
@@ -85,7 +85,7 @@ jobs:
             goarch: arm64
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - name: Set up Go
       uses: actions/setup-go@v5
