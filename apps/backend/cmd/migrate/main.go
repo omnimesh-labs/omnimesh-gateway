@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -97,10 +98,18 @@ func main() {
 }
 
 func runMigrations(db *sql.DB, command string) {
-	// Get migrations path
-	migrationsPath := "apps/backend/migrations"
+	// Get migrations path - handle both root and apps/backend working directories
+	var migrationsPath string
+	pwd, _ := os.Getwd()
+
+	// Check if we're in the backend directory or root
+	if filepath.Base(pwd) == "backend" || strings.HasSuffix(pwd, "apps/backend") {
+		migrationsPath = "migrations"
+	} else {
+		migrationsPath = "apps/backend/migrations"
+	}
+
 	if !filepath.IsAbs(migrationsPath) {
-		pwd, _ := os.Getwd()
 		migrationsPath = filepath.Join(pwd, migrationsPath)
 	}
 

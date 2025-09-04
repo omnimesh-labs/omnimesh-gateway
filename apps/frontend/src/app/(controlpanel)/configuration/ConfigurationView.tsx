@@ -134,7 +134,7 @@ function ConfigurationView() {
 								color="textSecondary"
 								className="mt-1"
 							>
-								Export and import your Janex configuration
+								Export and import your MCP Gateway configuration
 							</Typography>
 						</div>
 					</div>
@@ -172,7 +172,7 @@ function ConfigurationView() {
 					{tabValue === 0 && (
 						<Stack spacing={3}>
 							<Alert severity="info">
-								Export your Janex configuration including servers, namespaces, and content.
+								Export your MCP Gateway configuration including servers, namespaces, and content.
 							</Alert>
 
 							<Card>

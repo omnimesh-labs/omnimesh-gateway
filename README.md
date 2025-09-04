@@ -1,10 +1,10 @@
 # MCP Gateway
 
-[![CI](https://github.com/janex-ai/janex-gateway/workflows/CI/badge.svg)](https://github.com/janex-ai/janex-gateway/actions)
+[![CI](https://github.com/theognis1002/mcp-gateway/workflows/CI/badge.svg)](https://github.com/theognis1002/mcp-gateway/actions)
 [![Go Version](https://img.shields.io/badge/Go-1.25+-blue.svg)](https://golang.org)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Go Report Card](https://goreportcard.com/badge/github.com/janex-ai/janex-gateway)](https://goreportcard.com/report/github.com/janex-ai/janex-gateway)
-[![codecov](https://codecov.io/gh/janex-ai/janex-gateway/branch/main/graph/badge.svg)](https://codecov.io/gh/janex-ai/janex-gateway)
+[![Go Report Card](https://goreportcard.com/badge/github.com/theognis1002/mcp-gateway)](https://goreportcard.com/report/github.com/theognis1002/mcp-gateway)
+[![codecov](https://codecov.io/gh/theognis1002/mcp-gateway/branch/main/graph/badge.svg)](https://codecov.io/gh/theognis1002/mcp-gateway)
 [![Security](https://img.shields.io/badge/Security-Enabled-green.svg)](SECURITY.md)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
@@ -17,7 +17,7 @@ Get the entire MCP Gateway stack running with a single command:
 
 ```bash
 # Clone the repository
-git clone https://github.com/janex-ai/janex-gateway.git
+git clone https://github.com/theognis1002/mcp-gateway.git
 cd mcp-gateway
 
 docker compose up --build  # or use `make start` cmd
@@ -136,11 +136,6 @@ bun install
 bun run dev
 ```
 
-This approach provides:
-- ⚡ **Fast compilation** (1-3s vs 30s+)
-- 🔄 **Better hot reload** performance  
-- 🛠️ **Native debugging** tools
-
 ### Essential Commands
 ```bash
 # Development
@@ -195,15 +190,15 @@ Security is a top priority. Please review our [Security Policy](SECURITY.md) and
 ## 🙏 Acknowledgments
 
 - [Model Context Protocol](https://modelcontextprotocol.io/) for the core specification
-- All our [contributors](https://github.com/janex-ai/janex-gateway/contributors)
+- All our [contributors](https://github.com/theognis1002/mcp-gateway/contributors)
 
 ---
 
 <div align="center">
   <p>Built with ❤️ for the MCP community</p>
   <p>
-    <a href="https://github.com/janex-ai/janex-gateway">⭐ Star us on GitHub</a> •
-    <a href="https://github.com/janex-ai/janex-gateway/issues">🐛 Report Bug</a> •
-    <a href="https://github.com/janex-ai/janex-gateway/issues">💡 Request Feature</a>
+    <a href="https://github.com/theognis1002/mcp-gateway">⭐ Star us on GitHub</a> •
+    <a href="https://github.com/theognis1002/mcp-gateway/issues">🐛 Report Bug</a> •
+    <a href="https://github.com/theognis1002/mcp-gateway/issues">💡 Request Feature</a>
   </p>
 </div>

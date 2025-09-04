@@ -20,9 +20,9 @@ export const metadata: Metadata = {
 	robots: 'follow, index',
 	icons: { icon: '/favicon.ico' },
 	manifest: '/manifest.json',
-	metadataBase: new URL('https://janex.ai'),
+	metadataBase: new URL('https://github.com/theognis1002/mcp-gateway'),
 	openGraph: {
-		url: 'https://janex.ai',
+		url: 'https://github.com/theognis1002/mcp-gateway',
 		title: 'MCP Gateway - Dashboard',
 		description: 'MCP Gateway - Production-ready API gateway for Model Context Protocol servers',
 		images: ['/card.png'],

@@ -40,10 +40,14 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      # Set up Node.js for frontend tests
+      # Set up Node.js and Bun for frontend tests
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
 
       # Wait until healthy (extra guard)
       - name: Wait for Postgres
@@ -71,23 +75,22 @@ jobs:
       - name: Install frontend dependencies
         run: |
           cd apps/frontend
-          npm ci
+          bun install
 
       - name: Test Frontend
         run: |
           cd apps/frontend
-          npm test
+          bun test
 
   build:
     runs-on: ubuntu-latest
     needs: [test]
     strategy:
       matrix:
-        goos: [linux, windows, darwin]
+        goos: [linux, darwin]
         goarch: [amd64, arm64]
         exclude:
-          - goos: windows
-            goarch: arm64
+          - goarch: arm64
 
     steps:
     - uses: actions/checkout@v4
