@@ -12,10 +12,10 @@ type ProjectOption = {
 
 const projectOptions: ProjectOption[] = [
 	{
-		value: 'Janex',
+		value: 'MCP Gateway',
 		logo: '/assets/images/logo/mcp-gateway.svg',
 		darkLogo: '/assets/images/logo/mcp-gateway-dark.svg',
-		name: 'Janex',
+		name: 'MCP Gateway',
 		url: typeof window !== 'undefined' ? window.location.origin : ''
 	}
 ];

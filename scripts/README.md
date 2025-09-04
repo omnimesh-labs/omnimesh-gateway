@@ -1,6 +1,6 @@
-# Janex Gateway Scripts
+# MCP Gateway Scripts
 
-This directory contains Python scripts and tools for testing and working with the Janex Gateway.
+This directory contains Python scripts and tools for testing and working with the MCP Gateway.
 
 ## Setup
 
@@ -18,14 +18,14 @@ This directory contains Python scripts and tools for testing and working with th
 ## Scripts
 
 ### `transport_smoke_test.py`
-Quick smoke test for all Janex Gateway transport protocols (JSON-RPC, WebSocket, SSE, MCP, STDIO).
+Quick smoke test for all MCP Gateway transport protocols (JSON-RPC, WebSocket, SSE, MCP, STDIO).
 
 ```bash
 python transport_smoke_test.py
 ```
 
 ### `test_mcp_agent.py`
-Comprehensive Janex Gateway and server testing tool with multiple modes:
+Comprehensive MCP Gateway and server testing tool with multiple modes:
 
 ```bash
 # Transport-only testing

@@ -10,31 +10,31 @@ import type { Metadata, Viewport } from 'next';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-	title: 'Janex - Dashboard',
-	description: 'Janex - Production-ready API gateway for Model Context Protocol servers',
+	title: 'MCP Gateway - Dashboard',
+	description: 'MCP Gateway - Production-ready API gateway for Model Context Protocol servers',
 	referrer: 'origin-when-cross-origin',
-	keywords: ['MCP', 'Model Context Protocol', 'API Gateway', 'Janex'],
-	authors: [{ name: 'Janex Team' }],
-	creator: 'Janex Team',
-	publisher: 'Janex Team',
+	keywords: ['MCP', 'Model Context Protocol', 'API Gateway', 'MCP Gateway'],
+	authors: [{ name: 'MCP Gateway Team' }],
+	creator: 'MCP Gateway Team',
+	publisher: 'MCP Gateway Team',
 	robots: 'follow, index',
 	icons: { icon: '/favicon.ico' },
 	manifest: '/manifest.json',
 	metadataBase: new URL('https://janex.ai'),
 	openGraph: {
 		url: 'https://janex.ai',
-		title: 'Janex - Dashboard',
-		description: 'Janex - Production-ready API gateway for Model Context Protocol servers',
+		title: 'MCP Gateway - Dashboard',
+		description: 'MCP Gateway - Production-ready API gateway for Model Context Protocol servers',
 		images: ['/card.png'],
 		type: 'website',
-		siteName: 'Janex - Dashboard'
+		siteName: 'MCP Gateway - Dashboard'
 	},
 	twitter: {
 		card: 'summary_large_image',
-		site: '@Janex',
-		creator: '@Janex',
-		title: 'Janex - Dashboard',
-		description: 'Janex - Production-ready API gateway for Model Context Protocol servers',
+		site: '@MCPGateway',
+		creator: '@MCPGateway',
+		title: 'MCP Gateway - Dashboard',
+		description: 'MCP Gateway - Production-ready API gateway for Model Context Protocol servers',
 		images: ['/card.png']
 	},
 	other: {

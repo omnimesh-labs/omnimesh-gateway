@@ -1,8 +1,8 @@
-# Frontend Testing Guide - Janex Gateway
+# Frontend Testing Guide - MCP Gateway
 
 ## Overview
 
-This guide provides comprehensive instructions for AI coding agents on working with the Janex Gateway frontend test suite. The project uses Jest with jsdom environment and follows a structured testing approach.
+This guide provides comprehensive instructions for AI coding agents on working with the MCP Gateway frontend test suite. The project uses Jest with jsdom environment and follows a structured testing approach.
 
 ## Testing Architecture
 

@@ -1,7 +1,7 @@
-# Janex MCP Gateway Architecture
+# MCP Gateway Architecture
 
 ## Overview
-Janex's MCP (Model Context Protocol) Gateway provides organization-level policies, authentication, logging, and rate limiting for MCP server access.
+The MCP (Model Context Protocol) Gateway provides organization-level policies, authentication, logging, and rate limiting for MCP server access.
 
 ## Core Features
 1. **Authentication & Authorization** - JWT-based auth with RBAC and flexible policies

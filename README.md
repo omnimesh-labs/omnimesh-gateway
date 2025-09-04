@@ -1,4 +1,4 @@
-# Janex Gateway
+# MCP Gateway
 
 [![CI](https://github.com/janex-ai/janex-gateway/workflows/CI/badge.svg)](https://github.com/janex-ai/janex-gateway/actions)
 [![Go Version](https://img.shields.io/badge/Go-1.25+-blue.svg)](https://golang.org)
@@ -13,7 +13,7 @@ A production-ready API gateway for Model Context Protocol (MCP) servers, providi
 
 ## 🚀 Quick Start
 
-Get the entire Janex Gateway stack running with a single command:
+Get the entire MCP Gateway stack running with a single command:
 
 ```bash
 # Clone the repository
@@ -30,7 +30,7 @@ docker compose up --build  # or use `make start` cmd
 
 ## Architecture
 
-The Janex Gateway is designed with a modular architecture for scalability and maintainability:
+The MCP Gateway is designed with a modular architecture for scalability and maintainability:
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -41,7 +41,7 @@ The Janex Gateway is designed with a modular architecture for scalability and ma
           └──────────────────────┼──────────────────────┘
                                  │
                    ┌─────────────▼─────────────┐
-                   │      Janex Gateway        │
+                   │       MCP Gateway         │
                    │                           │
                    │  ┌─────────────────────┐  │
                    │  │   Security Layer    │  │

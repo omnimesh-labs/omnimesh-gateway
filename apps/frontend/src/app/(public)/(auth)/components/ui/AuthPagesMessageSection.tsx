@@ -74,7 +74,7 @@ function AuthPagesMessageSection() {
 
 			<div className="relative z-10 w-full max-w-4xl">
 				<div className="text-7xl font-bold leading-none text-gray-100">
-					<div>Janex Gateway</div>
+					<div>MCP Gateway</div>
 					<div>Admin Dashboard</div>
 				</div>
 				<div className="mt-6 text-lg leading-6 tracking-tight text-gray-400">

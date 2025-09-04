@@ -171,7 +171,7 @@ function DashboardView() {
 						color="textSecondary"
 						className="mt-1"
 					>
-						Welcome back{user ? `, ${user.email}` : ''}! Here's your Janex overview.
+						Welcome back{user ? `, ${user.email}` : ''}! Here's your MCP Gateway overview.
 					</Typography>
 				</div>
 			}

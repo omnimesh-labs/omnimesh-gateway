@@ -1,6 +1,6 @@
 {
-	"short_name": "Janex",
-	"name": "Janex Gateway",
+	"short_name": "MCP Gateway",
+	"name": "MCP Gateway",
 	"icons": [
 		{
 			"src": "favicon.ico",

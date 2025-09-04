@@ -30,7 +30,7 @@ function FooterLayout1(props: FooterLayout1Props) {
 						<span className="muted-foreground·text-sm"></span>
 					</div>
 					<div className="flex items-center space-x-4">
-						<span className="muted-foreground·text-sm">© 2025 Janex. All rights reserved.</span>
+						<span className="muted-foreground·text-sm">© 2025 MCP Gateway. All rights reserved.</span>
 					</div>
 				</Toolbar>
 			</AppBar>
