@@ -13,7 +13,7 @@ The **Janex Gateway** is a production-ready API gateway for Model Context Protoc
 - **Developer Tools**: MCP Inspector for real-time debugging and testing
 
 ### Key Features
-- 🔐 **Authentication & Authorization** - JWT-based auth with API keys and RBAC
+- 🔐 **Authentication & Authorization** - JWT-based auth with API keys, RBAC, and OAuth2
 - 📊 **Comprehensive Logging** - Request/response logging, audit trails, performance metrics
 - ⚡ **Rate Limiting** - IP-based rate limiting with sliding window algorithms
 - 🛡️ **Smart Rate Limiting** - Redis-backed with memory fallback and proxy detection
@@ -23,6 +23,10 @@ The **Janex Gateway** is a production-ready API gateway for Model Context Protoc
 - 🚀 **High Performance** - Built with Go and Gin for maximum throughput and low latency
 - 🏢 **Namespace Management** - Group and organize MCP servers into logical namespaces
 - 🔍 **MCP Inspector** - Real-time debugging and testing interface
+- 🤝 **Agent-to-Agent (A2A)** - Agent-to-agent authentication and communication
+- 🔧 **Plugin System** - Extensible middleware with content filters and AI integrations
+- 📡 **Endpoint Management** - Dynamic REST endpoint creation with OpenAPI generation
+- 🛠️ **Content Filtering** - PII detection, regex filtering, and resource protection
 
 ## Architecture
 
@@ -53,14 +57,35 @@ mcp-gateway/
 │   │   │   │   ├── jwt.go    # JWT token management
 │   │   │   │   ├── middleware.go # Auth middleware
 │   │   │   │   ├── policies.go # Policy engine
+│   │   │   │   ├── rbac.go   # Role-based access control
+│   │   │   │   ├── cache.go  # JWT blacklist cache
+│   │   │   │   ├── cleanup.go # Token cleanup service
 │   │   │   │   └── service.go # Auth service
+│   │   │   ├── a2a/          # Agent-to-Agent Auth
+│   │   │   │   ├── service.go # A2A service
+│   │   │   │   ├── client.go # A2A client
+│   │   │   │   └── adapter.go # A2A adapters
 │   │   │   ├── config/       # Configuration management
 │   │   │   │   ├── config.go # Config structs and loading
 │   │   │   │   ├── policy.go # Policy configuration
 │   │   │   │   └── validation.go # Config validation
 │   │   │   ├── database/     # Database layer
 │   │   │   │   ├── database.go # Database connection
-│   │   │   │   └── models/   # Database models
+│   │   │   │   ├── models/   # Database models
+│   │   │   │   │   ├── base.go # Base model
+│   │   │   │   │   ├── user.go # User model
+│   │   │   │   │   ├── organization.go # Organization model
+│   │   │   │   │   ├── namespace.go # Namespace model
+│   │   │   │   │   ├── server.go # MCP server model
+│   │   │   │   │   ├── session.go # Session model
+│   │   │   │   │   ├── virtual_server.go # Virtual server model
+│   │   │   │   │   ├── a2a.go   # Agent-to-Agent models
+│   │   │   │   │   ├── config.go # Configuration models
+│   │   │   │   │   ├── content_filter.go # Content filter models
+│   │   │   │   │   ├── logging.go # Logging models
+│   │   │   │   │   └── ratelimit.go # Rate limiting models
+│   │   │   │   └── repositories/ # Database repositories
+│   │   │   │       └── namespace_repo.go # Namespace repository
 │   │   │   ├── discovery/    # MCP Server Discovery
 │   │   │   │   ├── health.go # Health checking
 │   │   │   │   ├── registry.go # Server registry
@@ -81,16 +106,50 @@ mcp-gateway/
 │   │   │   │   ├── path_rewrite.go # Path rewriting
 │   │   │   │   ├── security.go # Security headers middleware
 │   │   │   │   ├── iratelimit.go # IP-based rate limiting with Redis/Memory backends
+│   │   │   ├── plugins/      # Plugin System
+│   │   │   │   ├── manager.go # Plugin manager
+│   │   │   │   ├── registry.go # Plugin registry
+│   │   │   │   ├── interfaces.go # Plugin interfaces
+│   │   │   │   ├── service.go # Plugin service
+│   │   │   │   ├── middleware.go # Plugin middleware
+│   │   │   │   ├── content_filters/ # Content filtering plugins
+│   │   │   │   │   ├── pii/    # PII detection
+│   │   │   │   │   ├── regex/  # Regex filtering
+│   │   │   │   │   ├── deny/   # Deny lists
+│   │   │   │   │   └── resource/ # Resource protection
+│   │   │   │   ├── ai_middleware/ # AI integration plugins
+│   │   │   │   │   ├── openai_mod/ # OpenAI moderation
+│   │   │   │   │   └── llamaguard/ # Llama Guard
+│   │   │   │   └── shared/   # Shared plugin utilities
+│   │   │   ├── inspector/    # MCP Inspector
+│   │   │   │   ├── service.go # Inspector service
+│   │   │   │   └── types.go  # Inspector types
+│   │   │   ├── services/     # Business Services
+│   │   │   │   ├── namespace_service.go # Namespace management
+│   │   │   │   ├── namespace_session_pool.go # Session pooling
+│   │   │   │   ├── endpoint_service.go # Endpoint management
+│   │   │   │   └── openapi_generator.go # OpenAPI generation
 │   │   │   ├── server/       # HTTP Server
 │   │   │   │   ├── handlers/ # HTTP handlers
 │   │   │   │   │   ├── auth.go # Auth endpoints
+│   │   │   │   │   ├── oauth_handlers.go # OAuth2 endpoints
 │   │   │   │   │   ├── gateway.go # Gateway endpoints
 │   │   │   │   │   ├── health.go # Health check endpoints
 │   │   │   │   │   ├── admin.go # Admin endpoints
 │   │   │   │   │   ├── mcp_discovery.go # MCP discovery endpoints
+│   │   │   │   │   ├── namespace_handlers.go # Namespace management
+│   │   │   │   │   ├── inspector_handlers.go # MCP Inspector endpoints
+│   │   │   │   │   ├── endpoint_*.go # Endpoint management
+│   │   │   │   │   ├── filters.go # Content filter endpoints
+│   │   │   │   │   ├── resource.go # Resource endpoints
+│   │   │   │   │   ├── tool.go # Tool endpoints
+│   │   │   │   │   ├── prompt.go # Prompt endpoints
+│   │   │   │   │   ├── a2a.go # Agent-to-Agent endpoints
+│   │   │   │   │   ├── policy.go # Policy endpoints
 │   │   │   │   │   ├── transport_*.go # Transport handlers
 │   │   │   │   │   ├── virtual_admin.go # Virtual server admin
-│   │   │   │   │   └── virtual_mcp.go # Virtual server MCP
+│   │   │   │   │   ├── virtual_mcp.go # Virtual server MCP
+│   │   │   │   │   └── common.go # Common handler utilities
 │   │   │   │   ├── routes.go # Route definitions
 │   │   │   │   └── server.go # Server setup
 │   │   │   ├── transport/    # Transport Layer
@@ -104,8 +163,11 @@ mcp-gateway/
 │   │   │   │   └── stdio.go  # STDIO transport bridge
 │   │   │   ├── types/        # Shared types and interfaces
 │   │   │   │   ├── auth.go   # Auth-related types
+│   │   │   │   ├── a2a.go    # Agent-to-Agent types
 │   │   │   │   ├── config.go # Configuration types
+│   │   │   │   ├── configuration.go # Runtime config types
 │   │   │   │   ├── discovery.go # Discovery types
+│   │   │   │   ├── endpoint.go # Endpoint types
 │   │   │   │   ├── errors.go # Custom error types
 │   │   │   │   ├── gateway.go # Gateway types
 │   │   │   │   ├── mcp.go    # MCP protocol types
@@ -322,13 +384,20 @@ CREATE TABLE virtual_servers (
 
 ## API Endpoints
 
-### Authentication
+### Authentication & OAuth2
 - `POST /auth/login` - Username/password login
 - `POST /auth/refresh` - Token refresh
 - `POST /auth/logout` - User logout
 - `POST /auth/api-keys` - Create API keys
 - `GET /auth/profile` - Get user profile
 - `PUT /auth/profile` - Update user profile
+
+#### OAuth2 Endpoints
+- `GET /auth/oauth/authorize` - OAuth2 authorization endpoint
+- `POST /auth/oauth/token` - OAuth2 token exchange
+- `GET /auth/oauth/userinfo` - OAuth2 user information
+- `POST /auth/oauth/revoke` - Token revocation
+- `GET /auth/oauth/jwks` - JSON Web Key Set
 
 ### Gateway Management
 - `GET /gateway/servers` - List available MCP servers
@@ -386,11 +455,48 @@ CREATE TABLE virtual_servers (
 - `DELETE /api/admin/virtual-servers/{id}` - Delete virtual server
 - `POST /mcp/rpc` - Virtual MCP JSON-RPC interface
 
+### Content Filtering & Policies
+- `GET /api/admin/filters` - List content filters
+- `POST /api/admin/filters` - Create content filter
+- `PUT /api/admin/filters/{id}` - Update content filter
+- `DELETE /api/admin/filters/{id}` - Delete content filter
+- `POST /api/admin/filters/{id}/test` - Test content filter
+
+### Agent-to-Agent (A2A)
+- `POST /api/a2a/register` - Register A2A client
+- `GET /api/a2a/clients` - List A2A clients
+- `PUT /api/a2a/clients/{id}` - Update A2A client
+- `DELETE /api/a2a/clients/{id}` - Delete A2A client
+- `POST /api/a2a/token` - Get A2A access token
+
+### MCP Inspector
+- `GET /api/inspector/sessions` - List active sessions
+- `GET /api/inspector/sessions/{id}` - Get session details
+- `POST /api/inspector/sessions/{id}/message` - Send message to session
+- `GET /api/inspector/sessions/{id}/logs` - Get session logs
+
+### Endpoint Management
+- `GET /api/admin/endpoints` - List custom endpoints
+- `POST /api/admin/endpoints` - Create custom endpoint
+- `PUT /api/admin/endpoints/{id}` - Update custom endpoint
+- `DELETE /api/admin/endpoints/{id}` - Delete custom endpoint
+- `GET /api/admin/endpoints/{id}/openapi` - Get OpenAPI specification
+
+### Resources, Tools & Prompts
+- `GET /api/resources` - List resources
+- `POST /api/resources` - Create resource
+- `GET /api/tools` - List tools
+- `POST /api/tools` - Create tool
+- `GET /api/prompts` - List prompts
+- `POST /api/prompts` - Create prompt
+
 ### Admin & Monitoring
 - `GET /health` - Health check
 - `GET /metrics` - Prometheus metrics
 - `GET /admin/logs` - Audit logs
 - `GET /admin/stats` - Usage statistics
+- `GET /admin/policies` - List policies
+- `POST /admin/policies` - Create policy
 
 ## Service Virtualization
 
@@ -461,63 +567,139 @@ make setup-reset            # Reset database (WARNING: deletes all data)
 - **Development Config**: `apps/backend/configs/development.yaml`
 - **Production Config**: `apps/backend/configs/production.yaml`
 
-### Testing
-- **Unit Tests**: Individual functions and methods
-- **Integration Tests**: Service interactions with database
-- **Transport Tests**: All transport layer implementations
-- **End-to-End Tests**: Complete request flows
+### Testing Strategy
+
+Our testing approach ensures high code quality and reliability across all components:
+
+#### Test Architecture
+- **Testcontainers**: Real PostgreSQL and Redis instances for integration tests
+- **Docker Environment**: Isolated test environment with `DOCKER_ENV=1`
+- **Coverage Reporting**: HTML coverage reports with `make test-coverage`
+- **Parallel Execution**: Tests run concurrently for faster feedback
+
+#### Test Categories
+
+##### 1. Unit Tests (`apps/backend/tests/unit/`)
+- **Authentication**: JWT validation, token blacklist, RBAC
+- **Services**: Namespace management, endpoint services, OAuth
+- **Filters**: Content filtering plugins (PII, regex, deny, resource)
+- **Repositories**: Database layer operations
+- **Utilities**: A2A client/service, helpers
+
+##### 2. Integration Tests (`apps/backend/tests/integration/`)
+- **Authentication Flow**: Complete login/logout/refresh cycles
+- **Namespace Management**: CRUD operations with database
+- **OAuth End-to-End**: Authorization code flow testing
+- **Endpoint Management**: Dynamic endpoint creation/deletion
+- **Multi-Transport**: All transport protocols working together
+
+##### 3. Transport Tests (`apps/backend/tests/transport/`)
+- **JSON-RPC** (`rpc/`): Request/response validation, batch operations
+- **WebSocket** (`websocket/`): Connection lifecycle, message handling
+- **Server-Sent Events** (`sse/`): Event streaming, client management
+- **MCP Protocol** (`mcp/`): Streamable HTTP, capabilities exchange
+- **STDIO Bridge** (`stdio/`): Process management, I/O handling
+
+##### 4. Component Tests (within modules)
+- **Middleware Tests**: Security headers, rate limiting, CORS
+- **Handler Tests**: HTTP endpoint behavior, error handling
+- **Service Tests**: Business logic validation
+- **Repository Tests**: Database operations and constraints
+
+#### Test Data Management
+- **Fixtures**: Consistent test data across test suites
+- **Cleanup**: Automatic cleanup after each test
+- **Isolation**: Tests don't interfere with each other
+- **Seeding**: Proper database seeding for integration tests
+
+#### Mock Strategy
+- **External Services**: HTTP clients, third-party APIs
+- **Database**: Optional mocking for pure unit tests
+- **Transport**: Mock transport layers for service testing
+- **Authentication**: Mock JWT validation for handler tests
 
 ## Implementation Status
 
-### ✅ Complete
-- Architecture and scaffolding
-- Database schema with migrations
-- Configuration system
-- Type definitions
-- Middleware chain
-- Transport layer interfaces
-- Virtual server framework
-- Testing infrastructure
-- IP-based rate limiting with Redis sliding window and memory fallback
+### ✅ Complete Features
 
-### 🔄 Implementation Needed
-Following the **IMPLEMENTATION_GUIDE.md**, the main areas needing business logic:
+#### Core Infrastructure
+- ✅ Architecture and scaffolding
+- ✅ Database schema with comprehensive migrations
+- ✅ Configuration system with validation
+- ✅ Type definitions and interfaces
+- ✅ Middleware chain with composable patterns
+- ✅ Transport layer implementations (JSON-RPC, WebSocket, SSE, MCP, STDIO)
+- ✅ Virtual server framework
+- ✅ Comprehensive testing infrastructure
 
-#### Phase 1: Core Foundation
-1. Database connection & migration tool implementation
-2. Configuration loading completion
-3. Basic HTTP server setup
+#### Authentication & Authorization
+- ✅ JWT token management with blacklist cache
+- ✅ Role-based access control (RBAC)
+- ✅ OAuth2 authorization code flow
+- ✅ API key management (user and A2A keys)
+- ✅ Agent-to-Agent (A2A) authentication system
 
-#### Phase 2: Authentication & Authorization
-1. JWT implementation (token generation/validation)
-2. User management (CRUD operations, password hashing)
-3. API key management
-4. Policy engine completion
+#### Advanced Features
+- ✅ IP-based rate limiting with Redis sliding window and memory fallback
+- ✅ Namespace management with session pooling
+- ✅ Plugin system with content filtering
+- ✅ MCP Inspector for real-time debugging
+- ✅ Dynamic endpoint management with OpenAPI generation
+- ✅ Content filtering plugins (PII, regex, deny lists, resource protection)
+- ✅ AI middleware integration (OpenAI moderation, Llama Guard)
 
-#### Phase 3: Logging & Monitoring
-1. Request logging with database persistence
-2. Audit trail implementation
-3. Performance metrics tracking
+#### Testing & Quality
+- ✅ Extensive unit test coverage
+- ✅ Integration tests with testcontainers
+- ✅ Transport-specific test suites
+- ✅ End-to-end authentication flows
+- ✅ Error handling and edge case testing
 
-#### Phase 4: Rate Limiting ✅ IP Rate Limiting Complete
-1. ✅ IP-based rate limiting with Redis sliding window and memory fallback (using ulule/limiter)
-2. TODO: User/organization-level rate limiting (requires auth implementation)
-3. TODO: Per-endpoint rate limiting policies
-4. TODO: Rate limiting management API
+### 🔄 Areas for Enhancement
 
-#### Phase 5: MCP Server Discovery
-1. Server registration and management
-2. Health monitoring implementation
+While the core system is fully functional, these areas can be expanded:
 
-#### Phase 6: API Endpoints
-1. Authentication endpoints completion
-2. Gateway management endpoints
-3. Admin interface implementation
+#### Performance & Scalability
+- **Metrics Collection**: Enhanced Prometheus metrics and custom dashboards
+- **Caching Layer**: Redis-based response caching for frequently accessed data
+- **Connection Pooling**: Advanced database connection management
+- **Load Balancing**: Multi-instance deployment support
+
+#### Advanced Features
+- **GraphQL Support**: Virtual server adapters for GraphQL endpoints
+- **gRPC Bridge**: Protocol translation for gRPC services
+- **WebHook Management**: Outbound webhook system for event notifications
+- **Batch Operations**: Bulk operations for administrative tasks
+
+#### Monitoring & Observability
+- **Distributed Tracing**: OpenTelemetry integration
+- **Advanced Logging**: Structured logging with correlation IDs
+- **Health Dashboards**: Real-time system health visualization
+- **Alert Management**: Automated alerting for system issues
+
+#### Developer Experience
+- **SDK Generation**: Auto-generated client SDKs
+- **API Documentation**: Enhanced interactive API documentation
+- **Development Tools**: CLI tools for gateway management
+- **Testing Utilities**: Enhanced testing helpers and fixtures
 
 ### Key Dependencies
+
+#### Backend (Go)
+- **Framework**: Gin HTTP framework
 - **Database**: PostgreSQL with extensions (uuid-ossp, pgcrypto, citext)
-- **Go Modules**: Gin, JWT, PostgreSQL drivers, Redis client, ulule/limiter (rate limiting), testcontainers
-- **Frontend**: Next.js 14, React 18, TypeScript
+- **Cache**: Redis for rate limiting and session management
+- **Authentication**: JWT-go, OAuth2, bcrypt for password hashing
+- **Rate Limiting**: ulule/limiter with Redis and memory backends
+- **Testing**: Testcontainers, testify, Go testing framework
+- **Transport**: Gorilla WebSocket, Server-Sent Events
+- **Configuration**: Viper, YAML configuration management
+
+#### Frontend (Next.js)
+- **Framework**: Next.js 14 with App Router
+- **Language**: TypeScript for type safety
+- **UI**: React 18, modern component patterns
+- **Package Manager**: Bun (preferred over npm)
 
 ### Security Considerations
 - JWT token validation and rotation
