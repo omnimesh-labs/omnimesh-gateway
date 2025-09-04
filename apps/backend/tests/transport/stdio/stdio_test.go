@@ -370,7 +370,12 @@ func TestSTDIOLongRunningProcess(t *testing.T) {
 
 		resp, err := client.Post("/stdio/execute", commandData)
 		helpers.AssertNil(t, err, "HTTP request should not fail")
-		helpers.AssertStatusCode(t, http.StatusOK, resp, "HTTP status should be 200")
+		if resp != nil {
+			helpers.AssertStatusCode(t, http.StatusOK, resp, "HTTP status should be 200")
+		} else {
+			t.Fatal("Response is nil - request likely failed or timed out")
+			return
+		}
 		helpers.AssertMapKeyExists(t, resp.Body, "success", "Response should contain success field")
 		helpers.AssertMapKeyExists(t, resp.Body, "output", "Response should contain output field")
 	})
