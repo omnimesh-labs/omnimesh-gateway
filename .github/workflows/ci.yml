@@ -1,6 +1,9 @@
 name: CI
 on: [push, pull_request]
 
+env:
+  GO_VERSION: '1.23'
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -35,7 +38,7 @@ jobs:
       # Set up Go
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: ${{ env.GO_VERSION }}
 
       # Set up Node.js for frontend tests
       - uses: actions/setup-node@v4
@@ -54,10 +57,12 @@ jobs:
       - name: Run migrations
         run: |
           cd apps/backend
-          go run cmd/migrate/main.go up
+          CONFIG_PATH=configs/development.yaml go run cmd/migrate/main.go up
 
       # Run backend tests
       - name: Test Backend
+        env:
+          CONFIG_PATH: configs/development.yaml
         run: |
           cd apps/backend
           go test ./... -count=1 -v
