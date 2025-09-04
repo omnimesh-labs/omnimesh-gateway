@@ -16,7 +16,7 @@ Before starting, make sure you have:
 
 1. **Clone and Start the Gateway**
    ```bash
-   git clone https://github.com/janex-ai/janex-gateway.git
+   git clone https://github.com/theognis1002/mcp-gateway.git
    cd mcp-gateway
    make start
    ```
