@@ -12,7 +12,7 @@ help:
 	@echo "MCP Gateway - Available Commands"
 	@echo ""
 	@echo "Quick Start:"
-	@echo "  make setup        - Production build (frontend built, no hot reload)"
+	@echo "  make setup        - Complete production setup (DB + frontend + backend + admin)"
 	@echo "  make dev          - Start services (backend with hot reload via air)"
 	@echo "  make watch        - Same as dev (hot reload for backend development)"
 	@echo "  make stop         - Stop all services (clean)"
@@ -49,7 +49,7 @@ help:
 	@echo "  make watch        - Local development with hot reload"
 	@echo ""
 	@echo "Setup:"
-	@echo "  make setup        - Complete setup (DB + admin + orgs + namespaces)"
+	@echo "  make setup        - Complete production setup (DB + frontend + backend + admin)"
 	@echo "  make start        - Production-ready local setup with services"
 	@echo ""
 	@echo "Memory/Disk Management:"
@@ -137,10 +137,25 @@ migrate-status:
 	@echo "Checking migration status..."
 	@$(DOCKER_COMPOSE) run --rm --entrypoint /app/migrate backend status
 
-# Complete setup - runs Go setup script for all necessary objects
+# Complete setup - runs production stack with full setup
 setup:
-	@echo "Running complete setup (database + admin user + organizations + namespaces)..."
-	@$(DOCKER_COMPOSE) run --rm --entrypoint="" backend sh -c "cd /app && /scripts/wait-for-it.sh \$${DB_HOST}:\$${DB_PORT} -t 60 && /app/migrate up && go run apps/backend/cmd/setup/main.go all"
+	@echo "Setting up MCP Gateway Stack (production build with frontend)..."
+	@if [ ! -f .env ]; then \
+		echo "Creating .env file from .env.example..."; \
+		cp .env.example .env; \
+		echo ".env file created"; \
+	fi
+	@echo "Building and starting services..."
+	@$(DOCKER_COMPOSE_PROD) up --build -d
+	@echo "Waiting for services to be ready..."
+	@sleep 10
+	@echo "Running database migrations and setup..."
+	@$(DOCKER_COMPOSE_PROD) exec backend sh -c "cd /app && /app/migrate up && go run apps/backend/cmd/setup/main.go all"
+	@echo ""
+	@echo "Setup complete! 🚀"
+	@echo "Backend: http://localhost:8080"
+	@echo "Frontend: http://localhost:3000"
+	@echo "Admin user: admin@admin.com / qwerty123"
 
 # Development helpers
 shell:
