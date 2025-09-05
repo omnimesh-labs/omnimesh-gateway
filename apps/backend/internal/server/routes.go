@@ -133,7 +133,14 @@ func (s *Server) RegisterRoutes() http.Handler {
 	baseURL := s.cfg.Server.GetBaseURL()
 	endpointService := services.NewEndpointService(s.db.GetDB(), baseURL)
 
-	// Initialize discovery service
+	// Initialize transport manager first
+	transportConfig := s.cfg.Transport.ToTransportConfig()
+	transportManager := transport.NewManager(transportConfig)
+	if err := transportManager.Initialize(context.TODO()); err != nil {
+		// Log error but continue - transport layer is optional
+	}
+
+	// Initialize discovery service with transport manager
 	discoveryConfig := &discovery.Config{
 		Enabled:          true,
 		HealthInterval:   30 * time.Second,
@@ -141,14 +148,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 		RecoveryTimeout:  5 * time.Minute,
 		SingleTenant:     true,
 	}
-	discoveryService := discovery.NewService(s.db.GetDB(), discoveryConfig)
-
-	// Initialize transport manager
-	transportConfig := s.cfg.Transport.ToTransportConfig()
-	transportManager := transport.NewManager(transportConfig)
-	if err := transportManager.Initialize(context.TODO()); err != nil {
-		// Log error but continue - transport layer is optional
-	}
+	discoveryService := discovery.NewService(s.db.GetDB(), discoveryConfig, transportManager)
 
 	// Initialize virtual server service
 	virtualService := virtual.NewService(s.db.GetDB())
@@ -188,13 +188,14 @@ func (s *Server) RegisterRoutes() http.Handler {
 	// Initialize filters handler
 	filtersHandler := handlers.NewFiltersHandler(s.db.GetDB(), pluginService)
 
-	// Initialize resource, prompt, and tool models and handlers
+	// Initialize resource, prompt, tool, and server models and handlers
 	resourceModel := models.NewMCPResourceModel(s.db.GetDB())
 	promptModel := models.NewMCPPromptModel(s.db.GetDB())
 	toolModel := models.NewMCPToolModel(s.db.GetDB())
+	serverModel := models.NewMCPServerModel(s.db.GetDB())
 	resourceHandler := handlers.NewResourceHandler(resourceModel)
 	promptHandler := handlers.NewPromptHandler(promptModel)
-	toolHandler := handlers.NewToolHandler(toolModel)
+	toolHandler := handlers.NewToolHandler(toolModel, serverModel)
 
 	// Initialize authentication service
 	authConfig := &auth.Config{
@@ -334,6 +335,10 @@ func (s *Server) RegisterRoutes() http.Handler {
 			gateway.GET("/servers/:id/stats",
 				authMiddleware.RequireResourceAccess("server", "read"),
 				gatewayHandler.GetServerStats)
+			gateway.POST("/servers/:id/discover-tools",
+				authMiddleware.RequireResourceAccess("server", "write"),
+				loggingMiddleware.AuditLogger("discover_tools", "server"),
+				gatewayHandler.DiscoverServerTools)
 
 			// MCP session management - requires session permissions
 			gateway.POST("/sessions",

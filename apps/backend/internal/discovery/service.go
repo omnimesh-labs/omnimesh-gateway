@@ -1,6 +1,7 @@
 package discovery
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -9,6 +10,8 @@ import (
 	"time"
 
 	"mcp-gateway/apps/backend/internal/database/models"
+	"mcp-gateway/apps/backend/internal/services"
+	"mcp-gateway/apps/backend/internal/transport"
 	"mcp-gateway/apps/backend/internal/types"
 
 	"github.com/google/uuid"
@@ -17,19 +20,21 @@ import (
 
 // Service handles MCP server discovery and management
 type Service struct {
-	db       *sql.DB
-	models   *Models
-	config   *Config
-	registry *Registry
-	health   *HealthChecker
-	stopCh   map[uuid.UUID]chan struct{}
-	mu       sync.RWMutex
+	db              *sql.DB
+	models          *Models
+	config          *Config
+	registry        *Registry
+	health          *HealthChecker
+	toolDiscovery   *services.ToolDiscoveryService
+	stopCh          map[uuid.UUID]chan struct{}
+	mu              sync.RWMutex
 }
 
 // Models contains all database models used by the discovery service
 type Models struct {
 	MCPServer   *models.MCPServerModel
 	HealthCheck *models.HealthCheckModel
+	MCPTool     *models.MCPToolModel
 }
 
 // Config holds discovery service configuration
@@ -44,8 +49,22 @@ type Config struct {
 // Default organization UUID for single-tenant mode (matches migration)
 var DefaultOrganizationID = uuid.MustParse("00000000-0000-0000-0000-000000000000")
 
+// serverRepositoryAdapter adapts MCPServerModel to ServerRepository interface
+type serverRepositoryAdapter struct {
+	mcpServerModel *models.MCPServerModel
+}
+
+// GetByID implements the ServerRepository interface
+func (s *serverRepositoryAdapter) GetByID(ctx context.Context, id string) (*models.MCPServer, error) {
+	serverUUID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid server ID: %w", err)
+	}
+	return s.mcpServerModel.GetByID(serverUUID)
+}
+
 // NewService creates a new discovery service
-func NewService(db *sql.DB, config *Config) *Service {
+func NewService(db *sql.DB, config *Config, transportManager *transport.Manager) *Service {
 	// Wrap the database to implement the Database interface
 	dbWrap := &dbWrapper{db}
 
@@ -55,6 +74,7 @@ func NewService(db *sql.DB, config *Config) *Service {
 		models: &Models{
 			MCPServer:   models.NewMCPServerModel(dbWrap),
 			HealthCheck: models.NewHealthCheckModel(dbWrap),
+			MCPTool:     models.NewMCPToolModel(dbWrap),
 		},
 		stopCh: make(map[uuid.UUID]chan struct{}),
 	}
@@ -62,7 +82,16 @@ func NewService(db *sql.DB, config *Config) *Service {
 	service.registry = NewRegistry(db)
 	service.health = NewHealthChecker(service.registry, config, service.models.HealthCheck)
 
+	// Create a server repository adapter for the tool discovery service
+	serverRepoAdapter := &serverRepositoryAdapter{mcpServerModel: service.models.MCPServer}
+	service.toolDiscovery = services.NewToolDiscoveryService(service.models.MCPTool, serverRepoAdapter, transportManager)
+
 	return service
+}
+
+// NewServiceWithoutTransport creates a new discovery service without transport manager (for backwards compatibility)
+func NewServiceWithoutTransport(db *sql.DB, config *Config) *Service {
+	return NewService(db, config, nil)
 }
 
 // RegisterServer registers a new MCP server
@@ -120,6 +149,9 @@ func (s *Service) RegisterServer(orgID string, req *types.CreateMCPServerRequest
 
 	// Start health checking for the server
 	go s.startHealthChecking(server.ID)
+
+	// Start tool discovery for the server (async to avoid blocking server registration)
+	go s.discoverServerTools(context.Background(), server.ID, orgUUID)
 
 	// Convert back to types.MCPServer
 	return convertModelToTypesMCPServer(server), nil
@@ -657,4 +689,66 @@ func (s *Service) mapHealthStatusToServerStatus(healthStatus string) string {
 		log.Printf("Unknown health status '%s', defaulting to inactive", healthStatus)
 		return "inactive"
 	}
+}
+
+// discoverServerTools discovers and stores tools from the registered MCP server (internal async method)
+func (s *Service) discoverServerTools(ctx context.Context, serverID uuid.UUID, organizationID uuid.UUID) {
+	// Add panic recovery to ensure server registration isn't affected by tool discovery crashes
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("PANIC in tool discovery for server %s: %v", serverID, r)
+		}
+	}()
+
+	if s.toolDiscovery == nil {
+		log.Printf("Warning: Tool discovery service not initialized for server %s", serverID)
+		return
+	}
+
+	log.Printf("Starting tool discovery for server %s", serverID)
+
+	// Discover tools from the server
+	err := s.toolDiscovery.DiscoverServerTools(ctx, serverID, organizationID)
+	if err != nil {
+		log.Printf("Tool discovery failed for server %s: %v", serverID, err)
+		log.Printf("Server %s will remain registered but no tools will be available until discovery succeeds", serverID)
+		return
+	}
+
+	log.Printf("Tool discovery completed successfully for server %s", serverID)
+}
+
+// DiscoverServerTools manually triggers tool discovery for a specific server (public API method)
+func (s *Service) DiscoverServerTools(serverID string) error {
+	// Validate server ID
+	serverUUID, err := uuid.Parse(serverID)
+	if err != nil {
+		return fmt.Errorf("invalid server ID: %w", err)
+	}
+
+	// Get server to ensure it exists and get organization ID
+	server, err := s.models.MCPServer.GetByID(serverUUID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("server not found")
+		}
+		return fmt.Errorf("failed to get server: %w", err)
+	}
+
+	// Start tool discovery (synchronous for API call)
+	ctx := context.Background()
+	if s.toolDiscovery == nil {
+		return fmt.Errorf("tool discovery service not initialized")
+	}
+
+	log.Printf("Manually starting tool discovery for server %s", serverID)
+
+	// Discover tools from the server
+	err = s.toolDiscovery.DiscoverServerTools(ctx, serverUUID, server.OrganizationID)
+	if err != nil {
+		return fmt.Errorf("error discovering tools for server %s: %w", serverID, err)
+	}
+
+	log.Printf("Manual tool discovery completed successfully for server %s", serverID)
+	return nil
 }

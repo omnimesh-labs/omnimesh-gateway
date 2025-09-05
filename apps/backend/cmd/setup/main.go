@@ -402,10 +402,7 @@ func (s *SetupManager) addDefaultMCPData() error {
 		return fmt.Errorf("failed to add default resources: %w", err)
 	}
 
-	// Add default tools
-	if err := s.addDefaultTools(org.ID); err != nil {
-		return fmt.Errorf("failed to add default tools: %w", err)
-	}
+	// Default tools are now discovered automatically from MCP servers
 
 	// Add default prompts
 	if err := s.addDefaultPrompts(org.ID); err != nil {
@@ -484,113 +481,6 @@ func (s *SetupManager) addDefaultResources(orgID uuid.UUID) error {
 	return nil
 }
 
-func (s *SetupManager) addDefaultTools(orgID uuid.UUID) error {
-	toolModel := models.NewMCPToolModel(s.db)
-
-	tools := []struct {
-		name               string
-		description        string
-		functionName       string
-		schema             map[string]interface{}
-		category           string
-		implementationType string
-		examples           []interface{}
-		documentation      string
-		metadata           map[string]interface{}
-		tags               []string
-	}{
-		{
-			name:               "Echo Tool",
-			description:        "Simple echo tool that returns the input message",
-			functionName:       "echo",
-			schema:             map[string]interface{}{"type": "object", "properties": map[string]interface{}{"message": map[string]interface{}{"type": "string", "description": "Message to echo back"}}, "required": []string{"message"}},
-			category:           "general",
-			implementationType: "internal",
-			examples:           []interface{}{map[string]interface{}{"input": map[string]interface{}{"message": "Hello World"}, "output": map[string]interface{}{"result": "Hello World"}}},
-			documentation:      "The echo tool simply returns whatever message you send to it. Useful for testing and debugging.",
-			metadata:           map[string]interface{}{"version": "1.0", "simple": true},
-			tags:               []string{"test", "debug", "simple"},
-		},
-		{
-			name:               "Get Current Time",
-			description:        "Returns the current server timestamp",
-			functionName:       "get_current_time",
-			schema:             map[string]interface{}{"type": "object", "properties": map[string]interface{}{"format": map[string]interface{}{"type": "string", "description": "Time format (iso, unix, human)", "default": "iso"}}, "required": []string{}},
-			category:           "system",
-			implementationType: "internal",
-			examples:           []interface{}{map[string]interface{}{"input": map[string]interface{}{"format": "iso"}, "output": map[string]interface{}{"timestamp": "2024-01-01T12:00:00Z"}}, map[string]interface{}{"input": map[string]interface{}{"format": "unix"}, "output": map[string]interface{}{"timestamp": 1704110400}}},
-			documentation:      "Returns the current server time in various formats. Supports ISO 8601, Unix timestamp, or human-readable format.",
-			metadata:           map[string]interface{}{"version": "1.0", "timezone": "UTC"},
-			tags:               []string{"time", "system", "utility"},
-		},
-		{
-			name:               "Generate UUID",
-			description:        "Generates a new UUID v4",
-			functionName:       "generate_uuid",
-			schema:             map[string]interface{}{"type": "object", "properties": map[string]interface{}{"version": map[string]interface{}{"type": "integer", "description": "UUID version (4 or 1)", "default": 4}}, "required": []string{}},
-			category:           "dev",
-			implementationType: "internal",
-			examples:           []interface{}{map[string]interface{}{"input": map[string]interface{}{"version": 4}, "output": map[string]interface{}{"uuid": "550e8400-e29b-41d4-a716-446655440000"}}},
-			documentation:      "Generates a new UUID (Universally Unique Identifier). Supports version 4 (random) and version 1 (timestamp-based).",
-			metadata:           map[string]interface{}{"version": "1.0", "secure": true},
-			tags:               []string{"uuid", "generate", "utility", "dev"},
-		},
-		{
-			name:               "Base64 Encode",
-			description:        "Encodes text to Base64 format",
-			functionName:       "base64_encode",
-			schema:             map[string]interface{}{"type": "object", "properties": map[string]interface{}{"text": map[string]interface{}{"type": "string", "description": "Text to encode"}, "url_safe": map[string]interface{}{"type": "boolean", "description": "Use URL-safe encoding", "default": false}}, "required": []string{"text"}},
-			category:           "data",
-			implementationType: "internal",
-			examples:           []interface{}{map[string]interface{}{"input": map[string]interface{}{"text": "Hello World", "url_safe": false}, "output": map[string]interface{}{"encoded": "SGVsbG8gV29ybGQ="}}},
-			documentation:      "Encodes text to Base64 format. Supports both standard and URL-safe encoding.",
-			metadata:           map[string]interface{}{"version": "1.0", "encoding": "base64"},
-			tags:               []string{"encode", "base64", "data", "utility"},
-		},
-	}
-
-	for _, t := range tools {
-		// Check if tool already exists
-		_, err := toolModel.GetByName(orgID, t.name)
-		if err == nil {
-			fmt.Printf("⚠️  Tool already exists: %s\n", t.name)
-			continue
-		}
-
-		tool := &models.MCPTool{
-			OrganizationID:     orgID,
-			Name:               t.name,
-			FunctionName:       t.functionName,
-			Schema:             t.schema,
-			Category:           t.category,
-			ImplementationType: t.implementationType,
-			TimeoutSeconds:     30,
-			MaxRetries:         3,
-			UsageCount:         0,
-			AccessPermissions:  map[string]interface{}{"execute": []string{"*"}, "read": []string{"*"}},
-			IsActive:           true,
-			IsPublic:           false,
-			Metadata:           t.metadata,
-			Tags:               t.tags,
-			Examples:           t.examples,
-		}
-
-		if t.description != "" {
-			tool.Description = sql.NullString{String: t.description, Valid: true}
-		}
-		if t.documentation != "" {
-			tool.Documentation = sql.NullString{String: t.documentation, Valid: true}
-		}
-
-		if err := toolModel.Create(tool); err != nil {
-			fmt.Printf("❌ Failed to create tool %s: %v\n", t.name, err)
-		} else {
-			fmt.Printf("✅ Created tool: %s\n", t.name)
-		}
-	}
-
-	return nil
-}
 
 func (s *SetupManager) addDefaultPrompts(orgID uuid.UUID) error {
 	promptModel := models.NewMCPPromptModel(s.db)

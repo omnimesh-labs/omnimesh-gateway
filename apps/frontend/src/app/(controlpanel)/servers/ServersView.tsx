@@ -136,6 +136,20 @@ function ServersView() {
 		}
 	});
 
+	// Discover server tools mutation
+	const discoverToolsMutation = useMutation({
+		mutationFn: (serverId: string) => serverApi.discoverServerTools(serverId),
+		onSuccess: (result) => {
+			enqueueSnackbar(result.message || 'Tool discovery completed successfully', { variant: 'success' });
+			// Invalidate tools query to refresh tool list if user is viewing tools
+			queryClient.invalidateQueries({ queryKey: ['tools'] });
+		},
+		onError: (error: Error | unknown) => {
+			const message = error instanceof Error ? error.message : 'Failed to discover tools';
+			enqueueSnackbar(message, { variant: 'error' });
+		}
+	});
+
 	const handleUnregisterServer = (server: MCPServer) => {
 		setServerToUnregister(server);
 		setUnregisterDialogOpen(true);
@@ -168,6 +182,10 @@ function ServersView() {
 
 	const handleToggleServerStatus = (server: MCPServer) => {
 		toggleServerMutation.mutate({ id: server.id, isActive: !server.is_active });
+	};
+
+	const handleDiscoverTools = (server: MCPServer) => {
+		discoverToolsMutation.mutate(server.id);
 	};
 
 	const columns = useMemo<MRT_ColumnDef<MCPServer>[]>(
@@ -336,6 +354,18 @@ function ServersView() {
 											onClick={() => handleViewDetails(row.original)}
 										>
 											<SvgIcon size={18}>lucide:eye</SvgIcon>
+										</IconButton>
+									</Tooltip>
+									<Tooltip title="Discover Tools">
+										<IconButton
+											size="small"
+											onClick={() => handleDiscoverTools(row.original)}
+											disabled={discoverToolsMutation.isPending}
+											color="primary"
+										>
+											<SvgIcon size={18}>
+												{discoverToolsMutation.isPending ? 'lucide:loader-2' : 'lucide:refresh-cw'}
+											</SvgIcon>
 										</IconButton>
 									</Tooltip>
 									<Tooltip title="Unregister Server">

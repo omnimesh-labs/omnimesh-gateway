@@ -25,14 +25,15 @@ type STDIOTransport struct {
 	cmd          *exec.Cmd
 	messageQueue chan *types.MCPMessage
 	*BaseTransport
-	config     map[string]interface{}
-	done       chan struct{}
-	command    string
-	workingDir string
-	args       []string
-	env        []string
-	timeout    time.Duration
-	mu         sync.RWMutex
+	config       map[string]interface{}
+	done         chan struct{}
+	command      string
+	workingDir   string
+	args         []string
+	env          []string
+	timeout      time.Duration
+	mu           sync.RWMutex
+	cleanupOnce  sync.Once // Ensure cleanup only runs once
 }
 
 // NewSTDIOTransport creates a new STDIO transport instance
@@ -130,8 +131,13 @@ func (s *STDIOTransport) Connect(ctx context.Context) error {
 func (s *STDIOTransport) Disconnect(ctx context.Context) error {
 	s.setConnected(false)
 
-	// Signal done to all goroutines
-	close(s.done)
+	// Signal done to all goroutines safely
+	select {
+	case <-s.done:
+		// Channel already closed
+	default:
+		close(s.done)
+	}
 
 	// Close stdin to signal the process to exit gracefully
 	if s.stdin != nil {
@@ -413,31 +419,51 @@ func (s *STDIOTransport) convertToMCPMessage(message interface{}) (*types.MCPMes
 	}
 }
 
-// cleanup cleans up resources
+// cleanup cleans up resources safely
 func (s *STDIOTransport) cleanup() {
-	if s.stdin != nil {
-		s.stdin.Close()
-		s.stdin = nil
-	}
-	if s.stdout != nil {
-		s.stdout.Close()
-		s.stdout = nil
-	}
-	if s.stderr != nil {
-		s.stderr.Close()
-		s.stderr = nil
-	}
+	s.cleanupOnce.Do(func() {
+		s.mu.Lock()
+		defer s.mu.Unlock()
 
-	// Close channels
-	if s.messageQueue != nil {
-		close(s.messageQueue)
-	}
-	for _, ch := range s.responseMap {
-		close(ch)
-	}
-	s.responseMap = make(map[string]chan *types.MCPMessage)
+		// Close file handles
+		if s.stdin != nil {
+			s.stdin.Close()
+			s.stdin = nil
+		}
+		if s.stdout != nil {
+			s.stdout.Close()
+			s.stdout = nil
+		}
+		if s.stderr != nil {
+			s.stderr.Close()
+			s.stderr = nil
+		}
 
-	s.cmd = nil
+		// Close channels safely
+		if s.messageQueue != nil {
+			// Use select to avoid panic if channel is already closed
+			select {
+			case <-s.messageQueue:
+				// Channel already closed by someone else
+			default:
+				close(s.messageQueue)
+			}
+			s.messageQueue = nil
+		}
+
+		// Close all response channels
+		for id, ch := range s.responseMap {
+			select {
+			case <-ch:
+				// Channel already closed
+			default:
+				close(ch)
+			}
+			delete(s.responseMap, id)
+		}
+
+		s.cmd = nil
+	})
 }
 
 // Helper methods for MCP operations

@@ -12,6 +12,7 @@ import (
 	"mcp-gateway/apps/backend/internal/config"
 	"mcp-gateway/apps/backend/internal/database"
 	"mcp-gateway/apps/backend/internal/discovery"
+	"mcp-gateway/apps/backend/internal/transport"
 )
 
 func main() {
@@ -37,6 +38,13 @@ func main() {
 	_, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	// Initialize transport manager
+	transportConfig := cfg.Transport.ToTransportConfig()
+	transportManager := transport.NewManager(transportConfig)
+	if err := transportManager.Initialize(context.Background()); err != nil {
+		log.Printf("Warning: Failed to initialize transport manager: %v", err)
+	}
+
 	// Initialize services
 	// TODO: Initialize discovery service and other background workers
 	discoveryConfig := &discovery.Config{
@@ -44,8 +52,9 @@ func main() {
 		HealthInterval:   cfg.Discovery.HealthInterval,
 		FailureThreshold: cfg.Discovery.FailureThreshold,
 		RecoveryTimeout:  cfg.Discovery.RecoveryTimeout,
+		SingleTenant:     true,
 	}
-	_ = discovery.NewService(db, discoveryConfig)
+	discoveryService := discovery.NewService(db, discoveryConfig, transportManager)
 
 	log.Println("Background worker started")
 
@@ -59,7 +68,18 @@ func main() {
 
 	// Cancel context and wait for graceful shutdown
 	cancel()
-	time.Sleep(5 * time.Second)
+
+	// Shutdown services gracefully
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownCancel()
+
+	if err := discoveryService.Stop(); err != nil {
+		log.Printf("Error stopping discovery service: %v", err)
+	}
+
+	if err := transportManager.Shutdown(shutdownCtx); err != nil {
+		log.Printf("Error shutting down transport manager: %v", err)
+	}
 
 	log.Println("Worker stopped")
 }

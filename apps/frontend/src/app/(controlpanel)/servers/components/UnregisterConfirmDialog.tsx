@@ -39,7 +39,7 @@ export default function UnregisterConfirmDialog({
 				>
 					lucide:alert-triangle
 				</SvgIcon>
-				<Typography variant="h6">Unregister Server</Typography>
+				Unregister Server
 			</DialogTitle>
 
 			<DialogContent>

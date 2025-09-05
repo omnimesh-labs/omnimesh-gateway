@@ -12,15 +12,25 @@ import (
 	"github.com/google/uuid"
 )
 
+// ToolWithServerInfo extends MCPTool with server information
+type ToolWithServerInfo struct {
+	*models.MCPTool
+	ServerName     *string `json:"server_name,omitempty"`
+	ServerProtocol *string `json:"server_protocol,omitempty"`
+	ServerStatus   *string `json:"server_status,omitempty"`
+}
+
 // ToolHandler handles MCP tool endpoints
 type ToolHandler struct {
-	toolModel *models.MCPToolModel
+	toolModel   *models.MCPToolModel
+	serverModel *models.MCPServerModel
 }
 
 // NewToolHandler creates a new tool handler
-func NewToolHandler(toolModel *models.MCPToolModel) *ToolHandler {
+func NewToolHandler(toolModel *models.MCPToolModel, serverModel *models.MCPServerModel) *ToolHandler {
 	return &ToolHandler{
-		toolModel: toolModel,
+		toolModel:   toolModel,
+		serverModel: serverModel,
 	}
 }
 
@@ -97,10 +107,20 @@ func (h *ToolHandler) ListTools(c *gin.Context) {
 		}
 	}
 
+	// Enrich tools with server information
+	enrichedTools, err := h.enrichToolsWithServerInfo(tools)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			Error:   types.NewInternalError("Failed to enrich tools with server information"),
+			Success: false,
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"data":    tools,
-		"count":   len(tools),
+		"data":    enrichedTools,
+		"count":   len(enrichedTools),
 	})
 }
 
@@ -665,4 +685,28 @@ func (h *ToolHandler) ListPublicTools(c *gin.Context) {
 		"data":    tools,
 		"count":   len(tools),
 	})
+}
+
+// enrichToolsWithServerInfo enriches tools with server information
+func (h *ToolHandler) enrichToolsWithServerInfo(tools []*models.MCPTool) ([]*ToolWithServerInfo, error) {
+	enrichedTools := make([]*ToolWithServerInfo, len(tools))
+
+	for i, tool := range tools {
+		enriched := &ToolWithServerInfo{MCPTool: tool}
+
+		// If tool has a server ID, get the server information
+		if tool.ServerID.Valid {
+			server, err := h.serverModel.GetByID(tool.ServerID.UUID)
+			if err == nil {
+				enriched.ServerName = &server.Name
+				enriched.ServerProtocol = &server.Protocol
+				enriched.ServerStatus = &server.Status
+			}
+			// If error occurs, we just skip adding server info but don't fail the whole request
+		}
+
+		enrichedTools[i] = enriched
+	}
+
+	return enrichedTools, nil
 }

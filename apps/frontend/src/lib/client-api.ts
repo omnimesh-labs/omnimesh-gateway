@@ -185,6 +185,12 @@ class ServerAPI {
 			method: 'POST'
 		});
 	}
+
+	public async discoverServerTools(id: string): Promise<{ success: boolean; message: string }> {
+		return await apiRequest<{ success: boolean; message: string }>(`/api/gateway/servers/${id}/discover-tools`, {
+			method: 'POST'
+		});
+	}
 }
 
 // Namespace API

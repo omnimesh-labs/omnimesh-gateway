@@ -11,32 +11,37 @@ import (
 
 // MCPTool represents the mcp_tools table
 type MCPTool struct {
-	UpdatedAt           time.Time              `db:"updated_at" json:"updated_at"`
-	CreatedAt           time.Time              `db:"created_at" json:"created_at"`
-	AccessPermissions   map[string]interface{} `db:"access_permissions" json:"access_permissions,omitempty"`
-	CreatedByUUID       *uuid.UUID             `db:"-" json:"created_by,omitempty"`
-	DocumentationString *string                `db:"-" json:"documentation,omitempty"`
-	EndpointURLString   *string                `db:"-" json:"endpoint_url,omitempty"`
-	DescriptionString   *string                `db:"-" json:"description,omitempty"`
-	Schema              map[string]interface{} `db:"schema" json:"schema,omitempty"`
-	Metadata            map[string]interface{} `db:"metadata" json:"metadata,omitempty"`
-	Category            string                 `db:"category" json:"category"`
-	ImplementationType  string                 `db:"implementation_type" json:"implementation_type"`
-	Name                string                 `db:"name" json:"name"`
-	FunctionName        string                 `db:"function_name" json:"function_name"`
-	Documentation       sql.NullString         `db:"documentation" json:"-"`
-	EndpointURL         sql.NullString         `db:"endpoint_url" json:"-"`
-	Tags                pq.StringArray         `db:"tags" json:"tags,omitempty"`
-	Examples            []interface{}          `db:"examples" json:"examples,omitempty"`
-	Description         sql.NullString         `db:"description" json:"-"`
-	MaxRetries          int                    `db:"max_retries" json:"max_retries"`
-	TimeoutSeconds      int                    `db:"timeout_seconds" json:"timeout_seconds"`
-	UsageCount          int64                  `db:"usage_count" json:"usage_count"`
-	CreatedBy           uuid.NullUUID          `db:"created_by" json:"-"`
-	ID                  uuid.UUID              `db:"id" json:"id"`
-	OrganizationID      uuid.UUID              `db:"organization_id" json:"organization_id"`
-	IsPublic            bool                   `db:"is_public" json:"is_public"`
-	IsActive            bool                   `db:"is_active" json:"is_active"`
+	UpdatedAt            time.Time              `db:"updated_at" json:"updated_at"`
+	CreatedAt            time.Time              `db:"created_at" json:"created_at"`
+	LastDiscoveredAt     *time.Time             `db:"last_discovered_at" json:"last_discovered_at,omitempty"`
+	AccessPermissions    map[string]interface{} `db:"access_permissions" json:"access_permissions,omitempty"`
+	DiscoveryMetadata    map[string]interface{} `db:"discovery_metadata" json:"discovery_metadata,omitempty"`
+	CreatedByUUID        *uuid.UUID             `db:"-" json:"created_by,omitempty"`
+	DocumentationString  *string                `db:"-" json:"documentation,omitempty"`
+	EndpointURLString    *string                `db:"-" json:"endpoint_url,omitempty"`
+	DescriptionString    *string                `db:"-" json:"description,omitempty"`
+	ServerIDUUID         *uuid.UUID             `db:"-" json:"server_id,omitempty"`
+	Schema               map[string]interface{} `db:"schema" json:"schema,omitempty"`
+	Metadata             map[string]interface{} `db:"metadata" json:"metadata,omitempty"`
+	Category             string                 `db:"category" json:"category"`
+	ImplementationType   string                 `db:"implementation_type" json:"implementation_type"`
+	SourceType           string                 `db:"source_type" json:"source_type"`
+	Name                 string                 `db:"name" json:"name"`
+	FunctionName         string                 `db:"function_name" json:"function_name"`
+	Documentation        sql.NullString         `db:"documentation" json:"-"`
+	EndpointURL          sql.NullString         `db:"endpoint_url" json:"-"`
+	ServerID             uuid.NullUUID          `db:"server_id" json:"-"`
+	Tags                 pq.StringArray         `db:"tags" json:"tags,omitempty"`
+	Examples             []interface{}          `db:"examples" json:"examples,omitempty"`
+	Description          sql.NullString         `db:"description" json:"-"`
+	MaxRetries           int                    `db:"max_retries" json:"max_retries"`
+	TimeoutSeconds       int                    `db:"timeout_seconds" json:"timeout_seconds"`
+	UsageCount           int64                  `db:"usage_count" json:"usage_count"`
+	CreatedBy            uuid.NullUUID          `db:"created_by" json:"-"`
+	ID                   uuid.UUID              `db:"id" json:"id"`
+	OrganizationID       uuid.UUID              `db:"organization_id" json:"organization_id"`
+	IsPublic             bool                   `db:"is_public" json:"is_public"`
+	IsActive             bool                   `db:"is_active" json:"is_active"`
 }
 
 // MCPToolModel handles MCP tool database operations
@@ -56,9 +61,9 @@ func (m *MCPToolModel) Create(tool *MCPTool) error {
 			id, organization_id, name, description, function_name, schema, category,
 			implementation_type, endpoint_url, timeout_seconds, max_retries, usage_count,
 			access_permissions, is_active, is_public, metadata, tags, examples,
-			documentation, created_by
+			documentation, created_by, server_id, source_type, last_discovered_at, discovery_metadata
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24
 		)
 	`
 
@@ -103,12 +108,26 @@ func (m *MCPToolModel) Create(tool *MCPTool) error {
 		}
 	}
 
+	var discoveryMetadataJSON []byte
+	if tool.DiscoveryMetadata != nil {
+		var err error
+		discoveryMetadataJSON, err = json.Marshal(tool.DiscoveryMetadata)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Set default source type if not specified
+	if tool.SourceType == "" {
+		tool.SourceType = "manual"
+	}
+
 	_, err := m.db.Exec(query,
 		tool.ID, tool.OrganizationID, tool.Name, tool.Description, tool.FunctionName,
 		schemaJSON, tool.Category, tool.ImplementationType, tool.EndpointURL,
 		tool.TimeoutSeconds, tool.MaxRetries, tool.UsageCount, accessPermissionsJSON,
 		tool.IsActive, tool.IsPublic, metadataJSON, tool.Tags, examplesJSON,
-		tool.Documentation, tool.CreatedBy)
+		tool.Documentation, tool.CreatedBy, tool.ServerID, tool.SourceType, tool.LastDiscoveredAt, discoveryMetadataJSON)
 	return err
 }
 
@@ -118,20 +137,22 @@ func (m *MCPToolModel) GetByID(id uuid.UUID) (*MCPTool, error) {
 		SELECT id, organization_id, name, description, function_name, schema, category,
 			   implementation_type, endpoint_url, timeout_seconds, max_retries, usage_count,
 			   access_permissions, is_active, is_public, metadata, tags, examples,
-			   documentation, created_at, updated_at, created_by
+			   documentation, created_at, updated_at, created_by, server_id, source_type,
+			   last_discovered_at, discovery_metadata
 		FROM mcp_tools
 		WHERE id = $1
 	`
 
 	tool := &MCPTool{}
-	var schemaJSON, metadataJSON, accessPermissionsJSON, examplesJSON []byte
+	var schemaJSON, metadataJSON, accessPermissionsJSON, examplesJSON, discoveryMetadataJSON []byte
 
 	err := m.db.QueryRow(query, id).Scan(
 		&tool.ID, &tool.OrganizationID, &tool.Name, &tool.Description, &tool.FunctionName,
 		&schemaJSON, &tool.Category, &tool.ImplementationType, &tool.EndpointURL,
 		&tool.TimeoutSeconds, &tool.MaxRetries, &tool.UsageCount, &accessPermissionsJSON,
 		&tool.IsActive, &tool.IsPublic, &metadataJSON, &tool.Tags, &examplesJSON,
-		&tool.Documentation, &tool.CreatedAt, &tool.UpdatedAt, &tool.CreatedBy,
+		&tool.Documentation, &tool.CreatedAt, &tool.UpdatedAt, &tool.CreatedBy, &tool.ServerID,
+		&tool.SourceType, &tool.LastDiscoveredAt, &discoveryMetadataJSON,
 	)
 
 	if err != nil {
@@ -167,6 +188,13 @@ func (m *MCPToolModel) GetByID(id uuid.UUID) (*MCPTool, error) {
 		}
 	}
 
+	if len(discoveryMetadataJSON) > 0 {
+		err = json.Unmarshal(discoveryMetadataJSON, &tool.DiscoveryMetadata)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// Convert SQL null types to JSON-friendly pointers
 	convertToolNullTypes(tool)
 
@@ -187,6 +215,9 @@ func convertToolNullTypes(tool *MCPTool) {
 	if tool.CreatedBy.Valid {
 		tool.CreatedByUUID = &tool.CreatedBy.UUID
 	}
+	if tool.ServerID.Valid {
+		tool.ServerIDUUID = &tool.ServerID.UUID
+	}
 }
 
 // GetByName retrieves an MCP tool by name within an organization
@@ -195,20 +226,22 @@ func (m *MCPToolModel) GetByName(orgID uuid.UUID, name string) (*MCPTool, error)
 		SELECT id, organization_id, name, description, function_name, schema, category,
 			   implementation_type, endpoint_url, timeout_seconds, max_retries, usage_count,
 			   access_permissions, is_active, is_public, metadata, tags, examples,
-			   documentation, created_at, updated_at, created_by
+			   documentation, created_at, updated_at, created_by, server_id, source_type,
+			   last_discovered_at, discovery_metadata
 		FROM mcp_tools
 		WHERE organization_id = $1 AND name = $2 AND is_active = true
 	`
 
 	tool := &MCPTool{}
-	var schemaJSON, metadataJSON, accessPermissionsJSON, examplesJSON []byte
+	var schemaJSON, metadataJSON, accessPermissionsJSON, examplesJSON, discoveryMetadataJSON []byte
 
 	err := m.db.QueryRow(query, orgID, name).Scan(
 		&tool.ID, &tool.OrganizationID, &tool.Name, &tool.Description, &tool.FunctionName,
 		&schemaJSON, &tool.Category, &tool.ImplementationType, &tool.EndpointURL,
 		&tool.TimeoutSeconds, &tool.MaxRetries, &tool.UsageCount, &accessPermissionsJSON,
 		&tool.IsActive, &tool.IsPublic, &metadataJSON, &tool.Tags, &examplesJSON,
-		&tool.Documentation, &tool.CreatedAt, &tool.UpdatedAt, &tool.CreatedBy,
+		&tool.Documentation, &tool.CreatedAt, &tool.UpdatedAt, &tool.CreatedBy, &tool.ServerID,
+		&tool.SourceType, &tool.LastDiscoveredAt, &discoveryMetadataJSON,
 	)
 
 	if err != nil {
@@ -256,13 +289,14 @@ func (m *MCPToolModel) GetByFunctionName(orgID uuid.UUID, functionName string) (
 		SELECT id, organization_id, name, description, function_name, schema, category,
 			   implementation_type, endpoint_url, timeout_seconds, max_retries, usage_count,
 			   access_permissions, is_active, is_public, metadata, tags, examples,
-			   documentation, created_at, updated_at, created_by
+			   documentation, created_at, updated_at, created_by, server_id, source_type,
+			   last_discovered_at, discovery_metadata
 		FROM mcp_tools
 		WHERE organization_id = $1 AND function_name = $2 AND is_active = true
 	`
 
 	tool := &MCPTool{}
-	var schemaJSON, metadataJSON, accessPermissionsJSON, examplesJSON []byte
+	var schemaJSON, metadataJSON, accessPermissionsJSON, examplesJSON, discoveryMetadataJSON []byte
 
 	err := m.db.QueryRow(query, orgID, functionName).Scan(
 		&tool.ID, &tool.OrganizationID, &tool.Name, &tool.Description, &tool.FunctionName,
@@ -270,6 +304,7 @@ func (m *MCPToolModel) GetByFunctionName(orgID uuid.UUID, functionName string) (
 		&tool.TimeoutSeconds, &tool.MaxRetries, &tool.UsageCount, &accessPermissionsJSON,
 		&tool.IsActive, &tool.IsPublic, &metadataJSON, &tool.Tags, &examplesJSON,
 		&tool.Documentation, &tool.CreatedAt, &tool.UpdatedAt, &tool.CreatedBy,
+		&tool.ServerID, &tool.SourceType, &tool.LastDiscoveredAt, &discoveryMetadataJSON,
 	)
 
 	if err != nil {
@@ -305,6 +340,13 @@ func (m *MCPToolModel) GetByFunctionName(orgID uuid.UUID, functionName string) (
 		}
 	}
 
+	if len(discoveryMetadataJSON) > 0 {
+		err = json.Unmarshal(discoveryMetadataJSON, &tool.DiscoveryMetadata)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// Convert SQL null types to JSON-friendly pointers
 	convertToolNullTypes(tool)
 
@@ -317,7 +359,8 @@ func (m *MCPToolModel) ListByOrganization(orgID uuid.UUID, activeOnly bool) ([]*
 		SELECT id, organization_id, name, description, function_name, schema, category,
 			   implementation_type, endpoint_url, timeout_seconds, max_retries, usage_count,
 			   access_permissions, is_active, is_public, metadata, tags, examples,
-			   documentation, created_at, updated_at, created_by
+			   documentation, created_at, updated_at, created_by, server_id, source_type,
+			   last_discovered_at, discovery_metadata
 		FROM mcp_tools
 		WHERE organization_id = $1
 	`
@@ -391,7 +434,8 @@ func (m *MCPToolModel) ListByCategory(orgID uuid.UUID, category string, activeOn
 		SELECT id, organization_id, name, description, function_name, schema, category,
 			   implementation_type, endpoint_url, timeout_seconds, max_retries, usage_count,
 			   access_permissions, is_active, is_public, metadata, tags, examples,
-			   documentation, created_at, updated_at, created_by
+			   documentation, created_at, updated_at, created_by, server_id, source_type,
+			   last_discovered_at, discovery_metadata
 		FROM mcp_tools
 		WHERE organization_id = $1 AND category = $2
 	`
@@ -417,7 +461,8 @@ func (m *MCPToolModel) GetPopularTools(orgID uuid.UUID, limit int) ([]*MCPTool, 
 		SELECT id, organization_id, name, description, function_name, schema, category,
 			   implementation_type, endpoint_url, timeout_seconds, max_retries, usage_count,
 			   access_permissions, is_active, is_public, metadata, tags, examples,
-			   documentation, created_at, updated_at, created_by
+			   documentation, created_at, updated_at, created_by, server_id, source_type,
+			   last_discovered_at, discovery_metadata
 		FROM mcp_tools
 		WHERE organization_id = $1 AND is_active = true
 		ORDER BY usage_count DESC, created_at DESC
@@ -439,7 +484,8 @@ func (m *MCPToolModel) ListPublicTools(limit int, offset int) ([]*MCPTool, error
 		SELECT id, organization_id, name, description, function_name, schema, category,
 			   implementation_type, endpoint_url, timeout_seconds, max_retries, usage_count,
 			   access_permissions, is_active, is_public, metadata, tags, examples,
-			   documentation, created_at, updated_at, created_by
+			   documentation, created_at, updated_at, created_by, server_id, source_type,
+			   last_discovered_at, discovery_metadata
 		FROM mcp_tools
 		WHERE is_public = true AND is_active = true
 		ORDER BY usage_count DESC, created_at DESC
@@ -462,7 +508,7 @@ func (m *MCPToolModel) Update(tool *MCPTool) error {
 		SET name = $2, description = $3, function_name = $4, schema = $5, category = $6,
 			implementation_type = $7, endpoint_url = $8, timeout_seconds = $9, max_retries = $10,
 			access_permissions = $11, is_active = $12, is_public = $13, metadata = $14, tags = $15,
-			examples = $16, documentation = $17, updated_at = NOW()
+			examples = $16, documentation = $17, last_discovered_at = $18, discovery_metadata = $19, updated_at = NOW()
 		WHERE id = $1
 	`
 
@@ -503,11 +549,20 @@ func (m *MCPToolModel) Update(tool *MCPTool) error {
 		}
 	}
 
+	var discoveryMetadataJSON []byte
+	if tool.DiscoveryMetadata != nil {
+		var err error
+		discoveryMetadataJSON, err = json.Marshal(tool.DiscoveryMetadata)
+		if err != nil {
+			return err
+		}
+	}
+
 	_, err := m.db.Exec(query,
 		tool.ID, tool.Name, tool.Description, tool.FunctionName, schemaJSON, tool.Category,
 		tool.ImplementationType, tool.EndpointURL, tool.TimeoutSeconds, tool.MaxRetries,
 		accessPermissionsJSON, tool.IsActive, tool.IsPublic, metadataJSON, tool.Tags, examplesJSON,
-		tool.Documentation)
+		tool.Documentation, tool.LastDiscoveredAt, discoveryMetadataJSON)
 	return err
 }
 
@@ -531,7 +586,8 @@ func (m *MCPToolModel) SearchTools(orgID uuid.UUID, searchTerm string, limit int
 		SELECT id, organization_id, name, description, function_name, schema, category,
 			   implementation_type, endpoint_url, timeout_seconds, max_retries, usage_count,
 			   access_permissions, is_active, is_public, metadata, tags, examples,
-			   documentation, created_at, updated_at, created_by
+			   documentation, created_at, updated_at, created_by, server_id, source_type,
+			   last_discovered_at, discovery_metadata
 		FROM mcp_tools
 		WHERE organization_id = $1 AND is_active = true
 		AND (
@@ -560,14 +616,15 @@ func (m *MCPToolModel) parseToolRows(rows *sql.Rows) ([]*MCPTool, error) {
 	var tools []*MCPTool
 	for rows.Next() {
 		tool := &MCPTool{}
-		var schemaJSON, metadataJSON, accessPermissionsJSON, examplesJSON []byte
+		var schemaJSON, metadataJSON, accessPermissionsJSON, examplesJSON, discoveryMetadataJSON []byte
 
 		err := rows.Scan(
 			&tool.ID, &tool.OrganizationID, &tool.Name, &tool.Description, &tool.FunctionName,
 			&schemaJSON, &tool.Category, &tool.ImplementationType, &tool.EndpointURL,
 			&tool.TimeoutSeconds, &tool.MaxRetries, &tool.UsageCount, &accessPermissionsJSON,
 			&tool.IsActive, &tool.IsPublic, &metadataJSON, &tool.Tags, &examplesJSON,
-			&tool.Documentation, &tool.CreatedAt, &tool.UpdatedAt, &tool.CreatedBy,
+			&tool.Documentation, &tool.CreatedAt, &tool.UpdatedAt, &tool.CreatedBy, &tool.ServerID,
+			&tool.SourceType, &tool.LastDiscoveredAt, &discoveryMetadataJSON,
 		)
 		if err != nil {
 			return nil, err
@@ -602,6 +659,13 @@ func (m *MCPToolModel) parseToolRows(rows *sql.Rows) ([]*MCPTool, error) {
 			}
 		}
 
+		if len(discoveryMetadataJSON) > 0 {
+			err = json.Unmarshal(discoveryMetadataJSON, &tool.DiscoveryMetadata)
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		tools = append(tools, tool)
 	}
 
@@ -611,4 +675,56 @@ func (m *MCPToolModel) parseToolRows(rows *sql.Rows) ([]*MCPTool, error) {
 	}
 
 	return tools, nil
+}
+
+// GetByServerID retrieves all tools for a specific server
+func (m *MCPToolModel) GetByServerID(serverID uuid.UUID) ([]*MCPTool, error) {
+	query := `
+		SELECT id, organization_id, name, description, function_name, schema, category,
+			   implementation_type, endpoint_url, timeout_seconds, max_retries, usage_count,
+			   access_permissions, is_active, is_public, metadata, tags, examples,
+			   documentation, created_at, updated_at, created_by, server_id, source_type,
+			   last_discovered_at, discovery_metadata
+		FROM mcp_tools
+		WHERE server_id = $1 AND source_type = 'discovered'
+		ORDER BY created_at DESC
+	`
+
+	rows, err := m.db.Query(query, serverID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	return m.parseToolRows(rows)
+}
+
+// UpsertDiscoveredTool creates or updates a discovered tool
+func (m *MCPToolModel) UpsertDiscoveredTool(tool *MCPTool) error {
+	// Try to find existing tool by server_id and function_name
+	existingQuery := `
+		SELECT id FROM mcp_tools
+		WHERE server_id = $1 AND function_name = $2 AND source_type = 'discovered'
+	`
+
+	var existingID uuid.UUID
+	err := m.db.QueryRow(existingQuery, tool.ServerID, tool.FunctionName).Scan(&existingID)
+
+	if err == sql.ErrNoRows {
+		// Create new tool
+		return m.Create(tool)
+	} else if err != nil {
+		return err
+	} else {
+		// Update existing tool
+		tool.ID = existingID
+		return m.Update(tool)
+	}
+}
+
+// DeleteDiscoveredTools removes all discovered tools for a server
+func (m *MCPToolModel) DeleteDiscoveredTools(serverID uuid.UUID) error {
+	query := `DELETE FROM mcp_tools WHERE server_id = $1 AND source_type = 'discovered'`
+	_, err := m.db.Exec(query, serverID)
+	return err
 }

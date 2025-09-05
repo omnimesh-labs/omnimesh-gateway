@@ -3,9 +3,12 @@ FROM golang:1.23-alpine AS development
 
 WORKDIR /app
 
-# Install dependencies including air, bash, and make
-RUN apk add --no-cache git gcc musl-dev bash make && \
-    go install github.com/air-verse/air@v1.61.1
+# Install dependencies including air, bash, make, Python, Node.js, uvx, and npx
+RUN apk add --no-cache git gcc musl-dev bash make python3 python3-dev py3-pip curl nodejs npm && \
+    go install github.com/air-verse/air@v1.61.1 && \
+    curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    ln -sf /root/.local/bin/uv /usr/local/bin/uv && \
+    ln -sf /root/.local/bin/uvx /usr/local/bin/uvx
 
 # Copy go mod files
 COPY go.mod go.sum ./
@@ -24,6 +27,7 @@ COPY .air.toml ./
 
 # Environment for development mode
 ENV MODE=development
+ENV PATH="$PATH:/root/.local/bin"
 
 # Expose port
 EXPOSE 8080
@@ -53,7 +57,10 @@ RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o main apps/backend
 # Production stage
 FROM alpine:latest AS production
 
-RUN apk --no-cache add ca-certificates tzdata bash
+RUN apk --no-cache add ca-certificates tzdata bash python3 python3-dev py3-pip curl nodejs npm && \
+    curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    ln -sf /root/.local/bin/uv /usr/local/bin/uv && \
+    ln -sf /root/.local/bin/uvx /usr/local/bin/uvx
 
 WORKDIR /app
 
@@ -70,6 +77,7 @@ RUN chmod +x /scripts/*.sh
 
 # Environment for production mode
 ENV MODE=production
+ENV PATH="$PATH:/root/.local/bin"
 
 # Expose port
 EXPOSE 8080

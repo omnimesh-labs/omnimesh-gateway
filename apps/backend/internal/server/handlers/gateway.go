@@ -46,8 +46,10 @@ func convertToTypesError(err error) *types.Error {
 		return types.NewValidationError(errMsg)
 	case strings.Contains(errMsgLower, "organization"):
 		return types.NewValidationError(errMsg)
-	case strings.Contains(errMsgLower, "server"):
+	case strings.Contains(errMsgLower, "server not found") || strings.Contains(errMsgLower, "server does not exist"):
 		return types.NewServerNotFoundError(errMsg)
+	case strings.Contains(errMsgLower, "stdio") || strings.Contains(errMsgLower, "communication") || strings.Contains(errMsgLower, "failed to receive"):
+		return types.NewBadGatewayError(errMsg)
 	default:
 		return types.NewInternalError(errMsg)
 	}
@@ -212,6 +214,34 @@ func (h *GatewayHandler) GetServerStats(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"data":    stats,
+	})
+}
+
+// DiscoverServerTools manually triggers tool discovery for a specific server
+func (h *GatewayHandler) DiscoverServerTools(c *gin.Context) {
+	serverID := c.Param("id")
+	if serverID == "" {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   types.NewValidationError("Server ID is required"),
+			Success: false,
+		})
+		return
+	}
+
+	// Trigger tool discovery for the server
+	err := h.discoveryService.DiscoverServerTools(serverID)
+	if err != nil {
+		typesErr := convertToTypesError(err)
+		c.JSON(types.GetStatusCode(typesErr), types.ErrorResponse{
+			Error:   typesErr,
+			Success: false,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Tool discovery initiated successfully",
 	})
 }
 
