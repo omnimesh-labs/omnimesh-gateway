@@ -48,7 +48,7 @@ func convertToTypesError(err error) *types.Error {
 		return types.NewValidationError(errMsg)
 	case strings.Contains(errMsgLower, "server not found") || strings.Contains(errMsgLower, "server does not exist"):
 		return types.NewServerNotFoundError(errMsg)
-	case strings.Contains(errMsgLower, "stdio") || strings.Contains(errMsgLower, "communication") || strings.Contains(errMsgLower, "failed to receive"):
+	case strings.Contains(errMsgLower, "stdio") || strings.Contains(errMsgLower, "communication") || strings.Contains(errMsgLower, "failed to receive") || strings.Contains(errMsgLower, "protocol"):
 		return types.NewBadGatewayError(errMsg)
 	default:
 		return types.NewInternalError(errMsg)

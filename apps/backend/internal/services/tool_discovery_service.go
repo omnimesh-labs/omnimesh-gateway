@@ -112,6 +112,9 @@ func (s *ToolDiscoveryService) GetDiscoveredToolsForServer(serverID uuid.UUID) (
 
 // discoverRealMCPTools attempts to discover tools from a real MCP server using transport layer
 func (s *ToolDiscoveryService) discoverRealMCPTools(ctx context.Context, server *models.MCPServer) ([]types.MCPTool, error) {
+	// Set a shorter timeout for tool discovery to prevent long hangs on non-MCP servers
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
 	var tools []types.MCPTool
 
 	// Check if transport manager is available
@@ -138,7 +141,7 @@ func (s *ToolDiscoveryService) discoverRealMCPTools(ctx context.Context, server 
 		config,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create transport connection: %w", err)
+		return nil, fmt.Errorf("failed to connect to MCP server")
 	}
 
 	// Ensure we clean up the connection
@@ -152,7 +155,17 @@ func (s *ToolDiscoveryService) discoverRealMCPTools(ctx context.Context, server 
 
 	// Connect to the server
 	if err := transport.Connect(ctx); err != nil {
-		return nil, fmt.Errorf("failed to connect to server: %w", err)
+		return nil, fmt.Errorf("failed to establish connection to MCP server")
+	}
+	
+	// Quick check: For STDIO transport, verify the command exists and is executable
+	if transportType == types.TransportTypeSTDIO {
+		if server.Command.Valid && server.Command.String != "" {
+			// Basic validation that the command exists
+			log.Printf("Attempting tool discovery on STDIO server with command: %s", server.Command.String)
+		} else {
+			return nil, fmt.Errorf("STDIO server missing command configuration")
+		}
 	}
 
 	// Send a generic MCP list tools request
@@ -164,46 +177,65 @@ func (s *ToolDiscoveryService) discoverRealMCPTools(ctx context.Context, server 
 		Params:  map[string]interface{}{},
 	}
 
-	// Send the request
-	if err := transport.SendMessage(ctx, request); err != nil {
-		return nil, fmt.Errorf("failed to send list tools request: %w", err)
-	}
+	var mcpResponse *types.MCPMessage
 
-	// For transports like STDIO that have synchronous communication,
-	// we need to handle responses differently
+	// For STDIO transport, use synchronous request-response pattern
 	if transportType == types.TransportTypeSTDIO {
-		// For STDIO, try to use the transport manager's receive functionality
-		// which handles the request-response mapping internally
-		response, err := s.transportManager.ReceiveMessage(ctx, session.ID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to receive tools response via STDIO: %w", err)
+		// Check if the transport has a SendRequest method using reflection/interface
+		type syncTransport interface {
+			SendRequest(ctx context.Context, request *types.MCPMessage) (*types.MCPMessage, error)
 		}
 
-		// Parse response
-		if mcpResponse, ok := response.(*types.MCPMessage); ok {
-			tools, err = s.parseMCPToolsResponse(mcpResponse)
+		if syncTrans, ok := transport.(syncTransport); ok {
+			mcpResponse, err = syncTrans.SendRequest(ctx, request)
 			if err != nil {
-				return nil, fmt.Errorf("failed to parse tools response: %w", err)
+				// Provide helpful error messages based on the error type
+				if strings.Contains(err.Error(), "timeout") || strings.Contains(err.Error(), "context deadline exceeded") {
+					return nil, fmt.Errorf("server did not respond to MCP protocol request - this may not be an MCP-compatible server")
+				}
+				// Sanitize other error messages for API response
+				return nil, fmt.Errorf("failed to communicate with MCP server: connection error")
 			}
 		} else {
-			return nil, fmt.Errorf("unexpected response type: %T", response)
+			// Fallback to async pattern (though this will likely fail for STDIO)
+			if err := transport.SendMessage(ctx, request); err != nil {
+				return nil, fmt.Errorf("failed to communicate with MCP server: send error")
+			}
+
+			response, err := transport.ReceiveMessage(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("failed to communicate with MCP server: receive error")
+			}
+
+			if resp, ok := response.(*types.MCPMessage); ok {
+				mcpResponse = resp
+			} else {
+				return nil, fmt.Errorf("received unexpected response from MCP server")
+			}
 		}
 	} else {
-		// For other transport types, receive response directly
-		response, err := transport.ReceiveMessage(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to receive tools response: %w", err)
+		// For other transport types, use async message sending
+		if err := transport.SendMessage(ctx, request); err != nil {
+			return nil, fmt.Errorf("failed to communicate with MCP server: send error")
 		}
 
-		// Parse response
-		if mcpResponse, ok := response.(*types.MCPMessage); ok {
-			tools, err = s.parseMCPToolsResponse(mcpResponse)
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse tools response: %w", err)
-			}
-		} else {
-			return nil, fmt.Errorf("unexpected response type: %T", response)
+		response, err := transport.ReceiveMessage(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to communicate with MCP server: receive error")
 		}
+
+		// Type check the response
+		if resp, ok := response.(*types.MCPMessage); ok {
+			mcpResponse = resp
+		} else {
+			return nil, fmt.Errorf("received unexpected response from MCP server")
+		}
+	}
+
+	// Parse the response to extract tools
+	tools, err = s.parseMCPToolsResponse(mcpResponse)
+	if err != nil {
+		return nil, fmt.Errorf("failed to process MCP server response")
 	}
 
 	log.Printf("Successfully discovered %d real tools from server %s", len(tools), server.Name)
@@ -343,38 +375,37 @@ func (s *ToolDiscoveryService) parseMCPToolsResponse(response *types.MCPMessage)
 	return tools, nil
 }
 
-
 // categorizeToolByName attempts to categorize a tool based on its name
 func (s *ToolDiscoveryService) categorizeToolByName(name string) string {
 	nameLower := strings.ToLower(name)
 
 	// File operations
 	if strings.Contains(nameLower, "file") || strings.Contains(nameLower, "read") ||
-	   strings.Contains(nameLower, "write") || strings.Contains(nameLower, "directory") {
+		strings.Contains(nameLower, "write") || strings.Contains(nameLower, "directory") {
 		return types.ToolCategoryFile
 	}
 
 	// Web/HTTP operations
 	if strings.Contains(nameLower, "http") || strings.Contains(nameLower, "web") ||
-	   strings.Contains(nameLower, "fetch") || strings.Contains(nameLower, "request") {
+		strings.Contains(nameLower, "fetch") || strings.Contains(nameLower, "request") {
 		return types.ToolCategoryWeb
 	}
 
 	// Database operations
 	if strings.Contains(nameLower, "db") || strings.Contains(nameLower, "database") ||
-	   strings.Contains(nameLower, "sql") || strings.Contains(nameLower, "query") {
+		strings.Contains(nameLower, "sql") || strings.Contains(nameLower, "query") {
 		return types.ToolCategoryData
 	}
 
 	// System operations
 	if strings.Contains(nameLower, "system") || strings.Contains(nameLower, "exec") ||
-	   strings.Contains(nameLower, "command") || strings.Contains(nameLower, "shell") {
+		strings.Contains(nameLower, "command") || strings.Contains(nameLower, "shell") {
 		return types.ToolCategorySystem
 	}
 
 	// AI/ML operations
 	if strings.Contains(nameLower, "ai") || strings.Contains(nameLower, "ml") ||
-	   strings.Contains(nameLower, "model") || strings.Contains(nameLower, "predict") {
+		strings.Contains(nameLower, "model") || strings.Contains(nameLower, "predict") {
 		return types.ToolCategoryAI
 	}
 

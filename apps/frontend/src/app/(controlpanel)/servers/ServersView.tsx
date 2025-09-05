@@ -145,7 +145,35 @@ function ServersView() {
 			queryClient.invalidateQueries({ queryKey: ['tools'] });
 		},
 		onError: (error: Error | unknown) => {
-			const message = error instanceof Error ? error.message : 'Failed to discover tools';
+			let message = 'Failed to discover tools';
+			
+			if (error instanceof Error) {
+				const errorMessage = error.message.toLowerCase();
+				
+				// Provide user-friendly messages for common error scenarios
+				if (errorMessage.includes('mcp-compatible') || errorMessage.includes('mcp protocol request') || errorMessage.includes('did not respond to mcp protocol')) {
+					message = error.message; // Show the specific protocol error message
+				} else if (errorMessage.includes('communication error') || errorMessage.includes('stdio')) {
+					message = 'Unable to communicate with the MCP server. Please check if the server is running and accessible.';
+				} else if (errorMessage.includes('connection') || errorMessage.includes('connect')) {
+					message = 'Failed to connect to the MCP server. Please verify the server configuration.';
+				} else if (errorMessage.includes('timeout')) {
+					message = 'The server took too long to respond. Please try again later.';
+				} else if (errorMessage.includes('not found')) {
+					message = 'MCP server not found. It may have been removed or is temporarily unavailable.';
+				} else if (errorMessage.includes('unauthorized') || errorMessage.includes('authentication')) {
+					message = 'Authentication failed. Please check your credentials and try again.';
+				} else if (errorMessage.includes('bad gateway') || errorMessage.includes('502')) {
+					message = 'The MCP server is currently unavailable. Please try again later or contact support.';
+				} else if (error.message && error.message.trim()) {
+					// Use the original message if it's meaningful and doesn't contain technical details
+					const cleanMessage = error.message;
+					if (!cleanMessage.includes('SendRequest') && !cleanMessage.includes('STDIO') && !cleanMessage.includes('transport')) {
+						message = cleanMessage;
+					}
+				}
+			}
+			
 			enqueueSnackbar(message, { variant: 'error' });
 		}
 	});
@@ -185,6 +213,7 @@ function ServersView() {
 	};
 
 	const handleDiscoverTools = (server: MCPServer) => {
+		enqueueSnackbar('Received request to discover available server tools!', { variant: 'info' });
 		discoverToolsMutation.mutate(server.id);
 	};
 

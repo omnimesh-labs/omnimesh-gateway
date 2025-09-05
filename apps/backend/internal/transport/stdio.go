@@ -194,9 +194,9 @@ func (s *STDIOTransport) ReceiveMessage(ctx context.Context) (interface{}, error
 		return nil, fmt.Errorf("STDIO transport not connected")
 	}
 
-	// For STDIO, messages are handled asynchronously by readLoop
-	// This method can be used to wait for specific responses
-	return nil, fmt.Errorf("use SendRequest for synchronous STDIO communication")
+	// STDIO transport requires synchronous communication
+	// Use SendRequest method for proper request-response handling
+	return nil, fmt.Errorf("STDIO server communication error")
 }
 
 // SendRequest sends a request and waits for response
