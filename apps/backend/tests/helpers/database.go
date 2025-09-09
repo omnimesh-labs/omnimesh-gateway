@@ -144,31 +144,50 @@ func CleanDatabase(t *testing.T, db *sql.DB) {
 	}
 }
 
-// CreateTestOrganization creates a test organization
+// CreateTestOrganization creates a test organization with unique ID
 func CreateTestOrganization(db *sql.DB) (string, error) {
-	orgID := "00000000-0000-0000-0000-000000000001"
+	// Use a generated UUID for the organization to avoid conflicts in parallel tests
+	var orgID string
+	err := db.QueryRow("SELECT gen_random_uuid()").Scan(&orgID)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate organization ID: %w", err)
+	}
 
-	_, err := db.Exec(`
+	_, err = db.Exec(`
 		INSERT INTO organizations (id, name, slug)
 		VALUES ($1, $2, $3)
-		ON CONFLICT (id) DO NOTHING
-	`, orgID, "Test Organization", "test-org")
+	`, orgID, "Test Organization", "test-org-"+orgID[:8])
 
 	if err != nil {
 		return "", fmt.Errorf("failed to create test organization: %w", err)
 	}
 
+	// Verify the organization exists
+	var count int
+	err = db.QueryRow("SELECT COUNT(*) FROM organizations WHERE id = $1", orgID).Scan(&count)
+	if err != nil {
+		return "", fmt.Errorf("failed to verify test organization exists: %w", err)
+	}
+
+	if count == 0 {
+		return "", fmt.Errorf("test organization was not created properly")
+	}
+
 	return orgID, nil
 }
 
-// CreateTestUser creates a test user
+// CreateTestUser creates a test user with unique ID
 func CreateTestUser(db *sql.DB, orgID string) (string, error) {
-	userID := "00000000-0000-0000-0000-000000000002"
+	// Use a generated UUID for the user to avoid conflicts in parallel tests
+	var userID string
+	err := db.QueryRow("SELECT gen_random_uuid()").Scan(&userID)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate user ID: %w", err)
+	}
 
-	_, err := db.Exec(`
+	_, err = db.Exec(`
 		INSERT INTO users (id, email, name, password_hash, organization_id, role)
 		VALUES ($1, $2, $3, $4, $5, $6)
-		ON CONFLICT (id) DO NOTHING
 	`, userID, "test@example.com", "Test User", "hashed", orgID, "user")
 
 	if err != nil {
@@ -180,7 +199,12 @@ func CreateTestUser(db *sql.DB, orgID string) (string, error) {
 
 // CreateTestUserWithCredentials creates a test user with specific email and password
 func CreateTestUserWithCredentials(db *sql.DB, orgID, email, password string) (string, error) {
-	userID := "00000000-0000-0000-0000-000000000002"
+	// Use a generated UUID for the user to avoid conflicts in parallel tests
+	var userID string
+	err := db.QueryRow("SELECT gen_random_uuid()").Scan(&userID)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate user ID: %w", err)
+	}
 
 	// Hash the password using bcrypt (same as production)
 	passwordHash, err := hashPasswordForTest(password)
@@ -191,9 +215,6 @@ func CreateTestUserWithCredentials(db *sql.DB, orgID, email, password string) (s
 	_, err = db.Exec(`
 		INSERT INTO users (id, email, name, password_hash, organization_id, role)
 		VALUES ($1, $2, $3, $4, $5, $6)
-		ON CONFLICT (id) DO UPDATE SET
-		email = EXCLUDED.email,
-		password_hash = EXCLUDED.password_hash
 	`, userID, email, "Test User", passwordHash, orgID, "admin") // admin role for API key creation
 
 	if err != nil {
@@ -203,15 +224,19 @@ func CreateTestUserWithCredentials(db *sql.DB, orgID, email, password string) (s
 	return userID, nil
 }
 
-// CreateTestNamespace creates a test namespace
+// CreateTestNamespace creates a test namespace with unique ID
 func CreateTestNamespace(db *sql.DB, orgID string) (string, error) {
-	namespaceID := "00000000-0000-0000-0000-000000000003"
+	// Use a generated UUID for the namespace to avoid conflicts in parallel tests
+	var namespaceID string
+	err := db.QueryRow("SELECT gen_random_uuid()").Scan(&namespaceID)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate namespace ID: %w", err)
+	}
 
-	_, err := db.Exec(`
+	_, err = db.Exec(`
 		INSERT INTO namespaces (id, organization_id, name, slug, description)
 		VALUES ($1, $2, $3, $4, $5)
-		ON CONFLICT (id) DO NOTHING
-	`, namespaceID, orgID, "test-namespace", "test-namespace", "Test namespace")
+	`, namespaceID, orgID, "test-namespace", "test-namespace-"+namespaceID[:8], "Test namespace")
 
 	if err != nil {
 		return "", fmt.Errorf("failed to create test namespace: %w", err)
