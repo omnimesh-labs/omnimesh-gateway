@@ -71,7 +71,7 @@ func TestMCPToolModel_Create(t *testing.T) {
 			sqlmock.AnyArg(), types.ToolCategoryGeneral, types.ToolImplementationInternal,
 			sqlmock.AnyArg(), 30, 3, int64(0), sqlmock.AnyArg(), true, false,
 			sqlmock.AnyArg(), pq.StringArray{"test", "function"}, sqlmock.AnyArg(),
-			"Test documentation", userID).
+			"Test documentation", userID, sqlmock.AnyArg(), "manual", sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	err := model.Create(tool)
@@ -110,13 +110,14 @@ func TestMCPToolModel_GetByID(t *testing.T) {
 			"id", "organization_id", "name", "description", "function_name", "schema", "category",
 			"implementation_type", "endpoint_url", "timeout_seconds", "max_retries", "usage_count",
 			"access_permissions", "is_active", "is_public", "metadata", "tags", "examples",
-			"documentation", "created_at", "updated_at", "created_by",
+			"documentation", "created_at", "updated_at", "created_by", "server_id", "source_type",
+			"last_discovered_at", "discovery_metadata",
 		}).AddRow(
 			toolID, orgID, "Test Tool", "Test description", "test_function", schemaJSON,
 			types.ToolCategoryGeneral, types.ToolImplementationInternal, "",
 			30, 3, int64(5), accessJSON, true, false, metadataJSON,
 			pq.StringArray{"test", "function"}, examplesJSON, "Test docs",
-			time.Now(), time.Now(), userID,
+			time.Now(), time.Now(), userID, nil, "manual", nil, []byte("{}"),
 		))
 
 	tool, err := model.GetByID(toolID)
@@ -163,13 +164,14 @@ func TestMCPToolModel_GetByFunctionName(t *testing.T) {
 			"id", "organization_id", "name", "description", "function_name", "schema", "category",
 			"implementation_type", "endpoint_url", "timeout_seconds", "max_retries", "usage_count",
 			"access_permissions", "is_active", "is_public", "metadata", "tags", "examples",
-			"documentation", "created_at", "updated_at", "created_by",
+			"documentation", "created_at", "updated_at", "created_by", "server_id", "source_type",
+			"last_discovered_at", "discovery_metadata",
 		}).AddRow(
 			toolID, orgID, "Echo Tool", "Description", "echo_function", schemaJSON,
 			types.ToolCategoryGeneral, types.ToolImplementationInternal, "",
 			30, 3, int64(10), []byte("{}"), true, false, []byte("{}"),
 			pq.StringArray{"echo"}, []byte("[]"), "Docs",
-			time.Now(), time.Now(), nil,
+			time.Now(), time.Now(), nil, nil, "manual", nil, []byte("{}"),
 		))
 
 	tool, err := model.GetByFunctionName(orgID, "echo_function")
@@ -204,19 +206,20 @@ func TestMCPToolModel_ListByOrganization(t *testing.T) {
 			"id", "organization_id", "name", "description", "function_name", "schema", "category",
 			"implementation_type", "endpoint_url", "timeout_seconds", "max_retries", "usage_count",
 			"access_permissions", "is_active", "is_public", "metadata", "tags", "examples",
-			"documentation", "created_at", "updated_at", "created_by",
+			"documentation", "created_at", "updated_at", "created_by", "server_id", "source_type",
+			"last_discovered_at", "discovery_metadata",
 		}).AddRow(
 			toolID1, orgID, "Popular Tool", "Description 1", "popular_func", schemaJSON,
 			types.ToolCategoryData, types.ToolImplementationInternal, "",
 			30, 3, int64(15), []byte("{}"), true, false, []byte("{}"),
 			pq.StringArray{"data"}, []byte("[]"), "Docs 1",
-			time.Now(), time.Now(), nil,
+			time.Now(), time.Now(), nil, nil, "manual", nil, []byte("{}"),
 		).AddRow(
 			toolID2, orgID, "New Tool", "Description 2", "new_func", schemaJSON,
 			types.ToolCategoryGeneral, types.ToolImplementationExternal, "https://api.example.com",
 			60, 2, int64(3), []byte("{}"), true, true, []byte("{}"),
 			pq.StringArray{"general"}, []byte("[]"), "Docs 2",
-			time.Now(), time.Now(), nil,
+			time.Now(), time.Now(), nil, nil, "manual", nil, []byte("{}"),
 		))
 
 	tools, err := model.ListByOrganization(orgID, true)
@@ -257,13 +260,14 @@ func TestMCPToolModel_ListByCategory(t *testing.T) {
 			"id", "organization_id", "name", "description", "function_name", "schema", "category",
 			"implementation_type", "endpoint_url", "timeout_seconds", "max_retries", "usage_count",
 			"access_permissions", "is_active", "is_public", "metadata", "tags", "examples",
-			"documentation", "created_at", "updated_at", "created_by",
+			"documentation", "created_at", "updated_at", "created_by", "server_id", "source_type",
+			"last_discovered_at", "discovery_metadata",
 		}).AddRow(
 			toolID, orgID, "Dev Tool", "A development tool", "dev_func", schemaJSON,
 			types.ToolCategoryDev, types.ToolImplementationScript, "/scripts/dev.sh",
 			45, 1, int64(25), []byte("{}"), true, false, []byte("{}"),
 			pq.StringArray{"dev", "script"}, []byte("[]"), "Dev docs",
-			time.Now(), time.Now(), nil,
+			time.Now(), time.Now(), nil, nil, "manual", nil, []byte("{}"),
 		))
 
 	tools, err := model.ListByCategory(orgID, types.ToolCategoryDev, true)
@@ -299,13 +303,14 @@ func TestMCPToolModel_ListPublicTools(t *testing.T) {
 			"id", "organization_id", "name", "description", "function_name", "schema", "category",
 			"implementation_type", "endpoint_url", "timeout_seconds", "max_retries", "usage_count",
 			"access_permissions", "is_active", "is_public", "metadata", "tags", "examples",
-			"documentation", "created_at", "updated_at", "created_by",
+			"documentation", "created_at", "updated_at", "created_by", "server_id", "source_type",
+			"last_discovered_at", "discovery_metadata",
 		}).AddRow(
 			toolID, orgID, "Public Tool", "A public tool", "public_func", schemaJSON,
 			types.ToolCategoryGeneral, types.ToolImplementationInternal, "",
 			30, 3, int64(100), []byte("{}"), true, true, []byte("{}"),
 			pq.StringArray{"public"}, []byte("[]"), "Public docs",
-			time.Now(), time.Now(), nil,
+			time.Now(), time.Now(), nil, nil, "manual", nil, []byte("{}"),
 		))
 
 	tools, err := model.ListPublicTools(50, 0)
@@ -381,7 +386,7 @@ func TestMCPToolModel_Update(t *testing.T) {
 			sqlmock.AnyArg(), types.ToolCategoryAI, types.ToolImplementationWebhook,
 			"https://webhook.example.com", 60, 5, sqlmock.AnyArg(), false, true,
 			sqlmock.AnyArg(), pq.StringArray{"updated", "ai"}, sqlmock.AnyArg(),
-			"Updated documentation").
+			"Updated documentation", sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	err := model.Update(tool)
@@ -428,13 +433,14 @@ func TestMCPToolModel_SearchTools(t *testing.T) {
 			"id", "organization_id", "name", "description", "function_name", "schema", "category",
 			"implementation_type", "endpoint_url", "timeout_seconds", "max_retries", "usage_count",
 			"access_permissions", "is_active", "is_public", "metadata", "tags", "examples",
-			"documentation", "created_at", "updated_at", "created_by",
+			"documentation", "created_at", "updated_at", "created_by", "server_id", "source_type",
+			"last_discovered_at", "discovery_metadata",
 		}).AddRow(
 			toolID, orgID, "Search Tool", "Tool for search", "search_func", schemaJSON,
 			types.ToolCategoryGeneral, types.ToolImplementationInternal, "",
 			30, 3, int64(7), []byte("{}"), true, false, []byte("{}"),
 			pq.StringArray{"search", "utility"}, []byte("[]"), "Search docs",
-			time.Now(), time.Now(), nil,
+			time.Now(), time.Now(), nil, nil, "manual", nil, []byte("{}"),
 		))
 
 	tools, err := model.SearchTools(orgID, "search", 10, 0)

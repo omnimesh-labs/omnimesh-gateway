@@ -50,9 +50,10 @@ RUN go mod download
 # Copy source code
 COPY . .
 
-# Build main application and migrate tool only
+# Build main application, migrate tool, and setup tool
 RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o main apps/backend/cmd/api/main.go && \
-    CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o migrate apps/backend/cmd/migrate/main.go
+    CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o migrate apps/backend/cmd/migrate/main.go && \
+    CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o setup apps/backend/cmd/setup/main.go
 
 # Production stage
 FROM alpine:latest AS production
@@ -67,6 +68,7 @@ WORKDIR /app
 # Copy the binaries from builder
 COPY --from=builder /app/main .
 COPY --from=builder /app/migrate .
+COPY --from=builder /app/setup .
 COPY --from=builder /app/apps/backend/configs ./apps/backend/configs
 COPY --from=builder /app/apps/backend/migrations ./apps/backend/migrations
 

@@ -20,9 +20,14 @@ Get the entire MCP Gateway stack running with a single command:
 git clone https://github.com/theognis1002/mcp-gateway.git
 cd mcp-gateway
 
-docker compose up --build  # or use `make start` cmd
+# Option 1: Using Docker Compose directly
+docker compose up --build
+
+# Option 2: Using Makefile (automatically detects docker compose vs docker-compose)
+make start
 ```
 
+**Access the application:**
 - Backend: `http://localhost:8080`
 - Frontend: `http://localhost:3000`
 - Admin user: `admin@admin.com` / `qwerty123`
@@ -163,6 +168,27 @@ make rebuild          # Rebuild and restart containers
 make shell            # Open shell in backend container
 make bash             # Open bash in backend container
 ```
+
+### Troubleshooting
+
+**Docker Compose Issues:**
+```bash
+# The Makefile automatically detects your Docker Compose version
+# Check what it's using:
+make help  # Will work with either docker-compose or docker compose
+
+# Manual check:
+docker compose version    # Modern v2
+docker-compose version    # Legacy v1
+
+# If you get "command not found":
+# Install Docker Desktop (includes Compose v2) or standalone Compose
+```
+
+**Common Issues:**
+- **Port conflicts**: Stop other services on ports 8080, 3000, 5432, 6379
+- **Permission denied**: Ensure Docker daemon is running
+- **Build failures**: Try `make clean` then `make setup`
 
 ## 🤝 Contributing
 

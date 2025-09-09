@@ -1,9 +1,10 @@
 # MCP Gateway Makefile
 .PHONY: help dev stop clean test migrate lint setup shell bash migrate-down migrate-status setup-admin logs nuclear restart prune docker-prune docker-reset
 
-# Docker compose command
-DOCKER_COMPOSE = docker compose -f docker-compose.dev.yml
-DOCKER_COMPOSE_PROD = docker compose
+# Docker compose command detection - use 'docker compose' if available, fallback to 'docker-compose'
+DOCKER_COMPOSE_CMD := $(shell if docker compose version >/dev/null 2>&1; then echo "docker compose"; else echo "docker-compose"; fi)
+DOCKER_COMPOSE = $(DOCKER_COMPOSE_CMD) -f docker-compose.dev.yml
+DOCKER_COMPOSE_PROD = $(DOCKER_COMPOSE_CMD)
 BACKEND = $(DOCKER_COMPOSE) run --rm backend
 GO = $(BACKEND) go
 
@@ -150,7 +151,7 @@ setup:
 	@echo "Waiting for services to be ready..."
 	@sleep 10
 	@echo "Running database migrations and setup..."
-	@$(DOCKER_COMPOSE_PROD) exec backend sh -c "cd /app && /app/migrate up && go run apps/backend/cmd/setup/main.go all"
+	@$(DOCKER_COMPOSE_PROD) exec backend sh -c "cd /app && /app/migrate up && /app/setup all"
 	@echo ""
 	@echo "Setup complete! 🚀"
 	@echo "Backend: http://localhost:8080"

@@ -377,55 +377,7 @@ func (m *MCPToolModel) ListByOrganization(orgID uuid.UUID, activeOnly bool) ([]*
 	}
 	defer rows.Close()
 
-	var tools []*MCPTool
-	for rows.Next() {
-		tool := &MCPTool{}
-		var schemaJSON, metadataJSON, accessPermissionsJSON, examplesJSON []byte
-
-		err := rows.Scan(
-			&tool.ID, &tool.OrganizationID, &tool.Name, &tool.Description, &tool.FunctionName,
-			&schemaJSON, &tool.Category, &tool.ImplementationType, &tool.EndpointURL,
-			&tool.TimeoutSeconds, &tool.MaxRetries, &tool.UsageCount, &accessPermissionsJSON,
-			&tool.IsActive, &tool.IsPublic, &metadataJSON, &tool.Tags, &examplesJSON,
-			&tool.Documentation, &tool.CreatedAt, &tool.UpdatedAt, &tool.CreatedBy,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		// Parse JSON fields
-		if len(schemaJSON) > 0 {
-			err = json.Unmarshal(schemaJSON, &tool.Schema)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		if len(metadataJSON) > 0 {
-			err = json.Unmarshal(metadataJSON, &tool.Metadata)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		if len(accessPermissionsJSON) > 0 {
-			err = json.Unmarshal(accessPermissionsJSON, &tool.AccessPermissions)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		if len(examplesJSON) > 0 {
-			err = json.Unmarshal(examplesJSON, &tool.Examples)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		tools = append(tools, tool)
-	}
-
-	return tools, nil
+	return m.parseToolRows(rows)
 }
 
 // ListByCategory lists MCP tools by category for an organization
