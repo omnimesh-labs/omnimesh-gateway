@@ -93,8 +93,7 @@ func (m *OrganizationModel) GetBySlug(slug string) (*Organization, error) {
 
 // GetDefault retrieves the default organization
 func (m *OrganizationModel) GetDefault() (*Organization, error) {
-	defaultID := uuid.MustParse("00000000-0000-0000-0000-000000000000")
-	return m.GetByID(defaultID)
+	return m.GetBySlug("default")
 }
 
 // Update updates an organization

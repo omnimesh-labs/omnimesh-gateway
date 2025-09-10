@@ -291,16 +291,15 @@ func (s *SetupManager) createDefaultOrganization() error {
 
 	orgModel := models.NewOrganizationModel(s.db)
 
-	// Check if default org already exists
-	_, err := orgModel.GetDefault()
+	// Check if default org already exists by slug
+	existingOrg, err := orgModel.GetBySlug("default")
 	if err == nil {
-		fmt.Println("⚠️  Default organization already exists")
+		fmt.Printf("⚠️  Default organization already exists: %s (ID: %s)\n", existingOrg.Name, existingOrg.ID)
 		return nil
 	}
 
 	// Create default organization
 	defaultOrg := &models.Organization{
-		ID:               uuid.MustParse("00000000-0000-0000-0000-000000000000"),
 		Name:             "Default Organization",
 		Slug:             "default",
 		IsActive:         true,
