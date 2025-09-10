@@ -10,8 +10,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 
-	"mcp-gateway/apps/backend/internal/database/models"
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/database/models"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 )
 
 // dbWrapper wraps *sql.DB to implement the Database interface

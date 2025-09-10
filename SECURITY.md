@@ -11,7 +11,7 @@ We release patches for security vulnerabilities in the following versions:
 
 ## Reporting a Vulnerability
 
-We take the security of MCP Gateway seriously. If you believe you have found a security vulnerability, please report it to us as described below.
+We take the security of Omnimesh AI Gateway seriously. If you believe you have found a security vulnerability, please report it to us as described below.
 
 ### How to Report a Security Vulnerability
 
@@ -49,7 +49,7 @@ To help us better understand the nature and scope of the possible issue, please 
 
 ## Security Features
 
-MCP Gateway implements several security measures:
+Omnimesh AI Gateway implements several security measures:
 
 ### Authentication & Authorization
 - JWT-based authentication with configurable expiry
@@ -83,13 +83,13 @@ MCP Gateway implements several security measures:
 
 ## Security Best Practices for Users
 
-When deploying MCP Gateway:
+When deploying Omnimesh AI Gateway:
 
 1. **Use HTTPS in production** - Always enable TLS encryption
 2. **Secure your JWT secret** - Use a strong, random secret key
 3. **Configure rate limiting** - Set appropriate limits for your use case
 4. **Enable audit logging** - Monitor security events
-5. **Regular updates** - Keep MCP Gateway updated to the latest version
+5. **Regular updates** - Keep Omnimesh AI Gateway updated to the latest version
 6. **Environment variables** - Never commit secrets to version control
 7. **Database security** - Use secure database credentials and SSL connections
 8. **Network isolation** - Deploy in secure network environments
@@ -118,4 +118,4 @@ For urgent security matters, please include "URGENT" in the subject line.
 
 ---
 
-Thank you for helping keep MCP Gateway and our users safe!
+Thank you for helping keep Omnimesh AI Gateway and our users safe!

@@ -7,15 +7,15 @@ import (
 	"fmt"
 	"sync"
 
-	"mcp-gateway/apps/backend/internal/database/models"
-	"mcp-gateway/apps/backend/internal/plugins/ai_middleware/llamaguard"
-	"mcp-gateway/apps/backend/internal/plugins/ai_middleware/openai_mod"
-	"mcp-gateway/apps/backend/internal/plugins/content_filters/deny"
-	"mcp-gateway/apps/backend/internal/plugins/content_filters/pii"
-	"mcp-gateway/apps/backend/internal/plugins/content_filters/regex"
-	"mcp-gateway/apps/backend/internal/plugins/content_filters/resource"
-	"mcp-gateway/apps/backend/internal/plugins/shared"
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/database/models"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/plugins/ai_middleware/llamaguard"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/plugins/ai_middleware/openai_mod"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/plugins/content_filters/deny"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/plugins/content_filters/pii"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/plugins/content_filters/regex"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/plugins/content_filters/resource"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/plugins/shared"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 )
 
 // pluginService implements PluginService interface

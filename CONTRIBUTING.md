@@ -1,6 +1,6 @@
-# Contributing to MCP Gateway
+# Contributing to Omnimesh Gateway
 
-Thank you for your interest in contributing to MCP Gateway! We welcome contributions from the community and are excited to work with you.
+Thank you for your interest in contributing to Omnimesh Gateway! We welcome contributions from the community and are excited to work with you.
 
 ## 📋 Table of Contents
 
@@ -34,12 +34,12 @@ Before you begin, ensure you have:
 1. Fork the repository on GitHub
 2. Clone your fork locally:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/mcp-gateway.git
-   cd mcp-gateway
+   git clone https://github.com/YOUR_USERNAME/omnimesh-gateway.git
+   cd omnimesh-gateway
    ```
 3. Add the original repository as a remote:
    ```bash
-   git remote add upstream https://github.com/theognis1002/mcp-gateway.git
+   git remote add upstream https://github.com/omnimesh-labs/omnimesh-gateway.git
    ```
 
 ## 🛠️ Development Setup
@@ -355,4 +355,4 @@ Contributors are recognized in:
 
 ---
 
-Thank you for contributing to MCP Gateway! Your efforts help make this project better for everyone. 🚀
+Thank you for contributing to Omnimesh Gateway! Your efforts help make this project better for everyone. 🚀

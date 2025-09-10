@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"github.com/google/uuid"
 )
@@ -151,7 +151,7 @@ func (s *StreamableHTTPTransport) SendMessage(ctx context.Context, message inter
 		return fmt.Errorf("failed to convert message: %w", err)
 	}
 
-	// For the MCP Gateway, we work internally without external HTTP requests
+	// For the Omnimesh Gateway, we work internally without external HTTP requests
 	// Instead of making HTTP requests, we process the message internally
 	return s.processMessageInternally(ctx, request)
 }

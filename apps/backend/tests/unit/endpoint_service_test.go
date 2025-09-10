@@ -2,9 +2,9 @@ package unit
 
 import (
 	"context"
-	"mcp-gateway/apps/backend/internal/services"
-	"mcp-gateway/apps/backend/internal/types"
-	"mcp-gateway/apps/backend/tests/helpers"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/services"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/tests/helpers"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

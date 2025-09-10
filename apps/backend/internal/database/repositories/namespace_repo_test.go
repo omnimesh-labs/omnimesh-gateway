@@ -5,12 +5,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"mcp-gateway/apps/backend/internal/types"
 )
 
 func TestNamespaceRepository_Create(t *testing.T) {

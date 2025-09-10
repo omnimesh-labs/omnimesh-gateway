@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/logging"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/logging"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -511,8 +511,8 @@ func TestService_Subscribe(t *testing.T) {
 			errorMsg:    "subscriber ID cannot be empty",
 		},
 		{
-			name: "valid subscriber",
-			subscriber: NewMockLogSubscriber("test-subscriber"),
+			name:        "valid subscriber",
+			subscriber:  NewMockLogSubscriber("test-subscriber"),
 			expectError: false,
 		},
 	}

@@ -1,7 +1,7 @@
 import { NavItemType } from '@fuse/core/Navigation/types/NavItemType';
 
 /**
- * The navigationConfig object is an array of navigation items for the MCP Gateway application.
+ * The navigationConfig object is an array of navigation items for the Omnimesh Gateway application.
  */
 const navigationConfig: NavItemType[] = [
 	{

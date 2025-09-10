@@ -18,10 +18,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"mcp-gateway/apps/backend/internal/auth"
-	"mcp-gateway/apps/backend/internal/server/handlers"
-	"mcp-gateway/apps/backend/internal/types"
-	"mcp-gateway/apps/backend/tests/helpers"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/auth"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/server/handlers"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/tests/helpers"
 )
 
 // OAuthE2ETestSuite provides end-to-end testing for OAuth flows
@@ -119,10 +119,10 @@ func TestCompleteAuthorizationCodeFlow(t *testing.T) {
 
 	// Step 3: Token exchange
 	tokenReq := &types.TokenRequest{
-		GrantType:   types.GrantTypeAuthorizationCode,
-		Code:        authorizationCode,
-		RedirectURI: client.RedirectURIs[0],
-		ClientID:    client.ClientID,
+		GrantType:    types.GrantTypeAuthorizationCode,
+		Code:         authorizationCode,
+		RedirectURI:  client.RedirectURIs[0],
+		ClientID:     client.ClientID,
 		ClientSecret: client.ClientSecret,
 	}
 
@@ -361,10 +361,10 @@ func TestErrorHandling(t *testing.T) {
 		{
 			name: "Invalid authorization code",
 			tokenRequest: &types.TokenRequest{
-				GrantType:   types.GrantTypeAuthorizationCode,
-				Code:        "invalid-code",
-				RedirectURI: client.RedirectURIs[0],
-				ClientID:    client.ClientID,
+				GrantType:    types.GrantTypeAuthorizationCode,
+				Code:         "invalid-code",
+				RedirectURI:  client.RedirectURIs[0],
+				ClientID:     client.ClientID,
 				ClientSecret: client.ClientSecret,
 			},
 			expectedError:  types.ErrorInvalidGrant,

@@ -1,5 +1,5 @@
 name: Bug Report
-description: Report a bug encountered while using MCP Gateway
+description: Report a bug encountered while using Omnimesh AI Gateway
 labels: kind/bug
 body:
   - type: markdown
@@ -136,12 +136,12 @@ body:
   - type: textarea
     id: version
     attributes:
-      label: MCP Gateway Version
+      label: Omnimesh AI Gateway Version
       value: |
         <details>
 
         ```console
-        $ mcp-gateway version
+        $ omnimesh-gateway version
         # paste output here
         ```
 

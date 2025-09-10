@@ -41,7 +41,7 @@ repos:
       - id: go-imports
         name: go imports
         entry: goimports
-        args: [-w, -local, mcp-gateway]
+        args: [-w, -local, omnimesh-gateway]
         language: system
         files: \.go$
         pass_filenames: false

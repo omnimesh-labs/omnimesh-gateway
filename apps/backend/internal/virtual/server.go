@@ -3,7 +3,7 @@ package virtual
 import (
 	"fmt"
 
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 )
 
 // VirtualServer implements the Server interface for MCP protocol

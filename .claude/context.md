@@ -1,4 +1,4 @@
-# MCP Gateway - Claude Context
+# Omnimesh Gateway - Claude Context
 
 ## Project Overview
 This is a production-ready API gateway for Model Context Protocol (MCP) servers, built with Go and PostgreSQL.

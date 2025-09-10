@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/a2a"
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/a2a"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

@@ -9,9 +9,9 @@ import (
 	"os"
 	"strings"
 
-	"mcp-gateway/apps/backend/internal/config"
-	"mcp-gateway/apps/backend/internal/database/models"
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/config"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/database/models"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
@@ -71,7 +71,7 @@ var setupFunctions = map[string]SetupFunction{
 }
 
 func main() {
-	fmt.Println("🚀 MCP Gateway Local Development Setup")
+	fmt.Println("🚀 Omnimesh Gateway Local Development Setup")
 	fmt.Println("======================================")
 
 	// Load configuration
@@ -429,14 +429,14 @@ func (s *SetupManager) addDefaultResources(orgID uuid.UUID) error {
 			name:         "System Documentation",
 			description:  "Default system documentation resource",
 			resourceType: "url",
-			uri:          "https://docs.example.com/mcp-gateway",
+			uri:          "https://docs.example.com/omnimesh-gateway",
 			mimeType:     "text/html",
 			metadata:     map[string]interface{}{"version": "1.0", "public": true},
 			tags:         []string{"documentation", "system", "help"},
 		},
 		{
 			name:         "API Reference",
-			description:  "MCP Gateway API reference documentation",
+			description:  "Omnimesh Gateway API reference documentation",
 			resourceType: "url",
 			uri:          "https://api.example.com/docs",
 			mimeType:     "application/json",
@@ -480,7 +480,6 @@ func (s *SetupManager) addDefaultResources(orgID uuid.UUID) error {
 
 	return nil
 }
-
 
 func (s *SetupManager) addDefaultPrompts(orgID uuid.UUID) error {
 	promptModel := models.NewMCPPromptModel(s.db)

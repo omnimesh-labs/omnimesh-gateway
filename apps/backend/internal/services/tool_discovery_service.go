@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/database/models"
-	"mcp-gateway/apps/backend/internal/transport"
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/database/models"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/transport"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"github.com/google/uuid"
 )
@@ -157,7 +157,7 @@ func (s *ToolDiscoveryService) discoverRealMCPTools(ctx context.Context, server 
 	if err := transport.Connect(ctx); err != nil {
 		return nil, fmt.Errorf("failed to establish connection to MCP server")
 	}
-	
+
 	// Quick check: For STDIO transport, verify the command exists and is executable
 	if transportType == types.TransportTypeSTDIO {
 		if server.Command.Valid && server.Command.String != "" {

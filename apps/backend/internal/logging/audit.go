@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 )
 
 // AuditService handles audit trail functionality

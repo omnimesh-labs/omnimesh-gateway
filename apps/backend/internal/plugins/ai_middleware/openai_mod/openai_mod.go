@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/plugins/shared"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/plugins/shared"
 )
 
 // OpenAIModerationPlugin implements the OpenAI Moderation API filter

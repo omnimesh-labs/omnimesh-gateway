@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/database/models"
-	"mcp-gateway/apps/backend/internal/discovery"
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/database/models"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/discovery"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -499,9 +499,9 @@ func TestService_StringMapConversion(t *testing.T) {
 
 func TestService_ServerStatusTransitions(t *testing.T) {
 	tests := []struct {
-		name           string
-		initialStatus  string
-		newStatus      string
+		name             string
+		initialStatus    string
+		newStatus        string
 		shouldTransition bool
 	}{
 		{
@@ -547,10 +547,10 @@ func TestService_ServerStatusTransitions(t *testing.T) {
 
 			// Verify status transitions are valid
 			validTransitions := map[string][]string{
-				types.ServerStatusInactive:   {types.ServerStatusActive},
-				types.ServerStatusActive:     {"failed", types.ServerStatusInactive},
-				"failed":     {"recovering", types.ServerStatusInactive},
-				"recovering": {types.ServerStatusActive, "failed"},
+				types.ServerStatusInactive: {types.ServerStatusActive},
+				types.ServerStatusActive:   {"failed", types.ServerStatusInactive},
+				"failed":                   {"recovering", types.ServerStatusInactive},
+				"recovering":               {types.ServerStatusActive, "failed"},
 			}
 
 			if validTransitions[tt.initialStatus] != nil {

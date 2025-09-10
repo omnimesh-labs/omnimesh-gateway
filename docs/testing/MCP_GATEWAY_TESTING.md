@@ -1,6 +1,6 @@
-# MCP Gateway Testing Guide
+# Omnimesh Gateway Testing Guide
 
-This guide walks through setting up a practical MCP Gateway environment with real servers and endpoints.
+This guide walks through setting up a practical Omnimesh Gateway environment with real servers and endpoints.
 
 ## 📋 Prerequisites
 
@@ -12,12 +12,12 @@ Before starting, make sure you have:
 
 ---
 
-## 🚀 Part 1: Starting the MCP Gateway
+## 🚀 Part 1: Starting the Omnimesh Gateway
 
 1. **Clone and Start the Gateway**
    ```bash
-   git clone https://github.com/theognis1002/mcp-gateway.git
-   cd mcp-gateway
+   git clone https://github.com/omnimesh-labs/omnimesh-gateway.git
+   cd omnimesh-gateway
    make start
    ```
 
@@ -363,14 +363,14 @@ Configure Claude Desktop to connect to your gateway:
    ```json
    {
      "mcpServers": {
-       "mcp-gateway": {
+       "omnimesh-gateway": {
          "type": "http",
          "url": "http://localhost:8080/rpc",
          "headers": {
            "X-API-Key": "YOUR_API_KEY"
          }
        },
-       "mcp-gateway-namespace": {
+       "omnimesh-gateway-namespace": {
          "type": "http", 
          "url": "http://localhost:8080/api/public/endpoints/ENDPOINT_NAME/mcp",
          "headers": {

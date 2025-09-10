@@ -3,7 +3,7 @@ package auth
 import (
 	"testing"
 
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"github.com/stretchr/testify/assert"
 )

@@ -1,6 +1,6 @@
-# MCP Gateway - Playwright Server Example
+# Omnimesh Gateway - Playwright Server Example
 
-This example shows how to use the MCP Gateway to connect to the Playwright MCP server.
+This example shows how to use the Omnimesh Gateway to connect to the Playwright MCP server.
 
 ## Step 1: Register the Playwright MCP Server
 
@@ -95,7 +95,7 @@ curl -X POST http://localhost:8080/api/gateway/sessions/session-uuid-here/messag
         }
       },
       "clientInfo": {
-        "name": "mcp-gateway",
+        "name": "omnimesh-gateway",
         "version": "1.0.0"
       }
     },
@@ -132,10 +132,10 @@ Once connected, you can use standard MCP methods like:
 ## Architecture
 
 ```
-Client → MCP Gateway → Playwright MCP Server (via stdio)
+Client → Omnimesh Gateway → Playwright MCP Server (via stdio)
 ```
 
-The MCP Gateway:
+The Omnimesh Gateway:
 1. Manages the lifecycle of MCP server processes
 2. Provides WebSocket/HTTP interface for clients
 3. Handles authentication and rate limiting

@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"github.com/gin-gonic/gin"
 )

@@ -12,8 +12,8 @@ import (
 	"syscall"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/config"
-	"mcp-gateway/apps/backend/internal/server"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/config"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/server"
 )
 
 func gracefulShutdown(apiServer *http.Server, done chan bool) {

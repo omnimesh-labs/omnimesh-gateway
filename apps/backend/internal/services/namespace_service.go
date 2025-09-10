@@ -7,9 +7,9 @@ import (
 	"strings"
 	"sync"
 
-	"mcp-gateway/apps/backend/internal/database/repositories"
-	"mcp-gateway/apps/backend/internal/mcp"
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/database/repositories"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/mcp"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -494,7 +494,7 @@ func (s *NamespaceService) ensureMCPConnection(ctx context.Context, session *Ses
 			Command:     *server.Command,
 			Args:        server.Args,
 			Environment: envMap,
-			WorkingDir:  func() string {
+			WorkingDir: func() string {
 				if server.WorkingDir != nil {
 					return *server.WorkingDir
 				}
@@ -511,7 +511,7 @@ func (s *NamespaceService) ensureMCPConnection(ctx context.Context, session *Ses
 
 	// Connect to the server
 	clientInfo := mcp.ClientInfo{
-		Name:    "mcp-gateway",
+		Name:    "omnimesh-gateway",
 		Version: "1.0.0",
 		Capabilities: map[string]interface{}{
 			"tools": map[string]interface{}{

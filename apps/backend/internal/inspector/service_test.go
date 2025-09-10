@@ -6,10 +6,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/transport"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"mcp-gateway/apps/backend/internal/transport"
-	"mcp-gateway/apps/backend/internal/types"
 )
 
 // MockTransport is a mock implementation of the Transport interface
@@ -85,7 +86,7 @@ func TestService_CreateSession(t *testing.T) {
 	mockTransport.On("ReceiveMessage", ctx).Return(types.MCPMessage{
 		Result: map[string]interface{}{
 			"capabilities": map[string]interface{}{
-				"tools": true,
+				"tools":     true,
 				"resources": true,
 			},
 		},

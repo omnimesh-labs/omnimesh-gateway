@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"github.com/google/uuid"
 )
@@ -25,15 +25,15 @@ type STDIOTransport struct {
 	cmd          *exec.Cmd
 	messageQueue chan *types.MCPMessage
 	*BaseTransport
-	config       map[string]interface{}
-	done         chan struct{}
-	command      string
-	workingDir   string
-	args         []string
-	env          []string
-	timeout      time.Duration
-	mu           sync.RWMutex
-	cleanupOnce  sync.Once // Ensure cleanup only runs once
+	config      map[string]interface{}
+	done        chan struct{}
+	command     string
+	workingDir  string
+	args        []string
+	env         []string
+	timeout     time.Duration
+	mu          sync.RWMutex
+	cleanupOnce sync.Once // Ensure cleanup only runs once
 }
 
 // NewSTDIOTransport creates a new STDIO transport instance

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"mcp-gateway/apps/backend/internal/plugins/shared"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/plugins/shared"
 )
 
 // RegexFilter implements pattern-based search and replace functionality

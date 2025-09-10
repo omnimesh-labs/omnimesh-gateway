@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 )
 
 // MCPClient implements the MCP protocol over a transport connection
@@ -51,10 +51,10 @@ type JSONRPCRequest struct {
 
 // JSONRPCResponse represents a JSON-RPC response
 type JSONRPCResponse struct {
-	JSONRPC string      `json:"jsonrpc"`
-	Result  interface{} `json:"result,omitempty"`
+	JSONRPC string          `json:"jsonrpc"`
+	Result  interface{}     `json:"result,omitempty"`
 	Error   *types.MCPError `json:"error,omitempty"`
-	ID      string      `json:"id"`
+	ID      string          `json:"id"`
 }
 
 // InitializeParams represents MCP initialize request parameters
@@ -66,9 +66,9 @@ type InitializeParams struct {
 
 // InitializeResult represents MCP initialize response
 type InitializeResult struct {
-	ProtocolVersion  string                 `json:"protocolVersion"`
-	Capabilities     map[string]interface{} `json:"capabilities"`
-	ServerInfo       ServerInfo             `json:"serverInfo"`
+	ProtocolVersion string                 `json:"protocolVersion"`
+	Capabilities    map[string]interface{} `json:"capabilities"`
+	ServerInfo      ServerInfo             `json:"serverInfo"`
 }
 
 // ServerInfo represents information about the MCP server
@@ -91,7 +91,7 @@ type ToolsCallParams struct {
 // ToolsCallResult represents the result of tools/call
 type ToolsCallResult struct {
 	Content []ToolCallContent `json:"content"`
-	IsError bool             `json:"isError,omitempty"`
+	IsError bool              `json:"isError,omitempty"`
 }
 
 // ToolCallContent represents content returned by a tool call

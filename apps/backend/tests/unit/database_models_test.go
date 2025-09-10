@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/database/models"
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/database/models"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -199,45 +199,45 @@ func TestUser_Validation(t *testing.T) {
 // Test Organization model validation
 func TestOrganization_PlanLimits(t *testing.T) {
 	tests := []struct {
-		name         string
-		planType     string
-		maxServers   int
-		maxSessions  int
+		name          string
+		planType      string
+		maxServers    int
+		maxSessions   int
 		expectedValid bool
 	}{
 		{
-			name:         "free plan limits",
-			planType:     "free",
-			maxServers:   10,
-			maxSessions:  100,
+			name:          "free plan limits",
+			planType:      "free",
+			maxServers:    10,
+			maxSessions:   100,
 			expectedValid: true,
 		},
 		{
-			name:         "pro plan limits",
-			planType:     "pro",
-			maxServers:   100,
-			maxSessions:  1000,
+			name:          "pro plan limits",
+			planType:      "pro",
+			maxServers:    100,
+			maxSessions:   1000,
 			expectedValid: true,
 		},
 		{
-			name:         "enterprise plan limits",
-			planType:     "enterprise",
-			maxServers:   1000,
-			maxSessions:  10000,
+			name:          "enterprise plan limits",
+			planType:      "enterprise",
+			maxServers:    1000,
+			maxSessions:   10000,
 			expectedValid: true,
 		},
 		{
-			name:         "invalid plan type",
-			planType:     "invalid",
-			maxServers:   10,
-			maxSessions:  100,
+			name:          "invalid plan type",
+			planType:      "invalid",
+			maxServers:    10,
+			maxSessions:   100,
 			expectedValid: false,
 		},
 		{
-			name:         "negative limits",
-			planType:     "free",
-			maxServers:   -1,
-			maxSessions:  -1,
+			name:          "negative limits",
+			planType:      "free",
+			maxServers:    -1,
+			maxSessions:   -1,
 			expectedValid: false,
 		},
 	}
@@ -277,7 +277,7 @@ func TestMCPSession_StatusTransitions(t *testing.T) {
 	validTransitions := map[string][]string{
 		"initializing": {"active", "error"},
 		"active":       {"closed", "error"},
-		"closed":       {}, // Terminal state
+		"closed":       {},         // Terminal state
 		"error":        {"closed"}, // Can only be closed from error
 	}
 

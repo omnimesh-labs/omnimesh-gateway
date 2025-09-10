@@ -7,8 +7,8 @@ server:
   idle_timeout: 120s
   tls:
     enabled: true
-    cert_file: "/etc/ssl/certs/mcp-gateway.crt"
-    key_file: "/etc/ssl/private/mcp-gateway.key"
+    cert_file: "/etc/ssl/certs/omnimesh-gateway.crt"
+    key_file: "/etc/ssl/private/omnimesh-gateway.key"
 
 database:
   host: "${DB_HOST}"
@@ -62,7 +62,7 @@ discovery:
 logging:
   level: "info"
   format: "json"
-  output: "/var/log/mcp-gateway/apps/backend/app.log"
+  output: "/var/log/omnimesh-gateway/apps/backend/app.log"
   enable_audit: true
   enable_request: true
   request_body_log: false

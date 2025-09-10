@@ -6,9 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
+
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	"mcp-gateway/apps/backend/internal/types"
 )
 
 // NamespaceRepository handles namespace database operations
@@ -114,7 +115,6 @@ func (r *NamespaceRepository) GetByName(ctx context.Context, orgID, name string)
 
 	return ns, nil
 }
-
 
 // List retrieves all namespaces for an organization
 func (r *NamespaceRepository) List(ctx context.Context, orgID string) ([]*types.Namespace, error) {

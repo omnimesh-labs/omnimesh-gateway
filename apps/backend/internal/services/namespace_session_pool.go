@@ -4,23 +4,23 @@ import (
 	"sync"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/mcp"
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/mcp"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"github.com/google/uuid"
 )
 
 // Session represents a namespace session with real MCP connection
 type Session struct {
-	ID          string
-	ServerID    string
-	NamespaceID string
-	Status      string
-	Connection  *mcp.MCPClient
-	LastUsed    time.Time
-	Tools       []types.Tool
+	ID           string
+	ServerID     string
+	NamespaceID  string
+	Status       string
+	Connection   *mcp.MCPClient
+	LastUsed     time.Time
+	Tools        []types.Tool
 	Capabilities map[string]interface{}
-	mu          sync.RWMutex
+	mu           sync.RWMutex
 }
 
 // Close closes the session and cleans up resources
@@ -52,9 +52,9 @@ func (s *Session) UpdateLastUsed() {
 
 // NamespaceSessionPool manages sessions for namespace servers
 type NamespaceSessionPool struct {
-	sessions        map[string]map[string]*Session // namespace -> server -> session
+	sessions         map[string]map[string]*Session // namespace -> server -> session
 	transportManager *mcp.TransportManager
-	mu              sync.RWMutex
+	mu               sync.RWMutex
 }
 
 // NewNamespaceSessionPool creates a new namespace session pool
@@ -95,12 +95,12 @@ func (p *NamespaceSessionPool) GetSession(namespaceID, serverID string) (*Sessio
 
 	// Create new session placeholder (real MCP connection will be established by namespace service)
 	session := &Session{
-		ID:          uuid.New().String(),
-		ServerID:    serverID,
-		NamespaceID: namespaceID,
-		Status:      "created",
-		LastUsed:    time.Now(),
-		Tools:       make([]types.Tool, 0),
+		ID:           uuid.New().String(),
+		ServerID:     serverID,
+		NamespaceID:  namespaceID,
+		Status:       "created",
+		LastUsed:     time.Now(),
+		Tools:        make([]types.Tool, 0),
 		Capabilities: make(map[string]interface{}),
 	}
 

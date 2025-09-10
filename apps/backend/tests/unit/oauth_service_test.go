@@ -10,9 +10,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"mcp-gateway/apps/backend/internal/auth"
-	"mcp-gateway/apps/backend/internal/types"
-	"mcp-gateway/apps/backend/tests/helpers"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/auth"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/tests/helpers"
 )
 
 // OAuthServiceTestSuite provides test setup for OAuth service unit tests
@@ -73,12 +73,12 @@ func TestOAuthService_RegisterClient(t *testing.T) {
 	defer suite.Cleanup()
 
 	testCases := []struct {
-		name                string
-		request             *types.ClientRegistrationRequest
-		expectError         bool
-		expectedClientType  string
-		expectedGrantTypes  []string
-		expectedScopes      string
+		name               string
+		request            *types.ClientRegistrationRequest
+		expectError        bool
+		expectedClientType string
+		expectedGrantTypes []string
+		expectedScopes     string
 	}{
 		{
 			name: "Valid Client Registration",
@@ -90,10 +90,10 @@ func TestOAuthService_RegisterClient(t *testing.T) {
 				TokenEndpointAuthMethod: types.TokenEndpointAuthClientSecretBasic,
 				Scope:                   "read write",
 			},
-			expectError:         false,
-			expectedClientType:  types.ClientTypeConfidential,
-			expectedGrantTypes:  []string{types.GrantTypeAuthorizationCode, types.GrantTypeRefreshToken},
-			expectedScopes:      "read write",
+			expectError:        false,
+			expectedClientType: types.ClientTypeConfidential,
+			expectedGrantTypes: []string{types.GrantTypeAuthorizationCode, types.GrantTypeRefreshToken},
+			expectedScopes:     "read write",
 		},
 		{
 			name: "Public Client Registration",
@@ -105,10 +105,10 @@ func TestOAuthService_RegisterClient(t *testing.T) {
 				TokenEndpointAuthMethod: types.TokenEndpointAuthNone,
 				Scope:                   "read",
 			},
-			expectError:         false,
-			expectedClientType:  types.ClientTypePublic,
-			expectedGrantTypes:  []string{types.GrantTypeAuthorizationCode},
-			expectedScopes:      "read",
+			expectError:        false,
+			expectedClientType: types.ClientTypePublic,
+			expectedGrantTypes: []string{types.GrantTypeAuthorizationCode},
+			expectedScopes:     "read",
 		},
 	}
 
@@ -227,10 +227,10 @@ func TestOAuthService_AuthorizationCodeFlow(t *testing.T) {
 
 	// Test token exchange with authorization code
 	tokenReq := &types.TokenRequest{
-		GrantType:   types.GrantTypeAuthorizationCode,
-		Code:        code,
-		RedirectURI: clientReq.RedirectURIs[0],
-		ClientID:    clientResp.ClientID,
+		GrantType:    types.GrantTypeAuthorizationCode,
+		Code:         code,
+		RedirectURI:  clientReq.RedirectURIs[0],
+		ClientID:     clientResp.ClientID,
 		ClientSecret: clientResp.ClientSecret,
 	}
 
@@ -497,10 +497,10 @@ func (suite *OAuthServiceTestSuite) setupRefreshTokenTest(t *testing.T, ctx cont
 
 	// Exchange for tokens
 	tokenReq := &types.TokenRequest{
-		GrantType:   types.GrantTypeAuthorizationCode,
-		Code:        code,
-		RedirectURI: clientReq.RedirectURIs[0],
-		ClientID:    clientResp.ClientID,
+		GrantType:    types.GrantTypeAuthorizationCode,
+		Code:         code,
+		RedirectURI:  clientReq.RedirectURIs[0],
+		ClientID:     clientResp.ClientID,
 		ClientSecret: clientResp.ClientSecret,
 	}
 

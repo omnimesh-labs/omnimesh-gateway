@@ -13,10 +13,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"mcp-gateway/apps/backend/internal/server/handlers"
-	"mcp-gateway/apps/backend/internal/services"
-	"mcp-gateway/apps/backend/internal/types"
-	"mcp-gateway/apps/backend/tests/helpers"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/server/handlers"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/services"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/tests/helpers"
 )
 
 // IntegrationTestSuite provides a test setup for integration tests

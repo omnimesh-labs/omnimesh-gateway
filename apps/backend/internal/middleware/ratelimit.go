@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/config"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/config"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"

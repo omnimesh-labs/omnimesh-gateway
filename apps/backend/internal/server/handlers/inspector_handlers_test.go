@@ -11,12 +11,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/inspector"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"mcp-gateway/apps/backend/internal/inspector"
 )
 
 // MockInspectorService is a mock implementation of the inspector service
@@ -259,10 +260,10 @@ func TestInspectorHandler_GetSession_Forbidden(t *testing.T) {
 
 	// Setup mock to return session owned by different user
 	otherUserSession := &inspector.InspectorSession{
-		ID:       "session-123",
-		UserID:   "other-user",
-		OrgID:    "test-org-456",
-		Status:   inspector.SessionStatusConnected,
+		ID:     "session-123",
+		UserID: "other-user",
+		OrgID:  "test-org-456",
+		Status: inspector.SessionStatusConnected,
 	}
 
 	mockService.On("GetSession", "session-123").Return(otherUserSession, nil)

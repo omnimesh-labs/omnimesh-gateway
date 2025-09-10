@@ -1,10 +1,10 @@
-# MCP Gateway
+# Omnimesh AI Gateway
 
-[![CI](https://github.com/theognis1002/mcp-gateway/workflows/CI/badge.svg)](https://github.com/theognis1002/mcp-gateway/actions)
+[![CI](https://github.com/omnimesh-labs/omnimesh-gateway/workflows/CI/badge.svg)](https://github.com/omnimesh-labs/omnimesh-gateway/actions)
 [![Go Version](https://img.shields.io/badge/Go-1.25+-blue.svg)](https://golang.org)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Go Report Card](https://goreportcard.com/badge/github.com/theognis1002/mcp-gateway)](https://goreportcard.com/report/github.com/theognis1002/mcp-gateway)
-[![codecov](https://codecov.io/gh/theognis1002/mcp-gateway/branch/main/graph/badge.svg)](https://codecov.io/gh/theognis1002/mcp-gateway)
+[![Go Report Card](https://goreportcard.com/badge/github.com/omnimesh-labs/omnimesh-gateway)](https://goreportcard.com/report/github.com/omnimesh-labs/omnimesh-gateway)
+[![codecov](https://codecov.io/gh/omnimesh-gateway/branch/main/graph/badge.svg)](https://codecov.io/gh/omnimesh-labs/omnimesh-gateway)
 [![Security](https://img.shields.io/badge/Security-Enabled-green.svg)](SECURITY.md)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
@@ -13,12 +13,12 @@ A production-ready API gateway for Model Context Protocol (MCP) servers, providi
 
 ## 🚀 Quick Start
 
-Get the entire MCP Gateway stack running with a single command:
+Get the entire Omnimesh AI Gateway stack running with a single command:
 
 ```bash
 # Clone the repository
-git clone https://github.com/theognis1002/mcp-gateway.git
-cd mcp-gateway
+git clone https://github.com/omnimesh-labs/omnimesh-gateway.git
+cd omnimesh-gateway
 
 # Option 1: Using Docker Compose directly
 docker compose up --build
@@ -35,7 +35,7 @@ make start
 
 ## Architecture
 
-The MCP Gateway is designed with a modular architecture for scalability and maintainability:
+The Omnimesh AI Gateway is designed with a modular architecture for scalability and maintainability:
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -46,7 +46,7 @@ The MCP Gateway is designed with a modular architecture for scalability and main
           └──────────────────────┼──────────────────────┘
                                  │
                    ┌─────────────▼─────────────┐
-                   │       MCP Gateway         │
+                   │    Omnimesh AI Gateway    │
                    │                           │
                    │  ┌─────────────────────┐  │
                    │  │   Security Layer    │  │
@@ -216,15 +216,15 @@ Security is a top priority. Please review our [Security Policy](SECURITY.md) and
 ## 🙏 Acknowledgments
 
 - [Model Context Protocol](https://modelcontextprotocol.io/) for the core specification
-- All our [contributors](https://github.com/theognis1002/mcp-gateway/contributors)
+- All our [contributors](https://github.com/omnimesh-labs/omnimesh-gateway/contributors)
 
 ---
 
 <div align="center">
   <p>Built with ❤️ for the MCP community</p>
   <p>
-    <a href="https://github.com/theognis1002/mcp-gateway">⭐ Star us on GitHub</a> •
-    <a href="https://github.com/theognis1002/mcp-gateway/issues">🐛 Report Bug</a> •
-    <a href="https://github.com/theognis1002/mcp-gateway/issues">💡 Request Feature</a>
+    <a href="https://github.com/omnimesh-labs/omnimesh-gateway">⭐ Star us on GitHub</a> •
+    <a href="https://github.com/omnimesh-labs/omnimesh-gateway/issues">🐛 Report Bug</a> •
+    <a href="https://github.com/omnimesh-labs/omnimesh-gateway/issues">💡 Request Feature</a>
   </p>
 </div>

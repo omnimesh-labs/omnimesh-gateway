@@ -16,10 +16,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"mcp-gateway/apps/backend/internal/auth"
-	"mcp-gateway/apps/backend/internal/server/handlers"
-	"mcp-gateway/apps/backend/internal/types"
-	"mcp-gateway/apps/backend/tests/helpers"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/auth"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/server/handlers"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/tests/helpers"
 )
 
 // OAuthIntegrationTestSuite provides test setup for OAuth integration tests
@@ -284,10 +284,10 @@ func TestTokenEndpoint(t *testing.T) {
 		require.NoError(t, err)
 
 		tokenReq := types.TokenRequest{
-			GrantType:   types.GrantTypeAuthorizationCode,
-			Code:        code,
-			RedirectURI: client.RedirectURIs[0],
-			ClientID:    client.ClientID,
+			GrantType:    types.GrantTypeAuthorizationCode,
+			Code:         code,
+			RedirectURI:  client.RedirectURIs[0],
+			ClientID:     client.ClientID,
 			ClientSecret: client.ClientSecret,
 		}
 

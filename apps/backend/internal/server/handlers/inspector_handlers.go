@@ -7,10 +7,11 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/inspector"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
-	"mcp-gateway/apps/backend/internal/inspector"
 )
 
 // InspectorHandler handles inspector-related HTTP requests

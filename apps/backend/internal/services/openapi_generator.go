@@ -2,7 +2,7 @@ package services
 
 import (
 	"fmt"
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 	"strings"
 )
 
@@ -20,12 +20,12 @@ func NewOpenAPIGenerator(baseURL string) *OpenAPIGenerator {
 
 // OpenAPISpec represents an OpenAPI 3.0 specification
 type OpenAPISpec struct {
-	OpenAPI    string                 `json:"openapi"`
-	Info       Info                   `json:"info"`
-	Servers    []Server               `json:"servers"`
-	Paths      map[string]PathItem    `json:"paths"`
-	Components Components             `json:"components"`
-	Security   []SecurityRequirement  `json:"security,omitempty"`
+	OpenAPI    string                `json:"openapi"`
+	Info       Info                  `json:"info"`
+	Servers    []Server              `json:"servers"`
+	Paths      map[string]PathItem   `json:"paths"`
+	Components Components            `json:"components"`
+	Security   []SecurityRequirement `json:"security,omitempty"`
 }
 
 // Info represents the info section of OpenAPI spec
@@ -51,22 +51,22 @@ type PathItem struct {
 
 // Operation represents an operation in OpenAPI spec
 type Operation struct {
-	Summary     string                 `json:"summary,omitempty"`
-	Description string                 `json:"description,omitempty"`
-	OperationID string                 `json:"operationId"`
-	Parameters  []Parameter            `json:"parameters,omitempty"`
-	RequestBody *RequestBody           `json:"requestBody,omitempty"`
-	Responses   map[string]Response    `json:"responses"`
-	Security    []SecurityRequirement  `json:"security,omitempty"`
+	Summary     string                `json:"summary,omitempty"`
+	Description string                `json:"description,omitempty"`
+	OperationID string                `json:"operationId"`
+	Parameters  []Parameter           `json:"parameters,omitempty"`
+	RequestBody *RequestBody          `json:"requestBody,omitempty"`
+	Responses   map[string]Response   `json:"responses"`
+	Security    []SecurityRequirement `json:"security,omitempty"`
 }
 
 // Parameter represents a parameter in OpenAPI spec
 type Parameter struct {
-	Name        string      `json:"name"`
-	In          string      `json:"in"`
-	Description string      `json:"description,omitempty"`
-	Required    bool        `json:"required"`
-	Schema      Schema      `json:"schema"`
+	Name        string `json:"name"`
+	In          string `json:"in"`
+	Description string `json:"description,omitempty"`
+	Required    bool   `json:"required"`
+	Schema      Schema `json:"schema"`
 }
 
 // RequestBody represents a request body in OpenAPI spec
@@ -89,13 +89,13 @@ type MediaType struct {
 
 // Schema represents a schema in OpenAPI spec
 type Schema struct {
-	Type       string                 `json:"type,omitempty"`
-	Format     string                 `json:"format,omitempty"`
-	Properties map[string]Schema      `json:"properties,omitempty"`
-	Required   []string               `json:"required,omitempty"`
-	Items      *Schema                `json:"items,omitempty"`
-	Ref        string                 `json:"$ref,omitempty"`
-	Example    interface{}            `json:"example,omitempty"`
+	Type       string            `json:"type,omitempty"`
+	Format     string            `json:"format,omitempty"`
+	Properties map[string]Schema `json:"properties,omitempty"`
+	Required   []string          `json:"required,omitempty"`
+	Items      *Schema           `json:"items,omitempty"`
+	Ref        string            `json:"$ref,omitempty"`
+	Example    interface{}       `json:"example,omitempty"`
 }
 
 // Components represents the components section of OpenAPI spec
@@ -136,14 +136,14 @@ func (g *OpenAPIGenerator) GenerateSpec(endpoint *types.Endpoint, namespace *typ
 	spec := &OpenAPISpec{
 		OpenAPI: "3.0.0",
 		Info: Info{
-			Title:       fmt.Sprintf("%s - MCP Gateway", endpoint.Name),
+			Title:       fmt.Sprintf("%s - Omnimesh AI Gateway", endpoint.Name),
 			Description: g.generateDescription(endpoint, namespace),
 			Version:     "1.0.0",
 		},
 		Servers: []Server{
 			{
 				URL:         fmt.Sprintf("%s/api/public/endpoints/%s/api", g.baseURL, endpoint.Name),
-				Description: "MCP Gateway Endpoint API",
+				Description: "Omnimesh AI Gateway Endpoint API",
 			},
 		},
 		Paths:      make(map[string]PathItem),
@@ -419,7 +419,7 @@ func (g *OpenAPIGenerator) sanitizeOperationID(toolName string) string {
 	var result strings.Builder
 	for _, ch := range toolName {
 		if (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
-		   (ch >= '0' && ch <= '9') {
+			(ch >= '0' && ch <= '9') {
 			result.WriteRune(ch)
 		} else {
 			result.WriteRune('_')

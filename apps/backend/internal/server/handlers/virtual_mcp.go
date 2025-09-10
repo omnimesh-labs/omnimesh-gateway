@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"mcp-gateway/apps/backend/internal/types"
-	"mcp-gateway/apps/backend/internal/virtual"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/virtual"
 
 	"github.com/gin-gonic/gin"
 )

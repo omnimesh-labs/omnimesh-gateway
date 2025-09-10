@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/config"
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/config"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -343,7 +343,7 @@ func TestExpandEnvVars(t *testing.T) {
 			expected: "empty: ",
 		},
 		{
-			name:     "complex YAML with variables",
+			name: "complex YAML with variables",
 			input: `server:
   host: ${HOST:-localhost}
   port: ${PORT:-8080}
@@ -481,12 +481,12 @@ filters:
 
 	// Test that environment variables were expanded
 	assert.Equal(t, "localhost", cfg.Server.Host) // Default value
-	assert.Equal(t, 9090, cfg.Server.Port)       // From environment
+	assert.Equal(t, 9090, cfg.Server.Port)        // From environment
 	assert.False(t, cfg.Server.TLS.Enabled)
 
 	assert.Equal(t, "localhost", cfg.Database.Host)
 	assert.Equal(t, 5432, cfg.Database.Port)
-	assert.Equal(t, "testuser", cfg.Database.User)  // From environment
+	assert.Equal(t, "testuser", cfg.Database.User)   // From environment
 	assert.Equal(t, "secret", cfg.Database.Password) // Default value
 	assert.Equal(t, "gateway_test", cfg.Database.Database)
 	assert.Equal(t, "disable", cfg.Database.SSLMode)

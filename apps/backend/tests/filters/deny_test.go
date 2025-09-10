@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"mcp-gateway/apps/backend/internal/plugins/content_filters/deny"
-	"mcp-gateway/apps/backend/internal/plugins/shared"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/plugins/content_filters/deny"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/plugins/shared"
 )
 
 func TestDenyFilter_NewDenyFilter(t *testing.T) {

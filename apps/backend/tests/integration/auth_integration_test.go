@@ -13,10 +13,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"mcp-gateway/apps/backend/internal/auth"
-	"mcp-gateway/apps/backend/internal/server/handlers"
-	"mcp-gateway/apps/backend/internal/types"
-	"mcp-gateway/apps/backend/tests/helpers"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/auth"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/server/handlers"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/tests/helpers"
 )
 
 // AuthIntegrationTestSuite provides test setup for auth integration tests

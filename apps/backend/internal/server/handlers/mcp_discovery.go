@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"mcp-gateway/apps/backend/internal/discovery"
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/discovery"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"github.com/gin-gonic/gin"
 )

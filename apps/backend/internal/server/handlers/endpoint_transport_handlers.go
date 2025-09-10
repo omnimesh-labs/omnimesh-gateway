@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"fmt"
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 	"net/http"
 	"time"
 
@@ -140,7 +140,7 @@ func HandleEndpointHTTP(namespaceService NamespaceService) gin.HandlerFunc {
 			c.Header("Content-Type", "application/json")
 			c.Status(http.StatusOK)
 			return
-			
+
 		case "GET":
 			// Handle GET requests - return server capabilities
 			c.JSON(http.StatusOK, gin.H{
@@ -156,7 +156,7 @@ func HandleEndpointHTTP(namespaceService NamespaceService) gin.HandlerFunc {
 						},
 					},
 					"serverInfo": gin.H{
-						"name":    "MCP Gateway",
+						"name":    "Omnimesh Gateway",
 						"version": "1.0.0",
 					},
 					"protocolVersion": "2024-11-05",
@@ -164,18 +164,18 @@ func HandleEndpointHTTP(namespaceService NamespaceService) gin.HandlerFunc {
 				"id": nil,
 			})
 			return
-			
+
 		case "POST":
 			// Handle POST requests with JSON-RPC payload
 			break
-			
+
 		case "OPTIONS":
 			// Handle preflight requests
 			c.Header("Access-Control-Allow-Methods", "GET, POST, HEAD, OPTIONS")
 			c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-API-Key")
 			c.Status(http.StatusNoContent)
 			return
-			
+
 		default:
 			c.JSON(http.StatusMethodNotAllowed, gin.H{
 				"jsonrpc": "2.0",
@@ -230,7 +230,7 @@ func HandleEndpointHTTP(namespaceService NamespaceService) gin.HandlerFunc {
 						},
 					},
 					"serverInfo": gin.H{
-						"name":    "MCP Gateway",
+						"name":    "Omnimesh Gateway",
 						"version": "1.0.0",
 					},
 					"protocolVersion": "2024-11-05",
@@ -255,13 +255,13 @@ func HandleEndpointHTTP(namespaceService NamespaceService) gin.HandlerFunc {
 			// Get tools from virtual servers (temporary hardcode approach for demo)
 			virtualTools := []map[string]interface{}{
 				{
-					"name": "get_figma_files",
+					"name":        "get_figma_files",
 					"description": "Get list of Figma files in a team",
 					"inputSchema": map[string]interface{}{
 						"type": "object",
 						"properties": map[string]interface{}{
 							"team_id": map[string]interface{}{
-								"type": "string",
+								"type":        "string",
 								"description": "The Figma team ID",
 							},
 						},
@@ -269,13 +269,13 @@ func HandleEndpointHTTP(namespaceService NamespaceService) gin.HandlerFunc {
 					},
 				},
 				{
-					"name": "get_figma_file",
+					"name":        "get_figma_file",
 					"description": "Get a specific Figma file details",
 					"inputSchema": map[string]interface{}{
 						"type": "object",
 						"properties": map[string]interface{}{
 							"file_key": map[string]interface{}{
-								"type": "string",
+								"type":        "string",
 								"description": "The Figma file key",
 							},
 						},
@@ -283,19 +283,19 @@ func HandleEndpointHTTP(namespaceService NamespaceService) gin.HandlerFunc {
 					},
 				},
 				{
-					"name": "list_repositories",
+					"name":        "list_repositories",
 					"description": "List repositories for an organization or user",
 					"inputSchema": map[string]interface{}{
 						"type": "object",
 						"properties": map[string]interface{}{
 							"owner": map[string]interface{}{
-								"type": "string",
+								"type":        "string",
 								"description": "The organization or user name",
 							},
 							"type": map[string]interface{}{
-								"type": "string",
-								"enum": []string{"all", "public", "private"},
-								"default": "public",
+								"type":        "string",
+								"enum":        []string{"all", "public", "private"},
+								"default":     "public",
 								"description": "Repository visibility filter",
 							},
 						},
@@ -303,20 +303,20 @@ func HandleEndpointHTTP(namespaceService NamespaceService) gin.HandlerFunc {
 					},
 				},
 				{
-					"name": "get_current_time",
+					"name":        "get_current_time",
 					"description": "Get the current time in various formats",
 					"inputSchema": map[string]interface{}{
 						"type": "object",
 						"properties": map[string]interface{}{
 							"timezone": map[string]interface{}{
-								"type": "string",
-								"default": "UTC",
+								"type":        "string",
+								"default":     "UTC",
 								"description": "Timezone for the time (e.g., UTC, America/New_York)",
 							},
 							"format": map[string]interface{}{
-								"type": "string",
-								"default": "iso",
-								"enum": []string{"iso", "unix", "human"},
+								"type":        "string",
+								"default":     "iso",
+								"enum":        []string{"iso", "unix", "human"},
 								"description": "Output format",
 							},
 						},
@@ -328,7 +328,7 @@ func HandleEndpointHTTP(namespaceService NamespaceService) gin.HandlerFunc {
 			allTools := virtualTools
 			for _, tool := range namespacedTools {
 				allTools = append(allTools, map[string]interface{}{
-					"name": tool.PrefixedName,
+					"name":        tool.PrefixedName,
 					"description": fmt.Sprintf("%s (from %s)", tool.ToolName, tool.ServerName),
 				})
 			}
@@ -365,8 +365,8 @@ func HandleEndpointHTTP(namespaceService NamespaceService) gin.HandlerFunc {
 
 			c.JSON(http.StatusOK, gin.H{
 				"jsonrpc": "2.0",
-				"result": result,
-				"id":     id,
+				"result":  result,
+				"id":      id,
 			})
 
 		default:

@@ -9,10 +9,10 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 
-	"mcp-gateway/apps/backend/internal/config"
-	"mcp-gateway/apps/backend/internal/database"
-	"mcp-gateway/apps/backend/internal/logging"
-	"mcp-gateway/apps/backend/internal/logging/plugins/file"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/config"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/database"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/logging"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/logging/plugins/file"
 )
 
 type Server struct {

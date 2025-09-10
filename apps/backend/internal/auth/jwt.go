@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -63,7 +63,7 @@ func (j *JWTManager) GenerateAccessToken(user *types.User) (string, error) {
 			ExpiresAt: jwt.NewNumericDate(now.Add(j.accessTokenExpiry)),
 			IssuedAt:  jwt.NewNumericDate(now),
 			NotBefore: jwt.NewNumericDate(now),
-			Issuer:    "mcp-gateway",
+			Issuer:    "omnimesh-gateway",
 			Subject:   user.ID,
 			ID:        fmt.Sprintf("%s-%d-%d", user.ID, now.Unix(), now.UnixNano()),
 		},
@@ -90,7 +90,7 @@ func (j *JWTManager) GenerateRefreshToken(user *types.User) (string, error) {
 			ExpiresAt: jwt.NewNumericDate(now.Add(j.refreshTokenExpiry)),
 			IssuedAt:  jwt.NewNumericDate(now),
 			NotBefore: jwt.NewNumericDate(now),
-			Issuer:    "mcp-gateway",
+			Issuer:    "omnimesh-gateway",
 			Subject:   user.ID,
 			ID:        fmt.Sprintf("%s-refresh-%d-%d", user.ID, now.Unix(), now.UnixNano()),
 		},

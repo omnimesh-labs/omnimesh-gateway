@@ -1,10 +1,10 @@
-# MCP Gateway - Transport APIs Testing Guide
+# Omnimesh Gateway - Transport APIs Testing Guide
 
-This guide provides curl examples to test all the transport layer APIs in the MCP Gateway.
+This guide provides curl examples to test all the transport layer APIs in the Omnimesh Gateway.
 
 ## Prerequisites
 
-1. Start the MCP Gateway server:
+1. Start the Omnimesh Gateway server:
 ```bash
 make run
 ```
@@ -388,7 +388,7 @@ curl -X POST http://localhost:8080/stdio/send \
         }
       },
       "clientInfo": {
-        "name": "mcp-gateway",
+        "name": "omnimesh-gateway",
         "version": "1.0.0"
       }
     },

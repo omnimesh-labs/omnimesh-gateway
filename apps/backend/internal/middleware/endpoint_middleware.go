@@ -3,8 +3,8 @@ package middleware
 import (
 	"context"
 	"fmt"
-	"mcp-gateway/apps/backend/internal/types"
 	"net/http"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 	"strings"
 	"time"
 

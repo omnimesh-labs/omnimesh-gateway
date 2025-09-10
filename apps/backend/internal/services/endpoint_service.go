@@ -4,9 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"mcp-gateway/apps/backend/internal/database/repositories"
-	"mcp-gateway/apps/backend/internal/types"
 	"net/http"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/database/repositories"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 	"sync"
 
 	"github.com/jmoiron/sqlx"

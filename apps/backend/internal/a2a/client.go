@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 )
 
 // Client implements A2A communication with external agents

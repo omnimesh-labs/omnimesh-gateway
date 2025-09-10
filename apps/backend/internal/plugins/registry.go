@@ -93,7 +93,7 @@ func (r *pluginRegistry) GetInfo(pluginType PluginType) (*PluginInfo, error) {
 		Name:           factory.GetName(),
 		Description:    factory.GetDescription(),
 		Version:        "1.0.0", // Could be enhanced to get from plugin
-		Author:         "MCP Gateway Team",
+		Author:         "Omnimesh AI Gateway Team",
 		ConfigSchema:   factory.GetConfigSchema(),
 		Capabilities:   capabilities,
 		DefaultConfig:  defaultConfig,

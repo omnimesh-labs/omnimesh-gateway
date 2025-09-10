@@ -1,4 +1,4 @@
-# Example authentication configuration for MCP Gateway
+# Example authentication configuration for Omnimesh AI Gateway
 # Copy to development.yaml or production.yaml and customize
 
 server:

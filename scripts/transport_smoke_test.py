@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-MCP Gateway Transport Smoke Test
+Omnimesh Gateway Transport Smoke Test
 
-Quick and simple smoke test for all MCP Gateway transport protocols.
+Quick and simple smoke test for all Omnimesh Gateway transport protocols.
 This script verifies that all transport endpoints are working correctly.
 
 Usage:
@@ -13,7 +13,7 @@ import asyncio
 
 import httpx
 
-# MCP Gateway Configuration
+# Omnimesh AI Gateway Configuration
 GATEWAY_BASE_URL = "http://localhost:8080"
 ADMIN_EMAIL = "admin@admin.com"
 ADMIN_PASSWORD = "qwerty123"
@@ -87,7 +87,7 @@ async def test_transport(
 
 
 async def main():
-    print("🚀 MCP Gateway Transport Smoke Test")
+    print("🚀 Omnimesh AI Gateway Transport Smoke Test")
     print("=" * 50)
 
     # Test definitions for each transport

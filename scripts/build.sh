@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Build script for MCP Gateway
+# Build script for Omnimesh AI Gateway
 
 set -e
 
 # Configuration
-APP_NAME="mcp-gateway"
+APP_NAME="omnimesh-gateway"
 VERSION=${VERSION:-"1.0.0"}
 BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")

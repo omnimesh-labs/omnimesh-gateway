@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/middleware"
-	"mcp-gateway/apps/backend/internal/transport"
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/middleware"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/transport"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"github.com/gin-gonic/gin"
 )
@@ -329,7 +329,7 @@ func (h *MCPHandler) HandleMCPCapabilities(c *gin.Context) {
 		},
 		"protocol_version": "2024-11-05",
 		"server_info": gin.H{
-			"name":    "MCP Gateway",
+			"name":    "Omnimesh Gateway",
 			"version": "1.0.0",
 		},
 		"transports": []string{
@@ -381,12 +381,12 @@ func (h *MCPHandler) HandleMCPStatus(c *gin.Context) {
 	metrics := h.transportManager.GetMetrics()
 
 	response := gin.H{
-		"active_sessions":  len(streamableSessions),
-		"total_sessions":   len(streamableSessions), // For compatibility with test expectations
-		"transport_mode":   types.TransportTypeStreamable,
-		"sessions":         streamableSessions,
-		"metrics":          metrics,
-		"supported_modes":  []string{types.StreamableModeJSON, types.StreamableModeSSE},
+		"active_sessions": len(streamableSessions),
+		"total_sessions":  len(streamableSessions), // For compatibility with test expectations
+		"transport_mode":  types.TransportTypeStreamable,
+		"sessions":        streamableSessions,
+		"metrics":         metrics,
+		"supported_modes": []string{types.StreamableModeJSON, types.StreamableModeSSE},
 	}
 
 	c.JSON(http.StatusOK, response)

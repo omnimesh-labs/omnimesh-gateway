@@ -9,10 +9,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
+
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"mcp-gateway/apps/backend/internal/types"
 )
 
 // MockNamespaceService is a mock implementation of the namespace service
@@ -133,13 +134,13 @@ func TestNamespaceHandler_CreateNamespace(t *testing.T) {
 	}
 
 	assert.Equal(t, http.StatusCreated, w.Code)
-	
+
 	var response types.Namespace
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedNamespace.ID, response.ID)
 	assert.Equal(t, expectedNamespace.Name, response.Name)
-	
+
 	mockService.AssertExpectations(t)
 }
 
@@ -169,12 +170,12 @@ func TestNamespaceHandler_ListNamespaces(t *testing.T) {
 	router.ServeHTTP(w, httpReq)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	
+
 	var response map[string]interface{}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
 	assert.Equal(t, float64(2), response["total"])
-	
+
 	mockService.AssertExpectations(t)
 }
 
@@ -199,12 +200,12 @@ func TestNamespaceHandler_GetNamespace(t *testing.T) {
 	router.ServeHTTP(w, httpReq)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	
+
 	var response types.Namespace
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedNamespace.ID, response.ID)
-	
+
 	mockService.AssertExpectations(t)
 }
 
@@ -257,13 +258,13 @@ func TestNamespaceHandler_UpdateNamespace(t *testing.T) {
 	router.ServeHTTP(w, httpReq)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	
+
 	var response types.Namespace
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedNamespace.Name, response.Name)
 	assert.Equal(t, expectedNamespace.IsActive, response.IsActive)
-	
+
 	mockService.AssertExpectations(t)
 }
 
@@ -312,11 +313,11 @@ func TestNamespaceHandler_ExecuteNamespaceTool(t *testing.T) {
 	router.ServeHTTP(w, httpReq)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	
+
 	var response types.NamespaceToolResult
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
 	assert.True(t, response.Success)
-	
+
 	mockService.AssertExpectations(t)
 }
