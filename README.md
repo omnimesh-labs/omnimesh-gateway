@@ -20,11 +20,14 @@ Get the entire MCP Gateway stack running with a single command:
 git clone https://github.com/theognis1002/mcp-gateway.git
 cd mcp-gateway
 
+# Copy env vars
+cp .env.example .env
+
 # Option 1: Using Docker Compose directly
 docker compose up --build
 
 # Option 2: Using Makefile (automatically detects docker compose vs docker-compose)
-make start
+make setup
 ```
 
 **Access the application:**
