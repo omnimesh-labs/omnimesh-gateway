@@ -12,7 +12,7 @@ import (
 	"strings"
 	"sync"
 
-	"mcp-gateway/apps/backend/internal/logging"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/logging"
 )
 
 // FileStorageBackend implements types.StorageBackend for file storage
@@ -38,7 +38,7 @@ type FileConfig struct {
 // DefaultFileConfig returns default configuration for file storage
 func DefaultFileConfig() *FileConfig {
 	return &FileConfig{
-		Path:         "logs/mcp-gateway.log",
+		Path:         "logs/omnimesh-gateway.log",
 		MaxSize:      100 * 1024 * 1024, // 100MB
 		MaxFiles:     10,
 		Rotate:       true,

@@ -1,8 +1,8 @@
-# Frontend Unit Testing Plan - MCP Gateway
+# Frontend Unit Testing Plan - Omnimesh Gateway
 
 ## Overview
 
-This document outlines the comprehensive unit testing strategy for the MCP Gateway frontend application. The plan prioritizes critical functionality and provides a roadmap for achieving robust test coverage across the application.
+This document outlines the comprehensive unit testing strategy for the Omnimesh Gateway frontend application. The plan prioritizes critical functionality and provides a roadmap for achieving robust test coverage across the application.
 
 ## Testing Framework
 

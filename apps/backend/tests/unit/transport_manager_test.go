@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/transport"
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/transport"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -85,13 +85,13 @@ func setupTransportManager() *transport.Manager {
 			types.TransportTypeWebSocket,
 			types.TransportTypeSSE,
 		},
-		SessionTimeout:    30 * time.Minute,
-		MaxConnections:    100,
-		BufferSize:        1024,
-		SSEKeepAlive:      30 * time.Second,
-		WebSocketTimeout:  5 * time.Minute,
+		SessionTimeout:     30 * time.Minute,
+		MaxConnections:     100,
+		BufferSize:         1024,
+		SSEKeepAlive:       30 * time.Second,
+		WebSocketTimeout:   5 * time.Minute,
 		StreamableStateful: true,
-		STDIOTimeout:      10 * time.Second,
+		STDIOTimeout:       10 * time.Second,
 	}
 	return transport.NewManager(config)
 }

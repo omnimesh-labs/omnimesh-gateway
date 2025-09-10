@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"mcp-gateway/apps/backend/internal/plugins/content_filters/resource"
-	"mcp-gateway/apps/backend/internal/plugins/shared"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/plugins/content_filters/resource"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/plugins/shared"
 )
 
 func TestResourceFilter_NewResourceFilter(t *testing.T) {

@@ -1,6 +1,6 @@
-# MCP Gateway - Virtual Servers Testing Guide
+# Omnimesh Gateway - Virtual Servers Testing Guide
 
-This guide provides examples for testing the Virtual Server feature in the MCP Gateway, which allows virtualizing non-MCP services as MCP-compatible servers.
+This guide provides examples for testing the Virtual Server feature in the Omnimesh Gateway, which allows virtualizing non-MCP services as MCP-compatible servers.
 
 ## Overview
 
@@ -12,7 +12,7 @@ The Virtual Server feature enables you to:
 
 ## Prerequisites
 
-1. Start the MCP Gateway server:
+1. Start the Omnimesh Gateway server:
 ```bash
 make run
 ```
@@ -317,7 +317,7 @@ curl -X POST http://localhost:8080/mcp/rpc \
       "name": "send_message",
       "arguments": {
         "channel": "#general",
-        "text": "Hello from MCP Gateway!"
+        "text": "Hello from Omnimesh Gateway!"
       }
     }
   }'
@@ -332,7 +332,7 @@ Expected response (mock data):
     "content": [
       {
         "type": "text",
-        "text": "map[data:map[channel:#general message_id:1234567890.123456 text:Hello from MCP Gateway! timestamp:1755827948] mock:true status:success url:https://slack.com/api/chat.postMessage]"
+        "text": "map[data:map[channel:#general message_id:1234567890.123456 text:Hello from Omnimesh Gateway! timestamp:1755827948] mock:true status:success url:https://slack.com/api/chat.postMessage]"
       }
     ]
   }

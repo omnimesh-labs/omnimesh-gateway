@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/plugins/shared"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/plugins/shared"
 )
 
 // LlamaGuardPlugin implements the LlamaGuard AI safety filter

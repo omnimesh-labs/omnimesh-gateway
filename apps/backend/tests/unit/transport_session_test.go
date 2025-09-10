@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/transport"
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/transport"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -197,7 +197,7 @@ func TestSessionManager_UpdateSession(t *testing.T) {
 		{
 			name: "update metadata",
 			updates: map[string]interface{}{
-				"custom_field": "custom_value",
+				"custom_field":  "custom_value",
 				"numeric_field": 42,
 			},
 		},
@@ -326,12 +326,12 @@ func TestSessionManager_GetEvents(t *testing.T) {
 	}
 
 	tests := []struct {
-		name         string
-		sessionID    string
-		since        *time.Time
-		limit        int
-		expectedLen  int
-		expectError  bool
+		name        string
+		sessionID   string
+		since       *time.Time
+		limit       int
+		expectedLen int
+		expectError bool
 	}{
 		{
 			name:        "get all events",
@@ -663,7 +663,7 @@ func TestMetadataValue_DatabaseOperations(t *testing.T) {
 			metadata: nil,
 		},
 		{
-			name: "empty metadata",
+			name:     "empty metadata",
 			metadata: transport.MetadataValue{},
 		},
 		{

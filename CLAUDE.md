@@ -1,8 +1,8 @@
-# MCP Gateway - Claude Development Guide
+# Omnimesh AI Gateway - Claude Development Guide
 
 ## Project Overview
 
-The **MCP Gateway** is a production-ready API gateway for Model Context Protocol (MCP) servers, providing enterprise-grade infrastructure with authentication, logging, rate limiting, server discovery, and multi-protocol transport support.
+The **Omnimesh AI Gateway** is a production-ready API gateway for Model Context Protocol (MCP) servers, providing enterprise-grade infrastructure with authentication, logging, rate limiting, server discovery, and multi-protocol transport support.
 
 ### Core Purpose
 - **Enterprise Infrastructure**: JWT authentication, RBAC, and flexible policies
@@ -45,7 +45,7 @@ The **MCP Gateway** is a production-ready API gateway for Model Context Protocol
 
 ### Project Structure
 ```
-mcp-gateway/
+omnimesh-gateway/
 ├── apps/
 │   ├── backend/              # Go API backend
 │   │   ├── cmd/
@@ -737,7 +737,7 @@ cd apps/frontend && bun run dev
 
 **Admin Credentials**: `admin@admin.com` / `qwerty123`
 
-The codebase provides a comprehensive foundation for a production-ready MCP Gateway with enterprise features and multi-protocol support.
+The codebase provides a comprehensive foundation for a production-ready Omnimesh AI Gateway with enterprise features and multi-protocol support.
 
 ## DEVELOPMENT GUIDELINES
 - ALWAYS use `bun` instead of `npm`

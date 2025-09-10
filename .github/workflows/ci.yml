@@ -108,7 +108,7 @@ jobs:
         GOARCH: ${{ matrix.goarch }}
       run: |
         mkdir -p dist
-        BINARY_NAME=mcp-gateway
+        BINARY_NAME=omnimesh-gateway
         if [ "$GOOS" = "windows" ]; then
           BINARY_NAME="${BINARY_NAME}.exe"
         fi
@@ -117,5 +117,5 @@ jobs:
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: mcp-gateway-${{ matrix.goos }}-${{ matrix.goarch }}
+        name: omnimesh-gateway-${{ matrix.goos }}-${{ matrix.goarch }}
         path: dist/

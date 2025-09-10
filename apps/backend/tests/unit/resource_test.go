@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/database/models"
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/database/models"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"

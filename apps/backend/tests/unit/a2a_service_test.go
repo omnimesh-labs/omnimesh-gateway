@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/a2a"
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/a2a"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"

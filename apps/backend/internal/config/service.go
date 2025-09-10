@@ -8,8 +8,8 @@ import (
 	"slices"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/database/models"
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/database/models"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -46,7 +46,7 @@ func (s *Service) ExportConfiguration(ctx context.Context, orgID uuid.UUID, user
 			ExportID:      exportID,
 			Timestamp:     time.Now(),
 			Version:       "1.0.0",
-			Gateway:       "mcp-gateway",
+			Gateway:       "omnimesh-gateway",
 			Organization:  orgID.String(),
 			EntityTypes:   req.EntityTypes,
 			TotalEntities: 0,

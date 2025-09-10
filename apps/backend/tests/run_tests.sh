@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Test runner script for MCP Gateway transport tests
+# Test runner script for Omnimesh Gateway transport tests
 
 set -e
 

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"gopkg.in/yaml.v3"
 )
@@ -135,7 +135,7 @@ type DiscoveryConfig struct {
 	HealthInterval   time.Duration `yaml:"health_interval"`
 	FailureThreshold int           `yaml:"failure_threshold"`
 	RecoveryTimeout  time.Duration `yaml:"recovery_timeout"`
-	MCPURL          string        `yaml:"mcp_discovery_url" env:"MCP_DISCOVERY_URL"`
+	MCPURL           string        `yaml:"mcp_discovery_url" env:"MCP_DISCOVERY_URL"`
 }
 
 // GatewayConfig holds core gateway configuration
@@ -162,7 +162,6 @@ type RedisConfig struct {
 	Database int    `yaml:"database" env:"REDIS_DB"`
 	PoolSize int    `yaml:"pool_size"`
 }
-
 
 // TransportConfig holds transport layer configuration
 type TransportConfig struct {

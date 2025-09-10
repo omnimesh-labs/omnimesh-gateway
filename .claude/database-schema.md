@@ -1,7 +1,7 @@
-# MCP Gateway Database ERD
+# Omnimesh Gateway Database ERD
 
 ## Overview
-This document outlines the database schema for the MCP Gateway. The design separates control-plane data (kept in Postgres) from data-plane logs (stored in object storage/log systems) for scalability and cost efficiency.
+This document outlines the database schema for the Omnimesh Gateway. The design separates control-plane data (kept in Postgres) from data-plane logs (stored in object storage/log systems) for scalability and cost efficiency.
 
 ## Architecture Pattern
 - **Control-plane (Postgres)**: Small, fast queries for operations and metadata

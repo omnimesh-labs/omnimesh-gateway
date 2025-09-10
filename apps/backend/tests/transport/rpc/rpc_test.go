@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"mcp-gateway/apps/backend/tests/helpers"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/tests/helpers"
 )
 
 func TestJSONRPCBasicRequests(t *testing.T) {

@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/middleware"
-	"mcp-gateway/apps/backend/internal/transport"
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/middleware"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/transport"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"github.com/gin-gonic/gin"
 )
@@ -150,8 +150,8 @@ func (h *WebSocketHandler) HandleWebSocketSend(c *gin.Context) {
 	if err := h.transportManager.SendMessage(c.Request.Context(), sessionID, wsMessage); err != nil {
 		// Check if error is due to session not found
 		if err.Error() == "connection not found for session "+sessionID ||
-		   err.Error() == "session not found" ||
-		   err.Error() == "transport not found" {
+			err.Error() == "session not found" ||
+			err.Error() == "transport not found" {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "Session not found: " + sessionID,
 			})
@@ -287,8 +287,8 @@ func (h *WebSocketHandler) HandleWebSocketPing(c *gin.Context) {
 	if err := h.transportManager.SendMessage(c.Request.Context(), sessionID, pingMessage); err != nil {
 		// Check if error is due to session not found
 		if err.Error() == "connection not found for session "+sessionID ||
-		   err.Error() == "session not found" ||
-		   err.Error() == "transport not found" {
+			err.Error() == "session not found" ||
+			err.Error() == "transport not found" {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "Session not found: " + sessionID,
 			})
@@ -328,9 +328,9 @@ func (h *WebSocketHandler) HandleWebSocketClose(c *gin.Context) {
 		// Check if error is due to session not found
 		errStr := err.Error()
 		if errStr == "connection not found for session "+sessionID ||
-		   errStr == "session not found" ||
-		   errStr == "transport not found" ||
-		   errStr == "connection not found" {
+			errStr == "session not found" ||
+			errStr == "transport not found" ||
+			errStr == "connection not found" {
 			// For close, we return 200 even if session doesn't exist (idempotent)
 			c.JSON(http.StatusOK, gin.H{
 				"message":    "WebSocket connection closed or not found",

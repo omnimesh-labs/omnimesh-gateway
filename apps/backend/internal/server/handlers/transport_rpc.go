@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/discovery"
-	"mcp-gateway/apps/backend/internal/middleware"
-	"mcp-gateway/apps/backend/internal/transport"
-	"mcp-gateway/apps/backend/internal/types"
-	"mcp-gateway/apps/backend/internal/virtual"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/discovery"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/middleware"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/transport"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/virtual"
 
 	"github.com/gin-gonic/gin"
 )
@@ -629,7 +629,7 @@ func (h *RPCHandler) HandleRPCIntrospection(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"methods":     methods,
-		"description": "MCP Gateway JSON-RPC API",
+		"description": "Omnimesh Gateway JSON-RPC API",
 		"version":     "2024-11-05",
 		"transport":   "HTTP",
 	})

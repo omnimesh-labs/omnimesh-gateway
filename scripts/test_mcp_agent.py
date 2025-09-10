@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Comprehensive MCP Gateway Transport Test Agent
+Comprehensive Omnimesh AI Gateway Transport Test Agent
 
-This enhanced test script provides thorough testing of all MCP Gateway transport protocols:
+This enhanced test script provides thorough testing of all Omnimesh AI Gateway transport protocols:
 
 Transport Testing:
 1. JSON-RPC Transport (HTTP) - Single and batch requests
@@ -12,7 +12,7 @@ Transport Testing:
 5. STDIO Transport - Command execution and process management
 
 MCP Server Testing:
-1. Authenticates with the MCP Gateway using admin credentials
+1. Authenticates with the Omnimesh AI Gateway using admin credentials
 2. Discovers and lists all registered MCP servers
 3. Connects to MCP servers using multiple transport protocols
 4. Performs comprehensive testing of MCP server capabilities:
@@ -39,7 +39,7 @@ import httpx
 import websockets
 from websockets.exceptions import ConnectionClosed
 
-# MCP Gateway Configuration
+# Omnimesh AI Gateway Configuration
 GATEWAY_BASE_URL = "http://localhost:8080"
 GATEWAY_WS_URL = "ws://localhost:8080"
 ADMIN_EMAIL = "team@wraithscan.com"
@@ -47,7 +47,7 @@ ADMIN_PASSWORD = "qwerty123"
 
 
 class MCPGatewayClient:
-    """Client for interacting with the MCP Gateway and testing all transport protocols"""
+    """Client for interacting with the Omnimesh AI Gateway and testing all transport protocols"""
 
     def __init__(self, base_url: str = GATEWAY_BASE_URL):
         self.base_url = base_url
@@ -93,7 +93,7 @@ class MCPGatewayClient:
 
     async def test_all_transports(self) -> Dict[str, Any]:
         """Test all transport protocols with comprehensive smoke tests"""
-        print("\n🚀 TESTING ALL MCP GATEWAY TRANSPORTS")
+        print("\n🚀 TESTING ALL Omnimesh Gateway TRANSPORTS")
         print("=" * 60)
 
         transport_results = {
@@ -452,7 +452,7 @@ class SimpleMCPAgent:
             "params": {
                 "protocolVersion": "2024-11-05",
                 "capabilities": {"roots": {"listChanged": True}, "sampling": {}},
-                "clientInfo": {"name": "mcp-gateway-test", "version": "1.0.0"},
+                "clientInfo": {"name": "omnimesh-gateway-test", "version": "1.0.0"},
             },
         }
 
@@ -493,7 +493,7 @@ class SimpleMCPAgent:
                 "params": {
                     "protocolVersion": "2024-11-05",
                     "capabilities": {"roots": {"listChanged": True}, "sampling": {}},
-                    "clientInfo": {"name": "mcp-gateway-test", "version": "1.0.0"},
+                    "clientInfo": {"name": "omnimesh-gateway-test", "version": "1.0.0"},
                 },
             }
 
@@ -897,7 +897,7 @@ class SimpleMCPAgent:
 
 async def main():
     parser = argparse.ArgumentParser(
-        description="Comprehensive MCP Gateway Transport & Server Test Agent"
+        description="Comprehensive Omnimesh AI Gateway Transport & Server Test Agent"
     )
     parser.add_argument(
         "--transports-only",
@@ -924,7 +924,7 @@ async def main():
     )
     args = parser.parse_args()
 
-    print("🚀 Starting MCP Gateway Transport & Server Test Agent")
+    print("🚀 Starting Omnimesh AI Gateway Transport & Server Test Agent")
     print("=" * 60)
 
     # Initialize gateway client
@@ -1098,7 +1098,7 @@ async def main():
         # Clean up
         await agent.disconnect()
 
-        print(f"\n✅ MCP Gateway test completed!")
+        print(f"\n✅ Omnimesh AI Gateway test completed!")
         print(f"   Server: {server['name']}")
         print(f"   Tools discovered: {len(tools)}")
         print(f"   Resources discovered: {len(resources)}")

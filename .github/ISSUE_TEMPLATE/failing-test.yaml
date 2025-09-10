@@ -1,12 +1,12 @@
 name: Failing Test
-description: Report consistently failing tests in MCP Gateway's test suite
+description: Report consistently failing tests in Omnimesh AI Gateway's test suite
 labels: kind/failing-test
 body:
   - type: markdown
     attributes:
       value: |
         Please use this template to report tests that are consistently failing in the test suite.
-        This helps us maintain the quality and reliability of MCP Gateway.
+        This helps us maintain the quality and reliability of Omnimesh AI Gateway.
 
   - type: dropdown
     id: test_type

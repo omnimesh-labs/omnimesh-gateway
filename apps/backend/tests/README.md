@@ -1,6 +1,6 @@
-# MCP Gateway Test Suite
+# Omnimesh AI Gateway Test Suite
 
-Comprehensive test suite for the MCP Gateway transport layer APIs.
+Comprehensive test suite for the Omnimesh AI Gateway transport layer APIs.
 
 ## Test Structure
 

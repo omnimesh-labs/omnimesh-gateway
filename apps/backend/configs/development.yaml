@@ -60,7 +60,7 @@ logging:
   flush_interval: 5s
   async: true
   config:
-    path: "logs/mcp-gateway-dev.log"
+    path: "logs/omnimesh-gateway-dev.log"
     max_size: 52428800  # 50MB
     max_files: 10
     rotate: true

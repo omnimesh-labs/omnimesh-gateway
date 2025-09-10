@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"mcp-gateway/apps/backend/internal/plugins/content_filters/regex"
-	"mcp-gateway/apps/backend/internal/plugins/shared"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/plugins/content_filters/regex"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/plugins/shared"
 )
 
 func TestRegexFilter_NewRegexFilter(t *testing.T) {

@@ -8,7 +8,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thank you for suggesting a new feature! We appreciate your input and ideas for improving MCP Gateway.
+        Thank you for suggesting a new feature! We appreciate your input and ideas for improving Omnimesh AI Gateway.
 
   - type: checkboxes
     id: prerequisites

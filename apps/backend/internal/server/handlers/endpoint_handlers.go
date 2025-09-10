@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"context"
-	"mcp-gateway/apps/backend/internal/types"
 	"net/http"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"github.com/gin-gonic/gin"
 )
@@ -166,7 +166,7 @@ func (h *EndpointHandler) RegenerateEndpointKeys(c *gin.Context) {
 
 	// TODO: Implement API key regeneration logic
 	c.JSON(http.StatusOK, gin.H{
-		"message": "API keys regenerated successfully",
+		"message":     "API keys regenerated successfully",
 		"endpoint_id": id,
 	})
 }

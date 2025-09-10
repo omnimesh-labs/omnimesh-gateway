@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"mcp-gateway/apps/backend/tests/helpers"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/tests/helpers"
 )
 
 func TestWebSocketStatus(t *testing.T) {

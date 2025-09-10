@@ -1,5 +1,5 @@
 -- Add A2A (Agent-to-Agent) integration support
--- This migration adds support for managing external AI agents and exposing them through the MCP gateway
+-- This migration adds support for managing external AI agents and exposing them through the Omnimesh Gateway
 
 -- Add agent type enum for different AI agent types
 CREATE TYPE agent_type_enum AS ENUM ('custom', 'openai', 'anthropic', 'generic');

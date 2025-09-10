@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"mcp-gateway/apps/backend/internal/plugins/content_filters/pii"
-	"mcp-gateway/apps/backend/internal/plugins/shared"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/plugins/content_filters/pii"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/plugins/shared"
 )
 
 func TestPIIFilter_NewPIIFilter(t *testing.T) {

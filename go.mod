@@ -1,4 +1,4 @@
-module mcp-gateway
+module github.com/omnimesh-labs/omnimesh-gateway
 
 go 1.23.0
 

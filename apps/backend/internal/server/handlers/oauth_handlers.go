@@ -3,9 +3,9 @@ package handlers
 import (
 	"context"
 	"encoding/base64"
-	"mcp-gateway/apps/backend/internal/auth"
-	"mcp-gateway/apps/backend/internal/types"
 	"net/http"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/auth"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -548,15 +548,15 @@ func (h *OAuthHandler) renderConsentPage(c *gin.Context, req *types.Authorizatio
 
 	scopes := strings.Split(scope, " ")
 	c.JSON(http.StatusOK, gin.H{
-		"consent_required": true,
-		"client_name":      client.ClientName,
-		"client_id":        client.ClientID,
-		"scopes":          scopes,
-		"redirect_uri":     req.RedirectURI,
-		"state":           req.State,
-		"code_challenge":   req.CodeChallenge,
+		"consent_required":      true,
+		"client_name":           client.ClientName,
+		"client_id":             client.ClientID,
+		"scopes":                scopes,
+		"redirect_uri":          req.RedirectURI,
+		"state":                 req.State,
+		"code_challenge":        req.CodeChallenge,
 		"code_challenge_method": req.CodeChallengeMethod,
-		"message": "This is a placeholder for the consent page. In a real implementation, this would render an HTML form where the user can approve or deny the authorization request.",
+		"message":               "This is a placeholder for the consent page. In a real implementation, this would render an HTML form where the user can approve or deny the authorization request.",
 	})
 
 	// In a real implementation, you would render an HTML template like:

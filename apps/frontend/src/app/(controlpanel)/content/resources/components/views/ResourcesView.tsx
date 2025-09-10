@@ -375,7 +375,7 @@ function ResourcesView() {
 								color="textSecondary"
 								className="mt-1"
 							>
-								Manage your MCP gateway resources
+								Manage your Omnimesh Gateway resources
 							</Typography>
 						</div>
 						<Button

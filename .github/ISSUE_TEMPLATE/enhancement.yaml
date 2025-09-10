@@ -1,5 +1,5 @@
 name: Feature Enhancement
-description: Propose a new feature or enhancement for MCP Gateway
+description: Propose a new feature or enhancement for Omnimesh AI Gateway
 labels: kind/feature
 body:
   - type: markdown
@@ -66,7 +66,7 @@ body:
         Please explain the motivation behind this enhancement:
         - What problem does it solve?
         - Who would benefit from this?
-        - How does it align with MCP Gateway's goals?
+        - How does it align with Omnimesh AI Gateway's goals?
       placeholder: |
         Example:
         This would allow teams using GraphQL services to integrate them with MCP workflows without writing custom adapters.

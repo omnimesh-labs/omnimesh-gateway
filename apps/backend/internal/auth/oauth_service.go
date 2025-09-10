@@ -8,7 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 	"strings"
 	"time"
 
@@ -1084,13 +1084,13 @@ type JWK struct {
 	KeyID     string `json:"kid,omitempty"`
 	Use       string `json:"use,omitempty"`
 	Algorithm string `json:"alg,omitempty"`
-	N         string `json:"n,omitempty"`         // RSA modulus
-	E         string `json:"e,omitempty"`         // RSA exponent
-	K         string `json:"k,omitempty"`         // Symmetric key value
-	X         string `json:"x,omitempty"`         // EC x coordinate
-	Y         string `json:"y,omitempty"`         // EC y coordinate
-	Curve     string `json:"crv,omitempty"`       // EC curve
-	D         string `json:"d,omitempty"`         // EC private value
+	N         string `json:"n,omitempty"`   // RSA modulus
+	E         string `json:"e,omitempty"`   // RSA exponent
+	K         string `json:"k,omitempty"`   // Symmetric key value
+	X         string `json:"x,omitempty"`   // EC x coordinate
+	Y         string `json:"y,omitempty"`   // EC y coordinate
+	Curve     string `json:"crv,omitempty"` // EC curve
+	D         string `json:"d,omitempty"`   // EC private value
 }
 
 // GetJWKS returns the JSON Web Key Set for token verification
@@ -1106,10 +1106,10 @@ func (s *OAuthService) GetJWKS() (*JWKS, error) {
 	jwks := &JWKS{
 		Keys: []JWK{
 			{
-				KeyType:   "oct",     // Octet string for symmetric keys
+				KeyType:   "oct", // Octet string for symmetric keys
 				KeyID:     keyID,
-				Use:       "sig",     // For signing
-				Algorithm: "HS256",   // HMAC with SHA-256
+				Use:       "sig",   // For signing
+				Algorithm: "HS256", // HMAC with SHA-256
 				// Note: We don't include the actual key value (K) for security
 				// Clients should use the token introspection endpoint instead
 			},

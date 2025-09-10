@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 )
 
 // BaseTransport provides common functionality for all transport implementations

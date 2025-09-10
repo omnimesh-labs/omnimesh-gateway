@@ -9,10 +9,10 @@ import (
 	"sync"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/database/models"
-	"mcp-gateway/apps/backend/internal/services"
-	"mcp-gateway/apps/backend/internal/transport"
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/database/models"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/services"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/transport"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -20,14 +20,14 @@ import (
 
 // Service handles MCP server discovery and management
 type Service struct {
-	db              *sql.DB
-	models          *Models
-	config          *Config
-	registry        *Registry
-	health          *HealthChecker
-	toolDiscovery   *services.ToolDiscoveryService
-	stopCh          map[uuid.UUID]chan struct{}
-	mu              sync.RWMutex
+	db            *sql.DB
+	models        *Models
+	config        *Config
+	registry      *Registry
+	health        *HealthChecker
+	toolDiscovery *services.ToolDiscoveryService
+	stopCh        map[uuid.UUID]chan struct{}
+	mu            sync.RWMutex
 }
 
 // Models contains all database models used by the discovery service
@@ -682,9 +682,9 @@ func (s *Service) mapHealthStatusToServerStatus(healthStatus string) string {
 	case types.HealthStatusUnhealthy:
 		return "unhealthy"
 	case types.HealthStatusTimeout:
-		return "unhealthy"  // Consider timeouts as unhealthy
+		return "unhealthy" // Consider timeouts as unhealthy
 	case types.HealthStatusError:
-		return "unhealthy"  // Consider errors as unhealthy
+		return "unhealthy" // Consider errors as unhealthy
 	default:
 		log.Printf("Unknown health status '%s', defaulting to inactive", healthStatus)
 		return "inactive"

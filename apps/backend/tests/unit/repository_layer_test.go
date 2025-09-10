@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/database/repositories"
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/database/repositories"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
@@ -114,10 +114,10 @@ func TestMCPServerRepository_GetByID(t *testing.T) {
 // Test Namespace Repository
 func TestNamespaceRepository_Create(t *testing.T) {
 	tests := []struct {
-		name        string
-		namespace   *types.Namespace
-		mockSetup   func(mock sqlmock.Sqlmock, ns *types.Namespace)
-		expectError bool
+		name          string
+		namespace     *types.Namespace
+		mockSetup     func(mock sqlmock.Sqlmock, ns *types.Namespace)
+		expectError   bool
 		errorContains string
 	}{
 		{
@@ -170,7 +170,7 @@ func TestNamespaceRepository_Create(t *testing.T) {
 					WithArgs(ns.ID, ns.OrganizationID, ns.Name, ns.Description, nil, ns.IsActive, sqlmock.AnyArg()).
 					WillReturnError(sql.ErrConnDone)
 			},
-			expectError:    true,
+			expectError:   true,
 			errorContains: "failed to create namespace",
 		},
 	}
@@ -206,11 +206,11 @@ func TestNamespaceRepository_Create(t *testing.T) {
 
 func TestNamespaceRepository_GetByID_ErrorCases(t *testing.T) {
 	tests := []struct {
-		name               string
-		namespaceID        string
-		mockSetup          func(mock sqlmock.Sqlmock, namespaceID string)
-		expectError        bool
-		errorContains      string
+		name          string
+		namespaceID   string
+		mockSetup     func(mock sqlmock.Sqlmock, namespaceID string)
+		expectError   bool
+		errorContains string
 	}{
 		{
 			name:        "namespace not found",
@@ -220,8 +220,8 @@ func TestNamespaceRepository_GetByID_ErrorCases(t *testing.T) {
 					WithArgs(namespaceID).
 					WillReturnError(sql.ErrNoRows)
 			},
-			expectError:       true,
-			errorContains:     "namespace not found",
+			expectError:   true,
+			errorContains: "namespace not found",
 		},
 		{
 			name:        "database error",
@@ -231,8 +231,8 @@ func TestNamespaceRepository_GetByID_ErrorCases(t *testing.T) {
 					WithArgs(namespaceID).
 					WillReturnError(sql.ErrConnDone)
 			},
-			expectError:       true,
-			errorContains:     "failed to get namespace",
+			expectError:   true,
+			errorContains: "failed to get namespace",
 		},
 	}
 

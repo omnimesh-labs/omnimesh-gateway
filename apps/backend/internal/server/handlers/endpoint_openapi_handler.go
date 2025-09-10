@@ -3,9 +3,9 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"mcp-gateway/apps/backend/internal/services"
-	"mcp-gateway/apps/backend/internal/types"
 	"net/http"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/services"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 	"strings"
 
 	"github.com/gin-gonic/gin"

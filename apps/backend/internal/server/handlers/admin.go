@@ -5,10 +5,10 @@ import (
 	"strconv"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/auth"
-	"mcp-gateway/apps/backend/internal/config"
-	"mcp-gateway/apps/backend/internal/logging"
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/auth"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/config"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/logging"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -414,7 +414,7 @@ func (h *AdminHandler) ExportConfiguration(c *gin.Context) {
 	}
 
 	c.Header("Content-Type", "application/json")
-	c.Header("Content-Disposition", `attachment; filename="mcp-gateway-config-export.json"`)
+	c.Header("Content-Disposition", `attachment; filename="omnimesh-gateway-config-export.json"`)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"data":    export,

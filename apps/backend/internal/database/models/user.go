@@ -3,7 +3,7 @@ package models
 import (
 	"time"
 
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 )
 
 // UserModel handles user database operations

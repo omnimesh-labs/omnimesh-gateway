@@ -5,27 +5,27 @@ import (
 	"fmt"
 	"time"
 
-	"mcp-gateway/apps/backend/internal/database/models"
-	"mcp-gateway/apps/backend/internal/types"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/database/models"
+	"github.com/omnimesh-labs/omnimesh-gateway/apps/backend/internal/types"
 
 	"github.com/google/uuid"
 )
 
 // ConfigService handles authentication configuration management
 type ConfigService struct {
-	db                       models.Database
-	authConfigModel          *models.AuthConfigurationModel
-	sessionConfigModel       *models.SessionConfigurationModel
-	securityPolicyModel      *models.SecurityPolicyModel
+	db                  models.Database
+	authConfigModel     *models.AuthConfigurationModel
+	sessionConfigModel  *models.SessionConfigurationModel
+	securityPolicyModel *models.SecurityPolicyModel
 }
 
 // NewConfigService creates a new auth configuration service
 func NewConfigService(db models.Database) *ConfigService {
 	return &ConfigService{
-		db:                       db,
-		authConfigModel:          models.NewAuthConfigurationModel(db),
-		sessionConfigModel:       models.NewSessionConfigurationModel(db),
-		securityPolicyModel:      models.NewSecurityPolicyModel(db),
+		db:                  db,
+		authConfigModel:     models.NewAuthConfigurationModel(db),
+		sessionConfigModel:  models.NewSessionConfigurationModel(db),
+		securityPolicyModel: models.NewSecurityPolicyModel(db),
 	}
 }
 
@@ -79,16 +79,16 @@ func (s *ConfigService) GetConfiguration(orgID uuid.UUID) (*types.AuthConfigurat
 	// Build response
 	response := &types.AuthConfigurationResponse{
 		Methods: types.AuthMethodsResponse{
-			JWTEnabled:              authConfig.JWTEnabled,
-			JWTAccessTokenExpiry:    authConfig.JWTAccessTokenExpiry,
-			JWTRefreshTokenExpiry:   authConfig.JWTRefreshTokenExpiry,
-			APIKeysEnabled:          authConfig.APIKeysEnabled,
-			MaxAPIKeysPerUser:       authConfig.MaxAPIKeysPerUser,
-			APIKeyDefaultExpiry:     authConfig.APIKeyDefaultExpiry,
-			OAuth2Enabled:           authConfig.OAuth2Enabled,
-			OAuth2Providers:         oauth2Providers,
-			MFARequired:             authConfig.MFARequired,
-			MFAMethods:              []string(authConfig.MFAMethods),
+			JWTEnabled:            authConfig.JWTEnabled,
+			JWTAccessTokenExpiry:  authConfig.JWTAccessTokenExpiry,
+			JWTRefreshTokenExpiry: authConfig.JWTRefreshTokenExpiry,
+			APIKeysEnabled:        authConfig.APIKeysEnabled,
+			MaxAPIKeysPerUser:     authConfig.MaxAPIKeysPerUser,
+			APIKeyDefaultExpiry:   authConfig.APIKeyDefaultExpiry,
+			OAuth2Enabled:         authConfig.OAuth2Enabled,
+			OAuth2Providers:       oauth2Providers,
+			MFARequired:           authConfig.MFARequired,
+			MFAMethods:            []string(authConfig.MFAMethods),
 		},
 		Session: types.SessionConfigResponse{
 			SessionTimeoutSeconds:  sessionConfig.SessionTimeoutSeconds,
