@@ -27,11 +27,6 @@ tmp/
 # Project build
 bin/
 *templ.go
-migrate
-main
-api
-!*/migrate/
-!*/api/*
 
 # OS X generated file
 .DS_Store
